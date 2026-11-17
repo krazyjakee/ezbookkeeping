@@ -1,0 +1,81 @@
+/**
+ * Shared presentational pieces used by the desktop shared components (#27).
+ * Vuetify component overrides live in ../override/_vuetify.scss (`vuetify-overrides` layer).
+ */
+
+/* Dialog header strip (ConfirmDialog, and any dialog card that adds .ebk-dialog-title-strip) */
+.ebk-dialog-title-strip {
+    display: flex;
+    align-items: center;
+    gap: var(--ebk-space-2);
+    min-height: calc(var(--ebk-header-strip-height) + var(--ebk-space-3));
+    padding-block: var(--ebk-space-2);
+    padding-inline: var(--ebk-space-4);
+    color: var(--ebk-color-text-primary);
+
+    > .ebk-dialog-title-icon {
+        flex: 0 0 auto;
+    }
+
+    > .text-title-medium {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+}
+
+.ebk-confirm-dialog {
+    .v-card-text {
+        color: var(--ebk-color-text-primary);
+        overflow-wrap: anywhere;
+    }
+
+    .ebk-dialog-actions {
+        flex-wrap: wrap;
+        gap: var(--ebk-space-2);
+
+        > .v-btn {
+            margin-inline-start: 0;
+        }
+    }
+}
+
+/* Dialog close button in the dialog layouts */
+.dialog-layout-card-close-button.v-btn {
+    color: var(--ebk-color-text-secondary);
+}
+
+/* Snackbar message with an optional status icon */
+.ebk-snackbar-message {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ebk-space-2);
+    overflow-wrap: anywhere;
+
+    > .ebk-snackbar-icon {
+        flex: 0 0 auto;
+        margin-block-start: 1px;
+        color: rgb(var(--v-theme-error));
+    }
+}
+
+/* Amount fields always use tabular numerals (the user amount colors are applied by the component) */
+.amount-input .v-field__input,
+.amount-input .v-text-field__prefix,
+.amount-input .v-text-field__suffix {
+    font-variant-numeric: var(--ebk-font-numeric);
+}
+
+/* Table header filter menus: native buttons, so they are reachable and operable by keyboard (#36) */
+.ebk-table-header-menu-activator {
+    padding: 0;
+    border: 0;
+    border-radius: var(--ebk-radius-sm);
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+
+    &:disabled {
+        cursor: default;
+    }
+}

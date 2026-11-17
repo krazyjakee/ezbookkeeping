@@ -1,60 +1,116 @@
 <template>
     <main-page-layout>
         <template #nav-items>
-            <div class="mb-2">
-                <btn-vertical-group :disabled="loading" :buttons="TransactionListPageType.values().map(item => {
-                    return {
-                        name: tt(item.name),
-                        value: item.type
-                    }
-                })" v-model="queryPageType" />
-            </div>
-            <v-divider class="my-2" />
-            <div class="my-2">
-                <span class="mx-3 text-body-medium">{{ tt('Transaction Type') }}</span>
-                <v-select
-                    item-title="displayName"
-                    item-value="type"
-                    class="mt-1"
-                    density="compact"
-                    :disabled="loading"
-                    :items="[
-                        { displayName: tt('All Types'), type: 0 },
-                        { displayName: tt('Modify Balance'), type: 1 },
-                        { displayName: tt('Income'), type: 2 },
-                        { displayName: tt('Expense'), type: 3 },
-                        { displayName: tt('Transfer'), type: 4 }
-                    ]"
-                    v-model="queryType"
-                />
-            </div>
-            <div class="my-2" v-if="pageType === TransactionListPageType.List.type || pageType === TransactionListPageType.Gallery.type">
-                <span class="mx-3 text-body-medium">{{ tt('Transactions Per Page') }}</span>
-                <v-select class="mt-1" density="compact"
-                          item-title="name"
-                          item-value="value"
-                          :disabled="loading"
-                          :items="allPageCounts"
-                          v-model="countPerPage"
-                />
-            </div>
-            <li class="nav-link" :key="idx" v-for="(recentDateRange, idx) in recentMonthDateRanges">
-                <a class="d-flex align-center cursor-pointer my-1"
-                   :class="{ 'router-link-active router-link-exact-active': recentDateRangeIndex === idx, 'disabled': loading }"
-                   @click="changeDateFilter(recentDateRange)">
-                    <span class="nav-item-title text-truncate">{{ recentDateRange.displayName }}</span>
+            <li class="nav-section-title">
+                <div class="title-wrapper">
+                    <span class="title-text">{{ tt('View') }}</span>
+                </div>
+            </li>
+            <li class="nav-link" :key="item.type" v-for="item in TransactionListPageType.values()">
+                <a class="d-flex align-center cursor-pointer" role="button" tabindex="0"
+                   :class="{ 'router-link-active router-link-exact-active': pageType === item.type, 'disabled': loading }"
+                   :aria-current="pageType === item.type ? 'page' : undefined"
+                   :aria-disabled="loading ? 'true' : undefined"
+                   @click="selectPageType(item.type)"
+                   @keydown.enter.prevent="selectPageType(item.type)"
+                   @keydown.space.prevent="selectPageType(item.type)">
+                    <v-icon class="nav-item-icon" :icon="getPageTypeIcon(item.type)" size="18" />
+                    <span class="nav-item-title">{{ tt(item.name) }}</span>
                 </a>
+            </li>
+            <li class="transaction-list-filters-item">
+                <section class="ebk-panel transaction-list-filters" :aria-labelledby="'transaction-list-filters-title'">
+                    <header class="ebk-panel-header-strip">
+                        <span id="transaction-list-filters-title">{{ tt('Filters') }}</span>
+                    </header>
+                    <div class="transaction-list-filters-body">
+                        <label class="transaction-list-filter-label ebk-technical-heading" for="transaction-list-filter-type">{{ tt('Transaction Type') }}</label>
+                        <v-select
+                            id="transaction-list-filter-type"
+                            item-title="displayName"
+                            item-value="type"
+                            density="compact"
+                            hide-details
+                            :disabled="loading"
+                            :items="[
+                                { displayName: tt('All Types'), type: 0 },
+                                { displayName: tt('Modify Balance'), type: 1 },
+                                { displayName: tt('Income'), type: 2 },
+                                { displayName: tt('Expense'), type: 3 },
+                                { displayName: tt('Transfer'), type: 4 }
+                            ]"
+                            v-model="queryType"
+                        />
+                        <template v-if="pageType === TransactionListPageType.List.type || pageType === TransactionListPageType.Gallery.type">
+                            <label class="transaction-list-filter-label ebk-technical-heading" for="transaction-list-filter-per-page">{{ tt('Transactions Per Page') }}</label>
+                            <v-select id="transaction-list-filter-per-page"
+                                      density="compact"
+                                      hide-details
+                                      item-title="name"
+                                      item-value="value"
+                                      :disabled="loading"
+                                      :items="allPageCounts"
+                                      v-model="countPerPage"
+                            />
+                        </template>
+                        <span class="transaction-list-filter-label ebk-technical-heading">{{ tt('Date Range') }}</span>
+                        <ul class="transaction-list-filter-dates">
+                            <li class="nav-link" :key="idx" v-for="(recentDateRange, idx) in recentMonthDateRanges">
+                                <a class="d-flex align-center cursor-pointer" role="button" tabindex="0"
+                                   :class="{ 'router-link-active router-link-exact-active': recentDateRangeIndex === idx, 'disabled': loading }"
+                                   :aria-current="recentDateRangeIndex === idx ? 'true' : undefined"
+                                   @click="changeDateFilter(recentDateRange)"
+                                   @keydown.enter.prevent="changeDateFilter(recentDateRange)"
+                                   @keydown.space.prevent="changeDateFilter(recentDateRange)">
+                                    <span class="nav-item-title text-truncate">{{ recentDateRange.displayName }}</span>
+                                </a>
+                            </li>
+                        </ul>
+                        <v-btn class="transaction-list-filters-reset" block color="default" variant="outlined"
+                               :prepend-icon="mdiFilterOffOutline"
+                               :disabled="loading || !hasActiveFilters"
+                               @click="resetFilters">{{ tt('Reset Filters') }}</v-btn>
+                    </div>
+                </section>
             </li>
         </template>
 
         <template #content>
             <v-window class="d-flex flex-grow-1 disable-tab-transition w-100-window-container" v-model="activeTab">
                 <v-window-item value="transactionPage">
-                    <v-card min-height="920">
-                        <template #title>
-                            <div class="title-and-toolbar d-flex align-center text-no-wrap">
-                                <span>{{ tt('Transaction List') }}</span>
-                                <v-btn class="ms-3" color="default" variant="outlined"
+                    <v-card class="transaction-list-panel" :aria-busy="loading ? 'true' : 'false'">
+                        <header class="ebk-panel-header-strip transaction-list-header">
+                            <h2 class="transaction-list-header-label">{{ tt(currentPageTypeName) }}</h2>
+                            <span class="transaction-list-header-meta ebk-numeric" aria-live="polite"
+                                  v-if="!loading && !loadError && transactionCountText">{{ transactionCountText }}</span>
+                            <div class="ebk-panel-header-actions transaction-list-header-actions">
+                                <div class="transaction-keyword-filter">
+                                    <v-text-field autocomplete="off" density="compact" hide-details
+                                                  :disabled="loading"
+                                                  :aria-label="tt('Search transaction description')"
+                                                  :prepend-inner-icon="mdiMagnify"
+                                                  :placeholder="tt('Search transaction description')"
+                                                  v-model="searchKeyword"
+                                                  @keyup.enter="changeKeywordFilter(searchKeyword)"
+                                    >
+                                        <template #append-inner>
+                                            <v-tooltip :text="tt('Search')" v-if="searchKeyword !== query.keyword">
+                                                <template v-slot:activator="{ props }">
+                                                    <v-icon :icon="mdiCheck"
+                                                            role="button"
+                                                            tabindex="0"
+                                                            :aria-label="tt('Search')"
+                                                            :disabled="loading"
+                                                            @click="changeKeywordFilter(searchKeyword)"
+                                                            @keydown.enter.stop.prevent="changeKeywordFilter(searchKeyword)"
+                                                            @keydown.space.stop.prevent="changeKeywordFilter(searchKeyword)"
+                                                            v-bind="props" />
+                                                </template>
+                                            </v-tooltip>
+                                        </template>
+                                    </v-text-field>
+                                </div>
+                                <v-btn color="default" variant="text" :prepend-icon="mdiPlus" :append-icon="mdiMenuDown"
                                        :disabled="loading || !canAddTransaction" @click="add()">
                                     {{ tt('Add') }}
                                     <v-menu activator="parent" max-height="500" :open-on-hover="true">
@@ -82,7 +138,7 @@
                                         </v-list>
                                     </v-menu>
                                 </v-btn>
-                                <v-btn class="ms-3" color="default" variant="outlined"
+                                <v-btn color="default" variant="outlined" :prepend-icon="mdiTrayArrowDown"
                                        :disabled="loading" @click="importTransaction"
                                        v-if="isDataImportingEnabled()">
                                     {{ tt('Import') }}
@@ -99,7 +155,7 @@
                                         </v-list>
                                     </v-menu>
                                 </v-btn>
-                                <v-btn class="ms-3" color="default" variant="outlined"
+                                <v-btn color="default" variant="outlined"
                                        :disabled="loading || exportingData || !transactions || !transactions.length || transactions.length < 1" v-if="!isDataImportingEnabled() && isDataExportingEnabled()">
                                     {{ tt('Export') }}
                                     <v-menu activator="parent">
@@ -115,90 +171,62 @@
                                         </v-list>
                                     </v-menu>
                                 </v-btn>
-                                <v-btn density="compact" color="default" variant="text" class="ms-2"
+                                <v-btn density="comfortable" color="default" variant="text"
                                        :aria-label="tt('Refresh')" :icon="true" :loading="loading" @click="reload(true, false)">
                                     <template #loader>
                                         <v-progress-circular indeterminate size="20"/>
                                     </template>
-                                    <v-icon :icon="mdiRefresh" size="24" />
+                                    <v-icon :icon="mdiRefresh" size="22" />
                                     <v-tooltip activator="parent">{{ tt('Refresh') }}</v-tooltip>
                                 </v-btn>
-                                <v-spacer/>
-                                <div class="transaction-keyword-filter ms-2">
-                                    <v-text-field autocomplete="off" density="compact" :disabled="loading"
-                                                  :prepend-inner-icon="mdiMagnify"
-                                                  :placeholder="tt('Search transaction description')"
-                                                  v-model="searchKeyword"
-                                                  @keyup.enter="changeKeywordFilter(searchKeyword)"
-                                    >
-                                        <template #append-inner>
-                                            <v-tooltip :text="tt('Search')" v-if="searchKeyword !== query.keyword">
-                                                <template v-slot:activator="{ props }">
-                                                    <v-icon :icon="mdiCheck"
-                                                            :aria-label="tt('Search')"
-                                                            :disabled="loading"
-                                                            @click="changeKeywordFilter(searchKeyword)"
-                                                            @keydown.enter.stop.prevent="changeKeywordFilter(searchKeyword)"
-                                                            @keydown.space.stop.prevent="changeKeywordFilter(searchKeyword)"
-                                                            v-bind="props" />
-                                                </template>
-                                            </v-tooltip>
-                                        </template>
-                                    </v-text-field>
-                                </div>
                             </div>
-                        </template>
+                        </header>
 
-                        <v-card-text class="pt-0">
-                            <div class="transaction-list-datetime-range d-flex align-center">
-                                <span class="text-body-large">{{ tt('Date Range') }}</span>
-                                <div class="d-flex transaction-list-datetime-range-text ms-2"
-                                      v-if="!query.minTime && !query.maxTime">
-                                    <span class="text-body-medium">{{ tt('All') }}</span>
-                                </div>
-                                <div class="d-flex transaction-list-datetime-range-text ms-2"
-                                      v-else-if="query.minTime || query.maxTime">
+                        <div class="transaction-list-summary">
+                            <div class="transaction-list-summary-period">
+                                <span class="transaction-list-summary-label ebk-technical-heading" :class="{ 'ebk-visually-hidden': query.minTime || query.maxTime }">{{ tt('Date Range') }}</span>
+                                <span class="transaction-list-summary-period-text" v-if="!query.minTime && !query.maxTime">{{ tt('All') }}</span>
+                                <template v-else-if="query.minTime || query.maxTime">
                                     <v-btn class="button-icon-with-direction" size="small"
-                                           density="compact" color="default" variant="outlined"
+                                           density="comfortable" color="default" variant="text"
                                            :aria-label="tt('Previous Period')" :disabled="loading" :icon="true"
                                            @click="shiftDateRange(query.minTime, query.maxTime, -1)">
-                                        <v-icon :icon="mdiArrowLeft" size="14" />
+                                        <v-icon :icon="mdiChevronLeft" size="20" />
+                                        <v-tooltip activator="parent">{{ tt('Previous Period') }}</v-tooltip>
                                     </v-btn>
-                                    <span class="text-body-medium mx-1">{{ formatRange(queryMinTime, queryMaxTime) }}</span>
+                                    <span class="transaction-list-summary-period-text ebk-numeric">{{ currentPeriodDisplayName }}</span>
                                     <v-btn class="button-icon-with-direction" size="small"
-                                           density="compact" color="default" variant="outlined"
+                                           density="comfortable" color="default" variant="text"
                                            :aria-label="tt('Next Period')" :disabled="loading" :icon="true"
                                            @click="shiftDateRange(query.minTime, query.maxTime, 1)">
-                                        <v-icon :icon="mdiArrowRight" size="14" />
+                                        <v-icon :icon="mdiChevronRight" size="20" />
+                                        <v-tooltip activator="parent">{{ tt('Next Period') }}</v-tooltip>
                                     </v-btn>
-                                </div>
-                                <v-spacer/>
-                                <div class="skeleton-no-margin d-flex align-center" v-if="showTotalAmountInTransactionListPage && currentMonthTotalAmount">
-                                    <span class="ms-2 text-body-large">{{ totalAmountTypeInTransactionListPage === TransactionAmountType.IncomeAndExpense ? tt('Total Income') : tt('Total Inflows') }}</span>
-                                    <span class="text-income ms-2" v-if="loading">
-                                        <v-skeleton-loader type="text" style="width: 60px" :loading="true"></v-skeleton-loader>
-                                    </span>
-                                    <span class="text-body-large text-income ms-2" v-else-if="!loading">
-                                        {{ currentMonthTotalAmount.income }}
-                                        <v-tooltip activator="parent" v-if="!currentMonthTotalAmount.incomeIsZero && currentMonthTotalAmount.incomeInDefaultCurrency !== currentMonthTotalAmount.income">
-                                            <span>{{ currentMonthTotalAmount.incomeInDefaultCurrency }}</span>
-                                        </v-tooltip>
-                                    </span>
-                                    <span class="text-body-large ms-3">{{ totalAmountTypeInTransactionListPage === TransactionAmountType.IncomeAndExpense ? tt('Total Expense') : tt('Total Outflows') }}</span>
-                                    <span class="text-expense ms-2" v-if="loading">
-                                        <v-skeleton-loader type="text" style="width: 60px" :loading="true"></v-skeleton-loader>
-                                    </span>
-                                    <span class="text-body-large text-expense ms-2" v-else-if="!loading">
-                                        {{ currentMonthTotalAmount.expense }}
-                                        <v-tooltip activator="parent" v-if="!currentMonthTotalAmount.expenseIsZero && currentMonthTotalAmount.expenseInDefaultCurrency !== currentMonthTotalAmount.expense">
-                                            <span>{{ currentMonthTotalAmount.expenseInDefaultCurrency }}</span>
-                                        </v-tooltip>
-                                    </span>
-                                </div>
+                                </template>
                             </div>
-                        </v-card-text>
+                            <div class="transaction-list-summary-totals" v-if="showTotalAmountInTransactionListPage && currentMonthTotalAmount">
+                                <span class="transaction-list-summary-separator" aria-hidden="true">·</span>
+                                <span class="transaction-list-summary-label ebk-technical-heading">{{ totalAmountTypeInTransactionListPage === TransactionAmountType.IncomeAndExpense ? tt('Income') : tt('Total Inflows') }}</span>
+                                <v-skeleton-loader class="transaction-list-summary-skeleton" type="text" :loading="true" v-if="loading"></v-skeleton-loader>
+                                <span class="transaction-list-summary-amount" v-else>
+                                    <signed-amount type="income" :text="currentMonthTotalAmount.income" :hide-sign="currentMonthTotalAmount.incomeIsZero" />
+                                    <v-tooltip activator="parent" v-if="!currentMonthTotalAmount.incomeIsZero && currentMonthTotalAmount.incomeInDefaultCurrency !== currentMonthTotalAmount.income">
+                                        <span>{{ currentMonthTotalAmount.incomeInDefaultCurrency }}</span>
+                                    </v-tooltip>
+                                </span>
+                                <span class="transaction-list-summary-separator" aria-hidden="true">·</span>
+                                <span class="transaction-list-summary-label ebk-technical-heading">{{ totalAmountTypeInTransactionListPage === TransactionAmountType.IncomeAndExpense ? tt('Expense') : tt('Total Outflows') }}</span>
+                                <v-skeleton-loader class="transaction-list-summary-skeleton" type="text" :loading="true" v-if="loading"></v-skeleton-loader>
+                                <span class="transaction-list-summary-amount" v-else>
+                                    <signed-amount type="expense" :text="currentMonthTotalAmount.expense" :hide-sign="currentMonthTotalAmount.expenseIsZero" />
+                                    <v-tooltip activator="parent" v-if="!currentMonthTotalAmount.expenseIsZero && currentMonthTotalAmount.expenseInDefaultCurrency !== currentMonthTotalAmount.expense">
+                                        <span>{{ currentMonthTotalAmount.expenseInDefaultCurrency }}</span>
+                                    </v-tooltip>
+                                </span>
+                            </div>
+                        </div>
 
-                        <v-card-text class="transaction-calendar-container pt-0" v-if="pageType === TransactionListPageType.Calendar.type">
+                        <v-card-text class="transaction-calendar-container transaction-list-calendar-container" v-if="pageType === TransactionListPageType.Calendar.type">
                             <transaction-calendar show-amount show-income-amount show-expense-amount show-alternate-date
                                                   dates-have-any-transaction-clickable
                                                   day-has-transaction-class="font-weight-bold"
@@ -218,20 +246,19 @@
                                             eager location="bottom" max-height="500"
                                             @update:model-value="scrollTimeMenuToSelectedItem">
                                         <template #activator="{ props }">
-                                            <div class="d-flex align-center cursor-pointer"
+                                            <button type="button" class="ebk-table-header-menu-activator d-flex align-center cursor-pointer"
                                                  :class="{ 'readonly': loading, 'text-primary': query.dateType !== DateRange.ThisMonth.type }" v-bind="props">
                                                 <span>{{ tt('Time') }}</span>
                                                 <v-icon :icon="mdiMenuDown" />
-                                            </div>
+                                            </button>
                                         </template>
                                         <v-list :selected="[query.dateType]">
-                                            <v-list-item class="text-body-medium" density="compact"
+                                            <v-list-item @click="changeDateFilter(dateRange.type)" class="text-body-medium" density="compact"
                                                          :key="dateRange.type" :value="dateRange.type"
                                                          :class="{ 'list-item-selected': query.dateType === dateRange.type }"
                                                          :append-icon="(query.dateType === dateRange.type ? mdiCheck : undefined)"
                                                          v-for="dateRange in allDateRanges">
-                                                <v-list-item-title class="cursor-pointer"
-                                                                   @click="changeDateFilter(dateRange.type)">
+                                                <v-list-item-title class="cursor-pointer">
                                                     <div class="d-flex align-center">
                                                         <span class="text-body-medium ms-3">{{ dateRange.displayName }}</span>
                                                     </div>
@@ -254,30 +281,28 @@
                                             v-model="categoryMenuState"
                                             @update:model-value="scrollCategoryMenuToSelectedItem">
                                         <template #activator="{ props }">
-                                            <div class="d-flex align-center"
+                                            <button type="button" class="ebk-table-header-menu-activator d-flex align-center" :disabled="query.type === 1"
                                                 :class="{ 'readonly': loading, 'cursor-pointer': query.type !== 1, 'text-primary': query.categoryIds }" v-bind="props">
                                                 <span>{{ queryCategoryName }}</span>
                                                 <v-icon :icon="mdiMenuDown" v-show="query.type !== 1" />
-                                            </div>
+                                            </button>
                                         </template>
                                         <v-list :selected="[queryAllSelectedFilterCategoryIds]">
-                                            <v-list-item key="" value="" class="text-body-medium" density="compact"
+                                            <v-list-item @click="changeCategoryFilter('')" key="" value="" class="text-body-medium" density="compact"
                                                          :class="{ 'list-item-selected': !query.categoryIds }"
                                                          :append-icon="(!query.categoryIds ? mdiCheck : undefined)">
-                                                <v-list-item-title class="cursor-pointer"
-                                                                   @click="changeCategoryFilter('')">
+                                                <v-list-item-title class="cursor-pointer">
                                                     <div class="d-flex align-center">
                                                         <v-icon :icon="mdiViewGridOutline" />
                                                         <span class="text-body-medium ms-3">{{ tt('All') }}</span>
                                                     </div>
                                                 </v-list-item-title>
                                             </v-list-item>
-                                            <v-list-item key="multiple" value="multiple" class="text-body-medium" density="compact"
+                                            <v-list-item @click="showFilterCategoryDialog = true" key="multiple" value="multiple" class="text-body-medium" density="compact"
                                                          :class="{ 'list-item-selected': query.categoryIds && queryAllFilterCategoryIdsCount > 1 }"
                                                          :append-icon="(query.categoryIds && queryAllFilterCategoryIdsCount > 1 ? mdiCheck : undefined)"
                                                          v-if="allAvailableCategoriesCount > 0">
-                                                <v-list-item-title class="cursor-pointer"
-                                                                   @click="showFilterCategoryDialog = true">
+                                                <v-list-item-title class="cursor-pointer">
                                                     <div class="d-flex align-center">
                                                         <v-icon :icon="mdiVectorArrangeBelow" />
                                                         <span class="text-body-medium ms-3">{{ tt('Multiple Categories') }}</span>
@@ -311,12 +336,11 @@
                                                     </template>
 
                                                     <v-divider />
-                                                    <v-list-item class="text-body-medium" density="compact"
+                                                    <v-list-item @click="changeCategoryFilter(category.id)" class="text-body-medium" density="compact"
                                                                  :class="{ 'item-in-multiple-selection': queryAllFilterCategoryIdsCount > 1 && queryAllFilterCategoryIds[category.id] }"
                                                                  :value="category.id"
                                                                  :append-icon="(query.categoryIds === category.id ? mdiCheck : undefined)">
-                                                        <v-list-item-title class="cursor-pointer"
-                                                                           @click="changeCategoryFilter(category.id)">
+                                                        <v-list-item-title class="cursor-pointer">
                                                             <div class="d-flex align-center">
                                                                 <v-icon :icon="mdiViewGridOutline" />
                                                                 <span class="text-body-medium ms-3">{{ tt('All') }}</span>
@@ -327,13 +351,12 @@
                                                     <template :key="subCategory.id"
                                                               v-for="subCategory in category.subCategories">
                                                         <v-divider v-if="!subCategory.hidden || queryAllFilterCategoryIds[subCategory.id]" />
-                                                        <v-list-item class="text-body-medium" density="compact"
+                                                        <v-list-item @click="changeCategoryFilter(subCategory.id)" class="text-body-medium" density="compact"
                                                                      :value="subCategory.id"
                                                                      :class="{ 'list-item-selected': query.categoryIds === subCategory.id, 'item-in-multiple-selection': queryAllFilterCategoryIdsCount > 1 && queryAllFilterCategoryIds[subCategory.id] }"
                                                                      :append-icon="(query.categoryIds === subCategory.id ? mdiCheck : undefined)"
                                                                      v-if="!subCategory.hidden || queryAllFilterCategoryIds[subCategory.id]">
-                                                            <v-list-item-title class="cursor-pointer"
-                                                                               @click="changeCategoryFilter(subCategory.id)">
+                                                            <v-list-item-title class="cursor-pointer">
                                                                 <div class="d-flex align-center">
                                                                     <ItemIcon :icon-type="getCategoryIconType(subCategory.iconType)" size="24px" :icon-id="subCategory.icon" :color="subCategory.color"></ItemIcon>
                                                                     <span class="text-body-medium ms-2">{{ subCategory.name }}</span>
@@ -346,6 +369,135 @@
                                         </v-list>
                                     </v-menu>
                                 </th>
+                                <th class="transaction-table-column-account text-no-wrap">
+                                    <v-menu ref="accountFilterMenu" class="transaction-account-menu"
+                                            eager location="bottom" max-height="500"
+                                            @update:model-value="scrollAccountMenuToSelectedItem">
+                                        <template #activator="{ props }">
+                                            <button type="button" class="ebk-table-header-menu-activator d-flex align-center cursor-pointer"
+                                                 :class="{ 'readonly': loading, 'text-primary': query.accountIds }" v-bind="props">
+                                                <span>{{ queryAccountName }}</span>
+                                                <v-icon :icon="mdiMenuDown" />
+                                            </button>
+                                        </template>
+                                        <v-list :selected="[queryAllSelectedFilterAccountIds]">
+                                            <v-list-item @click="changeAccountFilter('')" key="" value="" class="text-body-medium" density="compact"
+                                                         :class="{ 'list-item-selected': !query.accountIds }"
+                                                         :append-icon="(!query.accountIds ? mdiCheck : undefined)">
+                                                <v-list-item-title class="cursor-pointer">
+                                                    <div class="d-flex align-center">
+                                                        <v-icon :icon="mdiViewGridOutline" />
+                                                        <span class="text-body-medium ms-3">{{ tt('All') }}</span>
+                                                    </div>
+                                                </v-list-item-title>
+                                            </v-list-item>
+                                            <v-list-item @click="showFilterAccountDialog = true" key="multiple" value="multiple" class="text-body-medium" density="compact"
+                                                         :class="{ 'list-item-selected': query.accountIds && queryAllFilterAccountIdsCount > 1 }"
+                                                         :append-icon="(query.accountIds && queryAllFilterAccountIdsCount > 1 ? mdiCheck : undefined)"
+                                                         v-if="allAvailableAccountsCount > 0">
+                                                <v-list-item-title class="cursor-pointer">
+                                                    <div class="d-flex align-center">
+                                                        <v-icon :icon="mdiVectorArrangeBelow" />
+                                                        <span class="text-body-medium ms-3">{{ tt('Multiple Accounts') }}</span>
+                                                    </div>
+                                                </v-list-item-title>
+                                            </v-list-item>
+                                            <template :key="account.id"
+                                                      v-for="account in allAccounts">
+                                                <v-divider v-if="(!account.hidden && (!allAccountsMap[account.parentId] || !allAccountsMap[account.parentId]!.hidden)) || queryAllFilterAccountIds[account.id]" />
+                                                <v-list-item @click="changeAccountFilter(account.id)" class="text-body-medium" density="compact"
+                                                             :value="account.id"
+                                                             :class="{ 'list-item-selected': query.accountIds === account.id, 'item-in-multiple-selection': queryAllFilterAccountIdsCount > 1 && queryAllFilterAccountIds[account.id] }"
+                                                             :append-icon="(query.accountIds === account.id ? mdiCheck : undefined)"
+                                                             v-if="(!account.hidden && (!allAccountsMap[account.parentId] || !allAccountsMap[account.parentId]!.hidden)) || queryAllFilterAccountIds[account.id]">
+                                                    <v-list-item-title class="cursor-pointer">
+                                                        <div class="d-flex align-center">
+                                                            <ItemIcon :icon-type="getAccountIconType(account.iconType)" size="24px" :icon-id="account.icon" :color="account.color"></ItemIcon>
+                                                            <span class="text-body-medium ms-2">{{ account.name }}</span>
+                                                        </div>
+                                                    </v-list-item-title>
+                                                </v-list-item>
+                                            </template>
+                                        </v-list>
+                                    </v-menu>
+                                </th>
+                                <th class="transaction-table-column-tags text-no-wrap" v-if="showTagInTransactionListPage">
+                                    <v-menu ref="tagFilterMenu" class="transaction-tag-menu"
+                                            eager location="bottom" max-height="500"
+                                            @update:model-value="scrollTagMenuToSelectedItem">
+                                        <template #activator="{ props }">
+                                            <button type="button" class="ebk-table-header-menu-activator d-flex align-center cursor-pointer"
+                                                 :class="{ 'readonly': loading, 'text-primary': query.tagFilter }" v-bind="props">
+                                                <span>{{ queryTagName }}</span>
+                                                <v-icon :icon="mdiMenuDown" />
+                                            </button>
+                                        </template>
+                                        <v-list :selected="[queryAllSelectedFilterTagIds]">
+                                            <v-list-item @click="changeTagFilter('')" key="" value="" class="text-body-medium" density="compact"
+                                                         :class="{ 'list-item-selected': !query.tagFilter }"
+                                                         :append-icon="(!query.tagFilter ? mdiCheck : undefined)">
+                                                <v-list-item-title class="cursor-pointer">
+                                                    <div class="d-flex align-center">
+                                                        <v-icon :icon="mdiViewGridOutline" />
+                                                        <span class="text-body-medium ms-2">{{ tt('All') }}</span>
+                                                    </div>
+                                                </v-list-item-title>
+                                            </v-list-item>
+                                            <v-list-item @click="changeTagFilter(TransactionTagFilter.TransactionNoTagFilterValue)" class="text-body-medium" density="compact"
+                                                         :key="TransactionTagFilter.TransactionNoTagFilterValue"
+                                                         :value="TransactionTagFilter.TransactionNoTagFilterValue"
+                                                         :class="{ 'list-item-selected': query.tagFilter === TransactionTagFilter.TransactionNoTagFilterValue }"
+                                                         :append-icon="(query.tagFilter === TransactionTagFilter.TransactionNoTagFilterValue ? mdiCheck : undefined)">
+                                                <v-list-item-title class="cursor-pointer">
+                                                    <div class="d-flex align-center">
+                                                        <v-icon :icon="mdiBorderNoneVariant" />
+                                                        <span class="text-body-medium ms-2">{{ tt('Without Tags') }}</span>
+                                                    </div>
+                                                </v-list-item-title>
+                                            </v-list-item>
+                                            <v-list-item @click="showFilterTagDialog = true" key="multiple" value="multiple" class="text-body-medium" density="compact"
+                                                         :class="{ 'list-item-selected': query.tagFilter && queryAllFilterTagIdsCount > 1 }"
+                                                         :append-icon="(query.tagFilter && queryAllFilterTagIdsCount > 1 ? mdiCheck : undefined)"
+                                                         v-if="allAvailableTagsCount > 0">
+                                                <v-list-item-title class="cursor-pointer">
+                                                    <div class="d-flex align-center">
+                                                        <v-icon :icon="mdiVectorArrangeBelow" />
+                                                        <span class="text-body-medium ms-2">{{ tt('Multiple Tags') }}</span>
+                                                    </div>
+                                                </v-list-item-title>
+                                            </v-list-item>
+
+                                            <template :key="transactionTagGroup.id"
+                                                      v-for="transactionTagGroup in allTransactionTagGroupsWithDefault">
+                                                <v-divider v-if="allTransactionTagsByGroup[transactionTagGroup.id] && allTransactionTagsByGroup[transactionTagGroup.id]?.length && hasVisibleTagsInTagGroup(transactionTagGroup)" />
+
+                                                <v-list-item density="compact" v-if="allTransactionTagsByGroup[transactionTagGroup.id] && allTransactionTagsByGroup[transactionTagGroup.id]?.length && hasVisibleTagsInTagGroup(transactionTagGroup)">
+                                                    <v-list-item-title>
+                                                        <span class="text-body-small">{{ transactionTagGroup.name }}</span>
+                                                    </v-list-item-title>
+                                                </v-list-item>
+
+                                                <template :key="transactionTag.id"
+                                                          v-for="(transactionTag, index) in (allTransactionTagsByGroup[transactionTagGroup.id] ?? [])">
+                                                    <v-divider v-if="index > 0 && (!transactionTag.hidden || isDefined(queryAllFilterTagIds[transactionTag.id]))" />
+                                                    <v-list-item @click="changeTagFilter(TransactionTagFilter.of(transactionTag.id).toTextualTagFilter())" class="text-body-medium" density="compact"
+                                                                 :value="transactionTag.id"
+                                                                 :class="{ 'list-item-selected': queryAllFilterTagIdsCount === 1 && isDefined(queryAllFilterTagIds[transactionTag.id]), 'item-in-multiple-selection': queryAllFilterTagIdsCount > 1 && isDefined(queryAllFilterTagIds[transactionTag.id]) }"
+                                                                 :append-icon="(queryAllFilterTagIds[transactionTag.id] === true ? mdiCheck : (queryAllFilterTagIds[transactionTag.id] === false ? mdiClose : undefined))"
+                                                                 v-if="!transactionTag.hidden || isDefined(queryAllFilterTagIds[transactionTag.id])">
+                                                        <v-list-item-title class="cursor-pointer">
+                                                            <div class="d-flex align-center">
+                                                                <v-icon size="20" :icon="mdiPound"/>
+                                                                <span class="text-body-medium ms-2">{{ transactionTag.name }}</span>
+                                                            </div>
+                                                        </v-list-item-title>
+                                                    </v-list-item>
+                                                </template>
+                                            </template>
+                                        </v-list>
+                                    </v-menu>
+                                </th>
+                                <th class="transaction-table-column-description text-no-wrap">{{ tt('Description') }}</th>
                                 <th class="transaction-table-column-amount text-no-wrap">
                                     <v-menu ref="amountFilterMenu" class="transaction-amount-menu"
                                             eager location="bottom" max-height="500"
@@ -353,18 +505,17 @@
                                             v-model="amountMenuState"
                                             @update:model-value="scrollAmountMenuToSelectedItem">
                                         <template #activator="{ props }">
-                                            <div class="d-flex align-center cursor-pointer"
+                                            <button type="button" class="ebk-table-header-menu-activator d-flex align-center cursor-pointer"
                                                  :class="{ 'readonly': loading, 'text-primary': query.amountFilter }" v-bind="props">
                                                 <span>{{ tt('Amount') }}</span>
                                                 <v-icon :icon="mdiMenuDown" />
-                                            </div>
+                                            </button>
                                         </template>
                                         <v-list :selected="[query.amountFilter.split(':')[0]]">
-                                            <v-list-item key="" value="" class="text-body-medium" density="compact"
+                                            <v-list-item @click="changeAmountFilter('')" key="" value="" class="text-body-medium" density="compact"
                                                          :class="{ 'list-item-selected': !query.amountFilter }"
                                                          :append-icon="(!query.amountFilter && !currentAmountFilterType ? mdiCheck : undefined)">
-                                                <v-list-item-title class="cursor-pointer"
-                                                                   @click="changeAmountFilter('')">
+                                                <v-list-item-title class="cursor-pointer">
                                                     <div class="d-flex align-center">
                                                         <span class="text-body-medium ms-3">{{ tt('All') }}</span>
                                                     </div>
@@ -372,12 +523,11 @@
                                             </v-list-item>
                                             <template :key="filterType.type"
                                                       v-for="filterType in AmountFilterType.values()">
-                                                <v-list-item class="text-body-medium" density="compact"
+                                                <v-list-item @click="currentAmountFilterType = filterType.type" class="text-body-medium" density="compact"
                                                              :value="filterType.type"
                                                              :class="{ 'list-item-selected': query.amountFilter && query.amountFilter.startsWith(`${filterType.type}:`) }"
                                                              :append-icon="(query.amountFilter && query.amountFilter.startsWith(`${filterType.type}:`) && currentAmountFilterType !== filterType.type ? mdiCheck : undefined)">
-                                                    <v-list-item-title class="cursor-pointer"
-                                                                       @click="currentAmountFilterType = filterType.type">
+                                                    <v-list-item-title class="cursor-pointer">
                                                         <div class="d-flex align-center">
                                                             <span class="text-body-medium ms-3">{{ tt(filterType.name) }}</span>
                                                             <span class="text-body-medium ms-3" v-if="query.amountFilter && query.amountFilter.startsWith(`${filterType.type}:`) && currentAmountFilterType !== filterType.type">{{ queryAmount }}</span>
@@ -400,287 +550,212 @@
                                         </v-list>
                                     </v-menu>
                                 </th>
-                                <th class="transaction-table-column-account text-no-wrap">
-                                    <v-menu ref="accountFilterMenu" class="transaction-account-menu"
-                                            eager location="bottom" max-height="500"
-                                            @update:model-value="scrollAccountMenuToSelectedItem">
-                                        <template #activator="{ props }">
-                                            <div class="d-flex align-center cursor-pointer"
-                                                 :class="{ 'readonly': loading, 'text-primary': query.accountIds }" v-bind="props">
-                                                <span>{{ queryAccountName }}</span>
-                                                <v-icon :icon="mdiMenuDown" />
-                                            </div>
-                                        </template>
-                                        <v-list :selected="[queryAllSelectedFilterAccountIds]">
-                                            <v-list-item key="" value="" class="text-body-medium" density="compact"
-                                                         :class="{ 'list-item-selected': !query.accountIds }"
-                                                         :append-icon="(!query.accountIds ? mdiCheck : undefined)">
-                                                <v-list-item-title class="cursor-pointer"
-                                                                   @click="changeAccountFilter('')">
-                                                    <div class="d-flex align-center">
-                                                        <v-icon :icon="mdiViewGridOutline" />
-                                                        <span class="text-body-medium ms-3">{{ tt('All') }}</span>
-                                                    </div>
-                                                </v-list-item-title>
-                                            </v-list-item>
-                                            <v-list-item key="multiple" value="multiple" class="text-body-medium" density="compact"
-                                                         :class="{ 'list-item-selected': query.accountIds && queryAllFilterAccountIdsCount > 1 }"
-                                                         :append-icon="(query.accountIds && queryAllFilterAccountIdsCount > 1 ? mdiCheck : undefined)"
-                                                         v-if="allAvailableAccountsCount > 0">
-                                                <v-list-item-title class="cursor-pointer"
-                                                                   @click="showFilterAccountDialog = true">
-                                                    <div class="d-flex align-center">
-                                                        <v-icon :icon="mdiVectorArrangeBelow" />
-                                                        <span class="text-body-medium ms-3">{{ tt('Multiple Accounts') }}</span>
-                                                    </div>
-                                                </v-list-item-title>
-                                            </v-list-item>
-                                            <template :key="account.id"
-                                                      v-for="account in allAccounts">
-                                                <v-divider v-if="(!account.hidden && (!allAccountsMap[account.parentId] || !allAccountsMap[account.parentId]!.hidden)) || queryAllFilterAccountIds[account.id]" />
-                                                <v-list-item class="text-body-medium" density="compact"
-                                                             :value="account.id"
-                                                             :class="{ 'list-item-selected': query.accountIds === account.id, 'item-in-multiple-selection': queryAllFilterAccountIdsCount > 1 && queryAllFilterAccountIds[account.id] }"
-                                                             :append-icon="(query.accountIds === account.id ? mdiCheck : undefined)"
-                                                             v-if="(!account.hidden && (!allAccountsMap[account.parentId] || !allAccountsMap[account.parentId]!.hidden)) || queryAllFilterAccountIds[account.id]">
-                                                    <v-list-item-title class="cursor-pointer"
-                                                                       @click="changeAccountFilter(account.id)">
-                                                        <div class="d-flex align-center">
-                                                            <ItemIcon :icon-type="getAccountIconType(account.iconType)" size="24px" :icon-id="account.icon" :color="account.color"></ItemIcon>
-                                                            <span class="text-body-medium ms-2">{{ account.name }}</span>
-                                                        </div>
-                                                    </v-list-item-title>
-                                                </v-list-item>
-                                            </template>
-                                        </v-list>
-                                    </v-menu>
-                                </th>
-                                <th class="transaction-table-column-tags text-no-wrap" v-if="showTagInTransactionListPage">
-                                    <v-menu ref="tagFilterMenu" class="transaction-tag-menu"
-                                            eager location="bottom" max-height="500"
-                                            @update:model-value="scrollTagMenuToSelectedItem">
-                                        <template #activator="{ props }">
-                                            <div class="d-flex align-center cursor-pointer"
-                                                 :class="{ 'readonly': loading, 'text-primary': query.tagFilter }" v-bind="props">
-                                                <span>{{ queryTagName }}</span>
-                                                <v-icon :icon="mdiMenuDown" />
-                                            </div>
-                                        </template>
-                                        <v-list :selected="[queryAllSelectedFilterTagIds]">
-                                            <v-list-item key="" value="" class="text-body-medium" density="compact"
-                                                         :class="{ 'list-item-selected': !query.tagFilter }"
-                                                         :append-icon="(!query.tagFilter ? mdiCheck : undefined)">
-                                                <v-list-item-title class="cursor-pointer"
-                                                                   @click="changeTagFilter('')">
-                                                    <div class="d-flex align-center">
-                                                        <v-icon :icon="mdiViewGridOutline" />
-                                                        <span class="text-body-medium ms-2">{{ tt('All') }}</span>
-                                                    </div>
-                                                </v-list-item-title>
-                                            </v-list-item>
-                                            <v-list-item class="text-body-medium" density="compact"
-                                                         :key="TransactionTagFilter.TransactionNoTagFilterValue"
-                                                         :value="TransactionTagFilter.TransactionNoTagFilterValue"
-                                                         :class="{ 'list-item-selected': query.tagFilter === TransactionTagFilter.TransactionNoTagFilterValue }"
-                                                         :append-icon="(query.tagFilter === TransactionTagFilter.TransactionNoTagFilterValue ? mdiCheck : undefined)">
-                                                <v-list-item-title class="cursor-pointer"
-                                                                   @click="changeTagFilter(TransactionTagFilter.TransactionNoTagFilterValue)">
-                                                    <div class="d-flex align-center">
-                                                        <v-icon :icon="mdiBorderNoneVariant" />
-                                                        <span class="text-body-medium ms-2">{{ tt('Without Tags') }}</span>
-                                                    </div>
-                                                </v-list-item-title>
-                                            </v-list-item>
-                                            <v-list-item key="multiple" value="multiple" class="text-body-medium" density="compact"
-                                                         :class="{ 'list-item-selected': query.tagFilter && queryAllFilterTagIdsCount > 1 }"
-                                                         :append-icon="(query.tagFilter && queryAllFilterTagIdsCount > 1 ? mdiCheck : undefined)"
-                                                         v-if="allAvailableTagsCount > 0">
-                                                <v-list-item-title class="cursor-pointer"
-                                                                   @click="showFilterTagDialog = true">
-                                                    <div class="d-flex align-center">
-                                                        <v-icon :icon="mdiVectorArrangeBelow" />
-                                                        <span class="text-body-medium ms-2">{{ tt('Multiple Tags') }}</span>
-                                                    </div>
-                                                </v-list-item-title>
-                                            </v-list-item>
-
-                                            <template :key="transactionTagGroup.id"
-                                                      v-for="transactionTagGroup in allTransactionTagGroupsWithDefault">
-                                                <v-divider v-if="allTransactionTagsByGroup[transactionTagGroup.id] && allTransactionTagsByGroup[transactionTagGroup.id]?.length && hasVisibleTagsInTagGroup(transactionTagGroup)" />
-
-                                                <v-list-item density="compact" v-if="allTransactionTagsByGroup[transactionTagGroup.id] && allTransactionTagsByGroup[transactionTagGroup.id]?.length && hasVisibleTagsInTagGroup(transactionTagGroup)">
-                                                    <v-list-item-title>
-                                                        <span class="text-body-small">{{ transactionTagGroup.name }}</span>
-                                                    </v-list-item-title>
-                                                </v-list-item>
-
-                                                <template :key="transactionTag.id"
-                                                          v-for="(transactionTag, index) in (allTransactionTagsByGroup[transactionTagGroup.id] ?? [])">
-                                                    <v-divider v-if="index > 0 && (!transactionTag.hidden || isDefined(queryAllFilterTagIds[transactionTag.id]))" />
-                                                    <v-list-item class="text-body-medium" density="compact"
-                                                                 :value="transactionTag.id"
-                                                                 :class="{ 'list-item-selected': queryAllFilterTagIdsCount === 1 && isDefined(queryAllFilterTagIds[transactionTag.id]), 'item-in-multiple-selection': queryAllFilterTagIdsCount > 1 && isDefined(queryAllFilterTagIds[transactionTag.id]) }"
-                                                                 :append-icon="(queryAllFilterTagIds[transactionTag.id] === true ? mdiCheck : (queryAllFilterTagIds[transactionTag.id] === false ? mdiClose : undefined))"
-                                                                 v-if="!transactionTag.hidden || isDefined(queryAllFilterTagIds[transactionTag.id])">
-                                                        <v-list-item-title class="cursor-pointer"
-                                                                           @click="changeTagFilter(TransactionTagFilter.of(transactionTag.id).toTextualTagFilter())">
-                                                            <div class="d-flex align-center">
-                                                                <v-icon size="20" :icon="mdiPound"/>
-                                                                <span class="text-body-medium ms-2">{{ transactionTag.name }}</span>
-                                                            </div>
-                                                        </v-list-item-title>
-                                                    </v-list-item>
-                                                </template>
-                                            </template>
-                                        </v-list>
-                                    </v-menu>
-                                </th>
-                                <th class="transaction-table-column-description text-no-wrap">{{ tt('Description') }}</th>
                             </tr>
                             </thead>
 
-                            <tbody v-if="loading && (!transactions || !transactions.length || transactions.length < 1)">
-                            <tr :key="itemIdx" v-for="itemIdx in skeletonData">
-                                <td class="px-0" :colspan="showTagInTransactionListPage ? 6 : 5">
-                                    <v-skeleton-loader type="text" :loading="true"></v-skeleton-loader>
+                            <tbody class="transaction-table-skeleton" aria-hidden="true" v-if="loading && (!transactions || !transactions.length || transactions.length < 1)">
+                            <tr class="transaction-list-row-date no-hover" v-if="pageType === TransactionListPageType.List.type">
+                                <td :colspan="tableColumnCount">
+                                    <v-skeleton-loader class="transaction-table-skeleton-bone" type="text" width="180" :loading="true"></v-skeleton-loader>
                                 </td>
+                            </tr>
+                            <tr class="transaction-table-row-data no-hover" :key="itemIdx" v-for="itemIdx in skeletonData">
+                                <td class="transaction-table-column-time"><v-skeleton-loader class="transaction-table-skeleton-bone" type="text" width="64" :loading="true"></v-skeleton-loader></td>
+                                <td class="transaction-table-column-category">
+                                    <div class="d-flex align-center">
+                                        <span class="transaction-category-tile transaction-category-tile--skeleton"></span>
+                                        <v-skeleton-loader class="transaction-table-skeleton-bone ms-3" type="text" width="110" :loading="true"></v-skeleton-loader>
+                                    </div>
+                                </td>
+                                <td class="transaction-table-column-account"><v-skeleton-loader class="transaction-table-skeleton-bone" type="text" width="120" :loading="true"></v-skeleton-loader></td>
+                                <td class="transaction-table-column-tags" v-if="showTagInTransactionListPage"><v-skeleton-loader class="transaction-table-skeleton-bone" type="text" width="56" :loading="true"></v-skeleton-loader></td>
+                                <td class="transaction-table-column-description"><v-skeleton-loader class="transaction-table-skeleton-bone" type="text" width="160" :loading="true"></v-skeleton-loader></td>
+                                <td class="transaction-table-column-amount"><v-skeleton-loader class="transaction-table-skeleton-bone ms-auto" type="text" width="80" :loading="true"></v-skeleton-loader></td>
                             </tr>
                             </tbody>
 
                             <tbody v-if="!loading && (!transactions || !transactions.length || transactions.length < 1)">
-                            <tr>
-                                <td :colspan="showTagInTransactionListPage ? 6 : 5">{{ tt('No transaction data') }}</td>
+                            <tr class="no-hover">
+                                <td class="transaction-table-state-cell" :colspan="tableColumnCount">
+                                    <state-panel type="error" :title="tt('Unable to retrieve transaction list')" v-if="loadError">
+                                        <template #actions>
+                                            <v-btn color="default" variant="outlined" :prepend-icon="mdiRefresh" @click="reload(false, false)">{{ tt('Retry') }}</v-btn>
+                                        </template>
+                                    </state-panel>
+                                    <state-panel type="empty" :title="tt('No results')" :text="tt('No transactions match the current search or filters.')" v-else-if="hasActiveFilters">
+                                        <template #actions>
+                                            <v-btn color="default" variant="outlined" :prepend-icon="mdiFilterOffOutline" @click="resetFilters">{{ tt('Reset Filters') }}</v-btn>
+                                        </template>
+                                    </state-panel>
+                                    <state-panel type="empty" :title="tt('No transaction data')" v-else>
+                                        <template #actions v-if="canAddTransaction">
+                                            <v-btn color="default" variant="outlined" :prepend-icon="mdiPlus" @click="add()">{{ tt('Add Transaction') }}</v-btn>
+                                        </template>
+                                    </state-panel>
+                                </td>
                             </tr>
                             </tbody>
 
                             <tbody :key="transaction.id"
-                                   :class="{ 'disabled': loading, 'has-bottom-border': idx < transactions.length - 1 }"
+                                   :class="{ 'disabled': loading }"
                                    v-for="(transaction, idx) in transactions">
-                                <tr class="transaction-list-row-date no-hover text-body-small"
+                                <tr class="transaction-list-row-date no-hover"
                                     v-if="pageType === TransactionListPageType.List.type && (idx === 0 || (idx > 0 && (transaction.gregorianCalendarYearDashMonthDashDay !== transactions[idx - 1]!.gregorianCalendarYearDashMonthDashDay)))">
-                                    <td :colspan="showTagInTransactionListPage ? 6 : 5" class="font-weight-bold">
+                                    <th scope="colgroup" :colspan="tableColumnCount">
                                         <div class="d-flex align-center">
-                                            <span>{{ getDisplayLongDate(transaction) }}</span>
-                                            <v-chip class="ms-1" color="default" size="x-small"
-                                                    v-if="transaction.displayDayOfWeek">
+                                            <span class="transaction-list-row-date-text ebk-numeric">{{ getDisplayLongDate(transaction) }}</span>
+                                            <span class="transaction-list-row-weekday" v-if="transaction.displayDayOfWeek">
                                                 {{ getWeekdayLongName(transaction.displayDayOfWeek) }}
-                                            </v-chip>
+                                            </span>
                                         </div>
-                                    </td>
+                                    </th>
                                 </tr>
-                                <tr class="transaction-table-row-data cursor-pointer"
-                                    @click="show(transaction)">
-                                    <td class="transaction-table-column-time">
+                                <tr class="transaction-table-row-data cursor-pointer" tabindex="0"
+                                    :aria-label="getTransactionRowLabel(transaction)"
+                                    @click="show(transaction)"
+                                    @keydown.enter.self.prevent="show(transaction)"
+                                    @keydown.space.self.prevent="show(transaction)">
+                                    <td class="transaction-table-column-time ebk-numeric">
                                         <div class="d-flex flex-column">
                                             <span>{{ getDisplayTime(transaction) }}</span>
-                                            <span class="text-body-small text-medium-emphasis" v-if="!isSameAsDefaultTimezoneOffsetMinutes(transaction)">{{ getDisplayTimezone(transaction) }}</span>
+                                            <span class="transaction-table-meta" v-if="!isSameAsDefaultTimezoneOffsetMinutes(transaction)">{{ getDisplayTimezone(transaction) }}</span>
                                             <v-tooltip activator="parent" v-if="!isSameAsDefaultTimezoneOffsetMinutes(transaction)">{{ getDisplayTimeInDefaultTimezone(transaction) }}</v-tooltip>
                                         </div>
                                     </td>
                                     <td class="transaction-table-column-category">
                                         <div class="d-flex align-center">
-                                            <ItemIcon size="24px" :icon-type="getCategoryIconType(transaction.category.iconType)"
-                                                      :icon-id="transaction.category.icon"
-                                                      :color="transaction.category.color"
-                                                      v-if="transaction.category && transaction.category.color"></ItemIcon>
-                                            <v-icon size="24" :icon="mdiPencilBoxOutline" v-else-if="!transaction.category || !transaction.category.color" />
-                                            <span class="ms-1" v-if="transaction.type === TransactionType.ModifyBalance">
-                                                {{ tt('Modify Balance') }}
+                                            <span class="transaction-category-tile" aria-hidden="true">
+                                                <ItemIcon size="20px" :icon-type="getCategoryIconType(transaction.category.iconType)"
+                                                          :icon-id="transaction.category.icon"
+                                                          :color="transaction.category.color"
+                                                          v-if="transaction.category && transaction.category.color"></ItemIcon>
+                                                <v-icon size="20" :icon="mdiPencilBoxOutline" v-else-if="!transaction.category || !transaction.category.color" />
                                             </span>
-                                            <span class="ms-1" v-else-if="transaction.type !== TransactionType.ModifyBalance && transaction.category">
-                                                {{ transaction.category.name }}
-                                            </span>
-                                            <span class="ms-1" v-else-if="transaction.type !== TransactionType.ModifyBalance && !transaction.category">
-                                                {{ getTransactionTypeName(transaction.type, 'Transaction') }}
+                                            <div class="transaction-category-text">
+                                                <span class="transaction-category-title" v-if="transaction.type === TransactionType.ModifyBalance">
+                                                    {{ tt('Modify Balance') }}
+                                                </span>
+                                                <span class="transaction-category-title" v-else-if="transaction.type !== TransactionType.ModifyBalance && transaction.category">
+                                                    {{ transaction.category.name }}
+                                                </span>
+                                                <span class="transaction-category-title" v-else-if="transaction.type !== TransactionType.ModifyBalance && !transaction.category">
+                                                    {{ getTransactionTypeName(transaction.type, 'Transaction') }}
+                                                </span>
+                                                <span class="transaction-table-meta" v-if="transaction.type !== TransactionType.ModifyBalance">{{ getTransactionTypeName(transaction.type, 'Transaction') }}</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="transaction-table-column-account">
+                                        <div class="d-flex align-center transaction-table-account">
+                                            <span class="text-truncate" v-if="transaction.sourceAccount">{{ transaction.sourceAccount.name }}</span>
+                                            <template v-if="transaction.sourceAccount && transaction.type === TransactionType.Transfer && transaction.destinationAccount && transaction.sourceAccount.id !== transaction.destinationAccount.id">
+                                                <v-icon class="icon-with-direction transaction-table-account-arrow mx-1" size="14" :icon="mdiArrowRight" :aria-label="tt('Destination Account')" role="img"></v-icon>
+                                                <span class="text-truncate">{{ transaction.destinationAccount.name }}</span>
+                                            </template>
+                                        </div>
+                                    </td>
+                                    <td class="transaction-table-column-tags" v-if="showTagInTransactionListPage">
+                                        <div class="transaction-table-tags">
+                                            <v-chip class="transaction-tag" size="small" :prepend-icon="mdiPound"
+                                                    :text="allTransactionTags[tagId]?.name"
+                                                    :key="tagId"
+                                                    v-for="tagId in transaction.tagIds"/>
+                                            <span class="transaction-table-empty-value" v-if="!transaction.tagIds || !transaction.tagIds.length">
+                                                <span aria-hidden="true">—</span>
+                                                <span class="ebk-visually-hidden">{{ tt('None') }}</span>
                                             </span>
                                         </div>
                                     </td>
-                                    <td class="transaction-table-column-amount" :class="{ 'text-expense': transaction.type === TransactionType.Expense, 'text-income': transaction.type === TransactionType.Income }">
+                                    <td class="transaction-table-column-description">
+                                        <div class="transaction-table-description">
+                                            <v-icon class="transaction-picture-indicator" size="16" :icon="mdiPaperclip"
+                                                    :aria-label="tt('Transaction Pictures')" role="img"
+                                                    v-if="showPictureIndicatorInTransactionListPage && transaction.pictures?.length">
+                                            </v-icon>
+                                            <span class="text-truncate">{{ transaction.comment }}</span>
+                                            <v-tooltip activator="parent" location="top" :open-delay="400" max-width="480" v-if="transaction.comment">{{ transaction.comment }}</v-tooltip>
+                                        </div>
+                                    </td>
+                                    <td class="transaction-table-column-amount">
                                         <div v-if="transaction.sourceAccount">
-                                            <span>{{ getDisplayAmount(transaction) }}</span>
+                                            <signed-amount :text="getDisplayAmount(transaction)"
+                                                           :type="getSignedAmountType(transaction)"
+                                                           :hide-sign="transaction.hideAmount" />
                                             <v-tooltip activator="parent" v-if="!transaction.hideAmount && getDisplayAmountCurrency(transaction) !== userDefaultCurrency">
                                                 {{ getDisplayAmount(transaction, true) }}
                                             </v-tooltip>
                                         </div>
                                     </td>
-                                    <td class="transaction-table-column-account">
-                                        <div class="d-flex align-center">
-                                            <span v-if="transaction.sourceAccount">{{ transaction.sourceAccount.name }}</span>
-                                            <v-icon class="icon-with-direction mx-1" size="13" :icon="mdiArrowRight" v-if="transaction.sourceAccount && transaction.type === TransactionType.Transfer && transaction.destinationAccount && transaction.sourceAccount.id !== transaction.destinationAccount.id"></v-icon>
-                                            <span v-if="transaction.sourceAccount && transaction.type === TransactionType.Transfer && transaction.destinationAccount && transaction.sourceAccount.id !== transaction.destinationAccount.id">{{ transaction.destinationAccount.name }}</span>
-                                        </div>
-                                    </td>
-                                    <td class="transaction-table-column-tags" v-if="showTagInTransactionListPage">
-                                        <v-chip class="transaction-tag" size="small" :prepend-icon="mdiPound"
-                                                :text="allTransactionTags[tagId]?.name"
-                                                :key="tagId"
-                                                v-for="tagId in transaction.tagIds"/>
-                                        <v-chip class="transaction-tag" size="small"
-                                                :text="tt('None')"
-                                                v-if="!transaction.tagIds || !transaction.tagIds.length"/>
-                                    </td>
-                                    <td class="transaction-table-column-description text-truncate">
-                                        <v-icon class="transaction-picture-indicator" size="18" :icon="mdiImageOutline"
-                                                :aria-label="tt('Transaction Pictures')" role="img"
-                                                v-if="showPictureIndicatorInTransactionListPage && transaction.pictures?.length">
-                                        </v-icon>
-                                        {{ transaction.comment }}
-                                    </td>
                                 </tr>
                             </tbody>
                         </v-table>
 
-                        <v-card-text class="transaction-gallery-container pt-0" v-if="pageType === TransactionListPageType.Gallery.type">
-                            <div v-if="loading && (!transactions || !transactions.length || transactions.length < 1)">
-                                <v-skeleton-loader class="skeleton-no-margin" type="text" :loading="true"></v-skeleton-loader>
+                        <div class="transaction-gallery-container" v-if="pageType === TransactionListPageType.Gallery.type">
+                            <div class="transaction-gallery-grid" aria-hidden="true" v-if="loading && (!transactions || !transactions.length || transactions.length < 1)">
+                                <v-skeleton-loader class="transaction-gallery-skeleton" type="image" :key="itemIdx" v-for="itemIdx in [ 1, 2, 3, 4, 5 ]"></v-skeleton-loader>
                             </div>
 
-                            <div class="text-body-medium" v-if="!loading && (!transactions || !transactions.length || transactions.length < 1)">
-                                {{ tt('No transaction data') }}
-                            </div>
+                            <template v-if="!loading && (!transactions || !transactions.length || transactions.length < 1)">
+                                <state-panel type="error" :title="tt('Unable to retrieve transaction list')" v-if="loadError">
+                                    <template #actions>
+                                        <v-btn color="default" variant="outlined" :prepend-icon="mdiRefresh" @click="reload(false, false)">{{ tt('Retry') }}</v-btn>
+                                    </template>
+                                </state-panel>
+                                <state-panel type="empty" :title="tt('No results')" :text="tt('No transactions match the current search or filters.')" v-else-if="hasActiveFilters">
+                                    <template #actions>
+                                        <v-btn color="default" variant="outlined" :prepend-icon="mdiFilterOffOutline" @click="resetFilters">{{ tt('Reset Filters') }}</v-btn>
+                                    </template>
+                                </state-panel>
+                                <state-panel type="empty" :title="tt('No transaction data')" v-else />
+                            </template>
 
-                            <div :key="date" :class="{ 'disabled': loading }"
-                                 v-for="(transactions, date) in transactionsByDay">
-                                <div class="transaction-date font-weight-bold">
-                                    <div class="d-flex align-center">
-                                        <span>{{ getDisplayLongDate(transactions[0] as Transaction) }}</span>
-                                        <v-chip class="ms-1" color="default" size="x-small"
-                                                v-if="(transactions[0] as Transaction).displayDayOfWeek">
-                                            {{ getWeekdayLongName((transactions[0] as Transaction).displayDayOfWeek as WeekDay) }}
-                                        </v-chip>
-                                    </div>
-                                </div>
-                                <div class="d-flex flex-wrap gap-2 py-2">
-                                    <v-avatar rounded="lg" variant="tonal" size="160"
-                                              class="cursor-pointer transaction-picture" color="rgba(0,0,0,0)"
-                                              :key="pictureInfo.pictureId"
-                                              v-for="[transaction, pictureInfo] in allTransactionPictures(transactions)"
-                                              @click="show(transaction)">
-                                        <v-img :src="getTransactionPictureUrl(pictureInfo)">
+                            <section class="transaction-gallery-day" :key="date" :class="{ 'disabled': loading }"
+                                     v-for="(transactions, date) in transactionsByDay">
+                                <h3 class="transaction-list-row-date transaction-gallery-date">
+                                    <span class="transaction-list-row-date-text ebk-numeric">{{ getDisplayLongDate(transactions[0] as Transaction) }}</span>
+                                    <span class="transaction-list-row-weekday" v-if="(transactions[0] as Transaction).displayDayOfWeek">
+                                        {{ getWeekdayLongName((transactions[0] as Transaction).displayDayOfWeek as WeekDay) }}
+                                    </span>
+                                </h3>
+                                <div class="transaction-gallery-grid">
+                                    <button type="button" class="transaction-gallery-tile"
+                                            :key="pictureInfo.pictureId"
+                                            :aria-label="getTransactionRowLabel(transaction)"
+                                            v-for="[transaction, pictureInfo] in allTransactionPictures(transactions)"
+                                            @click="show(transaction)">
+                                        <span class="transaction-gallery-tile-document" v-if="isPdfFileUrl(getTransactionPictureUrl(pictureInfo))">
+                                            <v-icon size="40" :icon="mdiFilePdfBox"/>
+                                            <span>{{ tt('PDF Document') }}</span>
+                                        </span>
+                                        <v-img class="transaction-gallery-tile-image" cover :src="getTransactionPictureUrl(pictureInfo)" v-else>
                                             <template #placeholder>
-                                                <div class="d-flex align-center justify-center bg-light-primary">
-                                                    <v-progress-circular color="grey-500" indeterminate size="48"></v-progress-circular>
+                                                <div class="transaction-gallery-tile-placeholder">
+                                                    <v-progress-circular indeterminate size="32"></v-progress-circular>
                                                 </div>
                                             </template>
                                             <template #error>
-                                                <div class="d-flex align-center justify-center bg-light-primary">
-                                                    <span class="text-body-large">{{ tt('Failed to load image, please check whether the config "domain" and "root_url" are set correctly.') }}</span>
+                                                <div class="transaction-gallery-tile-placeholder transaction-gallery-tile-placeholder--error">
+                                                    <v-icon size="28" :icon="mdiImageBrokenVariant" />
+                                                    <span>{{ tt('Failed to load image, please check whether the config "domain" and "root_url" are set correctly.') }}</span>
                                                 </div>
                                             </template>
                                         </v-img>
-                                        <div class="picture-control-icon">
-                                            <v-icon size="64" :icon="mdiTextBoxEditOutline"/>
-                                        </div>
-                                    </v-avatar>
+                                        <span class="transaction-gallery-tile-caption">
+                                            <span class="text-truncate">{{ transaction.category?.name ?? getTransactionTypeName(transaction.type, 'Transaction') }}</span>
+                                            <signed-amount class="ms-auto" :text="getDisplayAmount(transaction)"
+                                                           :type="getSignedAmountType(transaction)"
+                                                           :hide-sign="transaction.hideAmount" v-if="transaction.sourceAccount" />
+                                        </span>
+                                    </button>
                                 </div>
-                            </div>
-                        </v-card-text>
+                            </section>
+                        </div>
 
-                        <div class="mt-2 mb-4" v-if="pageType === TransactionListPageType.List.type || pageType === TransactionListPageType.Gallery.type">
+                        <footer class="transaction-list-footer" v-if="(pageType === TransactionListPageType.List.type || pageType === TransactionListPageType.Gallery.type) && totalPageCount > 1">
                             <pagination-buttons density="comfortable"
                                                 :totalPageCount="totalPageCount" :disabled="loading"
                                                 v-model="paginationCurrentPage"></pagination-buttons>
-                        </div>
+                        </footer>
                     </v-card>
                 </v-window-item>
             </v-window>
@@ -722,6 +797,8 @@
 <script setup lang="ts">
 import { VMenu } from 'vuetify/components/VMenu';
 import PaginationButtons from '@/components/desktop/PaginationButtons.vue';
+import SignedAmount from '@/components/common/SignedAmount.vue';
+import StatePanel from '@/components/common/StatePanel.vue';
 import EditDialog from './list/dialogs/EditDialog.vue';
 import BatchAddDialog from './list/dialogs/BatchAddDialog.vue';
 import AIImageRecognitionDialog from './list/dialogs/AIImageRecognitionDialog.vue';
@@ -804,6 +881,7 @@ import {
     transactionTypeToCategoryType
 } from '@/lib/category.ts';
 import { allTransactionPictures } from '@/lib/transaction.ts';
+import { isPdfFileUrl } from '@/lib/file.ts';
 import {
     isDataExportingEnabled,
     isDataImportingEnabled,
@@ -823,14 +901,22 @@ import {
     mdiRefresh,
     mdiMenuDown,
     mdiPencilBoxOutline,
-    mdiArrowLeft,
     mdiArrowRight,
+    mdiChevronLeft,
+    mdiChevronRight,
     mdiPound,
-    mdiImageOutline,
+    mdiPaperclip,
     mdiMagicStaff,
     mdiTablePlus,
     mdiTextBoxOutline,
-    mdiTextBoxEditOutline
+    mdiPlus,
+    mdiTrayArrowDown,
+    mdiFilterOffOutline,
+    mdiFilePdfBox,
+    mdiImageBrokenVariant,
+    mdiFormatListBulleted,
+    mdiCalendarMonthOutline,
+    mdiImageMultipleOutline
 } from '@mdi/js';
 
 interface TransactionListProps {
@@ -862,7 +948,8 @@ const {
     formatRange,
     getAllRecentMonthDateRanges,
     getWeekdayLongName,
-    getTablePageOptions
+    getTablePageOptions,
+    formatNumberToLocalizedNumerals
 } = useI18n();
 
 const {
@@ -956,6 +1043,7 @@ const currentPageTransactions = ref<Transaction[]>([]);
 const categoryMenuState = ref<boolean>(false);
 const amountMenuState = ref<boolean>(false);
 const exportingData = ref<boolean>(false);
+const loadError = ref<boolean>(false);
 const showCustomDateRangeDialog = ref<boolean>(false);
 const showCustomMonthDialog = ref<boolean>(false);
 const showFilterAccountDialog = ref<boolean>(false);
@@ -1148,6 +1236,126 @@ const currentMonthTotalAmount = computed<TransactionListDisplayTotalAmount | nul
     }
 });
 
+const currentPeriodDisplayName = computed<string>(() => {
+    const recentDateRange = recentMonthDateRanges.value[recentDateRangeIndex.value];
+
+    if (recentDateRange && isNumber(recentDateRange.year) && isNumber(recentDateRange.month)) {
+        return recentDateRange.displayName;
+    }
+
+    return formatRange(queryMinTime.value, queryMaxTime.value);
+});
+
+const currentPageTypeName = computed<string>(() => TransactionListPageType.valueOf(pageType.value)?.name ?? TransactionListPageType.Default.name);
+const tableColumnCount = computed<number>(() => showTagInTransactionListPage.value ? 6 : 5);
+
+const transactionCountText = computed<string>(() => {
+    let count = 0;
+
+    if (queryMonthlyData.value) {
+        count = currentMonthTransactionData.value?.items?.length ?? 0;
+    } else if (transactions.value.length) {
+        count = totalCount.value;
+    }
+
+    if (!count) {
+        return '';
+    }
+
+    return tt('format.misc.batchTransactionCount', { count: formatNumberToLocalizedNumerals(count) });
+});
+
+const hasSearchOrFieldFilters = computed<boolean>(() => !!query.value.keyword
+    || query.value.type > 0
+    || !!query.value.categoryIds
+    || !!query.value.accountIds
+    || !!query.value.tagFilter
+    || !!query.value.amountFilter);
+
+const hasActiveFilters = computed<boolean>(() => hasSearchOrFieldFilters.value
+    || (pageType.value !== TransactionListPageType.Calendar.type && query.value.dateType !== DateRange.All.type));
+
+function getPageTypeIcon(type: number): string {
+    if (type === TransactionListPageType.Calendar.type) {
+        return mdiCalendarMonthOutline;
+    } else if (type === TransactionListPageType.Gallery.type) {
+        return mdiImageMultipleOutline;
+    }
+
+    return mdiFormatListBulleted;
+}
+
+function selectPageType(type: number): void {
+    if (loading.value || pageType.value === type) {
+        return;
+    }
+
+    queryPageType.value = type;
+}
+
+function getSignedAmountType(transaction: Transaction): 'income' | 'expense' | 'transfer' | 'none' {
+    if (transaction.type === TransactionType.Income) {
+        return 'income';
+    } else if (transaction.type === TransactionType.Expense) {
+        return 'expense';
+    } else if (transaction.type === TransactionType.Transfer) {
+        return 'transfer';
+    }
+
+    return 'none';
+}
+
+function getTransactionRowLabel(transaction: Transaction): string {
+    const parts: string[] = [];
+
+    parts.push(getDisplayLongDate(transaction));
+    parts.push(getDisplayTime(transaction));
+    parts.push(getTransactionTypeName(transaction.type, 'Transaction'));
+
+    if (transaction.type !== TransactionType.ModifyBalance && transaction.category) {
+        parts.push(transaction.category.name);
+    }
+
+    if (transaction.sourceAccount) {
+        const amount = getDisplayAmount(transaction);
+        const type = getSignedAmountType(transaction);
+        const sign = transaction.hideAmount ? '' : (type === 'income' ? '+' : (type === 'expense' ? '−' : ''));
+        parts.push(sign + amount);
+        parts.push(transaction.sourceAccount.name);
+
+        if (transaction.type === TransactionType.Transfer && transaction.destinationAccount && transaction.sourceAccount.id !== transaction.destinationAccount.id) {
+            parts.push(transaction.destinationAccount.name);
+        }
+    }
+
+    if (transaction.comment) {
+        parts.push(transaction.comment);
+    }
+
+    return parts.join(', ');
+}
+
+function resetFilters(): void {
+    const allDateRange = pageType.value !== TransactionListPageType.Calendar.type ? getDateRangeByDateType(DateRange.All.type, firstDayOfWeek.value, fiscalYearStart.value) : null;
+
+    searchKeyword.value = '';
+    currentAmountFilterType.value = '';
+
+    const changed = transactionsStore.updateTransactionListFilter({
+        dateType: allDateRange ? allDateRange.dateType : undefined,
+        maxTime: allDateRange ? allDateRange.maxTime : undefined,
+        minTime: allDateRange ? allDateRange.minTime : undefined,
+        type: 0,
+        categoryIds: '',
+        accountIds: '',
+        tagFilter: '',
+        amountFilter: '',
+        keyword: ''
+    });
+
+    updateUrlWhenChanged(changed);
+}
+
 function getCategoryListItemCheckedClass(category: TransactionCategory, queryCategoryIds: Record<string, boolean>): Record<string, boolean> {
     if (queryCategoryIds && queryCategoryIds[category.id]) {
         return {
@@ -1296,6 +1504,7 @@ function reload(force: boolean, init: boolean): void {
         }
     }).then(data => {
         loading.value = false;
+        loadError.value = false;
         currentPageTransactions.value = data && data.result && data.result.items && data.result.items.length ? data.result.items : [];
 
         if (page <= 1) {
@@ -1307,6 +1516,7 @@ function reload(force: boolean, init: boolean): void {
         }
     }).catch(error => {
         loading.value = false;
+        loadError.value = true;
         currentPageTransactions.value = [];
         totalCount.value = 1;
 
@@ -1888,86 +2098,245 @@ init(props);
 </script>
 
 <style>
-.transaction-keyword-filter .v-input--density-compact {
-    --v-input-control-height: 38px !important;
-    --v-input-padding-top: 5px !important;
-    --v-input-padding-bottom: 5px !important;
-    --v-input-chips-margin-top: 0px !important;
-    --v-input-chips-margin-bottom: 0px !important;
-    inline-size: 20rem;
+/* Side panel: sub-navigation and the FILTERS panel */
+.transaction-list-filters-item {
+    margin-block-start: var(--ebk-space-4);
+    list-style: none;
+}
 
-    .v-field__input {
-        min-block-size: 38px !important;
+.transaction-list-filters {
+    box-shadow: none;
+}
+
+.transaction-list-filters-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ebk-space-2);
+    padding: var(--ebk-space-3);
+}
+
+.transaction-list-filter-label {
+    margin-block-start: var(--ebk-space-2);
+    color: var(--ebk-color-text-secondary);
+
+    &:first-child {
+        margin-block-start: 0;
     }
 }
 
-.transaction-list-datetime-range {
-    min-height: 28px;
+.transaction-list-filter-dates {
+    margin: 0;
+    padding: 0 0 0 var(--ebk-space-1);
+    list-style: none;
+}
+
+.transaction-list-filters-reset {
+    margin-block-start: var(--ebk-space-2);
+}
+
+/* TRANSACTION LIST panel */
+.transaction-list-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: min(920px, calc(100vh - var(--ebk-shell-header-height, 64px) - 2rem));
+}
+
+.transaction-list-header {
     flex-wrap: wrap;
-    row-gap: 1rem;
+    row-gap: var(--ebk-space-2);
+    padding-block: var(--ebk-space-2);
+}
+
+.transaction-list-header-label {
+    margin: 0;
+    color: var(--ebk-color-text-primary);
+    font: inherit;
+}
+
+.transaction-list-header-meta {
+    color: var(--ebk-color-text-secondary);
+    font-weight: 400;
+    letter-spacing: normal;
+    text-transform: none;
+}
+
+.transaction-list-header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--ebk-space-2);
+    font-weight: 400;
+}
+
+.transaction-keyword-filter {
+    inline-size: 18rem;
+    max-inline-size: 100%;
+}
+
+.transaction-keyword-filter .v-input--density-compact {
+    --v-input-control-height: 36px !important;
+    --v-input-padding-top: 4px !important;
+    --v-input-padding-bottom: 4px !important;
+    --v-input-chips-margin-top: 0px !important;
+    --v-input-chips-margin-bottom: 0px !important;
+
+    .v-field__input {
+        min-block-size: 36px !important;
+    }
+}
+
+.transaction-list-summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: var(--ebk-space-3);
+    row-gap: var(--ebk-space-1);
+    min-height: 44px;
+    padding: var(--ebk-space-1) var(--ebk-space-4);
+    border-block-end: 1px solid var(--ebk-color-hairline);
+}
+
+.transaction-list-summary-period,
+.transaction-list-summary-totals {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ebk-space-2);
+}
+
+.transaction-list-summary-period-text {
+    color: var(--ebk-color-text-primary);
+    font-size: 0.9375rem;
+    font-weight: 600;
+}
+
+.transaction-list-summary-separator {
+    color: var(--ebk-color-text-secondary);
+}
+
+.transaction-list-summary-label {
+    color: var(--ebk-color-text-secondary);
+}
+
+.transaction-list-summary-amount {
+    font-size: 0.9375rem;
+    font-weight: 600;
+}
+
+.transaction-list-summary-skeleton {
+    width: 80px;
+
+    .v-skeleton-loader__text {
+        margin: 0;
+    }
 }
 
 .transaction-list-custom-datetime-range {
     line-height: 1rem;
 }
 
-.transaction-list-datetime-range .transaction-list-datetime-range-text {
-    color: rgba(var(--v-theme-on-background), var(--v-medium-emphasis-opacity)) !important;
-}
-
+/* Data table (guidelines §4.3) */
 .v-table.transaction-table > .v-table__wrapper > table {
-    th:not(:last-child),
-    td:not(:last-child) {
-        width: auto !important;
+    th,
+    td {
         white-space: nowrap;
     }
 
-    th:last-child,
-    td:last-child {
-        width: 100% !important;
+    .transaction-table-column-description {
+        width: 100%;
+        max-width: 0;
     }
 }
 
 .v-table.transaction-table {
+    .transaction-list-row-date > th,
     .transaction-list-row-date > td {
-        font-size: 0.8rem;
+        height: 32px !important;
+        background-color: rgba(var(--ebk-color-surface-sunken-rgb), 0.55);
+        color: var(--ebk-color-text-primary);
+        font-size: 0.8125rem;
+        font-weight: 600;
+        text-align: start;
+        text-transform: none !important;
+        letter-spacing: normal;
+    }
+
+    .transaction-table-row-data > td {
+        height: var(--ebk-density-table-row-height) !important;
+        padding-block: 2px;
+    }
+
+    .transaction-table-row-data:focus-visible {
+        outline: var(--ebk-focus-outline);
+        outline-offset: -2px;
+    }
+
+    .transaction-table-meta {
+        display: block;
+        color: var(--ebk-color-text-secondary);
+        font-size: 0.75rem;
+        line-height: 1rem;
     }
 
     .transaction-table-column-time {
-        min-width: 110px;
+        min-width: 96px;
     }
 
     .transaction-table-column-category {
-        min-width: 140px;
+        min-width: 180px;
     }
 
     .transaction-table-column-amount {
-        min-width: 120px;
+        min-width: 132px;
+        text-align: end;
+
+        > div {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .ebk-signed-amount {
+            font-size: 0.9375rem;
+            font-weight: 600;
+        }
+    }
+
+    th.transaction-table-column-amount > .v-menu,
+    th.transaction-table-column-amount > div {
+        justify-content: flex-end;
     }
 
     .transaction-table-column-account {
         min-width: 160px;
     }
 
+    .transaction-table-account {
+        max-width: 22rem;
+    }
+
+    .transaction-table-account-arrow {
+        flex: 0 0 auto;
+        color: var(--ebk-color-text-secondary);
+    }
+
     .transaction-table-column-tags {
         min-width: 90px;
     }
 
-    .transaction-table-column-category .v-btn,
-    .transaction-table-column-account .v-btn {
-        font-size: 0.75rem;
+    .transaction-table-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px var(--ebk-space-1);
+        max-width: 16rem;
+    }
 
-        .v-btn__append {
-            margin-inline-start: 0in;
-        }
+    .transaction-table-empty-value {
+        color: var(--ebk-color-text-secondary);
     }
 
     .transaction-table-column-tags .v-chip.transaction-tag {
-        margin-inline-end: 4px;
-        margin-top: 2px;
-        margin-bottom: 2px;
-        padding-inline: 12px;
-        border-radius: var(--ebk-radius-lg);
+        max-width: 100%;
 
         > .v-chip__content {
             display: block;
@@ -1977,11 +2346,72 @@ init(props);
         }
     }
 
-    .transaction-table-column-description {
+    .transaction-table-description {
+        display: flex;
+        align-items: center;
+        gap: var(--ebk-space-1);
+        min-width: 0;
+
         > .transaction-picture-indicator {
-            vertical-align: text-bottom;
+            flex: 0 0 auto;
+            color: var(--ebk-color-text-secondary);
         }
     }
+
+    .transaction-table-state-cell {
+        height: auto !important;
+        padding: var(--ebk-space-6) var(--ebk-space-4) !important;
+        white-space: normal !important;
+    }
+
+    .transaction-table-skeleton-bone .v-skeleton-loader__text {
+        margin: 0;
+    }
+}
+
+.transaction-category-tile {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--ebk-color-hairline);
+    border-radius: var(--ebk-radius-control);
+    background-color: var(--ebk-color-surface-sunken);
+}
+
+.transaction-category-tile--skeleton {
+    border-style: dashed;
+    background-color: transparent;
+}
+
+.transaction-category-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    margin-inline-start: var(--ebk-space-3);
+    line-height: 1.25rem;
+}
+
+.transaction-category-title {
+    overflow: hidden;
+    color: var(--ebk-color-text-primary);
+    text-overflow: ellipsis;
+}
+
+.transaction-list-row-weekday {
+    display: inline-flex;
+    align-items: center;
+    min-height: 20px;
+    margin-inline-start: var(--ebk-space-2);
+    padding-inline: var(--ebk-space-2);
+    border: 1px solid var(--ebk-color-hairline);
+    border-radius: var(--ebk-radius-pill);
+    color: var(--ebk-color-text-secondary);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    line-height: 1;
 }
 
 .transaction-time-menu .item-icon,
@@ -2008,11 +2438,121 @@ init(props);
     font-weight: bold;
 }
 
-.transaction-gallery-container {
-    color: rgba(var(--v-theme-on-surface), var(--v-high-emphasis-opacity));
+/* Calendar */
+.transaction-list-calendar-container.transaction-calendar-container {
+    flex: 0 0 auto !important;
+    padding: var(--ebk-space-4) !important;
+    border-block-end: 1px solid var(--ebk-color-hairline);
+}
 
-    .transaction-date {
-        font-size: 0.8rem;
+/* Gallery */
+.transaction-gallery-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ebk-space-4);
+    padding: var(--ebk-space-4);
+    color: var(--ebk-color-text-primary);
+}
+
+.transaction-gallery-date {
+    display: flex;
+    align-items: center;
+    min-height: 32px;
+    margin: 0 0 var(--ebk-space-2);
+    padding-inline: var(--ebk-space-3);
+    border-radius: var(--ebk-radius-control);
+    background-color: rgba(var(--ebk-color-surface-sunken-rgb), 0.55);
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+
+.transaction-gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+    gap: var(--ebk-space-3);
+}
+
+.transaction-gallery-skeleton {
+    aspect-ratio: 1;
+    border-radius: var(--ebk-radius-panel);
+    overflow: hidden;
+}
+
+.transaction-gallery-tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 0;
+    border: 1px solid var(--ebk-color-hairline);
+    border-radius: var(--ebk-radius-panel);
+    background-color: var(--ebk-color-surface-sunken);
+    color: inherit;
+    text-align: start;
+    cursor: pointer;
+    transition: border-color var(--ebk-motion-duration-xs) var(--ebk-motion-ease-standard);
+
+    &:hover {
+        border-color: var(--ebk-color-copper-line);
+    }
+
+    > .transaction-gallery-tile-image,
+    > .transaction-gallery-tile-document {
+        aspect-ratio: 4 / 3;
+        width: 100%;
+    }
+}
+
+.transaction-gallery-tile-document,
+.transaction-gallery-tile-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ebk-space-1);
+    height: 100%;
+    padding: var(--ebk-space-2);
+    color: var(--ebk-color-text-secondary);
+    font-size: 0.75rem;
+    text-align: center;
+}
+
+.transaction-gallery-tile-document > .v-icon {
+    color: var(--ebk-color-primary-text);
+}
+
+.transaction-gallery-tile-placeholder--error {
+    overflow-wrap: anywhere;
+}
+
+.transaction-gallery-tile-caption {
+    display: flex;
+    align-items: center;
+    gap: var(--ebk-space-2);
+    min-height: 36px;
+    padding: var(--ebk-space-1) var(--ebk-space-3);
+    border-block-start: 1px solid var(--ebk-color-hairline);
+    background-color: var(--ebk-color-surface);
+    font-size: 0.8125rem;
+
+    .ebk-signed-amount {
+        font-weight: 600;
+    }
+}
+
+/* Pagination footer */
+.transaction-list-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-block-start: auto;
+    padding: var(--ebk-space-3) var(--ebk-space-4);
+    border-block-start: 1px solid var(--ebk-color-hairline);
+}
+
+@media (forced-colors: active) {
+    .transaction-category-tile,
+    .transaction-gallery-tile {
+        border-color: CanvasText;
     }
 }
 </style>

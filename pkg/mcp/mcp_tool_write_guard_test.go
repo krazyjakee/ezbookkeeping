@@ -96,17 +96,6 @@ func (s *mcpTestIdempotencyStore) DeleteExpiredRecords(c core.Context, uid int64
 	return nil
 }
 
-func getMCPWriteGuardTestToolError(t *testing.T, err error) *MCPToolError {
-	t.Helper()
-	var toolErr *MCPToolError
-
-	if !errors.As(err, &toolErr) {
-		t.Fatalf("expected MCPToolError, but got %v", err)
-	}
-
-	return toolErr
-}
-
 func TestMCPComputeWriteRequestHash_IgnoresOrderWhitespaceAndControlArguments(t *testing.T) {
 	hash1, err := mcpComputeWriteRequestHash("add_transaction", jsontext.Value(`{"type":"expense","amount":"120.00","tags":["a","b"],"geo_location":{"latitude":1,"longitude":2}}`))
 	assert.Nil(t, err)
@@ -168,18 +157,18 @@ func TestMCPParseWriteControlArguments(t *testing.T) {
 
 func TestMCPParseWriteControlArguments_InvalidValues(t *testing.T) {
 	_, err := mcpParseWriteControlArguments(jsontext.Value(`{"idempotency_key":123}`))
-	assert.Equal(t, mcpIdempotencyKeyArgumentName, getMCPWriteGuardTestToolError(t, err).Field)
+	assert.Equal(t, mcpIdempotencyKeyArgumentName, mcpTestGetToolError(t, err).Field)
 
 	_, err = mcpParseWriteControlArguments(jsontext.Value(`{"idempotency_key":"   "}`))
-	assert.Equal(t, MCPToolErrorCodeInvalidValue, getMCPWriteGuardTestToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeInvalidValue, mcpTestGetToolError(t, err).Code)
 
 	_, err = mcpParseWriteControlArguments(jsontext.Value(`{"idempotency_key":"` + strings.Repeat("k", models.MCPIdempotencyKeyMaxLength+1) + `"}`))
-	toolErr := getMCPWriteGuardTestToolError(t, err)
+	toolErr := mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeTooLong, toolErr.Code)
 	assert.Equal(t, int64(models.MCPIdempotencyKeyMaxLength), *toolErr.Limit)
 
 	_, err = mcpParseWriteControlArguments(jsontext.Value(`{"operation_id":"op\u0000"}`))
-	assert.Equal(t, mcpOperationIdArgumentName, getMCPWriteGuardTestToolError(t, err).Field)
+	assert.Equal(t, mcpOperationIdArgumentName, mcpTestGetToolError(t, err).Field)
 }
 
 func TestMCPIdempotencyBegin_ReplaySameRequest(t *testing.T) {
@@ -215,13 +204,13 @@ func TestMCPIdempotencyBegin_ConflictDifferentRequest(t *testing.T) {
 
 	_, replayResponse, err := mcpIdempotencyBegin(nil, store, 1, "key-1", "add_transaction", "hash-2", now)
 	assert.Nil(t, replayResponse)
-	toolErr := getMCPWriteGuardTestToolError(t, err)
+	toolErr := mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeIdempotencyConflict, toolErr.Code)
 	assert.Equal(t, mcpIdempotencyKeyArgumentName, toolErr.Field)
 	assert.Equal(t, "key-1", toolErr.Value)
 
 	_, _, err = mcpIdempotencyBegin(nil, store, 1, "key-1", "update_transaction", "hash-1", now)
-	assert.Equal(t, MCPToolErrorCodeIdempotencyConflict, getMCPWriteGuardTestToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeIdempotencyConflict, mcpTestGetToolError(t, err).Code)
 }
 
 func TestMCPIdempotencyBegin_KeysAreScopedByUser(t *testing.T) {
@@ -247,12 +236,12 @@ func TestMCPIdempotencyBegin_InProgress(t *testing.T) {
 
 	_, replayResponse, err := mcpIdempotencyBegin(nil, store, 1, "key-1", "add_transaction", "hash-1", now.Add(time.Minute))
 	assert.Nil(t, replayResponse)
-	toolErr := getMCPWriteGuardTestToolError(t, err)
+	toolErr := mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeIdempotencyInProgress, toolErr.Code)
 	assert.True(t, strings.Contains(toolErr.Message, "still in progress"))
 
 	_, _, err = mcpIdempotencyBegin(nil, store, 1, "key-1", "add_transaction", "hash-1", now.Add(mcpIdempotencyPendingTimeout+time.Minute))
-	toolErr = getMCPWriteGuardTestToolError(t, err)
+	toolErr = mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeIdempotencyInProgress, toolErr.Code)
 	assert.True(t, strings.Contains(toolErr.Message, "did not complete"))
 }

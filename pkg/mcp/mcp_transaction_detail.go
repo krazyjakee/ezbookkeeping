@@ -270,18 +270,7 @@ func mcpTxnBuildDetail(transaction *models.Transaction, data *mcpTxnDetailData, 
 // mcpTxnResolveAccount returns the account which is specified by id (preferred) or name.
 // Accounts are matched by name only among visible accounts which can have transactions (parent accounts with sub-accounts are excluded)
 func mcpTxnResolveAccount(allAccounts []*models.Account, idField string, id string, nameField string, name string) (*models.Account, error) {
-	resolver := newMCPEntityResolver[*models.Account]("account",
-		func(account *models.Account) int64 { return account.AccountId },
-		func(account *models.Account) string { return account.Name },
-		func(account *models.Account) string {
-			description := account.Currency
-
-			if account.Hidden {
-				description = description + ", hidden"
-			}
-
-			return description
-		})
+	resolver := mcpAccountNewResolver()
 
 	if strings.TrimSpace(id) != "" {
 		account, err := resolver.Resolve(allAccounts, idField, id, nameField, "")
@@ -315,25 +304,13 @@ func mcpTxnResolveAccount(allAccounts []*models.Account, idField string, id stri
 // mcpTxnResolveCategory returns the secondary category of the given category type which is specified by id (preferred) or name.
 // Categories are matched by name only among visible secondary categories of the given category type
 func mcpTxnResolveCategory(allCategories []*models.TransactionCategory, categoryType models.TransactionCategoryType, idField string, id string, nameField string, name string) (*models.TransactionCategory, error) {
-	resolver := newMCPEntityResolver[*models.TransactionCategory]("category",
-		func(category *models.TransactionCategory) int64 { return category.CategoryId },
-		func(category *models.TransactionCategory) string { return category.Name },
-		func(category *models.TransactionCategory) string {
-			description := getMCPCategoryTypeName(category.Type)
+	categoryMap := make(map[int64]*models.TransactionCategory, len(allCategories))
 
-			for i := 0; i < len(allCategories); i++ {
-				if allCategories[i].CategoryId == category.ParentCategoryId {
-					description = description + ", primary category: " + allCategories[i].Name
-					break
-				}
-			}
+	for i := 0; i < len(allCategories); i++ {
+		categoryMap[allCategories[i].CategoryId] = allCategories[i]
+	}
 
-			if category.Hidden {
-				description = description + ", hidden"
-			}
-
-			return description
-		})
+	resolver := mcpTransactionCategoryNewNamedResolver("category", categoryMap)
 
 	if strings.TrimSpace(id) != "" {
 		category, err := resolver.Resolve(allCategories, idField, id, nameField, "")
@@ -371,16 +348,7 @@ func mcpTxnResolveCategory(allCategories []*models.TransactionCategory, category
 // mcpTxnResolveTagIds returns the unique tag ids which are specified by ids or names.
 // Tag ids must exist, tag names are matched only among visible tags, unknown or ambiguous tag names are returned as errors
 func mcpTxnResolveTagIds(allTags []*models.TransactionTag, idField string, ids []string, nameField string, names []string) ([]int64, error) {
-	resolver := newMCPEntityResolver[*models.TransactionTag]("tag",
-		func(tag *models.TransactionTag) int64 { return tag.TagId },
-		func(tag *models.TransactionTag) string { return tag.Name },
-		func(tag *models.TransactionTag) string {
-			if tag.Hidden {
-				return "hidden"
-			}
-
-			return ""
-		})
+	resolver := newMCPTransactionTagResolver(nil)
 
 	visibleTags := make([]*models.TransactionTag, 0, len(allTags))
 

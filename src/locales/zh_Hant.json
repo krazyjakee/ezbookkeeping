@@ -120,6 +120,8 @@
             "720p": "720p（約 {size} KiB）"
         },
         "misc": {
+            "nextOccurrence": "下次：{date}",
+            "occurrencesLeft": "剩餘 {count} 次",
             "nHour": "{n} 小時",
             "nHours": "{n} 小時",
             "nDay": "{n} 天",

@@ -5,9 +5,9 @@
                                   :cancel-button-title="tt('Cancel')"
                                   @cancel="cancel">
             <template #content>
-                <v-form class="mt-2">
+                <v-form class="mt-2 ebk-dialog-form">
                     <v-row>
-                        <v-col cols="12" md="12">
+                        <v-col cols="12" md="6">
                             <v-text-field
                                 persistent-placeholder
                                 type="text"
@@ -18,7 +18,7 @@
                                 v-model="preset.name" />
                         </v-col>
 
-                        <v-col cols="12" md="12">
+                        <v-col cols="12" md="6">
                             <two-column-select primary-key-field="displayCategoryName"
                                                primary-value-field="displayCategoryName"
                                                primary-title-field="displayCategoryName"
@@ -67,7 +67,7 @@
 
                         <v-col cols="12" md="12" v-if="isCustomFileFormat && preset.handlingMethod === ImportCustomFileFormatProcessMethod.CustomScript">
                             <div class="d-flex align-center mb-2 mt-n2">
-                                <span>{{ tt('Custom Script') }}</span>
+                                <span class="ebk-dialog-form-label mb-0">{{ tt('Custom Script') }}</span>
                                 <v-btn density="compact" color="default" variant="text" class="ms-2" :icon="true"
                                        :aria-label="tt('Load Script File')" :disabled="loading || submitting"
                                        @click="loadScriptFile">
@@ -105,17 +105,25 @@
             </template>
 
             <template #footer>
-                <v-spacer/>
-                <v-tooltip :disabled="!inputIsEmpty" :text="inputEmptyProblemMessage ? tt(inputEmptyProblemMessage) : ''">
-                    <template v-slot:activator="{ props }">
-                        <div v-bind="props" class="d-inline-block">
-                            <v-btn :disabled="inputIsEmpty || loading || submitting || !isPresetModified || !selectedFileTypeInfo" @click="save">
-                                {{ preset.id ? tt('Save') : tt('Add') }}
-                                <v-progress-circular indeterminate size="22" class="ms-2" v-if="submitting"></v-progress-circular>
-                            </v-btn>
-                        </div>
-                    </template>
-                </v-tooltip>
+                <div class="ebk-dialog-footer">
+                    <div class="ebk-dialog-footer-status" role="status" aria-live="polite">
+                        <template v-if="footerStatus">
+                            <span class="ebk-dialog-footer-status-dot" :class="`ebk-dialog-footer-status-dot--${footerStatus.kind}`" aria-hidden="true"></span>
+                            <span>{{ footerStatus.text }}</span>
+                        </template>
+                    </div>
+                    <v-btn color="default" variant="outlined" :disabled="loading || submitting" @click="cancel">{{ tt('Cancel') }}</v-btn>
+                    <v-tooltip :disabled="!inputIsEmpty" :text="inputEmptyProblemMessage ? tt(inputEmptyProblemMessage) : ''">
+                        <template v-slot:activator="{ props }">
+                            <div v-bind="props" class="d-inline-block">
+                                <v-btn color="primary" variant="flat" :disabled="inputIsEmpty || loading || submitting || !isPresetModified || !selectedFileTypeInfo" @click="save">
+                                    {{ preset.id ? tt('Save') : tt('Add') }}
+                                    <v-progress-circular indeterminate size="22" class="ms-2" v-if="submitting"></v-progress-circular>
+                                </v-btn>
+                            </div>
+                        </template>
+                    </v-tooltip>
+                </div>
             </template>
         </one-column-dialog-layout>
     </v-dialog>
@@ -233,6 +241,27 @@ const isPresetModified = computed<boolean>(() => {
     } else { // Edit
         return !!initPreset.value && !isEquals(preset.value.toModifyRequest(), initPreset.value.toModifyRequest());
     }
+});
+
+// footer status text at the start of the dialog footer (design guideline 4.4)
+const footerStatus = computed<{ kind: 'progress' | 'warning' | 'modified', text: string } | null>(() => {
+    if (loading.value) {
+        return null;
+    }
+
+    if (submitting.value) {
+        return { kind: 'progress', text: tt('Saving...') };
+    }
+
+    if (isPresetModified.value && inputIsEmpty.value && inputEmptyProblemMessage.value) {
+        return { kind: 'warning', text: tt(inputEmptyProblemMessage.value) };
+    }
+
+    if (isPresetModified.value) {
+        return { kind: 'modified', text: tt('Unsaved changes') };
+    }
+
+    return null;
 });
 
 const inputEmptyProblemMessage = computed<string | null>(() => {

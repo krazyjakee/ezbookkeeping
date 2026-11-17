@@ -1,47 +1,52 @@
 <template>
-    <main-page-layout nav-items-class="account-category-tabs my-3">
+    <main-page-layout nav-items-class="account-category-tabs">
         <template #nav-items>
-            <div class="mx-2 mb-2">
-                <span class="text-body-medium">{{ tt('Net assets') }}</span>
-                <div class="text-body-large text-primary text-truncate mt-1 mb-2">
-                    <span v-if="!loading || allAccountCount > 0">{{ netAssets }}</span>
-                    <span v-else-if="loading && allAccountCount <= 0">
-                        <v-skeleton-loader class="skeleton-no-margin mt-1 mb-2" type="text" :loading="true"></v-skeleton-loader>
-                    </span>
-                </div>
-                <span class="text-body-medium">{{ tt('Total liabilities') }}</span>
-                <div class="text-body-large text-expense text-truncate mt-1 mb-2">
-                    <span v-if="!loading || allAccountCount > 0">{{ totalLiabilities }}</span>
-                    <span v-else-if="loading && allAccountCount <= 0">
-                        <v-skeleton-loader class="skeleton-no-margin mt-1 mb-1" type="text" :loading="true"></v-skeleton-loader>
-                    </span>
-                </div>
-                <span class="text-body-medium">{{ tt('Total assets') }}</span>
-                <div class="text-body-large mt-1">
-                    <span v-if="!loading || allAccountCount > 0">{{ totalAssets }}</span>
-                    <span v-else-if="loading && allAccountCount <= 0">
-                        <v-skeleton-loader class="skeleton-no-margin mt-3 mb-2 pb-1" type="text" :loading="true"></v-skeleton-loader>
-                    </span>
-                </div>
-            </div>
+            <li class="ebk-mgmt-side-item">
+                <section class="ebk-panel ebk-mgmt-side-panel" aria-labelledby="account-list-summary-title">
+                    <header class="ebk-panel-header-strip">
+                        <span id="account-list-summary-title">{{ tt('Asset Summary') }}</span>
+                    </header>
+                    <div class="ebk-mgmt-side-panel-body">
+                        <div class="ebk-mgmt-kv">
+                            <span class="ebk-mgmt-kv-label ebk-technical-heading">{{ tt('Net assets') }}</span>
+                            <span class="ebk-mgmt-kv-value" v-if="!loading || allAccountCount > 0">{{ netAssets }}</span>
+                            <v-skeleton-loader class="ebk-mgmt-skeleton" type="text" width="120" :loading="true" v-else></v-skeleton-loader>
+                        </div>
+                        <div class="ebk-mgmt-kv">
+                            <span class="ebk-mgmt-kv-label ebk-technical-heading">{{ tt('Total assets') }}</span>
+                            <span class="ebk-mgmt-kv-value" v-if="!loading || allAccountCount > 0">{{ totalAssets }}</span>
+                            <v-skeleton-loader class="ebk-mgmt-skeleton" type="text" width="120" :loading="true" v-else></v-skeleton-loader>
+                        </div>
+                        <div class="ebk-mgmt-kv">
+                            <span class="ebk-mgmt-kv-label ebk-technical-heading">{{ tt('Total liabilities') }}</span>
+                            <span class="ebk-mgmt-kv-value" v-if="!loading || allAccountCount > 0">{{ totalLiabilities }}</span>
+                            <v-skeleton-loader class="ebk-mgmt-skeleton" type="text" width="120" :loading="true" v-else></v-skeleton-loader>
+                        </div>
+                    </div>
+                </section>
+            </li>
 
-            <v-divider class="my-2" />
+            <li class="nav-section-title">
+                <div class="title-wrapper">
+                    <span class="title-text">{{ tt('Account Category') }}</span>
+                </div>
+            </li>
 
             <li class="nav-link"
                 :key="accountCategory.type"
                 v-for="accountCategory in AccountCategory.values(customAccountCategoryOrder)"
                 v-show="!hideAccountCategoriesWithoutAccounts || (allCategorizedAccountsMap[accountCategory.type] && allCategorizedAccountsMap[accountCategory.type]!.accounts.length > 0)">
-                <a class="d-flex align-center cursor-pointer"
+                <a class="d-flex align-center cursor-pointer" role="button" tabindex="0"
                    :class="{ 'router-link-active router-link-exact-active': activeAccountCategoryType === accountCategory.type, 'disabled': loading }"
-                   @click="activeAccountCategoryType = accountCategory.type">
+                   :aria-current="activeAccountCategoryType === accountCategory.type ? 'true' : undefined"
+                   @click="activeAccountCategoryType = accountCategory.type"
+                   @keydown.enter.prevent="activeAccountCategoryType = accountCategory.type"
+                   @keydown.space.prevent="activeAccountCategoryType = accountCategory.type">
                     <ItemIcon icon-type="account" :icon-id="accountCategory.defaultAccountIconId" />
-                    <div class="nav-item-title d-flex flex-column text-truncate">
-                        <small class="text-truncate text-start smaller" v-if="!loading || allAccountCount > 0">{{ accountCategoryTotalBalance(accountCategory, false) }}</small>
-                        <small class="text-truncate text-start smaller mb-1" v-else-if="loading && allAccountCount <= 0">
-                            <v-skeleton-loader class="skeleton-no-margin"
-                                               width="100px" height="16" type="text" :loading="true"></v-skeleton-loader>
-                        </small>
-                        <span class="text-body-medium text-truncate text-start">{{ tt(accountCategory.name) }}</span>
+                    <div class="nav-item-title account-category-nav-title">
+                        <span class="text-truncate">{{ tt(accountCategory.name) }}</span>
+                        <small class="account-category-nav-balance text-truncate" v-if="!loading || allAccountCount > 0">{{ accountCategoryTotalBalance(accountCategory, false) }}</small>
+                        <v-skeleton-loader class="ebk-mgmt-skeleton" width="90" height="14" type="text" :loading="true" v-else></v-skeleton-loader>
                     </div>
                 </a>
             </li>
@@ -50,27 +55,28 @@
         <template #content>
             <v-window class="d-flex flex-grow-1 disable-tab-transition w-100-window-container" v-model="activeTab">
                 <v-window-item value="accountPage">
-                    <v-card min-height="780">
-                        <template #title>
-                            <div class="title-and-toolbar d-flex align-center">
-                                <span>{{ tt('Account List') }}</span>
-                                <v-btn class="ms-3" color="default" variant="outlined"
-                                       :disabled="loading" @click="add">{{ tt('Add') }}</v-btn>
-                                <v-btn class="ms-3" color="primary" variant="tonal"
+                    <v-card class="ebk-mgmt-panel account-list-panel" :aria-busy="loading ? 'true' : 'false'">
+                        <header class="ebk-panel-header-strip ebk-mgmt-header">
+                            <h2 class="ebk-mgmt-header-label">{{ activeAccountCategory ? tt(activeAccountCategory.name) : tt('Account List') }}</h2>
+                            <span class="ebk-mgmt-header-meta ebk-numeric" v-if="!loading && activeAccountCategoryVisibleAccountCount > 0">{{ formatNumberToLocalizedNumerals(activeAccountCategoryVisibleAccountCount) }}</span>
+                            <div class="ebk-panel-header-actions ebk-mgmt-header-actions">
+                                <v-btn color="primary" variant="tonal"
                                        :disabled="loading" @click="saveSortResult"
                                        v-if="displayOrderModified">{{ tt('Save Display Order') }}</v-btn>
-                                <v-btn density="compact" color="default" variant="text" class="ms-2"
+                                <v-btn color="default" variant="outlined" :prepend-icon="mdiPlus"
+                                       :disabled="loading" @click="add">{{ tt('Add') }}</v-btn>
+                                <v-btn density="comfortable" color="default" variant="text"
                                        :aria-label="tt('Refresh')" :icon="true" :loading="loading" @click="reload(true)">
                                     <template #loader>
                                         <v-progress-circular indeterminate size="20"/>
                                     </template>
-                                    <v-icon :icon="mdiRefresh" size="24" />
+                                    <v-icon :icon="mdiRefresh" size="22" />
                                     <v-tooltip activator="parent">{{ tt('Refresh') }}</v-tooltip>
                                 </v-btn>
-                                <v-spacer/>
-                                <v-btn density="comfortable" color="default" variant="text" class="ms-2"
+                                <v-btn density="comfortable" color="default" variant="text"
                                        :aria-label="tt('More')" :disabled="loading" :icon="true">
                                     <v-icon :icon="mdiDotsVertical" />
+                                    <v-tooltip activator="parent">{{ tt('More') }}</v-tooltip>
                                     <v-menu activator="parent">
                                         <v-list>
                                             <v-list-item :prepend-icon="mdiEyeOutline"
@@ -87,238 +93,317 @@
                                     </v-menu>
                                 </v-btn>
                             </div>
-                        </template>
+                        </header>
 
-                        <v-card-text class="accounts-overview-title text-truncate pt-0">
-                            <div class="d-flex align-center">
-                                <span class="accounts-overview-subtitle">{{ activeAccountCategory?.isLiability ? tt('Outstanding Balance') : tt('Balance') }}</span>
-                                <v-skeleton-loader class="skeleton-no-margin ms-3" width="120px" type="text" :loading="true" v-if="loading && activeAccountCategory && !hasAccount(activeAccountCategory)"></v-skeleton-loader>
-                                <template v-else-if="!loading || !activeAccountCategory || hasAccount(activeAccountCategory)">
-                                    <span class="accounts-overview-amount ms-3">{{ activeAccountCategoryTotalBalance }}</span>
-                                    <template v-if="activeAccountCategory?.type === AccountCategory.CreditCard.type && activeCreditCardTotalAvailabeCredit">
-                                        <v-divider vertical class="mx-3 my-1" />
-                                        <span class="accounts-overview-subtitle">{{ tt('Available Credit') }}</span>
-                                        <span class="accounts-overview-amount ms-3">{{ activeCreditCardTotalAvailabeCredit }}</span>
-                                    </template>
-                                </template>
-                                <v-btn class="ms-2" density="compact" color="default" variant="text"
-                                       :aria-label="showAccountBalance ? tt('Hide Account Balance') : tt('Show Account Balance')"
-                                       :icon="true" :disabled="loading"
-                                       @click="showAccountBalance = !showAccountBalance">
-                                    <v-icon :icon="showAccountBalance ? mdiEyeOffOutline : mdiEyeOutline" size="20" />
-                                    <v-tooltip activator="parent">{{ showAccountBalance ? tt('Hide Account Balance') : tt('Show Account Balance') }}</v-tooltip>
-                                </v-btn>
+                        <div class="ebk-mgmt-summary">
+                            <span class="ebk-mgmt-summary-item">
+                                <span class="ebk-mgmt-summary-label ebk-technical-heading">{{ activeAccountCategory?.isLiability ? tt('Outstanding Balance') : tt('Balance') }}</span>
+                                <v-skeleton-loader class="ebk-mgmt-skeleton" width="120" type="text" :loading="true" v-if="loading && activeAccountCategory && !hasAccount(activeAccountCategory)"></v-skeleton-loader>
+                                <span class="ebk-mgmt-summary-value" v-else>{{ activeAccountCategoryTotalBalance }}</span>
+                            </span>
+                            <template v-if="activeAccountCategory?.type === AccountCategory.CreditCard.type && activeCreditCardTotalAvailabeCredit && !(loading && !hasAccount(activeAccountCategory))">
+                                <span class="ebk-mgmt-summary-separator" aria-hidden="true">·</span>
+                                <span class="ebk-mgmt-summary-item">
+                                    <span class="ebk-mgmt-summary-label ebk-technical-heading">{{ tt('Available Credit') }}</span>
+                                    <span class="ebk-mgmt-summary-value">{{ activeCreditCardTotalAvailabeCredit }}</span>
+                                </span>
+                            </template>
+                            <v-btn density="comfortable" color="default" variant="text" size="small"
+                                   :aria-label="showAccountBalance ? tt('Hide Account Balance') : tt('Show Account Balance')"
+                                   :aria-pressed="showAccountBalance ? 'false' : 'true'"
+                                   :icon="true" :disabled="loading"
+                                   @click="showAccountBalance = !showAccountBalance">
+                                <v-icon :icon="showAccountBalance ? mdiEyeOffOutline : mdiEyeOutline" size="20" />
+                                <v-tooltip activator="parent">{{ showAccountBalance ? tt('Hide Account Balance') : tt('Show Account Balance') }}</v-tooltip>
+                            </v-btn>
+                        </div>
+
+                        <div class="account-list" role="table" :aria-label="activeAccountCategory ? tt(activeAccountCategory.name) : tt('Account List')">
+                            <div class="account-list-head" role="row">
+                                <span class="account-list-cell-name" role="columnheader">{{ tt('Account Name') }}</span>
+                                <span class="account-list-cell-amount" role="columnheader">{{ activeAccountCategory?.isLiability ? tt('Outstanding Balance') : tt('Balance') }}</span>
+                                <span class="account-list-cell-operation" role="columnheader"><span class="ebk-visually-hidden">{{ tt('Operation') }}</span></span>
                             </div>
-                        </v-card-text>
 
-                        <v-row class="ps-4 pe-4" v-if="loading && activeAccountCategory && !hasAccount(activeAccountCategory)">
-                            <v-col cols="12">
-                                <v-card border class="card-title-with-bg account-card mb-4 h-auto">
-                                    <template #title>
-                                        <div class="account-title d-flex align-center">
-                                            <v-icon class="disabled me-0" size="28px" :icon="mdiSquareRounded" />
-                                            <span class="account-name text-truncate ms-2">
-                                                <v-skeleton-loader class="skeleton-no-margin my-1"
-                                                                   width="120px" type="text" :loading="true"></v-skeleton-loader>
-                                            </span>
-                                            <v-spacer/>
-                                            <span class="align-self-center">
-                                                <v-icon class="disabled" :icon="mdiDrag"/>
-                                            </span>
-                                        </div>
-                                    </template>
-                                    <v-divider/>
-                                    <v-card-text>
-                                        <div class="d-flex account-toolbar align-center">
-                                            <v-btn class="px-2" density="comfortable" color="default" variant="text"
-                                                   :disabled="true" :prepend-icon="mdiListBoxOutline">
-                                                {{ tt('Transaction List') }}
-                                            </v-btn>
-                                            <v-spacer/>
-                                            <span class="account-balance ms-2">
-                                                <v-skeleton-loader class="skeleton-no-margin"
-                                                                   width="100px" type="text" :loading="true"></v-skeleton-loader>
-                                            </span>
-                                        </div>
-                                    </v-card-text>
-                                </v-card>
-                            </v-col>
-                        </v-row>
+                            <div class="account-list-skeleton" aria-hidden="true" v-if="loading && activeAccountCategory && !hasAccount(activeAccountCategory)">
+                                <div class="account-list-row" :key="itemIdx" v-for="itemIdx in [ 1, 2, 3 ]">
+                                    <div class="account-list-cell-name">
+                                        <span class="ebk-mgmt-drag disabled"></span>
+                                        <span class="ebk-mgmt-icon-tile ebk-mgmt-icon-tile--skeleton"></span>
+                                        <v-skeleton-loader class="ebk-mgmt-skeleton ms-3" type="text" width="160" :loading="true"></v-skeleton-loader>
+                                    </div>
+                                    <div class="account-list-cell-amount">
+                                        <v-skeleton-loader class="ebk-mgmt-skeleton ms-auto" type="text" width="100" :loading="true"></v-skeleton-loader>
+                                    </div>
+                                    <div class="account-list-cell-operation"></div>
+                                </div>
+                            </div>
 
-                        <v-row class="ps-4 pe-2 pe-md-4" v-if="!loading && activeAccountCategory && !hasAccount(activeAccountCategory)">
-                            <v-col cols="12">
-                                <span class="text-body-medium">{{ tt('No available account') }}</span>
-                            </v-col>
-                        </v-row>
+                            <div class="account-list-state" role="row" v-if="!loading && activeAccountCategory && !hasAccount(activeAccountCategory)">
+                                <div role="cell">
+                                    <state-panel type="error" :title="tt('Unable to retrieve account list')" v-if="loadError">
+                                        <template #actions>
+                                            <v-btn color="default" variant="outlined" :prepend-icon="mdiRefresh" @click="reload(true)">{{ tt('Retry') }}</v-btn>
+                                        </template>
+                                    </state-panel>
+                                    <state-panel type="empty" :title="tt('No available account')" v-else>
+                                        <template #actions>
+                                            <v-btn color="default" variant="outlined" :prepend-icon="mdiPlus" @click="add">{{ tt('Add') }}</v-btn>
+                                        </template>
+                                    </state-panel>
+                                </div>
+                            </div>
 
-                        <v-row class="ps-4 pe-4">
-                            <v-col cols="12">
-                                <draggable-list
-                                    class="list-group"
-                                    item-key="id"
-                                    handle=".drag-handle"
-                                    ghost-class="dragging-item"
-                                    :disabled="activeAccountCategoryVisibleAccountCount <= 1"
-                                    :list="allCategorizedAccountsMap[activeAccountCategory.type]!.accounts"
-                                    v-if="activeAccountCategory && allCategorizedAccountsMap[activeAccountCategory.type] && allCategorizedAccountsMap[activeAccountCategory.type]!.accounts && allCategorizedAccountsMap[activeAccountCategory.type]!.accounts.length"
-                                    @change="onMove"
-                                >
-                                    <template #item="{ element }">
-                                        <div class="list-group-item">
-                                            <v-card border class="card-title-with-bg account-card mb-4 h-auto" v-if="showHidden || !element.hidden">
-                                                <template #title>
-                                                    <div class="account-title d-flex align-center">
-                                                        <ItemIcon size="1.5rem" :icon-type="getAccountIconType(element.iconType)" :icon-id="element.icon"
-                                                                  :color="element.color" :hidden-status="element.hidden" />
-                                                        <span class="account-name text-truncate ms-2">{{ element.name }}</span>
-                                                        <small class="account-currency text-truncate ms-2 align-self-end">
-                                                            {{ accountCurrency(element) }}
-                                                        </small>
-                                                        <v-spacer/>
-                                                        <v-btn class="me-2" density="compact" color="default" variant="text"
-                                                               :aria-label="isSubAccountsExpanded(element) ? tt('Collapse Sub-accounts') : tt('Expand Sub-accounts')"
-                                                               :icon="true" :disabled="loading"
-                                                               v-if="element.type === AccountType.MultiSubAccounts.type"
-                                                               @click="toggleSubAccounts(element)">
-                                                            <v-icon :icon="isSubAccountsExpanded(element) ? mdiChevronUp : mdiChevronDown" size="20" />
-                                                            <v-tooltip activator="parent">{{ isSubAccountsExpanded(element) ? tt('Collapse Sub-accounts') : tt('Expand Sub-accounts') }}</v-tooltip>
-                                                        </v-btn>
-                                                        <span class="align-self-center">
-                                                            <v-icon :class="!loading && activeAccountCategoryVisibleAccountCount > 1 ? 'drag-handle' : 'disabled'"
-                                                                    :aria-label="tt('Drag to Reorder')" :icon="mdiDrag"/>
-                                                            <v-tooltip activator="parent" v-if="!loading && activeAccountCategoryVisibleAccountCount > 1">{{ tt('Drag to Reorder') }}</v-tooltip>
-                                                        </span>
-                                                    </div>
-
-                                                    <div class="mt-4" v-if="element.type === AccountType.MultiSubAccounts.type && isSubAccountsExpanded(element)">
-                                                        <v-btn-toggle
-                                                            class="account-subaccounts"
-                                                            variant="outlined"
-                                                            color="primary"
-                                                            density="compact"
-                                                            mandatory="force"
-                                                            rounded="xl"
-                                                            :disabled="loading"
-                                                            v-model="activeSubAccount[element.id]"
-                                                        >
-                                                            <v-btn :value="''">
-                                                                <span>{{ tt('All') }}</span>
-                                                            </v-btn>
-                                                            <template :key="subAccount.id" v-for="subAccount in element.subAccounts">
-                                                                <v-btn :value="subAccount.id" v-if="showHidden || !subAccount.hidden">
-                                                                    <ItemIcon size="1.5rem" :icon-type="getAccountIconType(subAccount.iconType)" :icon-id="subAccount.icon"
-                                                                              :color="subAccount.color" :hidden-status="subAccount.hidden" />
-                                                                    <span class="ms-2">{{ subAccount.name }}</span>
-                                                                </v-btn>
+                            <draggable-list
+                                class="account-list-body"
+                                role="rowgroup"
+                                item-key="id"
+                                handle=".drag-handle"
+                                ghost-class="dragging-item"
+                                :disabled="loading || activeAccountCategoryVisibleAccountCount <= 1"
+                                :list="allCategorizedAccountsMap[activeAccountCategory.type]!.accounts"
+                                v-if="activeAccountCategory && allCategorizedAccountsMap[activeAccountCategory.type] && allCategorizedAccountsMap[activeAccountCategory.type]!.accounts && allCategorizedAccountsMap[activeAccountCategory.type]!.accounts.length"
+                                @change="onMove"
+                            >
+                                <template #item="{ element }">
+                                    <div class="account-list-group ebk-mgmt-card">
+                                        <template v-if="showHidden || !element.hidden">
+                                            <div class="account-list-row ebk-mgmt-row" role="row"
+                                                 :class="{ 'ebk-mgmt-row--hidden': element.hidden }">
+                                                <div class="account-list-cell-name" role="cell">
+                                                    <span class="ebk-mgmt-drag" :class="{ 'drag-handle': !loading && activeAccountCategoryVisibleAccountCount > 1, 'disabled': loading || activeAccountCategoryVisibleAccountCount <= 1 }">
+                                                        <v-icon :aria-label="tt('Drag to Reorder')" :icon="mdiDrag" size="20"/>
+                                                        <v-tooltip activator="parent" v-if="!loading && activeAccountCategoryVisibleAccountCount > 1">{{ tt('Drag to Reorder') }}</v-tooltip>
+                                                    </span>
+                                                    <span class="ebk-mgmt-icon-tile ebk-mgmt-dimmable" aria-hidden="true">
+                                                        <ItemIcon size="1.25rem" :icon-type="getAccountIconType(element.iconType)" :icon-id="element.icon" :color="element.color" />
+                                                    </span>
+                                                    <div class="ebk-mgmt-name">
+                                                        <div class="ebk-mgmt-name-line">
+                                                            <span class="ebk-mgmt-name-text ebk-mgmt-dimmable">{{ element.name }}</span>
+                                                            <span class="ebk-mgmt-hidden-chip" v-if="element.hidden">
+                                                                <v-icon :icon="mdiEyeOffOutline" size="12" />
+                                                                {{ tt('Hidden') }}
+                                                            </span>
+                                                        </div>
+                                                        <span class="ebk-mgmt-meta ebk-mgmt-dimmable">
+                                                            <span>{{ accountCurrency(element) }}</span>
+                                                            <template v-if="element.comment">
+                                                                <span aria-hidden="true"> · </span>
+                                                                <span>{{ element.comment }}</span>
                                                             </template>
-                                                        </v-btn-toggle>
+                                                        </span>
+                                                        <v-tooltip activator="parent" location="bottom start" open-delay="600" v-if="element.comment">{{ element.comment }}</v-tooltip>
                                                     </div>
-                                                </template>
-
-                                                <v-divider/>
-
-                                                <v-card-text v-if="element.getAccountOrSubAccountComment(activeSubAccount[element.id])">
-                                                    {{ element.getAccountOrSubAccountComment(activeSubAccount[element.id]) }}
-                                                </v-card-text>
-
-                                                <v-card-text>
-                                                    <div class="d-flex account-toolbar align-center">
-                                                        <v-btn class="px-2" density="comfortable" color="default" variant="text"
-                                                               :disabled="loading" :prepend-icon="mdiListBoxOutline"
-                                                               :to="`/transaction/list?accountIds=${element.getAccountOrSubAccountId(activeSubAccount[element.id])}`">
-                                                            {{ tt('Transaction List') }}
-                                                        </v-btn>
-                                                        <v-btn class="ms-1" density="comfortable" color="default" variant="text"
-                                                               :disabled="loading" :prepend-icon="mdiInvoiceListOutline"
-                                                               @click="showReconciliationStatementDialog(element.getAccountOrSubAccount(activeSubAccount[element.id]))"
-                                                               v-if="element.type === AccountType.SingleAccount.type || element.getSubAccount(activeSubAccount[element.id])">
-                                                            {{ tt('Reconciliation Statement') }}
-                                                            <v-menu activator="parent" :open-on-hover="true">
-                                                                <v-list>
-                                                                    <template :key="dateRange.type"
-                                                                              v-for="dateRange in accountReconciliationStatementDateRanges(element.getAccountOrSubAccount(activeSubAccount[element.id]))">
+                                                    <v-btn class="ms-2" density="comfortable" size="small" color="default" variant="text"
+                                                           :aria-label="isSubAccountsExpanded(element) ? tt('Collapse Sub-accounts') : tt('Expand Sub-accounts')"
+                                                           :aria-expanded="isSubAccountsExpanded(element) ? 'true' : 'false'"
+                                                           :icon="true" :disabled="loading"
+                                                           v-if="element.type === AccountType.MultiSubAccounts.type"
+                                                           @click="toggleSubAccounts(element)">
+                                                        <v-icon :icon="isSubAccountsExpanded(element) ? mdiChevronUp : mdiChevronDown" size="20" />
+                                                        <v-tooltip activator="parent">{{ isSubAccountsExpanded(element) ? tt('Collapse Sub-accounts') : tt('Expand Sub-accounts') }}</v-tooltip>
+                                                    </v-btn>
+                                                </div>
+                                                <div class="account-list-cell-amount" role="cell">
+                                                    <span class="ebk-mgmt-amount account-balance">{{ accountBalance(element, '', showAccountBalance) }}</span>
+                                                    <span class="ebk-mgmt-amount-meta" v-if="canShowAvailableCredit(element) && accountAvailableCredit(element, showAccountBalance)">
+                                                        {{ tt('pageSpecific.accountListPage.availableBalance') }} {{ accountAvailableCredit(element, showAccountBalance) }}
+                                                    </span>
+                                                </div>
+                                                <div class="account-list-cell-operation" role="cell">
+                                                    <div class="ebk-mgmt-actions">
+                                                        <template v-if="element.type === AccountType.SingleAccount.type">
+                                                            <v-btn color="default" density="comfortable" variant="text" :icon="true"
+                                                                   :aria-label="tt('Transaction List')" :disabled="loading"
+                                                                   :to="`/transaction/list?accountIds=${element.id}`">
+                                                                <v-icon :icon="mdiListBoxOutline" size="20" />
+                                                                <v-tooltip activator="parent">{{ tt('Transaction List') }}</v-tooltip>
+                                                            </v-btn>
+                                                            <v-btn color="default" density="comfortable" variant="text" :icon="true"
+                                                                   :aria-label="tt('Reconciliation Statement')" :disabled="loading"
+                                                                   @click="showReconciliationStatementDialog(element)">
+                                                                <v-icon :icon="mdiInvoiceListOutline" size="20" />
+                                                                <v-tooltip activator="parent" location="top">{{ tt('Reconciliation Statement') }}</v-tooltip>
+                                                                <v-menu activator="parent" :open-on-hover="true" :open-on-click="false">
+                                                                    <v-list>
+                                                                        <v-list-subheader>{{ tt('Reconciliation Statement') }}</v-list-subheader>
                                                                         <v-list-item class="text-body-medium" density="compact"
-                                                                                     :value="dateRange.type">
-                                                                            <v-list-item-title class="cursor-pointer"
-                                                                                               @click="showReconciliationStatementDialog(element.getAccountOrSubAccount(activeSubAccount[element.id]), dateRange.type)">
-                                                                                <div class="d-flex align-center">
-                                                                                    <span class="text-body-medium ms-3">{{ dateRange.displayName }}</span>
-                                                                                </div>
-                                                                            </v-list-item-title>
-                                                                        </v-list-item>
-                                                                    </template>
-                                                                </v-list>
-                                                            </v-menu>
+                                                                                     :key="dateRange.type" :value="dateRange.type"
+                                                                                     :title="dateRange.displayName"
+                                                                                     v-for="dateRange in accountReconciliationStatementDateRanges(element)"
+                                                                                     @click="showReconciliationStatementDialog(element, dateRange.type)"></v-list-item>
+                                                                    </v-list>
+                                                                </v-menu>
+                                                            </v-btn>
+                                                        </template>
+                                                        <v-btn color="default" density="comfortable" variant="text" :icon="true"
+                                                               :aria-label="element.hidden ? tt('Show') : tt('Hide')" :disabled="loading"
+                                                               @click="hide(element, !element.hidden)">
+                                                            <v-icon :icon="element.hidden ? mdiEyeOutline : mdiEyeOffOutline" size="20" />
+                                                            <v-tooltip activator="parent">{{ element.hidden ? tt('Show') : tt('Hide') }}</v-tooltip>
                                                         </v-btn>
-                                                        <v-btn class="ms-1" density="comfortable" color="default" variant="text"
-                                                               :class="{ 'd-none': loading, 'hover-display': !loading }"
-                                                               :disabled="loading"
-                                                               :prepend-icon="element.isAccountOrSubAccountHidden(activeSubAccount[element.id]) ? mdiEyeOutline : mdiEyeOffOutline"
-                                                               v-if="!activeSubAccount[element.id] || element.getSubAccount(activeSubAccount[element.id])"
-                                                               @click="hide(element, element.getAccountOrSubAccount(activeSubAccount[element.id]), !element.isAccountOrSubAccountHidden(activeSubAccount[element.id]))">
-                                                            {{ element.isAccountOrSubAccountHidden(activeSubAccount[element.id]) ? tt('Show') : tt('Hide') }}
-                                                        </v-btn>
-                                                        <v-btn class="ms-1" density="comfortable" color="default" variant="text"
-                                                               :class="{ 'd-none': loading, 'hover-display': !loading }"
-                                                               :disabled="loading" :prepend-icon="mdiPencilOutline"
-                                                               v-if="!activeSubAccount[element.id] || element.getSubAccount(activeSubAccount[element.id])"
+                                                        <v-btn color="default" density="comfortable" variant="text" :icon="true"
+                                                               :aria-label="tt('Edit')" :disabled="loading"
                                                                @click="edit(element)">
-                                                            {{ tt('Edit') }}
+                                                            <v-icon :icon="mdiPencilOutline" size="20" />
+                                                            <v-tooltip activator="parent">{{ tt('Edit') }}</v-tooltip>
                                                         </v-btn>
-                                                        <v-btn class="ms-1" density="comfortable" color="default" variant="text"
-                                                               :class="{ 'd-none': loading, 'hover-display': !loading }"
-                                                               :disabled="loading" :prepend-icon="mdiDotsHorizontalCircleOutline"
-                                                               v-if="element.type === AccountType.SingleAccount.type || element.getSubAccount(activeSubAccount[element.id])">
-                                                            {{ tt('More') }}
-                                                            <v-menu activator="parent" :open-on-hover="true">
+                                                        <v-btn color="default" density="comfortable" variant="text" :icon="true"
+                                                               :aria-label="tt('More')" :disabled="loading"
+                                                               v-if="element.type === AccountType.SingleAccount.type">
+                                                            <v-icon :icon="mdiDotsHorizontalCircleOutline" size="20" />
+                                                            <v-tooltip activator="parent">{{ tt('More') }}</v-tooltip>
+                                                            <v-menu activator="parent">
                                                                 <v-list>
                                                                     <v-list-item class="text-body-medium" density="compact"
                                                                                  :title="tt('Mark as Reconciled')"
                                                                                  :prepend-icon="mdiReceiptTextCheckOutline"
-                                                                                 @click="updateLastReconciledTime(element.getAccountOrSubAccount(activeSubAccount[element.id]))"
+                                                                                 @click="updateLastReconciledTime(element)"
                                                                                  v-if="useLastReconciledTime"></v-list-item>
                                                                     <v-divider class="my-2" v-if="useLastReconciledTime" />
                                                                     <v-list-item class="text-body-medium" density="compact"
                                                                                  :title="tt('Move All Transactions')"
                                                                                  :prepend-icon="mdiSwapHorizontal"
-                                                                                 @click="moveAllTransactions(element.getAccountOrSubAccount(activeSubAccount[element.id]))"></v-list-item>
-                                                                    <v-list-item class="text-body-medium" density="compact"
+                                                                                 @click="moveAllTransactions(element)"></v-list-item>
+                                                                    <v-list-item class="text-body-medium text-error" density="compact"
                                                                                  :title="tt('Clear All Transactions')"
                                                                                  :prepend-icon="mdiDeleteSweepOutline"
-                                                                                 @click="clearAllTransactions(element.getAccountOrSubAccount(activeSubAccount[element.id]))"></v-list-item>
+                                                                                 @click="clearAllTransactions(element)"></v-list-item>
                                                                 </v-list>
                                                             </v-menu>
                                                         </v-btn>
-                                                        <v-btn class="ms-1" density="comfortable" color="default" variant="text"
-                                                               :class="{ 'd-none': loading, 'hover-display': !loading }"
-                                                               :disabled="loading" :prepend-icon="mdiDeleteOutline"
-                                                               v-if="!activeSubAccount[element.id] || element.getSubAccount(activeSubAccount[element.id])"
+                                                        <v-btn color="error" density="comfortable" variant="text" :icon="true"
+                                                               :aria-label="tt('Delete')" :disabled="loading"
                                                                @click="remove(element)">
-                                                            {{ tt('Delete') }}
+                                                            <v-icon :icon="mdiDeleteOutline" size="20" />
+                                                            <v-tooltip activator="parent">{{ tt('Delete') }}</v-tooltip>
                                                         </v-btn>
-                                                        <v-spacer/>
-                                                        <div class="d-flex align-center ms-2" v-if="element.category === AccountCategory.CreditCard.type">
-                                                            <div class="d-flex align-center">
-                                                                <span class="text-medium-emphasis me-3 pt-h1">{{ tt('pageSpecific.accountListPage.outstandingBalance') }}</span>
-                                                                <span class="account-balance">{{ accountBalance(element, activeSubAccount[element.id], showAccountBalance) }}</span>
-                                                            </div>
-                                                            <template v-if="!activeSubAccount[element.id] && canShowAvailableCredit(element) && accountAvailableCredit(element, showAccountBalance)">
-                                                                <v-divider vertical class="mx-3 my-1"/>
-                                                                <div class="d-flex align-center">
-                                                                    <span class="text-medium-emphasis me-3 pt-h1">{{ tt('pageSpecific.accountListPage.availableBalance') }}</span>
-                                                                    <span class="account-balance">{{ accountAvailableCredit(element, showAccountBalance) }}</span>
-                                                                </div>
-                                                            </template>
-                                                        </div>
-                                                        <span class="account-balance ms-2" v-else-if="element.category !== AccountCategory.CreditCard.type">{{ accountBalance(element, activeSubAccount[element.id], showAccountBalance) }}</span>
+                                                        <span class="ebk-mgmt-actions-divider" aria-hidden="true"></span>
+                                                        <v-btn class="ebk-mgmt-reveal" color="default" density="comfortable" variant="text" :icon="true"
+                                                               :aria-label="tt('Move Up')"
+                                                               :disabled="loading || !canMoveAccount(element, -1)"
+                                                               @click="moveAccount(element, -1)">
+                                                            <v-icon :icon="mdiArrowUp" size="18" />
+                                                            <v-tooltip activator="parent">{{ tt('Move Up') }}</v-tooltip>
+                                                        </v-btn>
+                                                        <v-btn class="ebk-mgmt-reveal" color="default" density="comfortable" variant="text" :icon="true"
+                                                               :aria-label="tt('Move Down')"
+                                                               :disabled="loading || !canMoveAccount(element, 1)"
+                                                               @click="moveAccount(element, 1)">
+                                                            <v-icon :icon="mdiArrowDown" size="18" />
+                                                            <v-tooltip activator="parent">{{ tt('Move Down') }}</v-tooltip>
+                                                        </v-btn>
                                                     </div>
-                                                </v-card-text>
-                                            </v-card>
-                                        </div>
-                                    </template>
-                                </draggable-list>
-                            </v-col>
-                        </v-row>
+                                                </div>
+                                            </div>
+
+                                            <template v-if="element.type === AccountType.MultiSubAccounts.type && isSubAccountsExpanded(element)">
+                                                <div class="account-list-row account-list-row--child ebk-mgmt-row" role="row"
+                                                     :class="{ 'ebk-mgmt-row--hidden': subAccount.hidden || element.hidden, 'account-list-row--child-last': isLastVisibleSubAccount(element, subAccount) }"
+                                                     :key="subAccount.id"
+                                                     v-for="subAccount in getVisibleSubAccounts(element)">
+                                                    <div class="account-list-cell-name" role="cell">
+                                                        <span class="account-list-guide" aria-hidden="true"></span>
+                                                        <span class="ebk-mgmt-icon-tile ebk-mgmt-dimmable" aria-hidden="true">
+                                                            <ItemIcon size="1.25rem" :icon-type="getAccountIconType(subAccount.iconType)" :icon-id="subAccount.icon" :color="subAccount.color" />
+                                                        </span>
+                                                        <div class="ebk-mgmt-name">
+                                                            <div class="ebk-mgmt-name-line">
+                                                                <span class="ebk-mgmt-name-text ebk-mgmt-dimmable">{{ subAccount.name }}</span>
+                                                                <span class="ebk-mgmt-hidden-chip" v-if="subAccount.hidden">
+                                                                    <v-icon :icon="mdiEyeOffOutline" size="12" />
+                                                                    {{ tt('Hidden') }}
+                                                                </span>
+                                                            </div>
+                                                            <span class="ebk-mgmt-meta ebk-mgmt-dimmable">
+                                                                <span>{{ getCurrencyName(subAccount.currency) }}</span>
+                                                                <template v-if="subAccount.comment">
+                                                                    <span aria-hidden="true"> · </span>
+                                                                    <span>{{ subAccount.comment }}</span>
+                                                                </template>
+                                                            </span>
+                                                            <v-tooltip activator="parent" location="bottom start" open-delay="600" v-if="subAccount.comment">{{ subAccount.comment }}</v-tooltip>
+                                                        </div>
+                                                    </div>
+                                                    <div class="account-list-cell-amount" role="cell">
+                                                        <span class="ebk-mgmt-amount account-balance">{{ accountBalance(element, subAccount.id, showAccountBalance) }}</span>
+                                                    </div>
+                                                    <div class="account-list-cell-operation" role="cell">
+                                                        <div class="ebk-mgmt-actions">
+                                                            <v-btn color="default" density="comfortable" variant="text" :icon="true"
+                                                                   :aria-label="tt('Transaction List')" :disabled="loading"
+                                                                   :to="`/transaction/list?accountIds=${subAccount.id}`">
+                                                                <v-icon :icon="mdiListBoxOutline" size="20" />
+                                                                <v-tooltip activator="parent">{{ tt('Transaction List') }}</v-tooltip>
+                                                            </v-btn>
+                                                            <v-btn color="default" density="comfortable" variant="text" :icon="true"
+                                                                   :aria-label="tt('Reconciliation Statement')" :disabled="loading"
+                                                                   @click="showReconciliationStatementDialog(subAccount)">
+                                                                <v-icon :icon="mdiInvoiceListOutline" size="20" />
+                                                                <v-tooltip activator="parent" location="top">{{ tt('Reconciliation Statement') }}</v-tooltip>
+                                                                <v-menu activator="parent" :open-on-hover="true" :open-on-click="false">
+                                                                    <v-list>
+                                                                        <v-list-subheader>{{ tt('Reconciliation Statement') }}</v-list-subheader>
+                                                                        <v-list-item class="text-body-medium" density="compact"
+                                                                                     :key="dateRange.type" :value="dateRange.type"
+                                                                                     :title="dateRange.displayName"
+                                                                                     v-for="dateRange in accountReconciliationStatementDateRanges(subAccount)"
+                                                                                     @click="showReconciliationStatementDialog(subAccount, dateRange.type)"></v-list-item>
+                                                                    </v-list>
+                                                                </v-menu>
+                                                            </v-btn>
+                                                            <v-btn color="default" density="comfortable" variant="text" :icon="true"
+                                                                   :aria-label="subAccount.hidden ? tt('Show') : tt('Hide')" :disabled="loading"
+                                                                   @click="hide(subAccount, !subAccount.hidden)">
+                                                                <v-icon :icon="subAccount.hidden ? mdiEyeOutline : mdiEyeOffOutline" size="20" />
+                                                                <v-tooltip activator="parent">{{ subAccount.hidden ? tt('Show') : tt('Hide') }}</v-tooltip>
+                                                            </v-btn>
+                                                            <v-btn color="default" density="comfortable" variant="text" :icon="true"
+                                                                   :aria-label="tt('Edit')" :disabled="loading"
+                                                                   @click="edit(element)">
+                                                                <v-icon :icon="mdiPencilOutline" size="20" />
+                                                                <v-tooltip activator="parent">{{ tt('Edit') }}</v-tooltip>
+                                                            </v-btn>
+                                                            <v-btn color="default" density="comfortable" variant="text" :icon="true"
+                                                                   :aria-label="tt('More')" :disabled="loading">
+                                                                <v-icon :icon="mdiDotsHorizontalCircleOutline" size="20" />
+                                                                <v-tooltip activator="parent">{{ tt('More') }}</v-tooltip>
+                                                                <v-menu activator="parent">
+                                                                    <v-list>
+                                                                        <v-list-item class="text-body-medium" density="compact"
+                                                                                     :title="tt('Mark as Reconciled')"
+                                                                                     :prepend-icon="mdiReceiptTextCheckOutline"
+                                                                                     @click="updateLastReconciledTime(subAccount)"
+                                                                                     v-if="useLastReconciledTime"></v-list-item>
+                                                                        <v-divider class="my-2" v-if="useLastReconciledTime" />
+                                                                        <v-list-item class="text-body-medium" density="compact"
+                                                                                     :title="tt('Move All Transactions')"
+                                                                                     :prepend-icon="mdiSwapHorizontal"
+                                                                                     @click="moveAllTransactions(subAccount)"></v-list-item>
+                                                                        <v-list-item class="text-body-medium text-error" density="compact"
+                                                                                     :title="tt('Clear All Transactions')"
+                                                                                     :prepend-icon="mdiDeleteSweepOutline"
+                                                                                     @click="clearAllTransactions(subAccount)"></v-list-item>
+                                                                    </v-list>
+                                                                </v-menu>
+                                                            </v-btn>
+                                                            <v-btn color="error" density="comfortable" variant="text" :icon="true"
+                                                                   :aria-label="tt('Delete')" :disabled="loading"
+                                                                   @click="remove(element, subAccount)">
+                                                                <v-icon :icon="mdiDeleteOutline" size="20" />
+                                                                <v-tooltip activator="parent">{{ tt('Delete') }}</v-tooltip>
+                                                            </v-btn>
+                                                            <span class="account-list-move-placeholder" aria-hidden="true"></span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </template>
+                                    </div>
+                                </template>
+                            </draggable-list>
+                        </div>
                     </v-card>
                 </v-window-item>
             </v-window>
@@ -345,6 +430,7 @@
 
 <script setup lang="ts">
 import ConfirmDialog from '@/components/desktop/ConfirmDialog.vue';
+import StatePanel from '@/components/common/StatePanel.vue';
 import EditDialog from './list/dialogs/EditDialog.vue';
 import ReconciliationStatementDialog from './list/dialogs/ReconciliationStatementDialog.vue';
 import MoveAllTransactionsDialog from '@/views/desktop/accounts/list/dialogs/MoveAllTransactionsDialog.vue';
@@ -381,7 +467,9 @@ import {
     mdiEyeOffOutline,
     mdiCalculatorVariantOutline,
     mdiRefresh,
-    mdiSquareRounded,
+    mdiPlus,
+    mdiArrowUp,
+    mdiArrowDown,
     mdiPencilOutline,
     mdiDotsHorizontalCircleOutline,
     mdiReceiptTextCheckOutline,
@@ -404,7 +492,7 @@ type ClearAllTransactionsDialogType = InstanceType<typeof ClearAllTransactionsDi
 
 const { lgAndUp } = useDisplay();
 
-const { tt, getAllDateRanges, getCurrencyName, joinMultiText } = useI18n();
+const { tt, getAllDateRanges, getCurrencyName, joinMultiText, formatNumberToLocalizedNumerals } = useI18n();
 
 const {
     loading,
@@ -416,7 +504,6 @@ const {
     firstDayOfWeek,
     fiscalYearStart,
     useLastReconciledTime,
-    allAccounts,
     allCategorizedAccountsMap,
     allAccountCount,
     netAssets,
@@ -441,7 +528,7 @@ const clearAllTransactionsDialog = useTemplateRef<ClearAllTransactionsDialogType
 
 const activeAccountCategoryType = ref<number>(defaultAccountCategory.value.type);
 const activeTab = ref<string>('accountPage');
-const activeSubAccount = ref<Record<string, string>>({});
+const loadError = ref<boolean>(false);
 const subAccountsExpandedStates = ref<Record<string, boolean>>({});
 const accountToShowReconciliationStatement = ref<Account | null>(null);
 const alwaysShowNav = ref<boolean>(lgAndUp.value);
@@ -488,15 +575,8 @@ function reload(force: boolean): void {
         force: force
     }).then(() => {
         loading.value = false;
+        loadError.value = false;
         displayOrderModified.value = false;
-
-        if (allAccounts.value) {
-            for (const account of allAccounts.value) {
-                if (account.type === AccountType.MultiSubAccounts.type && !activeSubAccount.value[account.id]) {
-                    activeSubAccount.value[account.id] = '';
-                }
-            }
-        }
 
         if (force) {
             desktopPageStore.addToast('Account list has been updated');
@@ -505,7 +585,10 @@ function reload(force: boolean): void {
         loading.value = false;
 
         if (error && error.isUpToDate) {
+            loadError.value = false;
             displayOrderModified.value = false;
+        } else if (!allAccountCount.value) {
+            loadError.value = true;
         }
 
         if (!error.processed) {
@@ -523,19 +606,78 @@ function isSubAccountsExpanded(account: Account): boolean {
 }
 
 function toggleSubAccounts(account: Account): void {
-    const expanded = !isSubAccountsExpanded(account);
-    subAccountsExpandedStates.value[account.id] = expanded;
+    subAccountsExpandedStates.value[account.id] = !isSubAccountsExpanded(account);
+}
 
-    if (!expanded) {
-        activeSubAccount.value[account.id] = '';
+function getVisibleSubAccounts(account: Account): Account[] {
+    if (!account.subAccounts) {
+        return [];
     }
+
+    return account.subAccounts.filter(subAccount => showHidden.value || !subAccount.hidden);
+}
+
+function isLastVisibleSubAccount(account: Account, subAccount: Account): boolean {
+    const visibleSubAccounts = getVisibleSubAccounts(account);
+    return visibleSubAccounts.length > 0 && visibleSubAccounts[visibleSubAccounts.length - 1]!.id === subAccount.id;
+}
+
+function getAdjacentVisibleAccountIndex(account: Account, direction: number): { from: number, to: number } | null {
+    if (!activeAccountCategory.value) {
+        return null;
+    }
+
+    const accounts = allCategorizedAccountsMap.value[activeAccountCategory.value.type]?.accounts;
+
+    if (!accounts) {
+        return null;
+    }
+
+    const from = accounts.findIndex(item => item.id === account.id);
+
+    if (from < 0) {
+        return null;
+    }
+
+    for (let to = from + direction; to >= 0 && to < accounts.length; to += direction) {
+        if (showHidden.value || !accounts[to]!.hidden) {
+            return { from, to };
+        }
+    }
+
+    return null;
+}
+
+function canMoveAccount(account: Account, direction: number): boolean {
+    return activeAccountCategoryVisibleAccountCount.value > 1 && !!getAdjacentVisibleAccountIndex(account, direction);
+}
+
+// non-drag alternative to the drag handle (guidelines §6.4), uses the same display order update as dragging
+function moveAccount(account: Account, direction: number): void {
+    const position = getAdjacentVisibleAccountIndex(account, direction);
+
+    if (!position) {
+        return;
+    }
+
+    accountsStore.changeAccountDisplayOrder({
+        accountId: account.id,
+        from: position.from,
+        to: position.to,
+        updateListOrder: true,
+        updateGlobalListOrder: true
+    }).then(() => {
+        displayOrderModified.value = true;
+    }).catch(error => {
+        desktopPageStore.addErrorToast(error);
+    });
 }
 
 function accountCurrency(account: Account): string | null {
     if (account.type === AccountType.SingleAccount.type) {
         return getCurrencyName(account.currency);
     } else if (account.type === AccountType.MultiSubAccounts.type) {
-        const subAccountCurrencies = account.getSubAccountCurrencies(showHidden.value, activeSubAccount.value[account.id])
+        const subAccountCurrencies = account.getSubAccountCurrencies(showHidden.value, undefined)
             .map(currencyCode => getCurrencyName(currencyCode));
         return joinMultiText(subAccountCurrencies);
     } else {
@@ -668,17 +810,13 @@ function clearAllTransactions(account: Account): void {
     });
 }
 
-function hide(account: Account, targetAccount: Account, hidden: boolean): void {
+function hide(targetAccount: Account, hidden: boolean): void {
     loading.value = true;
 
     accountsStore.hideAccount({
         account: targetAccount,
         hidden: hidden
     }).then(() => {
-        if (hidden && !showHidden.value && activeSubAccount.value[account.id]) {
-            activeSubAccount.value[account.id] = '';
-        }
-
         loading.value = false;
     }).catch(error => {
         loading.value = false;
@@ -689,22 +827,21 @@ function hide(account: Account, targetAccount: Account, hidden: boolean): void {
     });
 }
 
-function remove(account: Account): void {
-    if (activeSubAccount.value[account.id]) {
-        const subAccount: Account | null = account.getSubAccount(activeSubAccount.value[account.id]);
+function remove(account: Account, targetSubAccount?: Account): void {
+    if (targetSubAccount) {
+        const subAccount: Account | null = account.getSubAccount(targetSubAccount.id);
 
         if (!subAccount) {
             desktopPageStore.addToast('Unable to delete this sub-account');
             return;
         }
 
-        confirmDialog.value?.open('Are you sure you want to delete this sub-account?').then(() => {
+        confirmDialog.value?.open('Are you sure you want to delete this sub-account?', { color: 'error' }).then(() => {
             loading.value = true;
 
             accountsStore.deleteSubAccount({
                 subAccount: subAccount
             }).then(() => {
-                activeSubAccount.value[account.id] = '';
                 loading.value = false;
             }).catch(error => {
                 loading.value = false;
@@ -715,7 +852,7 @@ function remove(account: Account): void {
             });
         });
     } else {
-        confirmDialog.value?.open('Are you sure you want to delete this account?').then(() => {
+        confirmDialog.value?.open('Are you sure you want to delete this account?', { color: 'error' }).then(() => {
             loading.value = true;
 
             accountsStore.deleteAccount({
@@ -810,98 +947,165 @@ reload(false);
 </script>
 
 <style>
-.account-category-tabs .nav-link {
-    height: calc(var(--v-tabs-height) * 1.5);
-}
-
-.accounts-overview-title {
-    line-height: 2rem !important;
+.account-category-tabs .nav-link > a {
     min-height: 52px;
+}
+
+.account-category-nav-title {
     display: flex;
-    align-items: flex-end;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.2;
 }
 
-.accounts-overview-amount {
-    font-size: 1.5rem;
-    color: rgba(var(--v-theme-on-background), var(--v-high-emphasis-opacity));
-    overflow: hidden;
-    text-overflow: ellipsis;
+.account-category-nav-balance {
+    color: var(--ebk-color-text-secondary);
+    font-size: 0.75rem;
+    font-variant-numeric: var(--ebk-font-numeric);
 }
 
-.accounts-overview-subtitle {
-    font-size: 1rem;
-    line-height: 1.75rem;
+.account-list-panel {
+    min-height: min(780px, calc(100vh - var(--ebk-shell-header-height, 64px) - 2rem));
 }
 
-.account-card {
-    > .v-card-item {
-        padding-top: 0.875rem;
-        padding-bottom: 0.875rem;
+/* Account table: grid rows so each multi-account can carry its indented sub-account rows while dragging as one item */
+.account-list {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(8rem, auto) auto;
+}
+
+/* every wrapper level shares the table columns so amounts and actions line up across rows */
+.account-list > *,
+.account-list-body > *,
+.account-list-group > * {
+    grid-column: 1 / -1;
+}
+
+.account-list-body,
+.account-list-group,
+.account-list-skeleton,
+.account-list-head,
+.account-list-row {
+    display: grid;
+    grid-template-columns: subgrid;
+}
+
+.account-list-head,
+.account-list-row {
+    align-items: center;
+    column-gap: var(--ebk-space-3);
+    padding-inline: var(--ebk-space-4) var(--ebk-space-2);
+}
+
+.account-list-group:empty {
+    display: none;
+}
+
+.account-list-head {
+    min-height: 40px;
+    border-block-end: 1px solid var(--ebk-color-hairline);
+    background-color: var(--ebk-color-surface-sunken);
+    color: var(--ebk-color-text-secondary);
+    font-size: var(--ebk-font-technical-size);
+    font-weight: var(--ebk-font-technical-weight);
+    letter-spacing: var(--ebk-font-technical-letter-spacing);
+
+    &:lang(en), &:lang(de), &:lang(es), &:lang(fr), &:lang(it), &:lang(nl), &:lang(pl), &:lang(pt), &:lang(ro), &:lang(sk), &:lang(sl), &:lang(tr), &:lang(vi) {
+        text-transform: uppercase;
+    }
+}
+
+.account-list-row {
+    min-height: 56px;
+    padding-block: var(--ebk-space-1);
+    border-block-end: 1px solid var(--ebk-color-hairline);
+    transition: background-color var(--ebk-motion-duration-xs) var(--ebk-motion-ease-standard);
+
+    &:hover {
+        background-color: rgba(var(--v-theme-on-surface), 0.04);
+    }
+}
+
+.account-list-cell-name {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}
+
+.account-list-cell-amount {
+    min-width: 0;
+    text-align: end;
+    white-space: nowrap;
+}
+
+.account-list-cell-operation {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.account-list-row--child {
+    position: relative;
+    min-height: 48px;
+    background-color: rgba(var(--ebk-color-surface-sunken-rgb), 0.45);
+
+    .account-list-cell-name {
+        padding-inline-start: 3.75rem;
     }
 
-    .account-title {
-        font-size: 1rem;
-        line-height: 1.5rem !important;
+    .ebk-mgmt-icon-tile {
+        width: 28px;
+        height: 28px;
+    }
+}
+
+/* nested child guide: vertical hairline from the parent icon plus a short branch */
+.account-list-guide {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: calc(var(--ebk-space-4) + 3rem);
+    width: 0.75rem;
+    pointer-events: none;
+
+    &::before,
+    &::after {
+        content: "";
+        position: absolute;
+        inset-inline-start: 0;
     }
 
-    .account-title .account-name {
-        color: rgba(var(--v-theme-on-background), var(--v-high-emphasis-opacity));
+    &::before {
+        inset-block: 0;
+        border-inline-start: 1px solid var(--ebk-color-hairline);
     }
 
-    .account-currency {
-        font-size: 0.8rem;
-        color: rgba(var(--v-theme-on-background), var(--v-medium-emphasis-opacity));
+    &::after {
+        inset-block-start: 50%;
+        width: 0.75rem;
+        border-block-start: 1px solid var(--ebk-color-hairline);
     }
+}
 
-    .account-subaccounts {
-        overflow-x: auto;
-        white-space: nowrap;
-        min-height: 34px;
+.account-list-row--child-last .account-list-guide::before {
+    inset-block-end: 50%;
+}
 
-        &.v-btn-toggle {
-            height: auto !important;
-            padding: 0;
-            border: none;
+/* keeps sub-account actions aligned with the parent row, which ends with the divider and the two move buttons */
+.account-list-move-placeholder {
+    width: calc(var(--ebk-space-1) * 2 + 1px + 2px + 72px);
+}
 
-            > .v-btn {
-                width: auto !important;
-                border: thin solid rgba(var(--v-border-color), var(--v-border-opacity));
+.account-list-state {
+    padding: var(--ebk-space-4);
+}
 
-                &:not(:first-child) {
-                    border-top-left-radius: 0;
-                    border-bottom-left-radius: 0;
-                    border-left: none;
-                }
+.account-list-group.dragging-item {
+    opacity: 0.6;
+}
 
-                &:not(:last-child) {
-                    border-top-right-radius: 0;
-                    border-bottom-right-radius: 0;
-                }
-            }
-        }
-    }
-
-    .account-toolbar {
-        overflow-x: auto;
-        white-space: nowrap;
-
-        .v-btn {
-            padding: 0 12px;
-            min-height: 32px;
-        }
-
-        .hover-display {
-            display: none;
-        }
-
-        &:hover .hover-display {
-            display: inline-flex;
-        }
-    }
-
-    .account-balance {
-        font-size: 1.25rem;
-        color: rgba(var(--v-theme-on-background), var(--v-high-emphasis-opacity));
+@media (forced-colors: active) {
+    .account-list-guide::before,
+    .account-list-guide::after {
+        border-color: CanvasText;
     }
 }
 </style>

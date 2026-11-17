@@ -2,8 +2,10 @@ package storage
 
 import (
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/mayswind/ezbookkeeping/pkg/core"
 	"github.com/mayswind/ezbookkeeping/pkg/settings"
@@ -78,6 +80,42 @@ func (s *LocalFileSystemObjectStorage) Delete(ctx core.Context, path string) err
 	}
 
 	return nil
+}
+
+// List returns the paths of all the objects in this storage
+func (s *LocalFileSystemObjectStorage) List(ctx core.Context) ([]string, error) {
+	paths := make([]string, 0)
+
+	err := filepath.WalkDir(s.rootPath, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			if os.IsNotExist(err) && path == s.rootPath {
+				return filepath.SkipDir
+			}
+
+			return err
+		}
+
+		if entry.IsDir() || !entry.Type().IsRegular() {
+			return nil
+		}
+
+		relativePath, err := filepath.Rel(s.rootPath, path)
+
+		if err != nil {
+			return err
+		}
+
+		paths = append(paths, filepath.ToSlash(relativePath))
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	sort.Strings(paths)
+
+	return paths, nil
 }
 
 func (s *LocalFileSystemObjectStorage) getFinalPath(path string) string {

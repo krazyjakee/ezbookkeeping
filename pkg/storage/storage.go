@@ -8,4 +8,7 @@ type ObjectStorage interface {
 	Read(ctx core.Context, path string) (object ObjectInStorage, exists bool, err error)
 	Save(ctx core.Context, path string, object ObjectInStorage) error
 	Delete(ctx core.Context, path string) error
+
+	// List returns the paths (relative to the root path of this storage, separated by "/") of all the objects in this storage
+	List(ctx core.Context) ([]string, error)
 }

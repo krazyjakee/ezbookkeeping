@@ -1,85 +1,56 @@
 <template>
-    <div class="layout-wrapper">
-        <router-link to="/">
-            <div class="auth-logo d-flex align-start gap-x-3">
-                <img alt="logo" class="login-page-logo" :src="APPLICATION_LOGO_PATH" />
-                <span class="auth-app-title">{{ tt('global.app.title') }}</span>
+    <auth-page-layout illustration="unlock"
+                      :label="tt('Application Lock')"
+                      :title="tt('Unlock Application')"
+                      :version="version"
+                      :busy="unlocking || verifyingByWebAuthn"
+                      :status-text="errorMessage">
+        <template #message>
+            <p class="ma-0" v-if="isWebAuthnAvailable">{{ tt('Please enter your PIN code or use WebAuthn to unlock application') }}</p>
+            <p class="ma-0" v-else>{{ tt('Please enter your PIN code to unlock application') }}</p>
+        </template>
+
+        <v-form class="auth-access-form" @submit.prevent>
+            <div>
+                <span class="auth-access-field-label ebk-technical-heading">{{ tt('PIN Code') }}</span>
+                <pin-code-input :disabled="unlocking || verifyingByWebAuthn" :autofocus="true"
+                                :secure="true" :length="6" :auto-confirm="true"
+                                v-model="pinCode" @pincode:confirm="unlockByPin" />
             </div>
-        </router-link>
-        <v-row no-gutters class="auth-wrapper">
-            <v-col cols="12" md="8" class="auth-image-background d-none d-md-flex align-center justify-center position-relative">
-                <auth-illustration variant="unlock" />
-            </v-col>
-            <v-col cols="12" md="4" class="auth-card d-flex flex-column">
-                <div class="d-flex align-center justify-center h-100">
-                    <v-card variant="flat" class="w-100 mt-0 px-4 pt-12" max-width="500">
-                        <v-card-text class="py-0">
-                            <div class="text-headline-small mb-2">{{ tt('Unlock Application') }}</div>
-                            <div class="auth-message text-body-large mb-0" v-if="isWebAuthnAvailable">{{ tt('Please enter your PIN code or use WebAuthn to unlock application') }}</div>
-                            <div class="auth-message text-body-large mb-0" v-else-if="!isWebAuthnAvailable">{{ tt('Please enter your PIN code to unlock application') }}</div>
-                        </v-card-text>
 
-                        <v-card-text class="pb-0 mb-6">
-                            <v-form>
-                                <v-row>
-                                    <v-col cols="12">
-                                        <pin-code-input :disabled="unlocking || verifyingByWebAuthn" :autofocus="true"
-                                                        :secure="true" :length="6" :auto-confirm="true"
-                                                        v-model="pinCode" @pincode:confirm="unlockByPin" />
-                                    </v-col>
+            <v-btn block size="large" color="primary"
+                   :loading="unlocking && !verifyingByWebAuthn"
+                   :disabled="unlocking || verifyingByWebAuthn || !isPinCodeValid(pinCode)"
+                   @click="unlockByPin(pinCode)">
+                {{ tt('Unlock with PIN Code') }}
+            </v-btn>
 
-                                    <v-col cols="12">
-                                        <v-btn block :disabled="unlocking || verifyingByWebAuthn || !isPinCodeValid(pinCode)"
-                                               @click="unlockByPin(pinCode)">
-                                            {{ tt('Unlock with PIN Code') }}
-                                        </v-btn>
-                                    </v-col>
+            <div class="auth-access-divider" v-if="isWebAuthnAvailable">{{ tt('or') }}</div>
 
-                                    <v-col cols="12" v-if="isWebAuthnAvailable">
-                                        <v-btn block variant="tonal" :disabled="unlocking || verifyingByWebAuthn"
-                                               @click="unlockByWebAuthn">
-                                            {{ tt('Unlock with WebAuthn') }}
-                                            <v-progress-circular indeterminate size="22" class="ms-2" v-if="verifyingByWebAuthn"></v-progress-circular>
-                                        </v-btn>
-                                    </v-col>
+            <v-btn block size="large" variant="outlined" color="default"
+                   :loading="verifyingByWebAuthn"
+                   :disabled="unlocking || verifyingByWebAuthn"
+                   @click="unlockByWebAuthn" v-if="isWebAuthnAvailable">
+                {{ tt('Unlock with WebAuthn') }}
+            </v-btn>
+        </v-form>
 
-                                    <v-col cols="12" class="text-center text-body-large mt-2">
-                                        <span class="me-1">{{ tt('Can\'t Unlock?') }}</span>
-                                        <a class="text-primary" href="javascript:void(0);" @click="relogin">
-                                            {{ tt('Re-login') }}
-                                        </a>
-                                    </v-col>
-                                </v-row>
-                            </v-form>
-                        </v-card-text>
-                    </v-card>
-                </div>
-                <v-spacer/>
-                <div class="d-flex align-center justify-center">
-                    <v-card variant="flat" class="w-100 px-4 pb-3" max-width="500">
-                        <v-card-text class="pt-0">
-                            <div class="text-center">
-                                <language-select-button :disabled="unlocking || verifyingByWebAuthn" @error="desktopPageStore.addErrorToast" />
-                            </div>
+        <div class="auth-access-secondary auth-links">
+            <div>
+                <span class="me-1">{{ tt('Can\'t Unlock?') }}</span>
+                <a href="javascript:void(0);" :class="{ 'disabled': unlocking || verifyingByWebAuthn }" @click="relogin">{{ tt('Re-login') }}</a>
+            </div>
+        </div>
 
-                            <v-divider class="mt-2 mb-3" />
-
-                            <div class="auth-powered-by text-center">
-                                <span>Powered by </span>
-                                <a href="https://github.com/krazyjakee/ezbookkeeping" target="_blank">ezrbookkeeping</a>&nbsp;<span>{{ version }}</span>
-                            </div>
-                        </v-card-text>
-                    </v-card>
-                </div>
-            </v-col>
-        </v-row>
-
-        <confirm-dialog ref="confirmDialog"/>
-    </div>
+        <template #dialogs>
+            <confirm-dialog ref="confirmDialog"/>
+        </template>
+    </auth-page-layout>
 </template>
 
 <script setup lang="ts">
 import ConfirmDialog from '@/components/desktop/ConfirmDialog.vue';
+import AuthPageLayout from '@/components/desktop/AuthPageLayout.vue';
 
 import { ref, useTemplateRef } from 'vue';
 import { useRouter } from 'vue-router';
@@ -90,8 +61,6 @@ import { useUnlockPageBase } from '@/views/base/UnlockPageBase.ts';
 import { useSettingsStore } from '@/stores/setting.ts';
 import { useUserStore } from '@/stores/user.ts';
 import { useDesktopPageStore } from '@/stores/desktopPage.ts';
-
-import { APPLICATION_LOGO_PATH } from '@/consts/asset.ts';
 
 import {
     isWebAuthnSupported,
@@ -120,6 +89,7 @@ const confirmDialog = useTemplateRef<ConfirmDialogType>('confirmDialog');
 
 const unlocking = ref<boolean>(false);
 const verifyingByWebAuthn = ref<boolean>(false);
+const errorMessage = ref<string | null>(null);
 
 function unlockByWebAuthn(): void {
     if (unlocking.value) {
@@ -129,21 +99,22 @@ function unlockByWebAuthn(): void {
     const webAuthnCredentialId = getWebAuthnCredentialId();
 
     if (!userStore.currentUserBasicInfo || !webAuthnCredentialId) {
-        desktopPageStore.addToast('An error occurred');
+        errorMessage.value = tt('An error occurred');
         return;
     }
 
     if (!settingsStore.appSettings.applicationLockWebAuthn || !hasWebAuthnConfig()) {
-        desktopPageStore.addToast('WebAuthn is not enabled');
+        errorMessage.value = tt('WebAuthn is not enabled');
         return;
     }
 
     if (!isWebAuthnSupported()) {
-        desktopPageStore.addToast('WebAuth is not supported on this device');
+        errorMessage.value = tt('WebAuth is not supported on this device');
         return;
     }
 
     verifyingByWebAuthn.value = true;
+    errorMessage.value = null;
 
     verifyWebAuthnCredential(
         userStore.currentUserBasicInfo,
@@ -168,20 +139,20 @@ function unlockByWebAuthn(): void {
             });
         } else {
             logger.error('failed to unlock with webauthn');
-            desktopPageStore.addToast('Failed to authenticate with WebAuthn');
+            errorMessage.value = tt('Failed to authenticate with WebAuthn');
         }
     }).catch(error => {
         verifyingByWebAuthn.value = false;
         logger.error('failed to use webauthn to verify', error);
 
         if (error.notSupported) {
-            desktopPageStore.addToast('WebAuth is not supported on this device');
+            errorMessage.value = tt('WebAuth is not supported on this device');
         } else if (error.name === 'NotAllowedError') {
-            desktopPageStore.addToast('User has canceled authentication');
+            errorMessage.value = tt('User has canceled authentication');
         } else if (error.invalid) {
-            desktopPageStore.addToast('Failed to authenticate with WebAuthn');
+            errorMessage.value = tt('Failed to authenticate with WebAuthn');
         } else {
-            desktopPageStore.addToast('User has canceled or this device does not support WebAuthn');
+            errorMessage.value = tt('User has canceled or this device does not support WebAuthn');
         }
     });
 }
@@ -191,10 +162,12 @@ function unlockByPin(pinCode: string): void {
         return;
     }
 
+    errorMessage.value = null;
+
     const user = userStore.currentUserBasicInfo;
 
     if (!user || !user.username) {
-        desktopPageStore.addToast('An error occurred');
+        errorMessage.value = tt('An error occurred');
         return;
     }
 
@@ -216,11 +189,11 @@ function unlockByPin(pinCode: string): void {
             });
         } else {
             logger.error('failed to unlock with pin code');
-            desktopPageStore.addToast('Incorrect PIN code');
+            errorMessage.value = tt('Incorrect PIN code');
         }
     } catch (ex) {
         logger.error('failed to unlock with pin code', ex);
-        desktopPageStore.addToast('Incorrect PIN code');
+        errorMessage.value = tt('Incorrect PIN code');
     }
 }
 

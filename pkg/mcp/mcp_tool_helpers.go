@@ -2,7 +2,6 @@ package mcp
 
 import (
 	"encoding/json/v2"
-	"math/big"
 	"reflect"
 	"strconv"
 	"strings"
@@ -323,20 +322,4 @@ func getMCPCategoryTypeByTransactionType(transactionType string) models.Transact
 	default:
 		return 0
 	}
-}
-
-// getMCPDisplayBalances returns the signed accounting balance and the displayed balance of the account.
-// For liability accounts (credit card and debt), the balance is stored as a signed accounting balance (negative means money owed),
-// and the displayed (outstanding) balance is the negated value (positive means money owed), which is the same as the web interface shows.
-func getMCPDisplayBalances(account *models.Account) (signedBalance string, displayBalance string, outstandingBalance string) {
-	signedBalance = utils.FormatAmount(account.Balance)
-
-	if account.Category.IsLiability() {
-		outstandingBalance = utils.FormatBigIntAmount(new(big.Int).Neg(big.NewInt(account.Balance)))
-		displayBalance = outstandingBalance
-	} else {
-		displayBalance = signedBalance
-	}
-
-	return signedBalance, displayBalance, outstandingBalance
 }

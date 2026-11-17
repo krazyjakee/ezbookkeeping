@@ -89,7 +89,6 @@
                     <f7-list strong inset dividers accordion-list class="combination-list-content" v-else-if="categories && categories.length">
                         <f7-list-item checkbox
                                       :class="{ 'has-child-list-item': category.subCategories && category.subCategories.length > 0 }"
-                                      :title="category.name"
                                       :value="category.id"
                                       :checked="isSubCategoriesAllChecked(category, filterCategoryIds)"
                                       :indeterminate="isSubCategoriesHasButNotAllChecked(category, filterCategoryIds)"
@@ -97,29 +96,32 @@
                                       v-for="category in categories"
                                       @change="updateAllSubCategoriesSelected">
                             <template #media>
-                                <ItemIcon :icon-type="getCategoryIconType(category.iconType)" :icon-id="category.icon" :color="category.color">
-                                    <f7-badge color="gray" class="right-bottom-icon" v-if="category.hidden">
-                                        <f7-icon f7="eye_slash_fill"></f7-icon>
-                                    </f7-badge>
-                                </ItemIcon>
+                                <ItemIcon :icon-type="getCategoryIconType(category.iconType)" :icon-id="category.icon" :color="category.color" :class="{ 'ebk-m-dimmed': category.hidden }" />
+                            </template>
+                            <template #title>
+                                <span class="ebk-m-title-line">
+                                    <span class="ebk-m-title-text" :class="{ 'ebk-m-dimmed': category.hidden }">{{ category.name }}</span>
+                                    <span class="ebk-m-hidden-chip" v-if="category.hidden">{{ tt('Hidden') }}</span>
+                                </span>
                             </template>
 
                             <template #root>
-                                <ul class="padding-inline-start"
+                                <ul class="padding-inline-start ebk-m-nested-guide-list"
                                     v-if="category.subCategories && category.subCategories.length > 0">
                                     <f7-list-item checkbox
-                                                  :title="subCategory.name"
                                                   :value="subCategory.id"
                                                   :checked="isCategoryChecked(subCategory, filterCategoryIds)"
                                                   :key="subCategory.id"
                                                   v-for="subCategory in category.subCategories"
                                                   @change="updateCategorySelected">
                                         <template #media>
-                                            <ItemIcon :icon-type="getCategoryIconType(subCategory.iconType)" :icon-id="subCategory.icon" :color="subCategory.color">
-                                                <f7-badge color="gray" class="right-bottom-icon" v-if="subCategory.hidden">
-                                                    <f7-icon f7="eye_slash_fill"></f7-icon>
-                                                </f7-badge>
-                                            </ItemIcon>
+                                            <ItemIcon :icon-type="getCategoryIconType(subCategory.iconType)" :icon-id="subCategory.icon" :color="subCategory.color" :class="{ 'ebk-m-dimmed': subCategory.hidden }" />
+                                        </template>
+                                        <template #title>
+                                            <span class="ebk-m-title-line">
+                                                <span class="ebk-m-title-text" :class="{ 'ebk-m-dimmed': subCategory.hidden }">{{ subCategory.name }}</span>
+                                                <span class="ebk-m-hidden-chip" v-if="subCategory.hidden">{{ tt('Hidden') }}</span>
+                                            </span>
                                         </template>
                                     </f7-list-item>
                                 </ul>

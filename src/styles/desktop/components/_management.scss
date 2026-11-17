@@ -1,0 +1,610 @@
+@use '../../common/tokens' as ebk;
+
+/* Management lists and data transfer (#33, design guidelines §6.4)
+ * accounts, categories, tags, exchange rates, custom icons, import presets, data management and import/export
+ */
+
+/* Panel with a header strip (§4.1) */
+.ebk-mgmt-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+.ebk-mgmt-header {
+    flex-wrap: wrap;
+    row-gap: var(--ebk-space-2);
+    padding-block: var(--ebk-space-2);
+}
+
+.ebk-mgmt-header-label {
+    margin: 0;
+    overflow: hidden;
+    color: var(--ebk-color-text-primary);
+    font: inherit;
+    text-overflow: ellipsis;
+}
+
+.ebk-mgmt-header-meta {
+    color: var(--ebk-color-text-secondary);
+    font-weight: 400;
+    letter-spacing: normal;
+    text-transform: none;
+    white-space: nowrap;
+}
+
+.ebk-mgmt-header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--ebk-space-2);
+    font-weight: 400;
+}
+
+.ebk-mgmt-header-menu-toggle {
+    margin-inline-start: calc(var(--ebk-space-2) * -1);
+}
+
+/* Summary line under the header strip (label · value · label · value) */
+.ebk-mgmt-summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: var(--ebk-space-3);
+    row-gap: var(--ebk-space-1);
+    min-height: 44px;
+    padding: var(--ebk-space-1) var(--ebk-space-4);
+    border-block-end: 1px solid var(--ebk-color-hairline);
+}
+
+.ebk-mgmt-summary-item {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--ebk-space-2);
+}
+
+.ebk-mgmt-summary-label {
+    color: var(--ebk-color-text-secondary);
+}
+
+.ebk-mgmt-summary-value {
+    color: var(--ebk-color-text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+    font-variant-numeric: var(--ebk-font-numeric);
+}
+
+.ebk-mgmt-summary-separator {
+    color: var(--ebk-color-text-secondary);
+}
+
+/* Side panel module (account summary, tag group list, data source, ...) */
+.ebk-mgmt-side-item {
+    margin-block-end: var(--ebk-space-3);
+    list-style: none;
+}
+
+.ebk-mgmt-side-panel {
+    box-shadow: none;
+}
+
+.ebk-mgmt-side-panel-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ebk-space-1);
+    padding: var(--ebk-space-3);
+}
+
+.ebk-mgmt-kv {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+
+    & + & {
+        margin-block-start: var(--ebk-space-2);
+    }
+}
+
+.ebk-mgmt-kv-label {
+    color: var(--ebk-color-text-secondary);
+}
+
+.ebk-mgmt-kv-value {
+    overflow: hidden;
+    color: var(--ebk-color-text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+    font-variant-numeric: var(--ebk-font-numeric);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ebk-mgmt-side-section-title {
+    padding-inline: var(--ebk-space-4);
+    margin-block: var(--ebk-space-3) var(--ebk-space-1);
+    color: var(--ebk-color-text-secondary);
+}
+
+/* In-panel sub-navigation column (categories, tags, exchange rates) */
+.ebk-mgmt-subnav.v-navigation-drawer {
+    border-inline-end: 1px solid var(--ebk-color-hairline) !important;
+    background-color: var(--ebk-color-surface);
+}
+
+.ebk-mgmt-subnav-section {
+    padding: var(--ebk-space-3) var(--ebk-space-4);
+    border-block-end: 1px solid var(--ebk-color-hairline);
+}
+
+.ebk-mgmt-subnav-title {
+    display: block;
+    padding: var(--ebk-space-3) var(--ebk-space-4) var(--ebk-space-1);
+    color: var(--ebk-color-text-secondary);
+}
+
+.ebk-mgmt-subnav-tabs.v-tabs--vertical {
+    .v-tab {
+        justify-content: flex-start;
+        min-height: 40px;
+        text-transform: none;
+        letter-spacing: normal;
+    }
+}
+
+.ebk-mgmt-subnav-tabs .v-tab .v-btn__content {
+    width: 100%;
+    min-width: 0;
+}
+
+.ebk-mgmt-subnav-tab-content {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    gap: var(--ebk-space-2);
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.ebk-mgmt-subnav-tab-count {
+    margin-inline-start: auto;
+    padding-inline-start: var(--ebk-space-2);
+    color: var(--ebk-color-text-secondary);
+    font-size: 0.75rem;
+    font-variant-numeric: var(--ebk-font-numeric);
+}
+
+/* Data table rows (§4.3) */
+.v-table.ebk-mgmt-table > .v-table__wrapper > table {
+    th,
+    td {
+        white-space: nowrap;
+    }
+
+    .ebk-mgmt-column-name {
+        width: 100%;
+        max-width: 0;
+    }
+
+    .ebk-mgmt-column-amount {
+        min-width: 140px;
+        text-align: end;
+    }
+
+    .ebk-mgmt-column-operation {
+        width: 1%;
+        padding-inline: var(--ebk-space-2);
+        text-align: end;
+    }
+
+    .ebk-mgmt-column-state {
+        padding: var(--ebk-space-4) !important;
+        white-space: normal;
+    }
+}
+
+.ebk-mgmt-row > td {
+    height: var(--ebk-density-table-row-height) !important;
+    padding-block: 4px !important;
+}
+
+.ebk-mgmt-row-content {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}
+
+/* Hidden items: dimmed plus a "Hidden" chip (§6.4) */
+.ebk-mgmt-row--hidden .ebk-mgmt-dimmable {
+    opacity: 0.55;
+}
+
+.ebk-mgmt-hidden-chip {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 2px;
+    margin-inline-start: var(--ebk-space-2);
+    padding-inline: var(--ebk-space-2);
+    border: 1px solid var(--ebk-color-hairline);
+    border-radius: var(--ebk-radius-pill);
+    color: var(--ebk-color-text-secondary);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    line-height: 1.125rem;
+    white-space: nowrap;
+}
+
+/* Nested children: indented with a hairline guide (§6.4).
+ * The guide runs under the centre of the parent icon (drag handle 24px + 8px gap + half of the 32px tile). */
+.ebk-mgmt-row--child .ebk-mgmt-column-name {
+    position: relative;
+    padding-inline-start: calc(var(--ebk-space-4) + 3.75rem) !important;
+
+    &::before,
+    &::after {
+        content: "";
+        position: absolute;
+        pointer-events: none;
+    }
+
+    // vertical guide through the whole row
+    &::before {
+        inset-block: 0;
+        inset-inline-start: calc(var(--ebk-space-4) + 3rem);
+        border-inline-start: 1px solid var(--ebk-color-hairline);
+    }
+
+    // short branch into the child
+    &::after {
+        inset-block-start: 50%;
+        inset-inline-start: calc(var(--ebk-space-4) + 3rem);
+        width: 0.5rem;
+        border-block-start: 1px solid var(--ebk-color-hairline);
+    }
+}
+
+.ebk-mgmt-row--child-last .ebk-mgmt-column-name::before {
+    inset-block-end: 50%;
+}
+
+.ebk-mgmt-row--parent > td {
+    background-color: rgba(var(--ebk-color-surface-sunken-rgb), 0.5);
+}
+
+.ebk-mgmt-row--child > td {
+    background-color: rgba(var(--ebk-color-surface-sunken-rgb), 0.25);
+}
+
+/* Drag handles and move buttons: visible on hover and keyboard focus, always on touch */
+.ebk-mgmt-drag {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    margin-inline-end: var(--ebk-space-2);
+    color: var(--ebk-color-text-secondary);
+    opacity: 0;
+    transition: opacity var(--ebk-motion-duration-xs) var(--ebk-motion-ease-standard);
+
+    &.drag-handle {
+        cursor: grab;
+    }
+
+    &.disabled {
+        cursor: default;
+    }
+}
+
+.ebk-mgmt-reveal {
+    opacity: 0;
+    transition: opacity var(--ebk-motion-duration-xs) var(--ebk-motion-ease-standard);
+}
+
+.ebk-mgmt-row:hover,
+.ebk-mgmt-row:focus-within,
+.ebk-mgmt-card:hover,
+.ebk-mgmt-card:focus-within {
+    .ebk-mgmt-drag:not(.disabled),
+    .ebk-mgmt-reveal:not(.v-btn--disabled) {
+        opacity: 1;
+    }
+
+    .ebk-mgmt-drag.disabled,
+    .ebk-mgmt-reveal.v-btn--disabled {
+        opacity: 0.3;
+    }
+}
+
+@media (hover: none) {
+    .ebk-mgmt-drag:not(.disabled),
+    .ebk-mgmt-reveal:not(.v-btn--disabled) {
+        opacity: 1;
+    }
+
+    .ebk-mgmt-reveal.v-btn--disabled {
+        opacity: 0.3;
+    }
+}
+
+.ebk-mgmt-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 2px;
+}
+
+.ebk-mgmt-actions-divider {
+    width: 1px;
+    height: 20px;
+    margin-inline: var(--ebk-space-1);
+    background-color: var(--ebk-color-hairline);
+}
+
+/* Icon tile, title and meta */
+.ebk-mgmt-icon-tile {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--ebk-color-hairline);
+    border-radius: var(--ebk-radius-control);
+    background-color: var(--ebk-color-surface-sunken);
+    color: var(--ebk-color-primary-text);
+}
+
+.ebk-mgmt-icon-tile--skeleton {
+    border-style: dashed;
+    background-color: transparent;
+}
+
+.ebk-mgmt-name {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    margin-inline-start: var(--ebk-space-3);
+    line-height: 1.25rem;
+}
+
+.ebk-mgmt-name-line {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}
+
+.ebk-mgmt-name-text {
+    overflow: hidden;
+    color: var(--ebk-color-text-primary);
+    font-weight: 500;
+    text-overflow: ellipsis;
+}
+
+.ebk-mgmt-name-text--link {
+    cursor: pointer;
+
+    &:hover {
+        text-decoration: underline;
+        text-decoration-color: var(--ebk-color-copper-line);
+        text-underline-offset: 3px;
+    }
+}
+
+.ebk-mgmt-meta {
+    display: block;
+    overflow: hidden;
+    color: var(--ebk-color-text-secondary);
+    font-size: 0.75rem;
+    line-height: 1rem;
+    text-overflow: ellipsis;
+}
+
+.ebk-mgmt-amount {
+    color: var(--ebk-color-text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+    font-variant-numeric: var(--ebk-font-numeric);
+}
+
+.ebk-mgmt-amount-meta {
+    display: block;
+    color: var(--ebk-color-text-secondary);
+    font-size: 0.75rem;
+    font-weight: 400;
+    font-variant-numeric: var(--ebk-font-numeric);
+}
+
+.ebk-mgmt-skeleton .v-skeleton-loader__text {
+    margin: 0;
+}
+
+/* Sections (data management, dialogs) */
+.ebk-mgmt-section-body {
+    padding: var(--ebk-space-4);
+}
+
+.ebk-mgmt-section-text {
+    margin: 0 0 var(--ebk-space-3);
+    color: var(--ebk-color-text-secondary);
+}
+
+.ebk-mgmt-danger {
+    border-color: color-mix(in srgb, var(--ebk-color-error) 45%, transparent) !important;
+
+    > .ebk-panel-header-strip {
+        color: var(--ebk-color-error-text);
+
+        &::before {
+            border-color: color-mix(in srgb, var(--ebk-color-error) 60%, transparent);
+        }
+    }
+}
+
+/* Import stepper (Upload → Map → Check → Import) */
+.ebk-stepper {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ebk-space-1) var(--ebk-space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    letter-spacing: normal;
+    text-transform: none;
+}
+
+.ebk-stepper-step {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ebk-space-2);
+    color: var(--ebk-color-text-secondary);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.ebk-stepper-index {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border: 1px solid var(--ebk-color-hairline);
+    border-radius: 50%;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-variant-numeric: var(--ebk-font-numeric);
+}
+
+.ebk-stepper-step--done .ebk-stepper-index {
+    border-color: var(--ebk-color-copper-line);
+    color: var(--ebk-color-primary-text);
+}
+
+.ebk-stepper-step--current {
+    color: var(--ebk-color-text-primary);
+    font-weight: 600;
+
+    .ebk-stepper-index {
+        border-color: var(--ebk-color-primary);
+        background-color: var(--ebk-color-selected-background);
+        color: var(--ebk-color-primary-text);
+    }
+}
+
+.ebk-stepper-separator {
+    width: 20px;
+    border-block-start: 1px solid var(--ebk-color-hairline);
+}
+
+/* Progress that reports the real completion count */
+.ebk-progress-report {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ebk-space-2);
+}
+
+.ebk-progress-report-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--ebk-space-2);
+    color: var(--ebk-color-text-secondary);
+    font-variant-numeric: var(--ebk-font-numeric);
+}
+
+.ebk-progress-report-count {
+    color: var(--ebk-color-text-primary);
+    font-weight: 600;
+}
+
+@media (forced-colors: active) {
+    .ebk-mgmt-row--child .ebk-mgmt-column-name::before,
+    .ebk-mgmt-row--child .ebk-mgmt-column-name::after {
+        border-color: CanvasText;
+    }
+}
+
+.ebk-mgmt-danger .ebk-mgmt-header-label {
+    color: var(--ebk-color-error-text);
+}
+
+/* Dialog and form pattern (§4.4, D3): technical field labels, paired fields and a footer with an optional status at
+ * the start, then Cancel (outlined) and the one copper save action. The bracketed dialog frame comes from the dialog
+ * layouts (`.dialog-layout-card`).
+ */
+.ebk-dialog-form {
+    .v-field-label--floating,
+    .ebk-dialog-form-label {
+        font-size: var(--ebk-font-technical-size);
+        font-weight: var(--ebk-font-technical-weight);
+        letter-spacing: var(--ebk-font-technical-letter-spacing) !important;
+    }
+
+    .ebk-dialog-form-label {
+        display: block;
+        margin-block-end: var(--ebk-space-2);
+        color: var(--ebk-color-text-secondary);
+    }
+}
+
+@each $lang in ebk.$ebk-latin-script-languages {
+    .ebk-dialog-form:lang(#{$lang}) {
+        .v-field-label--floating,
+        .ebk-dialog-form-label {
+            text-transform: uppercase;
+        }
+    }
+}
+
+.ebk-dialog-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--ebk-space-3);
+    width: 100%;
+}
+
+.ebk-dialog-footer-status {
+    display: flex;
+    flex: 1 1 12rem;
+    align-items: center;
+    gap: var(--ebk-space-2);
+    min-width: 0;
+    color: var(--ebk-color-text-secondary);
+    font-size: 0.8125rem;
+    overflow-wrap: anywhere;
+}
+
+.ebk-dialog-footer-status-dot {
+    flex: 0 0 auto;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--ebk-color-copper-line);
+
+    &.ebk-dialog-footer-status-dot--progress {
+        background-color: var(--ebk-color-primary);
+    }
+
+    &.ebk-dialog-footer-status-dot--warning {
+        background-color: var(--ebk-color-warning);
+    }
+
+    &.ebk-dialog-footer-status-dot--modified {
+        border: 1px solid var(--ebk-color-primary);
+        background-color: transparent;
+    }
+}
+
+@media (forced-colors: active) {
+    .ebk-dialog-footer-status-dot {
+        forced-color-adjust: none;
+        background-color: CanvasText;
+    }
+}

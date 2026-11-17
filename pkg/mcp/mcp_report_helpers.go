@@ -201,8 +201,10 @@ func mcpTotalsRowMatches(row *models.TransactionTotalAmount, accountFilter map[i
 	return true
 }
 
-// mcpReportFormatBalances returns the displayed balance, the signed accounting balance and the outstanding balance (only for liability accounts) of the signed balance
-func mcpReportFormatBalances(category models.AccountCategory, signedBalance *big.Int) (displayBalance string, signed string, outstandingBalance string) {
+// mcpFormatAccountBalances returns the displayed balance, the signed accounting balance and the outstanding balance (only for liability accounts) of the signed balance.
+// For liability accounts (credit card and debt), the balance is stored as a signed accounting balance (negative means money owed),
+// and the displayed (outstanding) balance is the negated value (positive means money owed), which is the same as the web interface shows.
+func mcpFormatAccountBalances(category models.AccountCategory, signedBalance *big.Int) (displayBalance string, signed string, outstandingBalance string) {
 	if signedBalance == nil {
 		signedBalance = big.NewInt(0)
 	}
@@ -279,4 +281,117 @@ func mcpReportParseTimeRange(startTimeText string, endTimeText string) (int64, i
 	}
 
 	return startUnixTime, endUnixTime, location, nil
+}
+
+// mcpTotalsTransactionTimeRange represents the transaction time range and the local date time range of the transaction totals
+// (same rules as TransactionService.GetAccountsAndCategoriesTotalInflowAndOutflow without the transaction timezone)
+type mcpTotalsTransactionTimeRange struct {
+	minTransactionTime int64
+	maxTransactionTime int64
+	startLocalDateTime int64
+	endLocalDateTime   int64
+	timezone           *time.Location
+}
+
+// mcpTotalsGetTransactionTimeRange returns the transaction time range of the start and end unix time (0 means not set) in the timezone
+func mcpTotalsGetTransactionTimeRange(startUnixTime int64, endUnixTime int64, timezone *time.Location) *mcpTotalsTransactionTimeRange {
+	timeRange := &mcpTotalsTransactionTimeRange{
+		timezone: timezone,
+	}
+
+	if startUnixTime > 0 {
+		timeRange.startLocalDateTime = utils.FormatUnixTimeToNumericLocalDateTime(startUnixTime, timezone)
+		minUnixTime := utils.GetMinUnixTimeWithSameLocalDateTime(startUnixTime, utils.GetTimezoneOffsetMinutes(startUnixTime, timezone))
+		timeRange.minTransactionTime = utils.GetMinTransactionTimeFromUnixTime(minUnixTime)
+	}
+
+	if endUnixTime > 0 {
+		timeRange.endLocalDateTime = utils.FormatUnixTimeToNumericLocalDateTime(endUnixTime, timezone)
+		maxUnixTime := utils.GetMaxUnixTimeWithSameLocalDateTime(endUnixTime, utils.GetTimezoneOffsetMinutes(endUnixTime, timezone))
+		timeRange.maxTransactionTime = utils.GetMaxTransactionTimeFromUnixTime(maxUnixTime)
+	}
+
+	return timeRange
+}
+
+// contains returns whether the transaction is an income, expense or transfer transaction whose local date time is in the time range
+func (r *mcpTotalsTransactionTimeRange) contains(transaction *models.Transaction) bool {
+	if transaction.Type != models.TRANSACTION_DB_TYPE_INCOME &&
+		transaction.Type != models.TRANSACTION_DB_TYPE_EXPENSE &&
+		transaction.Type != models.TRANSACTION_DB_TYPE_TRANSFER_OUT &&
+		transaction.Type != models.TRANSACTION_DB_TYPE_TRANSFER_IN {
+		return false
+	}
+
+	localDateTime := utils.FormatUnixTimeToNumericLocalDateTime(utils.GetUnixTimeFromTransactionTime(transaction.TransactionTime), r.timezone)
+
+	if (r.startLocalDateTime > 0 && localDateTime < r.startLocalDateTime) || (r.endLocalDateTime > 0 && localDateTime > r.endLocalDateTime) {
+		return false
+	}
+
+	return true
+}
+
+// mcpTotalsGetTransactionTagIds returns the unique tag ids of the transaction, including the tag ids of its related transaction (the tags of a transfer are stored on one side only)
+func mcpTotalsGetTransactionTagIds(transaction *models.Transaction, transactionTagIds map[int64][]int64) []int64 {
+	tagIds := transactionTagIds[transaction.TransactionId]
+
+	if transaction.RelatedId > 0 {
+		if relatedTagIds := transactionTagIds[transaction.RelatedId]; len(relatedTagIds) > 0 {
+			tagIds = append(append(make([]int64, 0, len(tagIds)+len(relatedTagIds)), tagIds...), relatedTagIds...)
+		}
+	}
+
+	return utils.ToUniqueInt64Slice(tagIds)
+}
+
+// mcpTotalsAggregateByTag adds the amounts of the transactions which match the account filter and the category filter to the group of every tag
+// in groupTagIds the transaction has (a transaction with several tags is counted in every one of its tag groups), and (if includeNoTags is true)
+// adds the amounts of transactions without any tag to the "no tags" group
+func mcpTotalsAggregateByTag(aggregator *mcpTransactionTotalsAggregator, transactions []*models.Transaction, transactionTagIds map[int64][]int64, groupTagIds []int64, tagMap map[int64]*models.TransactionTag, includeNoTags bool, accountFilter map[int64]bool, categoryFilter map[int64]bool, categories map[int64]*models.TransactionCategory, accounts map[int64]*models.Account) {
+	groupTagIdSet := make(map[int64]bool, len(groupTagIds))
+
+	for i := 0; i < len(groupTagIds); i++ {
+		groupTagIdSet[groupTagIds[i]] = true
+	}
+
+	for i := 0; i < len(transactions); i++ {
+		transaction := transactions[i]
+		row := &models.TransactionTotalAmount{
+			Type:             transaction.Type,
+			CategoryId:       transaction.CategoryId,
+			AccountId:        transaction.AccountId,
+			RelatedAccountId: transaction.RelatedAccountId,
+			Amount:           big.NewInt(transaction.Amount),
+		}
+
+		if !mcpTotalsRowMatches(row, accountFilter, categoryFilter, categories) {
+			continue
+		}
+
+		currency := mcpTotalsGetCurrency(row, accounts)
+		tagIds := mcpTotalsGetTransactionTagIds(transaction, transactionTagIds)
+
+		if len(tagIds) < 1 {
+			if includeNoTags {
+				aggregator.Add("", mcpTotalsNoTagsGroupName, currency, row.Type, row.Amount)
+			}
+
+			continue
+		}
+
+		for j := 0; j < len(tagIds); j++ {
+			if !groupTagIdSet[tagIds[j]] {
+				continue
+			}
+
+			tagName := ""
+
+			if tag, exists := tagMap[tagIds[j]]; exists && tag != nil {
+				tagName = tag.Name
+			}
+
+			aggregator.Add(utils.Int64ToString(tagIds[j]), tagName, currency, row.Type, row.Amount)
+		}
+	}
 }

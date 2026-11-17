@@ -100,7 +100,7 @@ In addition, the timezone data is sourced from [nodatime](https://github.com/nod
 
 ## Preview frontend translations
 
-You can preview frontend language files directly in the desktop version without rebuilding the application. This feature is disabled by default. You can enable it by following [Configuration -  Developer Tools](/configuration/#developer-tools), or use it in the upstream ezBookkeeping [Live Demo](https://ezbookkeeping-demo.mayswind.net).
+You can preview frontend language files directly in the desktop version without rebuilding the application. This feature is disabled by default. You can enable it by following [Configuration -  Developer Tools](/configuration/#developer-tools).
 
 Open "Settings" -> "Developer Tools" -> "Preview Language Configuration" in the desktop version:
 

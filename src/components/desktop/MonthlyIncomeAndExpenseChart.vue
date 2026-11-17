@@ -43,6 +43,14 @@ import { BIG_DECIMAL_ZERO, parseBigDecimal } from '@/lib/numeral.ts';
 import { parseDateTimeFromUnixTime } from '@/lib/datetime.ts';
 import { getExpenseAndIncomeAmountColor } from '@/lib/ui/common.ts';
 import { getChartAnimationOptions } from '@/lib/motion.ts';
+import {
+    CHART_EXPENSE_LINE_TYPE,
+    getChartAxisLabelStyleOptions,
+    getChartAxisPointerLabelOptions,
+    getChartDecal,
+    getChartLegendStyleOptions,
+    getChartTooltipStyleOptions
+} from '@/components/base/ChartThemeBase.ts';
 
 export interface MonthlyIncomeAndExpenseCardClickEvent {
     transactionType: TransactionType;
@@ -141,6 +149,15 @@ const chartOptions = computed<object>(() => {
     }
 
     const amountGap = maxAmount.subtract(minAmount);
+    const incomeDecal = getChartDecal(0, props.isDarkMode);
+    const expenseDecal = getChartDecal(1, props.isDarkMode);
+    let totalIncomeAmount: BigDecimal = BIG_DECIMAL_ZERO;
+    let totalExpenseAmount: BigDecimal = BIG_DECIMAL_ZERO;
+
+    for (const item of props.data ?? []) {
+        totalIncomeAmount = totalIncomeAmount.add(item.incomeAmount);
+        totalExpenseAmount = totalExpenseAmount.add(item.expenseAmount);
+    }
 
     return {
         ...getChartAnimationOptions(),
@@ -150,8 +167,7 @@ const chartOptions = computed<object>(() => {
                 type: 'cross',
                 label: {
                     show: showAmountInHomePage.value,
-                    backgroundColor: props.isDarkMode ? '#333' : '#fff',
-                    color: props.isDarkMode ? '#eee' : '#333'
+                    ...getChartAxisPointerLabelOptions(props.isDarkMode)
                 }
             } : {
                 type: 'shadow',
@@ -159,11 +175,7 @@ const chartOptions = computed<object>(() => {
                     color: props.isDarkMode ? 'rgba(210, 210, 210, 0.05)' : 'rgba(120, 120, 120, 0.05)'
                 }
             },
-            backgroundColor: props.isDarkMode ? '#333' : '#fff',
-            borderColor: props.isDarkMode ? '#333' : '#fff',
-            textStyle: {
-                color: props.isDarkMode ? '#eee' : '#333'
-            },
+            ...getChartTooltipStyleOptions(props.isDarkMode),
             formatter: (params: CallbackDataParams[]) => {
                 let incomeAmount: string | null = null;
                 let expenseAmount: string | null = null;
@@ -207,12 +219,24 @@ const chartOptions = computed<object>(() => {
         legend: {
             show: !props.hideLegend,
             bottom: 5,
-            itemWidth: 14,
+            ...getChartLegendStyleOptions(props.isDarkMode),
+            itemWidth: props.chartType === TrendChartType.Area.type ? 24 : 14,
             itemHeight: 14,
-            textStyle: {
-                color: props.isDarkMode ? '#eee' : '#333'
+            icon: props.chartType === TrendChartType.Area.type ? undefined : 'circle',
+            // legends carry labels and values (design guideline D7), the amounts are summed flows of the displayed months
+            formatter: (name: string) => {
+                if (!hasAnyData.value) {
+                    return name;
+                }
+
+                if (name === tt('Income')) {
+                    return `${name}  ${getDisplayAmount(totalIncomeAmount, false)}`;
+                } else if (name === tt('Expense')) {
+                    return `${name}  ${getDisplayAmount(totalExpenseAmount, false)}`;
+                }
+
+                return name;
             },
-            icon: 'circle',
             data: [
                 ...(showIncome.value ? [tt('Income')] : []),
                 ...(showExpense.value ? [tt('Expense')] : [])
@@ -240,6 +264,7 @@ const chartOptions = computed<object>(() => {
                 },
                 axisLabel: {
                     show: !props.hideXAxisLabels,
+                    ...getChartAxisLabelStyleOptions(props.isDarkMode),
                     padding: [ (props.chartType === TrendChartType.Column.type && showIncomeAndExpense.value ? 10 : 0), 0, 0, 0 ]
                 }
             }
@@ -303,7 +328,12 @@ const chartOptions = computed<object>(() => {
                 showSymbol: false,
                 itemStyle: {
                     color: expenseIncomeAmountColor.incomeAmountColor,
-                    borderRadius: props.chartType === TrendChartType.Area.type ? undefined : 16
+                    borderRadius: props.chartType === TrendChartType.Area.type ? undefined : 16,
+                    ...(incomeDecal ? { decal: incomeDecal } : {})
+                },
+                lineStyle: {
+                    width: 2,
+                    type: 'solid'
                 },
                 emphasis: {
                     focus: 'series',
@@ -325,7 +355,13 @@ const chartOptions = computed<object>(() => {
                 showSymbol: false,
                 itemStyle: {
                     color: expenseIncomeAmountColor.expenseAmountColor,
-                    borderRadius: props.chartType === TrendChartType.Area.type ? undefined : 16
+                    borderRadius: props.chartType === TrendChartType.Area.type ? undefined : 16,
+                    ...(expenseDecal ? { decal: expenseDecal } : {})
+                },
+                // expense lines are dashed, income lines solid (design guideline D7)
+                lineStyle: {
+                    width: 2,
+                    type: CHART_EXPENSE_LINE_TYPE
                 },
                 emphasis: {
                     focus: 'series',

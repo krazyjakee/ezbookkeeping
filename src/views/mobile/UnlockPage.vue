@@ -1,35 +1,39 @@
 <template>
     <f7-page no-navbar no-swipeback login-screen hide-toolbar-on-scroll class="login-page unlock-page">
-        <f7-login-screen-title>
-            <img alt="logo" class="login-page-logo" :src="APPLICATION_LOGO_PATH" />
-            <f7-block class="login-page-tile margin-vertical-half">{{ tt('global.app.title') }}</f7-block>
-        </f7-login-screen-title>
+        <div class="ebk-auth-wordmark">
+            <img alt="" class="ebk-auth-wordmark-logo" :src="APPLICATION_LOGO_PATH" />
+            <span class="ebk-auth-wordmark-title">{{ tt('global.app.title') }}</span>
+        </div>
 
-        <f7-list form class="login-page-form">
-            <f7-list-item class="no-padding margin-top-half">
-                <template #inner>
-                    <div class="display-flex justify-content-center width-100">{{ tt('Unlock Application') }}</div>
-                </template>
-            </f7-list-item>
+        <section class="ebk-panel ebk-panel--bracketed ebk-auth-panel" aria-labelledby="mobile-unlock-title"
+                 :aria-busy="unlocking ? 'true' : 'false'">
+            <header class="ebk-panel-header-strip ebk-auth-panel-header">
+                <span>{{ tt('Application Lock') }}</span>
+                <span class="ebk-panel-header-actions ebk-auth-panel-live" :class="{ 'ebk-auth-panel-live--busy': unlocking }" aria-hidden="true"></span>
+            </header>
 
-            <f7-list-item class="list-item-pincode-input margin-horizontal margin-bottom">
-                <pin-code-input :disabled="unlocking" :secure="true" :length="6" :auto-confirm="true" v-model="pinCode" @pincode:confirm="unlockByPin" />
-            </f7-list-item>
+            <div class="ebk-auth-panel-intro">
+                <h1 class="ebk-auth-title" id="mobile-unlock-title">{{ tt('Unlock Application') }}</h1>
+                <p class="ebk-auth-message" v-if="isWebAuthnAvailable">{{ tt('Please enter your PIN code or use WebAuthn to unlock application') }}</p>
+                <p class="ebk-auth-message" v-else>{{ tt('Please enter your PIN code to unlock application') }}</p>
+            </div>
 
-            <f7-list-button class="login-page-primary-action margin-horizontal" :class="{ 'disabled': unlocking || !isPinCodeValid(pinCode) }"
-                            :text="tt('Unlock with PIN Code')" @click="unlockByPin"></f7-list-button>
-            <f7-list-button class="login-page-secondary-action margin-top margin-horizontal" :class="{ 'disabled': unlocking }" v-if="isWebAuthnAvailable"
-                            :text="tt('Unlock with WebAuthn')" @click="unlockByWebAuthn"></f7-list-button>
+            <f7-list form class="login-page-form no-margin-top">
+                <f7-list-item class="list-item-pincode-input margin-bottom">
+                    <pin-code-input :disabled="unlocking" :secure="true" :length="6" :auto-confirm="true" v-model="pinCode" @pincode:confirm="unlockByPin" />
+                </f7-list-item>
 
-            <f7-list-item class="block-footer margin-bottom-half">
-                <div class="width-100 align-content-center">
-                    <f7-link :text="tt('Re-login')" @click="relogin"></f7-link>
-                </div>
-            </f7-list-item>
+                <f7-list-button class="login-page-primary-action" :class="{ 'disabled': unlocking || !isPinCodeValid(pinCode) }"
+                                :text="tt('Unlock with PIN Code')" @click="unlockByPin"></f7-list-button>
+                <f7-list-button class="login-page-secondary-action margin-top" :class="{ 'disabled': unlocking }" v-if="isWebAuthnAvailable"
+                                :text="tt('Unlock with WebAuthn')" @click="unlockByWebAuthn"></f7-list-button>
+            </f7-list>
 
-            <f7-block-footer class="padding-bottom">
-            </f7-block-footer>
-        </f7-list>
+            <div class="ebk-auth-panel-secondary">
+                <span style="margin-inline-end: 0.3rem;">{{ tt('Can\'t Unlock?') }}</span>
+                <f7-link :class="{ 'disabled': unlocking }" :text="tt('Re-login')" @click="relogin"></f7-link>
+            </div>
+        </section>
 
         <f7-list class="login-page-bottom">
             <f7-block-footer>

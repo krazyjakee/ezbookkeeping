@@ -117,4 +117,3 @@ services:
       - "/var/log/ezbookkeeping:/ezbookkeeping/log" # make sure the UID:GID is 1000:1000
 ```
 
-If you're interested, you can take a look at the [docker-compose file](/configurations/demo/docker-compose.yml){target=_blank} and [nginx configuration file](/configurations/demo/ezbookkeeping.demo.conf){target=_blank} based on the upstream ezBookkeeping demo site [https://ezbookkeeping-demo.mayswind.net](https://ezbookkeeping-demo.mayswind.net).

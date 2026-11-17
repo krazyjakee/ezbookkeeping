@@ -4,7 +4,8 @@
             <f7-nav-title :title="tt('global.app.title')"></f7-nav-title>
         </f7-navbar>
 
-        <overview-dashboard :layout="layout" :loading="loading" @navigate="onNavigate" />
+        <overview-dashboard :layout="layout" :loading="loading" :load-failed="loadFailed"
+                            @navigate="onNavigate" @retry="retry" />
 
         <f7-toolbar tabbar icons bottom class="main-tabbar">
             <f7-link class="link" href="/transaction/list" :aria-label="tt('Details')">
@@ -20,7 +21,9 @@
                      href="/transaction/add"
                      :aria-label="tt('Add Transaction')"
                      @taphold="openTransactionTemplatePopover">
-                <f7-icon f7="plus_square" class="ebk-tarbar-big-icon" aria-hidden="true"></f7-icon>
+                <span class="ebk-tabbar-add-key" aria-hidden="true">
+                    <f7-icon f7="plus"></f7-icon>
+                </span>
             </f7-link>
             <f7-link class="link" href="/statistic/transaction" :aria-label="tt('Statistics')">
                 <f7-icon f7="chart_pie" aria-hidden="true"></f7-icon>
@@ -131,6 +134,7 @@ const overviewStore = useOverviewStore();
 const aiImageRecognitionSheet = useTemplateRef<AIImageRecognitionSheetType>('aiImageRecognitionSheet');
 
 const loading = ref<boolean>(true);
+const loadFailed = ref<boolean>(false);
 const showTransactionTemplatePopover = ref<boolean>(false);
 const showAIReceiptImageRecognitionSheet = ref<boolean>(false);
 
@@ -175,8 +179,10 @@ function init(): void {
             }
 
             loading.value = false;
+            loadFailed.value = false;
         }).catch(error => {
             loading.value = false;
+            loadFailed.value = !error.isUpToDate;
 
             if (!error.processed) {
                 showToast(error.message || error);
@@ -196,17 +202,24 @@ function reload(done?: () => void): void {
 
     Promise.all(promises).then(() => {
         done?.();
+        loadFailed.value = false;
 
         if (force) {
             showToast('Data has been updated');
         }
     }).catch(error => {
         done?.();
+        loadFailed.value = !error.isUpToDate;
 
         if (!error.processed) {
             showToast(error.message || error);
         }
     });
+}
+
+function retry(): void {
+    // the failed load may also have missed the accounts / categories / templates, so run the full initialization again
+    init();
 }
 
 function reloadOverviewData(force: boolean): Promise<unknown>[] {
@@ -428,13 +441,6 @@ init();
 
 .tabbar.main-tabbar .link i + span.tabbar-label {
     margin-top: var(--ebk-icon-text-margin);
-}
-
-.tabbar.main-tabbar .link i.ebk-tarbar-big-icon {
-    font-size: var(--ebk-big-icon-button-size);
-    width: var(--ebk-big-icon-button-size);
-    height: var(--ebk-big-icon-button-size);
-    line-height: var(--ebk-big-icon-button-size);
 }
 
 .template-popover-menu .popover-inner {

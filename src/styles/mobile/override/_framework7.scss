@@ -153,7 +153,7 @@ html[dir="rtl"] :not(.no-chevron) {
 
 .toolbar-item-auto-size .toolbar-inner > .link {
     width: auto;
-    min-width: 28px !important;
+    min-width: var(--ebk-touch-target-min, 44px) !important; /* touch target, see docs/design/README.md §5 */
 }
 
 .tabbar-primary-link,

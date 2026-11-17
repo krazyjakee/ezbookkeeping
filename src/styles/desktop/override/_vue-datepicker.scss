@@ -1,8 +1,41 @@
 /** Replacing the default style of @vuepic/vue-datepicker **/
 .dp--theme-light,
 .dp--theme-dark {
-    --dp-primary-color: #c67e48;
+    --dp-primary-color: var(--ebk-color-primary);
+    --dp-primary-text-color: var(--ebk-color-on-primary);
     --dp-text-color: rgba(var(--v-theme-on-background), var(--v-high-emphasis-opacity));
+    --dp-secondary-color: var(--ebk-color-text-secondary);
+    --dp-background-color: transparent;
+    --dp-hover-color: var(--ebk-color-selected-background);
+    --dp-hover-text-color: var(--ebk-color-text-primary);
+    --dp-hover-icon-color: var(--ebk-color-primary-text);
+    --dp-icon-color: var(--ebk-color-text-secondary);
+    --dp-border-color: var(--ebk-color-hairline);
+    --dp-menu-border-color: var(--ebk-color-hairline);
+    --dp-border-color-hover: var(--ebk-color-copper-line);
+    --dp-border-color-focus: var(--ebk-color-primary);
+    --dp-highlight-color: var(--ebk-color-selected-background);
+    --dp-range-between-dates-background-color: var(--ebk-color-selected-background);
+    --dp-range-between-dates-text-color: var(--ebk-color-text-primary);
+    --dp-border-radius: var(--ebk-radius-control);
+    --dp-cell-border-radius: var(--ebk-radius-control);
+    --dp-scroll-bar-background: transparent;
+    --dp-scroll-bar-color: var(--ebk-color-hairline);
+
+    // month / year / time overlays sit above the calendar and need an opaque raised surface
+    .dp--overlay {
+        --dp-background-color: var(--ebk-color-surface-raised);
+    }
+}
+
+/** Copper Instrument Panel: tabular numerals and a stronger selected cell **/
+.dp--main {
+    font-variant-numeric: var(--ebk-font-numeric);
+
+    .dp--cell-inner.dp--active-date,
+    .dp--overlay-cell-active {
+        font-weight: 600;
+    }
 }
 
 /** Fix @vuepic/vue-datepicker style issue **/

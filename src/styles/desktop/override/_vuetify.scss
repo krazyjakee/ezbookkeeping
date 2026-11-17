@@ -1,4 +1,19 @@
+@use '../../common/tokens' as ebk;
+
 /** Replacing the default style of Vuetify components */
+
+// copper text passes AA (docs/design/README.md §3.1, #36): on light surfaces copper 500 reaches only 3.2:1,
+// so Vuetify's text-primary uses copper 700 in the light theme. Progress indicators keep brand copper.
+.v-theme--light .text-primary:not(.v-progress-linear, .v-progress-circular),
+.v-theme--light.text-primary:not(.v-progress-linear, .v-progress-circular) {
+    color: var(--ebk-color-primary-text) !important;
+}
+
+// error text (field messages, error buttons and labels) uses the AA error text color in the light theme (3.5:1 otherwise)
+.v-theme--light .text-error:not(.v-progress-linear, .v-progress-circular),
+.v-theme--light .v-input--error:not(.v-input--disabled) .v-input__details .v-messages {
+    color: var(--ebk-color-error-text) !important;
+}
 [class*="--variant-outlined"].text-default {
     border-color: rgba(var(--v-border-color), 0.22);
 }
@@ -19,7 +34,7 @@
 
         .v-tab--selected {
             background: rgb(var(--v-theme-primary));
-            color: rgb(var(--v-theme-on-primary));
+            color: rgb(var(--v-theme-on-primary)) !important;
         }
 
         .v-tab:not(.v-tab--selected):not(.v-btn--disabled):hover {
@@ -112,9 +127,9 @@
     > .v-sheet,
     > .v-list {
         padding: var(--ebk-space-1);
-        border: 1px solid rgba(var(--ebk-border), 0.09);
+        border: 1px solid var(--ebk-color-hairline);
         border-radius: var(--ebk-radius-md);
-        box-shadow: 0 4px 12px 0 rgba(var(--v-shadow-key-umbra-color), var(--v-shadow-lg-opacity)), 0 0 transparent, 0 0 transparent;
+        box-shadow: var(--ebk-shadow-md);
     }
 }
 
@@ -124,7 +139,9 @@
 
 .v-autocomplete__content.v-overlay__content,
 .v-select__content.v-overlay__content {
-    box-shadow: 0 4px 12px 0 rgba(var(--v-shadow-key-umbra-color), var(--v-shadow-lg-opacity)), 0 0 transparent, 0 0 transparent;
+    border: 1px solid var(--ebk-color-hairline);
+    border-radius: var(--ebk-radius-md);
+    box-shadow: var(--ebk-shadow-md);
 
     .v-list {
         padding-block: 2px;
@@ -150,6 +167,10 @@
     border: 0;
 }
 
+.v-dialog > .v-overlay__content > .v-card.dialog-layout-card.v-card--variant-elevated {
+    border: 1px solid var(--ebk-color-hairline);
+}
+
 .v-table {
     border-radius: 0;
     color: rgba(var(--v-theme-on-background), var(--v-high-emphasis-opacity));
@@ -160,8 +181,17 @@
         font-size: 0.8125rem;
     }
 
+    > .v-table__wrapper > table > thead > tr > th {
+        color: var(--ebk-color-text-secondary);
+        font-size: var(--ebk-font-technical-size);
+        font-weight: var(--ebk-font-technical-weight);
+        letter-spacing: 0.04em !important;
+        border-block-end: 1px solid var(--ebk-color-hairline) !important;
+    }
+
     td {
         height: 2.875rem !important;
+        font-variant-numeric: var(--ebk-font-numeric);
     }
 
     &.v-table--density-comfortable {
@@ -352,19 +382,24 @@ html[dir="rtl"] .v-btn.button-icon-with-direction > .v-btn__append > .v-icon > .
 }
 
 .v-field--variant-outlined .v-field__outline {
-    --v-field-border-opacity: 0.25;
+    --v-field-border-opacity: 0.28;
 }
 
-.v-field--variant-outlined:hover .v-field__outline{
-    --v-field-border-opacity: 0.7;
+.v-field--variant-outlined:hover .v-field__outline {
+    --v-field-border-opacity: 0.6;
+}
+
+.v-field--variant-outlined.v-field--focused .v-field__outline,
+.v-input--error .v-field--variant-outlined .v-field__outline {
+    --v-field-border-opacity: 1;
 }
 
 .v-field {
-    border-radius: var(--ebk-radius-md);
+    border-radius: var(--ebk-radius-control);
 }
 
 .v-alert {
-    border-radius: var(--ebk-radius-md);
+    border-radius: var(--ebk-radius-control);
     font-size: 0.9375rem;
 }
 
@@ -402,8 +437,6 @@ html[dir="rtl"] .v-icon.icon-with-direction > .v-icon__svg {
 }
 
 .v-chip {
-    border-radius: var(--ebk-radius-sm);
-
     &.v-chip--size-x-small {
         font-size: 0.75rem;
     }
@@ -444,9 +477,10 @@ html[dir="rtl"] .v-icon.icon-with-direction > .v-icon__svg {
 
 .v-tooltip.table-tooltip > .v-overlay__content {
     color: rgb(var(--v-theme-on-surface));
-    background-color: rgb(var(--v-theme-surface));
+    background-color: var(--ebk-color-surface-raised);
     padding: 0;
-    border-radius: var(--ebk-radius-lg);
+    border: 1px solid var(--ebk-color-hairline);
+    border-radius: var(--ebk-radius-md);
     box-shadow: var(--ebk-shadow-md);
 
     .v-table td {
@@ -460,11 +494,13 @@ html[dir="rtl"] .v-icon.icon-with-direction > .v-icon__svg {
         box-shadow: var(--ebk-shadow-lg) !important;
     }
 
+    // neutral snackbars are raised instrument panels with a copper leading edge (see the shared controls layer below)
     .v-snackbar__wrapper:not(.v-snackbar--variant-outlined):not([class^="bg-"]):not([class*=" bg-"]) {
-        background-color: rgba(var(--v-tooltip-background));
+        border: 1px solid var(--ebk-color-hairline);
+        background-color: var(--ebk-color-surface-raised);
 
         .v-snackbar__content {
-            color: rgb(var(--v-tooltip-color));
+            color: var(--ebk-color-text-primary);
         }
     }
 }
@@ -541,5 +577,322 @@ html[dir="rtl"] .v-icon.icon-with-direction > .v-icon__svg {
     .v-window__container .v-window-item {
         transition: none !important;
         transform: none !important;
+    }
+}
+
+/**
+ * Shared controls in the "Copper Instrument Panel" language (#27, docs/design/components.md).
+ *
+ * These rules live in Vuetify's own `vuetify-overrides` cascade layer: they win over the
+ * component styles (`vuetify-components`) but still lose to Vuetify utility classes
+ * (`rounded-*`, `bg-*`, `text-*`...) and to the unlayered page styles, so pages keep
+ * full control. Colors come from the shared tokens (src/styles/common/_tokens.scss).
+ */
+@layer vuetify-overrides {
+    /* Buttons */
+    .v-btn:not(.v-btn--icon, .v-btn--rounded, .v-btn-group > .v-btn, .v-pagination .v-btn, .v-tab) {
+        border-radius: var(--ebk-radius-control);
+    }
+
+    .v-btn-group:not(.v-btn-group--tile) {
+        border-radius: var(--ebk-radius-control);
+    }
+
+    .v-btn {
+        transition-property: transform, opacity;
+        transition-duration: var(--ebk-motion-duration-xs);
+        transition-timing-function: var(--ebk-motion-ease-standard);
+
+        &:not(.v-btn--disabled, .v-btn--readonly, .v-btn--loading, .v-btn-group > .v-btn, .v-tab):active {
+            transform: scale(0.98);
+        }
+    }
+
+    // primary actions: copper glow on hover and on keyboard focus (in addition to the global focus ring)
+    .v-btn.bg-primary:is(.v-btn--variant-flat, .v-btn--variant-elevated):not(.v-btn--disabled, .v-btn--loading) {
+        &:focus-visible {
+            box-shadow: var(--ebk-glow);
+        }
+
+        @media (hover: hover) {
+            &:hover {
+                box-shadow: var(--ebk-glow);
+            }
+        }
+    }
+
+    // tonal buttons get an etched hairline in their own color so they read as controls on any surface
+    .v-btn--variant-tonal:not(.v-btn--disabled) {
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 22%, transparent);
+    }
+
+    .v-btn--variant-outlined:not(.v-btn--disabled) {
+        border-color: color-mix(in srgb, currentColor 45%, transparent);
+    }
+
+    .v-btn--disabled.v-btn--variant-outlined,
+    .v-btn--disabled.v-btn--variant-tonal {
+        border-style: dashed;
+    }
+
+    /* Text fields, selects, autocompletes and textareas: sunken well, hairline outline, copper focus line */
+    .v-field--variant-outlined {
+        background-color: var(--ebk-color-surface-sunken);
+        transition-property: opacity;
+
+        &.v-field--focused:not(.v-field--error) {
+            box-shadow: 0 0 12px rgba(var(--ebk-copper-500-rgb), 0.22);
+        }
+
+        // copper labels use the AA copper text color; custom field colors (e.g. user amount colors) are kept
+        &.v-field--focused.text-primary:not(.v-field--error) .v-label.v-field-label {
+            color: var(--ebk-color-primary-text);
+        }
+
+        &.v-field--error:not(.v-field--disabled) {
+            background-color: color-mix(in srgb, rgb(var(--v-theme-error)) 5%, var(--ebk-color-surface-sunken));
+        }
+
+        &.v-field--disabled {
+            background-color: transparent;
+        }
+    }
+
+    .v-text-field__prefix,
+    .v-text-field__suffix {
+        color: var(--ebk-color-text-secondary);
+        font-variant-numeric: var(--ebk-font-numeric);
+    }
+
+    .v-input__details {
+        min-height: 0;
+
+        .v-messages__message {
+            line-height: 1.35;
+            overflow-wrap: anywhere;
+        }
+    }
+
+    .v-input--error .v-input__details .v-messages__message {
+        font-weight: 500;
+    }
+
+    /* Selection controls */
+    .v-selection-control--disabled .v-label {
+        color: var(--ebk-color-text-secondary);
+    }
+
+    /* Lists: selected items get a copper leading edge (mirrored in RTL), not only a tint */
+    .v-list-item {
+        &.v-list-item--active:not(.v-list-item--nav)::before {
+            content: '';
+            position: absolute;
+            inset-block: 6px;
+            inset-inline-start: 0;
+            width: 2px;
+            border-radius: var(--ebk-radius-pill);
+            background-color: var(--ebk-color-primary);
+            pointer-events: none;
+        }
+    }
+
+    .v-list-subheader {
+        color: var(--ebk-color-text-secondary);
+        font-size: var(--ebk-font-technical-size);
+        font-weight: var(--ebk-font-technical-weight);
+        letter-spacing: var(--ebk-font-technical-letter-spacing) !important;
+    }
+
+    /* Menus and popovers: raised surface */
+    .v-menu > .v-overlay__content > :is(.v-card, .v-sheet, .v-list),
+    :is(.v-select__content, .v-autocomplete__content) > .v-list {
+        background-color: var(--ebk-color-surface-raised);
+        color: var(--ebk-color-text-primary);
+    }
+
+    /* Tables: sunken header strip, hairline rows, tabular numerals, copper leading edge on selected rows */
+    .v-table {
+        > .v-table__wrapper > table > tbody > tr {
+            &:is(.ebk-row-selected, .v-data-table__selected) > td:first-child {
+                background-image: linear-gradient(to right, var(--ebk-color-primary) 0 2px, transparent 2px);
+            }
+
+            &:is(.ebk-row-selected, .v-data-table__selected) > td {
+                background-color: var(--ebk-color-selected-background);
+            }
+        }
+    }
+
+    [dir="rtl"] .v-table > .v-table__wrapper > table > tbody > tr:is(.ebk-row-selected, .v-data-table__selected) > td:first-child {
+        background-image: linear-gradient(to left, var(--ebk-color-primary) 0 2px, transparent 2px);
+    }
+
+    /* Chips: pills, label chips keep the control radius */
+    .v-chip:not(.v-chip--label) {
+        border-radius: var(--ebk-radius-pill);
+    }
+
+    .v-chip--label {
+        border-radius: var(--ebk-radius-control);
+    }
+
+    .v-chip--variant-tonal {
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 18%, transparent);
+    }
+
+    .v-chip.v-chip--selected,
+    .v-chip-group .v-chip--selected {
+        box-shadow: inset 0 0 0 1px var(--ebk-color-copper-line);
+    }
+
+    /* Tabs: copper indicator line */
+    .v-tab__slider {
+        background: var(--ebk-color-primary);
+        box-shadow: 0 0 8px rgba(var(--ebk-copper-500-rgb), 0.45);
+    }
+
+    /* Pagination: the current page is a selected cell with a copper base line */
+    .v-pagination__item--is-active .v-btn {
+        background-color: var(--ebk-color-selected-background);
+        box-shadow: inset 0 -2px 0 var(--ebk-color-primary);
+        font-weight: 600;
+    }
+
+    .v-pagination .v-btn {
+        font-variant-numeric: var(--ebk-font-numeric);
+    }
+
+    /* Tooltips */
+    .v-tooltip > .v-overlay__content {
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: var(--ebk-radius-control);
+        box-shadow: var(--ebk-shadow-sm);
+        font-variant-numeric: var(--ebk-font-numeric);
+    }
+
+    /* Dialogs: panel with a header strip and copper corner brackets */
+    .v-dialog > .v-overlay__content > .v-card {
+        border: 1px solid var(--ebk-color-hairline);
+        border-radius: var(--ebk-radius-lg);
+        box-shadow: var(--ebk-shadow-lg);
+    }
+
+    .v-dialog > .v-overlay__content > .v-card.dialog-layout-card {
+        &::before,
+        &::after {
+            content: '';
+            position: absolute;
+            z-index: 1;
+            width: calc(var(--ebk-radius-lg) + var(--ebk-bracket-size));
+            height: calc(var(--ebk-radius-lg) + var(--ebk-bracket-size));
+            border: 0 solid var(--ebk-color-copper-line);
+            pointer-events: none;
+        }
+
+        &::before {
+            inset-block-start: 0;
+            inset-inline-start: 0;
+            border-block-start-width: 1px;
+            border-inline-start-width: 1px;
+            border-start-start-radius: calc(var(--ebk-radius-lg) - 1px);
+        }
+
+        &::after {
+            inset-block-end: 0;
+            inset-inline-end: 0;
+            border-block-end-width: 1px;
+            border-inline-end-width: 1px;
+            border-end-end-radius: calc(var(--ebk-radius-lg) - 1px);
+        }
+
+        > .dialog-layout-card-title,
+        > .ebk-dialog-title-strip {
+            background-color: rgba(var(--ebk-color-surface-sunken-rgb), 0.6);
+        }
+    }
+
+    /* Snackbars: raised panel with a leading status edge */
+    .v-snackbar .v-snackbar__wrapper:not(.v-snackbar--variant-outlined, [class^="bg-"], [class*=" bg-"]) {
+        &::before {
+            content: '';
+            position: absolute;
+            inset-block: 0;
+            inset-inline-start: 0;
+            width: 3px;
+            background-color: var(--ebk-color-primary);
+            pointer-events: none;
+        }
+
+        .v-snackbar__content {
+            padding-inline-start: calc(var(--ebk-space-4) + 3px);
+            font-variant-numeric: var(--ebk-font-numeric);
+        }
+    }
+
+    .v-snackbar.ebk-snackbar--error .v-snackbar__wrapper::before {
+        background-color: rgb(var(--v-theme-error));
+    }
+
+    /* Alerts (validation summaries and recoverable errors) */
+    .v-alert--variant-tonal {
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 22%, transparent);
+    }
+
+    /* Progress and skeleton loaders */
+    .v-progress-linear {
+        border-radius: var(--ebk-radius-pill);
+    }
+
+    .v-skeleton-loader {
+        background: transparent;
+    }
+
+    .v-skeleton-loader__bone:not(.v-skeleton-loader__avatar, .v-skeleton-loader__image) {
+        border-radius: var(--ebk-radius-sm);
+    }
+
+    .v-skeleton-loader__bone::after {
+        background: linear-gradient(90deg, transparent, rgba(var(--ebk-copper-500-rgb), 0.08), transparent);
+    }
+
+    .v-skeleton-loader__text,
+    .v-skeleton-loader__heading,
+    .v-skeleton-loader__avatar,
+    .v-skeleton-loader__button,
+    .v-skeleton-loader__chip,
+    .v-skeleton-loader__image {
+        background: rgba(var(--ebk-color-hairline-rgb), calc(var(--ebk-color-hairline-opacity) * 0.8));
+    }
+}
+
+/* Technical table headers are uppercased for Latin-script languages only */
+@each $lang in ebk.$ebk-latin-script-languages {
+    .v-table > .v-table__wrapper > table > thead > tr > th:lang(#{$lang}) {
+        text-transform: uppercase;
+    }
+}
+
+/* Pressed feedback is a movement, so it is dropped with reduced motion */
+:root.ebk-reduce-motion .v-btn:active {
+    transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :root:not(.ebk-motion-full) .v-btn:active {
+        transform: none;
+    }
+}
+
+@media (forced-colors: active) {
+    .v-dialog > .v-overlay__content > .v-card.dialog-layout-card::before,
+    .v-dialog > .v-overlay__content > .v-card.dialog-layout-card::after,
+    .v-snackbar .v-snackbar__wrapper::before,
+    .v-list-item.v-list-item--active::before {
+        display: none;
+    }
+
+    .v-field--variant-outlined.v-field--focused,
+    .v-btn.bg-primary {
+        box-shadow: none !important;
     }
 }

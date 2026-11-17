@@ -156,21 +156,21 @@ export function isArrayEquals<T>(array1: T[], array2: T[], getItemKey: (item: T)
         return false;
     }
 
-    const items2Map: Record<string, T[]> = {};
+    const items2Map = new Map<string, T[]>();
 
     for (const item of array2) {
         const itemKey = getItemKey(item);
-        const items = items2Map[itemKey];
+        const items = items2Map.get(itemKey);
 
         if (items) {
             items.push(item);
         } else {
-            items2Map[itemKey] = [item];
+            items2Map.set(itemKey, [item]);
         }
     }
 
     for (const item1 of array1) {
-        const items2 = items2Map[getItemKey(item1)];
+        const items2 = items2Map.get(getItemKey(item1));
 
         if (!items2 || !items2.length) {
             return false;

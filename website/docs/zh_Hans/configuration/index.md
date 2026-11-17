@@ -32,8 +32,8 @@ ezrbookkeeping 使用 ini 文件作为配置文件。
 | `protocol` | `http` | Web 服务器提供的协议，支持 `http`、`https` 或 `socket`。 |
 | `http_addr` | `0.0.0.0` | `http` 或 `https` 协议下绑定的 IP 地址。 `0.0.0.0` 表示绑定到所有网卡设备。 |
 | `http_port` | `8080` | `http` 或 `https` 协议下绑定的 Http 端口。 |
-| `domain` | `localhost` | 访问 ezrbookkeeping 使用的域名（例如 `ezbookkeeping-demo.mayswind.net`）。 |
-| `root_url` | `%(protocol)s://%(domain)s:%(http_port)s/` | 在浏览器中访问 ezrbookkeeping 的完整路径（例如 `https://ezbookkeeping-demo.mayswind.net/`），支持占位符：`%(protocol)s`, `%(domain)s` 和 `%(http_port)s`。如果用户在浏览器访问时的协议和端口号与上述设置（`protocol` 和 `http_port`）相同，该项可以使用默认值。 |
+| `domain` | `localhost` | 访问 ezrbookkeeping 使用的域名（例如 `ezbookkeeping.example.com`）。 |
+| `root_url` | `%(protocol)s://%(domain)s:%(http_port)s/` | 在浏览器中访问 ezrbookkeeping 的完整路径（例如 `https://ezbookkeeping.example.com/`），支持占位符：`%(protocol)s`, `%(domain)s` 和 `%(http_port)s`。如果用户在浏览器访问时的协议和端口号与上述设置（`protocol` 和 `http_port`）相同，该项可以使用默认值。 |
 | `cert_file` |  | `https` 协议使用的证书文件路径。 |
 | `cert_key_file` |  | `https` 协议使用的证书私钥文件路径。 |
 | `unix_socket` |  | `unix` 协议使用的 Unix Socket 路径。 |
@@ -312,7 +312,7 @@ ezrbookkeeping 使用 ini 文件作为配置文件。
 | 选项名 | 默认值 | 描述 |
 | --- | --- | --- |
 | `enable_internal_auth` | `true` | 是否开启用户名、密码登录（`internal`）。 |
-| `enable_oauth2_auth` | `false` | 是否开启使用外部 OAuth 2.0 登录。ezrbookkeeping 的 OAuth 2.0 回调路径为 `/oauth/callback`，例如你的 ezrbookkeeping 地址为 [`https://ezbookkeeping-demo.mayswind.net/`](https://ezbookkeeping-demo.mayswind.net/)，则回调地址为 [`https://ezbookkeeping-demo.mayswind.net/oauth2/callback`](https://ezbookkeeping-demo.mayswind.net/oauth2/callback)。 |
+| `enable_oauth2_auth` | `false` | 是否开启使用外部 OAuth 2.0 登录。ezrbookkeeping 的 OAuth 2.0 回调路径为 `/oauth/callback`，例如你的 ezrbookkeeping 地址为 [`https://ezbookkeeping.example.com/`](https://ezbookkeeping.example.com/)，则回调地址为 [`https://ezbookkeeping.example.com/oauth2/callback`](https://ezbookkeeping.example.com/oauth2/callback)。 |
 | `enable_two_factor` | `true` | 使用 `internal` 身份验证时，是否开启两步验证。 |
 | `enable_forget_password` | `true` | 使用 `internal` 身份验证时，是否启用用户密码重置。（SMTP 服务器必须配置） |
 | `forget_password_require_email_verify` | `true` | 使用 `internal` 身份验证时，用户使用密码重置时是否要求邮箱必须验证。 |

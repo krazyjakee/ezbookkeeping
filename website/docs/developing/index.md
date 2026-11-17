@@ -26,7 +26,29 @@ After doing the above steps, you can open the url `http://127.0.0.1:8081/` in yo
 
 ## Building
 
-You can use `build.sh` / `build.bat` / `build.ps1` script to build frontend files, backend file, full package or docker image.
+You can use `build.sh` / `build.bat` / `build.ps1` to build the frontend, backend or full package. `build.sh` also supports building a Docker image.
+
+## Verification
+
+From the repository root, install the locked frontend dependencies and run the checks separately:
+
+```shell
+npm ci
+npm run lint
+npm test
+npm run build
+go vet ./...
+go test ./...
+go build .
+```
+
+`npm run lint` checks TypeScript and ESLint without changing files. Use `npm run lint:fix` to apply ESLint fixes explicitly.
+
+Some Go tests call live third-party APIs. To use the CI mode that omits those calls, run `BUILD_PIPELINE=1 go test ./...` on a POSIX shell. Set `CHECK_3RD_API=1` as well to enable them in CI. On PowerShell, set these variables with `$env:BUILD_PIPELINE = "1"` and `$env:CHECK_3RD_API = "1"` before running the Go tests.
+
+The build scripts run lint and tests by default. `SKIP_TESTS` is a Go test-name regular expression passed to `go test -skip`; it is not a boolean. To omit all tests, use the script's `--no-test` or `-NoTest` option.
+
+## Build targets
 
 ### Building frontend files
 

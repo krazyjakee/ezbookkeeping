@@ -1,37 +1,38 @@
 <template>
-    <f7-card class="account-overview-card no-margin-top margin-bottom" :class="{ 'skeleton-text': loading }" :style="cardStyle">
-        <f7-card-header class="display-block" :style="cardHeaderStyle">
-            <p class="no-margin">
-                <small class="card-header-content" v-if="loading">Net assets</small>
-                <small class="card-header-content" v-else-if="!loading">{{ tt('Net assets') }}</small>
-            </p>
-            <p class="no-margin">
-                <span class="net-assets" v-if="loading">0.00 USD</span>
-                <span class="net-assets" v-else-if="!loading">{{ netAssets }}</span>
-                <f7-link class="display-inline-flex margin-inline-start-half" :style="iconStyle"
-                         :aria-label="showAccountBalance ? tt('Hide Account Balance') : tt('Show Account Balance')"
-                         @click="showAccountBalance = !showAccountBalance"
-                         v-if="scene === 'accountList'">
-                    <f7-icon class="ebk-hide-icon" :f7="showAccountBalance ? 'eye_slash_fill' : 'eye_fill'"></f7-icon>
-                </f7-link>
-            </p>
-            <p class="no-margin">
-                <small class="account-overview-info" v-if="loading">
-                    <span>Total assets | Total liabilities</span>
-                </small>
-                <small class="account-overview-info" v-else-if="!loading">
-                    <span>{{ tt('Total assets') }}</span>
-                    <span>{{ totalAssets }}</span>
-                    <span>|</span>
-                    <span>{{ tt('Total liabilities') }}</span>
-                    <span>{{ totalLiabilities }}</span>
-                </small>
-            </p>
-        </f7-card-header>
-    </f7-card>
+    <overview-widget-panel class="mobile-asset-summary"
+                           :class="[`mobile-asset-summary--height-${height || 3}`, `mobile-asset-summary--${scene}`]"
+                           :title="tt('Asset Summary')"
+                           :loading="loading"
+                           :custom-background-color="customBackgroundColor"
+                           :custom-text-color="customTextColor">
+        <template #actions v-if="scene === 'accountList'">
+            <f7-link :aria-label="showAccountBalance ? tt('Hide Account Balance') : tt('Show Account Balance')"
+                     @click="showAccountBalance = !showAccountBalance">
+                <f7-icon :f7="showAccountBalance ? 'eye_slash' : 'eye'"></f7-icon>
+            </f7-link>
+        </template>
+
+        <div class="mobile-overview-hero">
+            <span class="mobile-overview-label ebk-technical-heading">{{ tt('Net assets') }}</span>
+            <span class="mobile-overview-hero-amount ebk-numeric" :class="{ 'skeleton-text': loading }">{{ loading ? '0.00 GBP' : netAssets }}</span>
+        </div>
+
+        <div class="mobile-overview-pair">
+            <div>
+                <span class="mobile-overview-label ebk-technical-heading">{{ tt('Total assets') }}</span>
+                <span class="mobile-overview-pair-amount ebk-numeric" :class="{ 'skeleton-text': loading }">{{ loading ? '0.00 GBP' : totalAssets }}</span>
+            </div>
+            <div>
+                <span class="mobile-overview-label ebk-technical-heading">{{ tt('Total liabilities') }}</span>
+                <span class="mobile-overview-pair-amount ebk-numeric" :class="{ 'skeleton-text': loading }">{{ loading ? '0.00 GBP' : totalLiabilities }}</span>
+            </div>
+        </div>
+    </overview-widget-panel>
 </template>
 
 <script setup lang="ts">
+import OverviewWidgetPanel from './OverviewWidgetPanel.vue';
+
 import { computed } from 'vue';
 
 import { useI18n } from '@/locales/helpers.ts';
@@ -45,7 +46,7 @@ import {
     DEFAULT_MOBILE_OVERVIEW_WIDGET_DARK_BACKGROUND_COLOR
 } from '@/consts/color.ts';
 
-import { getDisplayColor, getContrastTextColor, getContrastIconColor } from '@/lib/color.ts';
+import { getDisplayColor, getContrastTextColor } from '@/lib/color.ts';
 
 const props = defineProps<{
     loading: boolean;
@@ -67,35 +68,27 @@ const {
 const environmentsStore = useEnvironmentsStore();
 
 const isDarkMode = computed<boolean>(() => environmentsStore.framework7DarkMode || false);
-const backgroundColor = computed<ColorValue>(() => isDarkMode.value ?
-    props.darkBackgroundColor ?? DEFAULT_MOBILE_OVERVIEW_WIDGET_DARK_BACKGROUND_COLOR :
-    props.lightBackgroundColor ?? DEFAULT_MOBILE_OVERVIEW_WIDGET_LIGHT_BACKGROUND_COLOR);
-const foregroundColor = computed<ColorValue>(() => getContrastTextColor(backgroundColor.value));
-const iconColor = computed<ColorValue>(() => getContrastIconColor(backgroundColor.value));
-
-const cardStyle = computed<Record<string, string>>(() => ({
-    'background-color': getDisplayColor(backgroundColor.value),
-    'color': getDisplayColor(foregroundColor.value)
-}));
-
-const cardHeaderStyle = computed<Record<string, string>>(() => {
-    const finalStyle: Record<string, string> = {
-        color: getDisplayColor(foregroundColor.value)
-    };
-
-    if (props.height === 1) {
-        finalStyle['padding-top'] = '10px';
-    } else if (props.height === 2) {
-        finalStyle['padding-top'] = '60px';
+const customBackground = computed<ColorValue | undefined>(() => {
+    if (isDarkMode.value) {
+        return props.darkBackgroundColor && props.darkBackgroundColor !== DEFAULT_MOBILE_OVERVIEW_WIDGET_DARK_BACKGROUND_COLOR ? props.darkBackgroundColor : undefined;
     } else {
-        finalStyle['padding-top'] = '120px';
+        return props.lightBackgroundColor && props.lightBackgroundColor !== DEFAULT_MOBILE_OVERVIEW_WIDGET_LIGHT_BACKGROUND_COLOR ? props.lightBackgroundColor : undefined;
     }
-
-    return finalStyle;
 });
-
-const iconStyle = computed<Record<string, string>>(() => ({
-    color: getDisplayColor(iconColor.value),
-    opacity: '1'
-}));
+const customBackgroundColor = computed<string | undefined>(() => customBackground.value ? getDisplayColor(customBackground.value) : undefined);
+const customTextColor = computed<string | undefined>(() => customBackground.value ? getDisplayColor(getContrastTextColor(customBackground.value)) : undefined);
 </script>
+
+<style>
+.mobile-asset-summary--accountList {
+    margin-inline: calc(var(--ebk-space-3) + var(--f7-safe-area-left)) calc(var(--ebk-space-3) + var(--f7-safe-area-right));
+}
+
+.mobile-asset-summary--height-1 {
+    --mobile-overview-panel-padding: var(--ebk-space-2) var(--ebk-space-3);
+}
+
+.mobile-asset-summary--height-3 .mobile-overview-panel-body {
+    padding-block: var(--ebk-space-4);
+}
+</style>

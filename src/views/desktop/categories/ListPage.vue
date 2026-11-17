@@ -1,62 +1,82 @@
 <template>
     <v-row class="match-height">
         <v-col cols="12">
-            <v-card>
+            <v-card class="ebk-mgmt-panel" :aria-busy="loading ? 'true' : 'false'">
                 <v-layout class="page-with-navigation-drawer">
-                    <v-navigation-drawer ref="navbar" :permanent="alwaysShowNav" v-model="showNav">
-                        <div class="mx-4 my-3">
+                    <v-navigation-drawer ref="navbar" class="ebk-mgmt-subnav" :permanent="alwaysShowNav" v-model="showNav">
+                        <div class="ebk-mgmt-subnav-section">
                             <btn-vertical-group :disabled="loading" :buttons="[
                                 { name: tt('Expense'), value: CategoryType.Expense },
                                 { name: tt('Income'), value: CategoryType.Income },
                                 { name: tt('Transfer'), value: CategoryType.Transfer }
                             ]" v-model="activeCategoryType" @update:model-value="switchAllPrimaryCategories" />
                         </div>
-                        <v-divider />
-                        <v-tabs show-arrows class="my-3" direction="vertical"
+                        <span class="ebk-mgmt-subnav-title ebk-technical-heading">{{ tt('Primary Category') }}</span>
+                        <v-tabs show-arrows class="ebk-mgmt-subnav-tabs mb-3" direction="vertical"
                                 :disabled="loading" v-model="primaryCategoryId">
                             <v-tab class="tab-text-truncate" value="0" @click="switchAllPrimaryCategories">
-                                <span class="text-truncate">{{ tt('Primary Categories') }}</span>
+                                <span class="ebk-mgmt-subnav-tab-content">
+                                    <span class="text-truncate">{{ tt('Primary Categories') }}</span>
+                                    <span class="ebk-mgmt-subnav-tab-count" v-if="primaryCategories.length">{{ formatNumberToLocalizedNumerals(getAvailableCategoryCount(primaryCategories, showHidden)) }}</span>
+                                </span>
                             </v-tab>
                             <template :key="category.id" v-for="category in primaryCategories">
                                 <v-tab class="tab-text-truncate" :value="category.id" v-if="!category.hidden"
                                        @click="switchPrimaryCategory(category)">
-                                    <span class="text-truncate">{{ category.name }}</span>
+                                    <span class="ebk-mgmt-subnav-tab-content">
+                                        <ItemIcon size="1.25rem" :icon-type="getCategoryIconType(category.iconType)" :icon-id="category.icon" :color="category.color" />
+                                        <span class="text-truncate">{{ category.name }}</span>
+                                        <span class="ebk-mgmt-subnav-tab-count" v-if="category.subCategories && category.subCategories.length">{{ formatNumberToLocalizedNumerals(getAvailableCategoryCount(category.subCategories, showHidden)) }}</span>
+                                    </span>
                                 </v-tab>
                             </template>
                             <template v-if="loading && (!primaryCategories || primaryCategories.length < 1)">
                                 <v-skeleton-loader class="skeleton-no-margin mx-4 mt-h1 py-3" type="text"
-                                                   :key="itemIdx" :loading="true" v-for="itemIdx in [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]"></v-skeleton-loader>
+                                                   :key="itemIdx" :loading="true" v-for="itemIdx in [ 1, 2, 3, 4, 5, 6 ]"></v-skeleton-loader>
                             </template>
                         </v-tabs>
                     </v-navigation-drawer>
                     <v-main>
                         <v-window class="d-flex flex-grow-1 disable-tab-transition w-100-window-container" v-model="activeTab">
                             <v-window-item value="categoryPage">
-                                <v-card variant="flat" :min-height="cardMinHeight">
-                                    <template #title>
-                                        <div class="title-and-toolbar d-flex align-center">
-                                            <v-btn class="me-3 d-lg-none" density="compact" color="default" variant="plain"
-                                                   :aria-label="tt('Open Menu')" :ripple="false" :icon="true" @click="showNav = !showNav">
-                                                <v-icon :icon="mdiMenu" size="24" />
-                                            </v-btn>
-                                            <span>{{ tt('Transaction Categories') }}</span>
-                                            <v-btn class="ms-3" color="default" variant="outlined"
-                                                   :disabled="loading || updating" @click="add">{{ tt('Add') }}</v-btn>
-                                            <v-btn class="ms-3" color="primary" variant="tonal"
+                                <v-card variant="flat" class="category-list-content" :min-height="cardMinHeight">
+                                    <header class="ebk-panel-header-strip ebk-mgmt-header">
+                                        <v-btn class="ebk-mgmt-header-menu-toggle d-lg-none" density="comfortable" color="default" variant="text"
+                                               :aria-label="tt('Open Menu')" :icon="true" @click="showNav = !showNav">
+                                            <v-icon :icon="mdiMenu" size="22" />
+                                        </v-btn>
+                                        <v-btn class="ebk-mgmt-header-menu-toggle button-icon-with-direction" density="comfortable" color="default" variant="text"
+                                               :aria-label="tt('Back')" :icon="true" :disabled="loading"
+                                               v-if="!hasSubCategories" @click="switchAllPrimaryCategories">
+                                            <v-icon :icon="mdiArrowLeft" size="20" />
+                                            <v-tooltip activator="parent">{{ tt('Primary Categories') }}</v-tooltip>
+                                        </v-btn>
+                                        <h2 class="ebk-mgmt-header-label">{{ hasSubCategories ? tt('Primary Categories') : (currentPrimaryCategory?.name ?? tt('Secondary Category')) }}</h2>
+                                        <span class="ebk-mgmt-header-meta">
+                                            <span>{{ activeCategoryTypeName }}</span>
+                                            <template v-if="!loading && availableCategoryCount > 0">
+                                                <span aria-hidden="true"> · </span>
+                                                <span class="ebk-numeric">{{ formatNumberToLocalizedNumerals(availableCategoryCount) }}</span>
+                                            </template>
+                                        </span>
+                                        <div class="ebk-panel-header-actions ebk-mgmt-header-actions">
+                                            <v-btn color="primary" variant="tonal"
                                                    :disabled="loading || updating" @click="saveSortResult"
                                                    v-if="displayOrderModified">{{ tt('Save Display Order') }}</v-btn>
-                                            <v-btn density="compact" color="default" variant="text" class="ms-2"
+                                            <v-btn color="default" variant="outlined" :prepend-icon="mdiPlus"
+                                                   :disabled="loading || updating" @click="add">{{ tt('Add') }}</v-btn>
+                                            <v-btn density="comfortable" color="default" variant="text"
                                                    :aria-label="tt('Refresh')" :icon="true" :loading="loading || updating" @click="reload(true)">
                                                 <template #loader>
                                                     <v-progress-circular indeterminate size="20"/>
                                                 </template>
-                                                <v-icon :icon="mdiRefresh" size="24" />
+                                                <v-icon :icon="mdiRefresh" size="22" />
                                                 <v-tooltip activator="parent">{{ tt('Refresh') }}</v-tooltip>
                                             </v-btn>
-                                            <v-spacer/>
-                                            <v-btn density="comfortable" color="default" variant="text" class="ms-2"
+                                            <v-btn density="comfortable" color="default" variant="text"
                                                    :aria-label="tt('More')" :disabled="loading || updating" :icon="true">
                                                 <v-icon :icon="mdiDotsVertical" />
+                                                <v-tooltip activator="parent">{{ tt('More') }}</v-tooltip>
                                                 <v-menu activator="parent">
                                                     <v-list>
                                                         <v-list-item :prepend-icon="mdiEyeOutline"
@@ -69,41 +89,80 @@
                                                 </v-menu>
                                             </v-btn>
                                         </div>
-                                    </template>
+                                    </header>
 
-                                    <v-table class="transaction-category-table table-striped"
-                                             density="default" :hover="!loading">
+                                    <v-table class="ebk-mgmt-table transaction-category-table" density="default" :hover="!loading">
                                         <thead>
                                         <tr>
-                                            <th>
-                                                <div class="d-flex align-center">
-                                                    <span>{{ tt('Category Name') }}</span>
-                                                    <v-spacer/>
-                                                    <span>{{ tt('Operation') }}</span>
-                                                </div>
+                                            <th class="ebk-mgmt-column-name">{{ tt('Category Name') }}</th>
+                                            <th class="ebk-mgmt-column-operation">
+                                                <span class="ebk-visually-hidden">{{ tt('Operation') }}</span>
                                             </th>
                                         </tr>
                                         </thead>
 
-                                        <tbody v-if="loading && noAvailableCategory">
-                                        <tr :key="itemIdx" v-for="itemIdx in [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]">
-                                            <td class="px-0">
-                                                <v-skeleton-loader type="text" :loading="true"></v-skeleton-loader>
+                                        <tbody aria-hidden="true" v-if="loading && noAvailableCategory">
+                                        <tr class="ebk-mgmt-row" :key="itemIdx" v-for="itemIdx in [ 1, 2, 3, 4, 5 ]">
+                                            <td class="ebk-mgmt-column-name">
+                                                <div class="ebk-mgmt-row-content">
+                                                    <span class="ebk-mgmt-drag disabled"></span>
+                                                    <span class="ebk-mgmt-icon-tile ebk-mgmt-icon-tile--skeleton"></span>
+                                                    <v-skeleton-loader class="ebk-mgmt-skeleton ms-3" type="text" width="180" :loading="true"></v-skeleton-loader>
+                                                </div>
+                                            </td>
+                                            <td></td>
+                                        </tr>
+                                        </tbody>
+
+                                        <tbody v-if="!hasSubCategories && currentPrimaryCategory && !(loading && noAvailableCategory)">
+                                        <tr class="ebk-mgmt-row ebk-mgmt-row--parent no-hover" :class="{ 'ebk-mgmt-row--hidden': currentPrimaryCategory.hidden }">
+                                            <td class="ebk-mgmt-column-name">
+                                                <div class="ebk-mgmt-row-content">
+                                                    <span class="ebk-mgmt-drag disabled" aria-hidden="true"></span>
+                                                    <span class="ebk-mgmt-icon-tile ebk-mgmt-dimmable" aria-hidden="true">
+                                                        <ItemIcon size="1.25rem" :icon-type="getCategoryIconType(currentPrimaryCategory.iconType)"
+                                                                  :icon-id="currentPrimaryCategory.icon" :color="currentPrimaryCategory.color" />
+                                                    </span>
+                                                    <div class="ebk-mgmt-name">
+                                                        <div class="ebk-mgmt-name-line">
+                                                            <span class="ebk-mgmt-name-text ebk-mgmt-dimmable">{{ currentPrimaryCategory.name }}</span>
+                                                        </div>
+                                                        <span class="ebk-mgmt-meta">{{ tt('Primary Category') }}</span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="ebk-mgmt-column-operation">
+                                                <div class="ebk-mgmt-actions">
+                                                    <v-btn color="default" density="comfortable" variant="text" :icon="true"
+                                                           :aria-label="tt('Edit')" :disabled="loading || updating"
+                                                           @click="edit(currentPrimaryCategory)">
+                                                        <v-icon :icon="mdiPencilOutline" size="20" />
+                                                        <v-tooltip activator="parent">{{ tt('Edit') }}</v-tooltip>
+                                                    </v-btn>
+                                                </div>
                                             </td>
                                         </tr>
                                         </tbody>
 
                                         <tbody v-if="!loading && noAvailableCategory">
-                                        <tr>
-                                            <td>
-                                                <div class="d-flex align-center">
-                                                    <span>{{ tt('No available category') }}</span>
-                                                    <v-btn class="ms-3" color="default" variant="outlined"
-                                                           @click="showPresetDialog = true"
-                                                           v-if="hasSubCategories && noCategory">
-                                                        {{ tt('Add Default Categories') }}
-                                                    </v-btn>
-                                                </div>
+                                        <tr class="no-hover">
+                                            <td class="ebk-mgmt-column-state" colspan="2">
+                                                <state-panel type="error" :title="tt('Unable to retrieve category list')" v-if="loadError">
+                                                    <template #actions>
+                                                        <v-btn color="default" variant="outlined" :prepend-icon="mdiRefresh" @click="reload(true)">{{ tt('Retry') }}</v-btn>
+                                                    </template>
+                                                </state-panel>
+                                                <state-panel type="empty" :title="tt('No available category')" v-else>
+                                                    <template #actions>
+                                                        <v-btn color="default" variant="outlined"
+                                                               @click="showPresetDialog = true"
+                                                               v-if="hasSubCategories && noCategory">
+                                                            {{ tt('Add Default Categories') }}
+                                                        </v-btn>
+                                                        <v-btn color="default" variant="outlined" :prepend-icon="mdiPlus"
+                                                               :disabled="updating" @click="add">{{ tt('Add') }}</v-btn>
+                                                    </template>
+                                                </state-panel>
                                             </td>
                                         </tr>
                                         </tbody>
@@ -112,64 +171,99 @@
                                                         item-key="id"
                                                         handle=".drag-handle"
                                                         ghost-class="dragging-item"
-                                                        :disabled="noAvailableCategory"
+                                                        :disabled="noAvailableCategory || loading || updating"
                                                         v-model="categories"
                                                         @change="onMove">
                                             <template #item="{ element }">
-                                                <tr class="transaction-category-table-row" v-if="showHidden || !element.hidden"
-                                                    @mouseenter="hoveredCategoryId = element.id" @mouseleave="hoveredCategoryId = ''">
-                                                    <td>
-                                                        <div class="d-flex align-center">
-                                                            <div class="d-flex align-center" :class="{ 'cursor-pointer': isCategorySupportSwitch(element) }"
-                                                                 @click="switchPrimaryCategory(element)">
-                                                                <ItemIcon :icon-type="getCategoryIconType(element.iconType)"
-                                                                          :icon-id="element.icon" :color="element.color"
-                                                                          :hidden-status="element.hidden" />
-                                                                <div class="d-flex flex-column py-2">
-                                                                    <span class="ms-2">{{ element.name }}</span>
-                                                                    <span class="transaction-category-comment ms-2">{{ element.comment }}</span>
-                                                                </div>
-                                                            </div>
-
-                                                            <v-spacer/>
-
-                                                            <template v-if="hoveredCategoryId === element.id && !loading">
-                                                                <v-btn class="px-2 ms-2" color="default"
-                                                                       density="comfortable" variant="text"
-                                                                       :prepend-icon="element.hidden ? mdiEyeOutline : mdiEyeOffOutline"
-                                                                       :loading="categoryHiding[element.id]"
-                                                                       :disabled="loading || updating"
-                                                                       @click="hide(element, !element.hidden)">
-                                                                    <template #loader>
-                                                                        <v-progress-circular indeterminate size="20" width="2"/>
-                                                                    </template>
-                                                                    {{ element.hidden ? tt('Show') : tt('Hide') }}
-                                                                </v-btn>
-                                                                <v-btn class="px-2" color="default"
-                                                                       density="comfortable" variant="text"
-                                                                       :prepend-icon="mdiPencilOutline"
-                                                                       :disabled="loading || updating"
-                                                                       @click="edit(element)">
-                                                                    {{ tt('Edit') }}
-                                                                </v-btn>
-                                                                <v-btn class="px-2" color="default"
-                                                                       density="comfortable" variant="text"
-                                                                       :prepend-icon="mdiDeleteOutline"
-                                                                       :loading="categoryRemoving[element.id]"
-                                                                       :disabled="loading || updating"
-                                                                       @click="remove(element)">
-                                                                    <template #loader>
-                                                                        <v-progress-circular indeterminate size="20" width="2"/>
-                                                                    </template>
-                                                                    {{ tt('Delete') }}
-                                                                </v-btn>
-                                                            </template>
-
-                                                            <span class="ms-2">
-                                                                <v-icon :class="!loading && !updating && availableCategoryCount > 1 ? 'drag-handle' : 'disabled'"
-                                                                        :aria-label="tt('Drag to Reorder')" :icon="mdiDrag"/>
-                                                                <v-tooltip activator="parent" v-if="!loading && !updating && availableCategoryCount > 1 && hoveredCategoryId === element.id">{{ tt('Drag to Reorder') }}</v-tooltip>
+                                                <tr class="ebk-mgmt-row transaction-category-table-row"
+                                                    :class="{ 'ebk-mgmt-row--hidden': element.hidden, 'ebk-mgmt-row--child': !hasSubCategories, 'ebk-mgmt-row--child-last': !hasSubCategories && isLastVisibleCategory(element) }"
+                                                    v-if="showHidden || !element.hidden">
+                                                    <td class="ebk-mgmt-column-name">
+                                                        <div class="ebk-mgmt-row-content">
+                                                            <span class="ebk-mgmt-drag" :class="{ 'drag-handle': !loading && !updating && availableCategoryCount > 1, 'disabled': loading || updating || availableCategoryCount <= 1 }">
+                                                                <v-icon :aria-label="tt('Drag to Reorder')" :icon="mdiDrag" size="20"/>
+                                                                <v-tooltip activator="parent" v-if="!loading && !updating && availableCategoryCount > 1">{{ tt('Drag to Reorder') }}</v-tooltip>
                                                             </span>
+                                                            <span class="ebk-mgmt-icon-tile ebk-mgmt-dimmable" aria-hidden="true">
+                                                                <ItemIcon size="1.25rem" :icon-type="getCategoryIconType(element.iconType)"
+                                                                          :icon-id="element.icon" :color="element.color" />
+                                                            </span>
+                                                            <div class="ebk-mgmt-name">
+                                                                <div class="ebk-mgmt-name-line">
+                                                                    <span class="ebk-mgmt-name-text ebk-mgmt-dimmable"
+                                                                          :class="{ 'ebk-mgmt-name-text--link': isCategorySupportSwitch(element) }"
+                                                                          @click="switchPrimaryCategory(element)">{{ element.name }}</span>
+                                                                    <span class="ebk-mgmt-hidden-chip" v-if="element.hidden">
+                                                                        <v-icon :icon="mdiEyeOffOutline" size="12" />
+                                                                        {{ tt('Hidden') }}
+                                                                    </span>
+                                                                </div>
+                                                                <span class="ebk-mgmt-meta ebk-mgmt-dimmable" v-if="element.comment || (hasSubCategories && element.subCategories && element.subCategories.length)">
+                                                                    <template v-if="hasSubCategories && element.subCategories && element.subCategories.length">
+                                                                        <span>{{ tt('Secondary Category') }}</span>
+                                                                        <span class="ebk-numeric">&nbsp;{{ formatNumberToLocalizedNumerals(getAvailableCategoryCount(element.subCategories, showHidden)) }}</span>
+                                                                    </template>
+                                                                    <span aria-hidden="true" v-if="element.comment && hasSubCategories && element.subCategories && element.subCategories.length"> · </span>
+                                                                    <span v-if="element.comment">{{ element.comment }}</span>
+                                                                </span>
+                                                                <v-tooltip activator="parent" location="bottom start" open-delay="600" v-if="element.comment">{{ element.comment }}</v-tooltip>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td class="ebk-mgmt-column-operation">
+                                                        <div class="ebk-mgmt-actions">
+                                                            <v-btn class="button-icon-with-direction" color="default" density="comfortable" variant="text" :icon="true"
+                                                                   :aria-label="tt('Secondary Category')"
+                                                                   :disabled="loading || updating"
+                                                                   v-if="isCategorySupportSwitch(element)"
+                                                                   @click="switchPrimaryCategory(element)">
+                                                                <v-icon :icon="mdiChevronRight" size="20" />
+                                                                <v-tooltip activator="parent">{{ tt('Secondary Category') }}</v-tooltip>
+                                                            </v-btn>
+                                                            <v-btn color="default" density="comfortable" variant="text" :icon="true"
+                                                                   :aria-label="element.hidden ? tt('Show') : tt('Hide')"
+                                                                   :loading="categoryHiding[element.id]"
+                                                                   :disabled="loading || updating"
+                                                                   @click="hide(element, !element.hidden)">
+                                                                <template #loader>
+                                                                    <v-progress-circular indeterminate size="20" width="2"/>
+                                                                </template>
+                                                                <v-icon :icon="element.hidden ? mdiEyeOutline : mdiEyeOffOutline" size="20" />
+                                                                <v-tooltip activator="parent">{{ element.hidden ? tt('Show') : tt('Hide') }}</v-tooltip>
+                                                            </v-btn>
+                                                            <v-btn color="default" density="comfortable" variant="text" :icon="true"
+                                                                   :aria-label="tt('Edit')"
+                                                                   :disabled="loading || updating"
+                                                                   @click="edit(element)">
+                                                                <v-icon :icon="mdiPencilOutline" size="20" />
+                                                                <v-tooltip activator="parent">{{ tt('Edit') }}</v-tooltip>
+                                                            </v-btn>
+                                                            <v-btn color="error" density="comfortable" variant="text" :icon="true"
+                                                                   :aria-label="tt('Delete')"
+                                                                   :loading="categoryRemoving[element.id]"
+                                                                   :disabled="loading || updating"
+                                                                   @click="remove(element)">
+                                                                <template #loader>
+                                                                    <v-progress-circular indeterminate size="20" width="2"/>
+                                                                </template>
+                                                                <v-icon :icon="mdiDeleteOutline" size="20" />
+                                                                <v-tooltip activator="parent">{{ tt('Delete') }}</v-tooltip>
+                                                            </v-btn>
+                                                            <span class="ebk-mgmt-actions-divider" aria-hidden="true"></span>
+                                                            <v-btn class="ebk-mgmt-reveal" color="default" density="comfortable" variant="text" :icon="true"
+                                                                   :aria-label="tt('Move Up')"
+                                                                   :disabled="loading || updating || !canMoveCategory(element, -1)"
+                                                                   @click="moveCategory(element, -1)">
+                                                                <v-icon :icon="mdiArrowUp" size="18" />
+                                                                <v-tooltip activator="parent">{{ tt('Move Up') }}</v-tooltip>
+                                                            </v-btn>
+                                                            <v-btn class="ebk-mgmt-reveal" color="default" density="comfortable" variant="text" :icon="true"
+                                                                   :aria-label="tt('Move Down')"
+                                                                   :disabled="loading || updating || !canMoveCategory(element, 1)"
+                                                                   @click="moveCategory(element, 1)">
+                                                                <v-icon :icon="mdiArrowDown" size="18" />
+                                                                <v-tooltip activator="parent">{{ tt('Move Down') }}</v-tooltip>
+                                                            </v-btn>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -196,6 +290,7 @@
 import { VNavigationDrawer } from 'vuetify/components/VNavigationDrawer';
 
 import ConfirmDialog from '@/components/desktop/ConfirmDialog.vue';
+import StatePanel from '@/components/common/StatePanel.vue';
 import EditDialog from './list/dialogs/EditDialog.vue';
 import PresetDialog from './list/dialogs/PresetDialog.vue';
 
@@ -226,14 +321,19 @@ import {
     mdiEyeOutline,
     mdiDeleteOutline,
     mdiDrag,
-    mdiDotsVertical
+    mdiDotsVertical,
+    mdiPlus,
+    mdiArrowUp,
+    mdiArrowDown,
+    mdiArrowLeft,
+    mdiChevronRight
 } from '@mdi/js';
 
 type ConfirmDialogType = InstanceType<typeof ConfirmDialog>;
 type EditDialogType = InstanceType<typeof EditDialog>;
 
 const { lgAndUp } = useDisplay();
-const { tt } = useI18n();
+const { tt, formatNumberToLocalizedNumerals } = useI18n();
 const { loading, primaryCategoryId, currentPrimaryCategory } = useCategoryListPageBase();
 
 const transactionCategoriesStore = useTransactionCategoriesStore();
@@ -246,7 +346,7 @@ const editDialog = useTemplateRef<EditDialogType>('editDialog');
 const activeCategoryType = ref<CategoryType>(CategoryType.Expense);
 const activeTab = ref<string>('categoryPage');
 const updating = ref<boolean>(false);
-const hoveredCategoryId = ref<string>('');
+const loadError = ref<boolean>(false);
 const categoryHiding = ref<Record<string, boolean>>({});
 const categoryRemoving = ref<Record<string, boolean>>({});
 const displayOrderModified = ref<boolean>(false);
@@ -287,6 +387,60 @@ const categories = computed<TransactionCategory[]>(() => {
 const noAvailableCategory = computed<boolean>(() => isNoAvailableCategory(categories.value, showHidden.value));
 const noCategory = computed<boolean>(() => categories.value.length < 1);
 const availableCategoryCount = computed<number>(() => getAvailableCategoryCount(categories.value, showHidden.value));
+
+const activeCategoryTypeName = computed<string>(() => {
+    if (activeCategoryType.value === CategoryType.Income) {
+        return tt('Income');
+    } else if (activeCategoryType.value === CategoryType.Transfer) {
+        return tt('Transfer');
+    } else {
+        return tt('Expense');
+    }
+});
+
+function getAdjacentVisibleCategoryIndex(category: TransactionCategory, direction: number): { from: number, to: number } | null {
+    const list = categories.value;
+    const from = list.findIndex(item => item.id === category.id);
+
+    if (from < 0) {
+        return null;
+    }
+
+    for (let to = from + direction; to >= 0 && to < list.length; to += direction) {
+        if (showHidden.value || !list[to]!.hidden) {
+            return { from, to };
+        }
+    }
+
+    return null;
+}
+
+function isLastVisibleCategory(category: TransactionCategory): boolean {
+    return !getAdjacentVisibleCategoryIndex(category, 1);
+}
+
+function canMoveCategory(category: TransactionCategory, direction: number): boolean {
+    return availableCategoryCount.value > 1 && !!getAdjacentVisibleCategoryIndex(category, direction);
+}
+
+// non-drag alternative to the drag handle (guidelines §6.4), uses the same display order update as dragging
+function moveCategory(category: TransactionCategory, direction: number): void {
+    const position = getAdjacentVisibleCategoryIndex(category, direction);
+
+    if (!position) {
+        return;
+    }
+
+    transactionCategoriesStore.changeCategoryDisplayOrder({
+        categoryId: category.id,
+        from: position.from,
+        to: position.to
+    }).then(() => {
+        displayOrderModified.value = true;
+    }).catch(error => {
+        desktopPageStore.addErrorToast(error);
+    });
+}
 
 function updateCardMinHeight(): void {
     nextTick(() => {
@@ -329,6 +483,7 @@ function reload(force: boolean): void {
         force: force
     }).then(() => {
         loading.value = false;
+        loadError.value = false;
         displayOrderModified.value = false;
 
         if (force) {
@@ -340,7 +495,10 @@ function reload(force: boolean): void {
         loading.value = false;
 
         if (error && error.isUpToDate) {
+            loadError.value = false;
             displayOrderModified.value = false;
+        } else if (noCategory.value) {
+            loadError.value = true;
         }
 
         if (!error.processed) {
@@ -412,7 +570,7 @@ function hide(category: TransactionCategory, hidden: boolean): void {
 }
 
 function remove(category: TransactionCategory): void {
-    confirmDialog.value?.open('Are you sure you want to delete this category?').then(() => {
+    confirmDialog.value?.open('Are you sure you want to delete this category?', { color: 'error' }).then(() => {
         updating.value = true;
         categoryRemoving.value[category.id] = true;
 
@@ -498,8 +656,7 @@ reload(false);
 </script>
 
 <style>
-.transaction-category-table .transaction-category-comment {
-    font-size: 0.8rem;
-    color: rgba(var(--v-theme-on-background), var(--v-medium-emphasis-opacity)) !important;
+.category-list-content {
+    border-radius: 0;
 }
 </style>

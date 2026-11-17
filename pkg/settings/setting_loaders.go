@@ -1,10 +1,12 @@
 package settings
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/robfig/cron/v3"
 	"gopkg.in/ini.v1"
 
 	"github.com/mayswind/ezbookkeeping/pkg/core"
@@ -401,6 +403,25 @@ func loadDuplicateCheckerConfiguration(config *Config, configFile *ini.File, sec
 func loadCronConfiguration(config *Config, configFile *ini.File, sectionName string) error {
 	config.EnableRemoveExpiredTokens = getConfigItemBoolValue(configFile, sectionName, "enable_remove_expired_tokens", false)
 	config.EnableCreateScheduledTransaction = getConfigItemBoolValue(configFile, sectionName, "enable_create_scheduled_transaction", false)
+
+	return nil
+}
+
+func loadBackupConfiguration(config *Config, configFile *ini.File, sectionName string) error {
+	config.EnableScheduledBackup = getConfigItemBoolValue(configFile, sectionName, "enable_scheduled_backup", false)
+	config.BackupCron = strings.TrimSpace(getConfigItemStringValue(configFile, sectionName, "backup_cron", defaultBackupCron))
+
+	if _, err := cron.ParseStandard(config.BackupCron); err != nil && config.EnableScheduledBackup {
+		return fmt.Errorf("invalid backup cron expression \"%s\": %w", config.BackupCron, err)
+	}
+
+	backupPath := strings.TrimSpace(getConfigItemStringValue(configFile, sectionName, "backup_path", defaultBackupPath))
+	config.BackupPath, _ = getFinalPath(config.WorkingPath, backupPath)
+	config.BackupIncludeConfig = getConfigItemBoolValue(configFile, sectionName, "backup_include_config", true)
+	config.BackupEncrypt = getConfigItemBoolValue(configFile, sectionName, "backup_encrypt", false)
+	config.BackupPassphrase = strings.TrimRight(getConfigItemStringValue(configFile, sectionName, "backup_passphrase"), "\r\n")
+	config.BackupRetentionCount = getConfigItemUint32Value(configFile, sectionName, "backup_retention_count", defaultBackupRetentionCount)
+	config.BackupRetentionDays = getConfigItemUint32Value(configFile, sectionName, "backup_retention_days", 0)
 
 	return nil
 }

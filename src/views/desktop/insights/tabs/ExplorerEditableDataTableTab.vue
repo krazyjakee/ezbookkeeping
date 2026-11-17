@@ -155,7 +155,8 @@
             </div>
         </template>
         <template #item.sourceAmount="{ item }">
-            <span :class="{ 'text-expense': item.type === TransactionType.Expense, 'text-income': item.type === TransactionType.Income }">{{ getDisplaySourceAmount(item) }}</span>
+            <signed-amount :text="getDisplaySourceAmount(item)" :hide-sign="item.hideAmount"
+                           :type="item.type === TransactionType.Income ? 'income' : (item.type === TransactionType.Expense ? 'expense' : (item.type === TransactionType.Transfer ? 'transfer' : 'none'))" />
             <v-icon class="icon-with-direction mx-1" size="13" :icon="mdiArrowRight" v-if="item.type === TransactionType.Transfer && item.sourceAccount?.id !== item.destinationAccount?.id && getDisplaySourceAmount(item) !== getDisplayDestinationAmount(item)"></v-icon>
             <span v-if="item.type === TransactionType.Transfer && item.sourceAccount?.id !== item.destinationAccount?.id && getDisplaySourceAmount(item) !== getDisplayDestinationAmount(item)">{{ getDisplayDestinationAmount(item) }}</span>
             <v-tooltip activator="parent" v-if="!item.hideAmount && ((item.type !== TransactionType.Transfer && item.sourceAccount?.currency !== defaultCurrency) || (item.type === TransactionType.Transfer && item.sourceAccount?.currency !== defaultCurrency && item.destinationAccount?.currency !== defaultCurrency))">
@@ -217,6 +218,7 @@
 
 <script setup lang="ts">
 import PaginationButtons from '@/components/desktop/PaginationButtons.vue';
+import SignedAmount from '@/components/common/SignedAmount.vue';
 import BatchUpdateCategoryDialog from '@/views/desktop/insights/dialogs/BatchUpdateCategoryDialog.vue';
 import BatchUpdateAccountDialog from '@/views/desktop/insights/dialogs/BatchUpdateAccountDialog.vue';
 import BatchUpdateTagsDialog, { type BatchUpdateTagsOperationType } from '@/views/desktop/insights/dialogs/BatchUpdateTagsDialog.vue';

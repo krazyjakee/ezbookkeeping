@@ -154,18 +154,18 @@ func TestMCPTransactionTotalsAggregator_IgnoreNilAmount(t *testing.T) {
 	assert.Equal(t, "0.00", items[0].Net)
 }
 
-func TestMCPReportFormatBalances(t *testing.T) {
-	display, signed, outstanding := mcpReportFormatBalances(models.ACCOUNT_CATEGORY_DEBT, big.NewInt(-12000))
+func TestMCPFormatAccountBalances(t *testing.T) {
+	display, signed, outstanding := mcpFormatAccountBalances(models.ACCOUNT_CATEGORY_DEBT, big.NewInt(-12000))
 	assert.Equal(t, "120.00", display)
 	assert.Equal(t, "-120.00", signed)
 	assert.Equal(t, "120.00", outstanding)
 
-	display, signed, outstanding = mcpReportFormatBalances(models.ACCOUNT_CATEGORY_CHECKING_ACCOUNT, big.NewInt(50050))
+	display, signed, outstanding = mcpFormatAccountBalances(models.ACCOUNT_CATEGORY_CHECKING_ACCOUNT, big.NewInt(50050))
 	assert.Equal(t, "500.50", display)
 	assert.Equal(t, "500.50", signed)
 	assert.Equal(t, "", outstanding)
 
-	display, signed, _ = mcpReportFormatBalances(models.ACCOUNT_CATEGORY_CASH, nil)
+	display, signed, _ = mcpFormatAccountBalances(models.ACCOUNT_CATEGORY_CASH, nil)
 	assert.Equal(t, "0.00", display)
 	assert.Equal(t, "0.00", signed)
 }
@@ -205,11 +205,11 @@ func TestMCPReportParseTimeRange(t *testing.T) {
 	assert.Equal(t, 3600, offset)
 
 	_, _, _, err = mcpReportParseTimeRange("2024-02-01T00:00:00Z", "2024-01-01T00:00:00Z")
-	toolErr := getMCPAttachmentTestToolError(t, err)
+	toolErr := mcpTestGetToolError(t, err)
 	assert.Equal(t, "end_time", toolErr.Field)
 
 	_, _, _, err = mcpReportParseTimeRange("yesterday", "")
-	toolErr = getMCPAttachmentTestToolError(t, err)
+	toolErr = mcpTestGetToolError(t, err)
 	assert.Equal(t, "start_time", toolErr.Field)
 }
 
@@ -240,8 +240,146 @@ func TestMCPReportGetAccountFilter(t *testing.T) {
 	assert.False(t, filter[4])
 
 	_, err = mcpReportGetAccountFilter(accounts, "account_ids", []string{"99"})
-	assert.Equal(t, MCPToolErrorCodeNotFound, getMCPAttachmentTestToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeNotFound, mcpTestGetToolError(t, err).Code)
 
 	_, err = mcpReportGetAccountFilter(accounts, "account_ids", []string{"abc"})
-	assert.Equal(t, MCPToolErrorCodeInvalidValue, getMCPAttachmentTestToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeInvalidValue, mcpTestGetToolError(t, err).Code)
+}
+
+func getReportTestTags() map[int64]*models.TransactionTag {
+	return map[int64]*models.TransactionTag{
+		301: {TagId: 301, Name: "Client A"},
+		302: {TagId: 302, Name: "Client B"},
+		303: {TagId: 303, Name: "Unused"},
+	}
+}
+
+func getReportTestTaggedTransactions() ([]*models.Transaction, map[int64][]int64) {
+	transactions := []*models.Transaction{
+		{TransactionId: 1, Type: models.TRANSACTION_DB_TYPE_EXPENSE, CategoryId: 202, AccountId: 101, Amount: 1000},
+		{TransactionId: 2, Type: models.TRANSACTION_DB_TYPE_EXPENSE, CategoryId: 203, AccountId: 103, Amount: 2000},
+		{TransactionId: 3, Type: models.TRANSACTION_DB_TYPE_INCOME, CategoryId: 207, AccountId: 101, Amount: 50000},
+		{TransactionId: 4, Type: models.TRANSACTION_DB_TYPE_TRANSFER_OUT, CategoryId: 205, AccountId: 101, RelatedId: 5, RelatedAccountId: 102, Amount: 3000},
+		{TransactionId: 5, Type: models.TRANSACTION_DB_TYPE_TRANSFER_IN, CategoryId: 205, AccountId: 102, RelatedId: 4, RelatedAccountId: 101, Amount: 3000},
+		{TransactionId: 6, Type: models.TRANSACTION_DB_TYPE_EXPENSE, CategoryId: 202, AccountId: 101, Amount: 700},
+	}
+	transactionTagIds := map[int64][]int64{
+		1: {301, 302},
+		2: {301},
+		3: {302, 302},
+		4: {301},
+	}
+
+	return transactions, transactionTagIds
+}
+
+func aggregateReportTestTotalsByTag(groupTagIds []int64, includeNoTags bool, accountFilter map[int64]bool, categoryFilter map[int64]bool) []*MCPTransactionTotalsItem {
+	transactions, transactionTagIds := getReportTestTaggedTransactions()
+	aggregator := newMCPTransactionTotalsAggregator()
+	mcpTotalsAggregateByTag(aggregator, transactions, transactionTagIds, groupTagIds, getReportTestTags(), includeNoTags, accountFilter, categoryFilter, getReportTestCategories(), getReportTestAccounts())
+	return aggregator.Items()
+}
+
+func TestMCPTotalsAggregateByTag_AllTags(t *testing.T) {
+	items := aggregateReportTestTotalsByTag([]int64{301, 302, 303}, true, nil, nil)
+
+	// tag 303 has no transactions so it has no group, and Client B only has GBP transactions
+	assert.Equal(t, 4, len(items))
+
+	// "(no tags)" sorts first by name: transaction 6
+	assert.Equal(t, "", items[0].Id)
+	assert.Equal(t, mcpTotalsNoTagsGroupName, items[0].Name)
+	assert.Equal(t, "GBP", items[0].Currency)
+	assert.Equal(t, "7.00", items[0].Expense)
+	assert.Equal(t, "-7.00", items[0].Net)
+
+	// Client A in GBP: transaction 1 and both sides of the transfer (the transfer in side gets the tags of the transfer out side)
+	assert.Equal(t, "301", items[1].Id)
+	assert.Equal(t, "Client A", items[1].Name)
+	assert.Equal(t, "GBP", items[1].Currency)
+	assert.Equal(t, "10.00", items[1].Expense)
+	assert.Equal(t, "30.00", items[1].TransferIn)
+	assert.Equal(t, "30.00", items[1].TransferOut)
+	assert.Equal(t, "-10.00", items[1].Net)
+
+	// Client A in USD: transaction 2
+	assert.Equal(t, "301", items[2].Id)
+	assert.Equal(t, "USD", items[2].Currency)
+	assert.Equal(t, "20.00", items[2].Expense)
+
+	// Client B: transaction 1 and transaction 3 (duplicated tag ids are counted once)
+	assert.Equal(t, "302", items[3].Id)
+	assert.Equal(t, "Client B", items[3].Name)
+	assert.Equal(t, "GBP", items[3].Currency)
+	assert.Equal(t, "500.00", items[3].Income)
+	assert.Equal(t, "10.00", items[3].Expense)
+	assert.Equal(t, "490.00", items[3].Net)
+}
+
+func TestMCPTotalsAggregateByTag_SpecifiedTagsWithoutNoTagsGroup(t *testing.T) {
+	items := aggregateReportTestTotalsByTag([]int64{302}, false, nil, nil)
+
+	assert.Equal(t, 1, len(items))
+	assert.Equal(t, "302", items[0].Id)
+	assert.Equal(t, "500.00", items[0].Income)
+	assert.Equal(t, "10.00", items[0].Expense)
+}
+
+func TestMCPTotalsAggregateByTag_AccountAndCategoryFilters(t *testing.T) {
+	items := aggregateReportTestTotalsByTag([]int64{301, 302}, true, map[int64]bool{101: true}, nil)
+
+	assert.Equal(t, 3, len(items))
+	assert.Equal(t, mcpTotalsNoTagsGroupName, items[0].Name)
+	assert.Equal(t, "301", items[1].Id)
+	assert.Equal(t, "GBP", items[1].Currency)
+	assert.Equal(t, "10.00", items[1].Expense)
+	assert.Equal(t, "0.00", items[1].TransferIn)
+	assert.Equal(t, "30.00", items[1].TransferOut)
+	assert.Equal(t, "302", items[2].Id)
+
+	items = aggregateReportTestTotalsByTag([]int64{301, 302}, true, nil, map[int64]bool{201: true})
+
+	assert.Equal(t, 4, len(items))
+	assert.Equal(t, mcpTotalsNoTagsGroupName, items[0].Name)
+	assert.Equal(t, "7.00", items[0].Expense)
+	assert.Equal(t, "301", items[1].Id)
+	assert.Equal(t, "10.00", items[1].Expense)
+	assert.Equal(t, "0.00", items[1].TransferOut)
+	assert.Equal(t, "301", items[2].Id)
+	assert.Equal(t, "USD", items[2].Currency)
+	assert.Equal(t, "302", items[3].Id)
+	assert.Equal(t, "0.00", items[3].Income)
+}
+
+func TestMCPTotalsGetTransactionTagIds(t *testing.T) {
+	_, transactionTagIds := getReportTestTaggedTransactions()
+
+	assert.Equal(t, []int64{301}, mcpTotalsGetTransactionTagIds(&models.Transaction{TransactionId: 5, RelatedId: 4}, transactionTagIds))
+	assert.Equal(t, []int64{302}, mcpTotalsGetTransactionTagIds(&models.Transaction{TransactionId: 3}, transactionTagIds))
+	assert.Equal(t, 0, len(mcpTotalsGetTransactionTagIds(&models.Transaction{TransactionId: 6}, transactionTagIds)))
+	assert.Equal(t, []int64{301, 302}, transactionTagIds[1])
+}
+
+func TestMCPTotalsTransactionTimeRange(t *testing.T) {
+	location := time.FixedZone("Test", 8*60*60)
+	startUnixTime := time.Date(2024, 1, 1, 0, 0, 0, 0, location).Unix()
+	endUnixTime := time.Date(2024, 1, 31, 23, 59, 59, 0, location).Unix()
+	timeRange := mcpTotalsGetTransactionTimeRange(startUnixTime, endUnixTime, location)
+
+	newTransaction := func(transactionType models.TransactionDbType, localTime time.Time) *models.Transaction {
+		return &models.Transaction{Type: transactionType, TransactionTime: localTime.Unix() * 1000}
+	}
+
+	assert.True(t, timeRange.minTransactionTime > 0)
+	assert.True(t, timeRange.maxTransactionTime > timeRange.minTransactionTime)
+	assert.True(t, timeRange.contains(newTransaction(models.TRANSACTION_DB_TYPE_EXPENSE, time.Date(2024, 1, 1, 0, 0, 0, 0, location))))
+	assert.True(t, timeRange.contains(newTransaction(models.TRANSACTION_DB_TYPE_TRANSFER_IN, time.Date(2024, 1, 31, 23, 59, 59, 0, location))))
+	assert.False(t, timeRange.contains(newTransaction(models.TRANSACTION_DB_TYPE_INCOME, time.Date(2023, 12, 31, 23, 59, 59, 0, location))))
+	assert.False(t, timeRange.contains(newTransaction(models.TRANSACTION_DB_TYPE_INCOME, time.Date(2024, 2, 1, 0, 0, 0, 0, location))))
+	assert.False(t, timeRange.contains(newTransaction(models.TRANSACTION_DB_TYPE_MODIFY_BALANCE, time.Date(2024, 1, 15, 0, 0, 0, 0, location))))
+
+	unboundedRange := mcpTotalsGetTransactionTimeRange(0, 0, location)
+	assert.Equal(t, int64(0), unboundedRange.minTransactionTime)
+	assert.Equal(t, int64(0), unboundedRange.maxTransactionTime)
+	assert.True(t, unboundedRange.contains(newTransaction(models.TRANSACTION_DB_TYPE_TRANSFER_OUT, time.Date(2030, 1, 1, 0, 0, 0, 0, location))))
 }

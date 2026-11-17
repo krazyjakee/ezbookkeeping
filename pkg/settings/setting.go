@@ -209,6 +209,10 @@ const (
 
 	defaultImportFileMaxSize uint32 = 10485760 // 10MB
 
+	defaultBackupCron           string = "0 3 * * *" // every day at 03:00
+	defaultBackupPath           string = "data/backups"
+	defaultBackupRetentionCount uint32 = 7
+
 	defaultExchangeRatesDataRequestTimeout uint32 = 10000 // 10 seconds
 )
 
@@ -318,8 +322,9 @@ type MultiLanguageContentConfig struct {
 // Config represents the global setting config
 type Config struct {
 	// Global
-	Mode        SystemMode
-	WorkingPath string
+	Mode           SystemMode
+	WorkingPath    string
+	ConfigFilePath string
 
 	// Server
 	Protocol Scheme
@@ -404,6 +409,16 @@ type Config struct {
 	// Cron
 	EnableRemoveExpiredTokens        bool
 	EnableCreateScheduledTransaction bool
+
+	// Backup
+	EnableScheduledBackup bool
+	BackupCron            string
+	BackupPath            string
+	BackupIncludeConfig   bool
+	BackupEncrypt         bool
+	BackupPassphrase      string
+	BackupRetentionCount  uint32
+	BackupRetentionDays   uint32
 
 	// Secret
 	SecretKeyNoSet                             bool
@@ -528,6 +543,12 @@ func LoadConfiguration(configFilePath string) (*Config, error) {
 		return nil, err
 	}
 
+	if absoluteConfigFilePath, err := filepath.Abs(configFilePath); err == nil {
+		config.ConfigFilePath = absoluteConfigFilePath
+	} else {
+		config.ConfigFilePath = configFilePath
+	}
+
 	loaders := []struct {
 		sectionName string
 		load        func(config *Config, configFile *ini.File, sectionName string) error
@@ -555,6 +576,7 @@ func LoadConfiguration(configFilePath string) (*Config, error) {
 		{"uuid", loadUuidConfiguration},
 		{"duplicate_checker", loadDuplicateCheckerConfiguration},
 		{"cron", loadCronConfiguration},
+		{"backup", loadBackupConfiguration},
 		{"security", loadSecurityConfiguration},
 		{"auth", loadAuthConfiguration},
 		{"user", loadUserConfiguration},

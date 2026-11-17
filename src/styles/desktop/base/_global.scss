@@ -28,7 +28,14 @@ a:where(:not(
   [class^="bg-"],
   [class*=" bg-"]
 )) {
-    color: rgb(var(--v-theme-primary));
+    // copper text uses the AA copper text color (copper 700 in light, copper 500 in dark), see docs/design/README.md §3.1
+    color: var(--ebk-color-primary-text);
+}
+
+// links inside running text are underlined, so they are not identified by color alone (WCAG 1.4.1)
+:is(p, .auth-message) a:where(:not(.v-btn, .v-chip, .v-list-item)) {
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
 }
 
 #app {

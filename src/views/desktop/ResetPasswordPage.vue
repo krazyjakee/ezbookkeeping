@@ -1,110 +1,77 @@
 <template>
-    <div class="layout-wrapper">
-        <router-link to="/">
-            <div class="auth-logo d-flex align-start gap-x-3">
-                <img alt="logo" class="login-page-logo" :src="APPLICATION_LOGO_PATH" />
-                <span class="auth-app-title">{{ tt('global.app.title') }}</span>
-            </div>
-        </router-link>
-        <v-row no-gutters class="auth-wrapper">
-            <v-col cols="12" md="8" class="auth-image-background d-none d-md-flex align-center justify-center position-relative">
-                <auth-illustration variant="recovery" />
-            </v-col>
-            <v-col cols="12" md="4" class="auth-card d-flex flex-column">
-                <div class="d-flex align-center justify-center h-100">
-                    <v-card variant="flat" class="w-100 mt-0 px-4 pt-12" max-width="500">
-                        <v-card-text class="py-0">
-                            <div class="text-headline-small mb-2">{{ tt('Reset Password') }}</div>
-                            <div class="auth-message text-body-large mb-0">{{ tt('Please re-enter your email address, and then enter a new password.') }}</div>
-                        </v-card-text>
+    <auth-page-layout illustration="recovery"
+                      :label="tt('Account Access')"
+                      :title="tt('Reset Password')"
+                      :version="version"
+                      :busy="updating"
+                      :status-type="passwordChanged ? 'success' : 'error'"
+                      :status-text="statusMessage">
+        <template #message>
+            <p class="ma-0">{{ tt('Please re-enter your email address, and then enter a new password.') }}</p>
+        </template>
 
-                        <v-card-text class="pb-0 mb-6">
-                            <v-form>
-                                <v-row>
-                                    <v-col cols="12">
-                                        <v-text-field
-                                            type="email"
-                                            autocomplete="email"
-                                            :autofocus="true"
-                                            :disabled="updating"
-                                            :label="tt('E-mail')"
-                                            :placeholder="tt('Your email address')"
-                                            v-model="email"
-                                            @keyup.enter="passwordInput?.focus()"
-                                        />
-                                    </v-col>
+        <v-form class="auth-access-form" @submit.prevent>
+            <v-text-field
+                type="email"
+                name="email"
+                autocomplete="email"
+                :autofocus="true"
+                :disabled="updating"
+                :label="tt('E-mail')"
+                :placeholder="tt('Your email address')"
+                v-model="email"
+                @input="statusMessage = null"
+                @keyup.enter="passwordInput?.focus()"
+            />
 
-                                    <v-col cols="12">
-                                        <v-text-field
-                                            autocomplete="new-password"
-                                            ref="passwordInput"
-                                            type="password"
-                                            :disabled="updating"
-                                            :label="tt('Password')"
-                                            :placeholder="tt('Your password')"
-                                            v-model="newPassword"
-                                            @keyup.enter="confirmPasswordInput?.focus()"
-                                        />
-                                    </v-col>
+            <v-text-field
+                name="new-password"
+                autocomplete="new-password"
+                ref="passwordInput"
+                type="password"
+                :disabled="updating"
+                :label="tt('Password')"
+                :placeholder="tt('Your password')"
+                v-model="newPassword"
+                @input="statusMessage = null"
+                @keyup.enter="confirmPasswordInput?.focus()"
+            />
 
-                                    <v-col cols="12">
-                                        <v-text-field
-                                            ref="confirmPasswordInput"
-                                            type="password"
-                                            :disabled="updating"
-                                            :label="tt('Confirm Password')"
-                                            :placeholder="tt('Re-enter the password')"
-                                            v-model="confirmPassword"
-                                            @keyup.enter="resetPassword"
-                                        />
-                                    </v-col>
+            <v-text-field
+                name="confirm-password"
+                autocomplete="new-password"
+                ref="confirmPasswordInput"
+                type="password"
+                :disabled="updating"
+                :label="tt('Confirm Password')"
+                :placeholder="tt('Re-enter the password')"
+                v-model="confirmPassword"
+                @input="statusMessage = null"
+                @keyup.enter="resetPassword"
+            />
 
-                                    <v-col cols="12">
-                                        <v-btn block :disabled="!email || !newPassword || !confirmPassword || updating" @click="resetPassword">
-                                            {{ tt('Update Password') }}
-                                            <v-progress-circular indeterminate size="22" class="ms-2" v-if="updating"></v-progress-circular>
-                                        </v-btn>
-                                    </v-col>
+            <v-btn block size="large" color="primary" :loading="updating" :disabled="!email || !newPassword || !confirmPassword || updating" @click="resetPassword">
+                {{ tt('Update Password') }}
+            </v-btn>
+        </v-form>
 
-                                    <v-col cols="12">
-                                        <router-link class="d-flex align-center justify-center mt-2" to="/login"
-                                                     :class="{ 'disabled': updating }">
-                                            <v-icon class="icon-with-direction" :icon="mdiChevronLeft"/>
-                                            <span class="text-body-medium">{{ tt('Back to login page') }}</span>
-                                        </router-link>
-                                    </v-col>
-                                </v-row>
-                            </v-form>
-                        </v-card-text>
-                    </v-card>
-                </div>
-                <v-spacer/>
-                <div class="d-flex align-center justify-center">
-                    <v-card variant="flat" class="w-100 px-4 pb-3" max-width="500">
-                        <v-card-text class="pt-0">
-                            <div class="text-center">
-                                <language-select-button :disabled="updating" @error="desktopPageStore.addErrorToast" />
-                            </div>
+        <div class="auth-access-secondary">
+            <router-link class="auth-back-link" to="/login" :class="{ 'disabled': updating }">
+                <v-icon class="icon-with-direction" size="20" :icon="mdiChevronLeft"/>
+                <span>{{ tt('Back to login page') }}</span>
+            </router-link>
+        </div>
 
-                            <v-divider class="mt-2 mb-3" />
-
-                            <div class="auth-powered-by text-center">
-                                <span>Powered by </span>
-                                <a href="https://github.com/krazyjakee/ezbookkeeping" target="_blank">ezrbookkeeping</a>&nbsp;<span>{{ version }}</span>
-                            </div>
-                        </v-card-text>
-                    </v-card>
-                </div>
-            </v-col>
-        </v-row>
-
-        <snack-bar ref="snackbar" @update:show="onSnackbarShowStateChanged" />
-    </div>
+        <template #dialogs>
+            <snack-bar ref="snackbar" @update:show="onSnackbarShowStateChanged" />
+        </template>
+    </auth-page-layout>
 </template>
 
 <script setup lang="ts">
 import { VTextField } from 'vuetify/components/VTextField';
 import SnackBar from '@/components/desktop/SnackBar.vue';
+import AuthPageLayout from '@/components/desktop/AuthPageLayout.vue';
 
 import { ref, computed, useTemplateRef } from 'vue';
 import { useRouter } from 'vue-router';
@@ -112,9 +79,6 @@ import { useRouter } from 'vue-router';
 import { useI18n } from '@/locales/helpers.ts';
 
 import { useRootStore } from '@/stores/index.ts';
-import { useDesktopPageStore } from '@/stores/desktopPage.ts';
-
-import { APPLICATION_LOGO_PATH } from '@/consts/asset.ts';
 
 import { getClientDisplayVersion } from '@/lib/version.ts';
 
@@ -130,10 +94,9 @@ const props = defineProps<{
 
 const router = useRouter();
 
-const { tt } = useI18n();
+const { tt, te } = useI18n();
 
 const rootStore = useRootStore();
-const desktopPageStore = useDesktopPageStore();
 
 const version = `${getClientDisplayVersion()}`;
 
@@ -146,6 +109,7 @@ const newPassword = ref<string>('');
 const confirmPassword = ref<string>('');
 const updating = ref<boolean>(false);
 const passwordChanged = ref<boolean>(false);
+const statusMessage = ref<string | null>(null);
 
 const inputProblemMessage = computed<string | null>(() => {
     if (!email.value) {
@@ -175,11 +139,12 @@ function resetPassword(): void  {
     const problemMessage = inputProblemMessage.value;
 
     if (problemMessage) {
-        desktopPageStore.addToast(problemMessage);
+        statusMessage.value = tt(problemMessage);
         return;
     }
 
     updating.value = true;
+    statusMessage.value = null;
 
     rootStore.resetPassword({
         token: props.token,
@@ -188,13 +153,14 @@ function resetPassword(): void  {
     }).then(() => {
         updating.value = false;
         passwordChanged.value = true;
+        statusMessage.value = tt('Password has been updated');
         snackbar.value?.showMessage('Password has been updated');
     }).catch(error => {
         updating.value = false;
         passwordChanged.value = false;
 
         if (!error.processed) {
-            desktopPageStore.addErrorToast(error);
+            statusMessage.value = error.message ? te(error.message) : (te(error) || tt('An error occurred'));
         }
     });
 }

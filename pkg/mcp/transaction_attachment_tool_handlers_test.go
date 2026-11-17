@@ -3,7 +3,6 @@ package mcp
 import (
 	"encoding/base64"
 	"encoding/json/v2"
-	"errors"
 	"strings"
 	"testing"
 
@@ -15,16 +14,6 @@ import (
 
 var mcpAttachmentTestPngContent = []byte("\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01")
 var mcpAttachmentTestPdfContent = []byte("%PDF-1.4\n1 0 obj\n<<>>\nendobj\n%%EOF\n")
-
-func getMCPAttachmentTestToolError(t *testing.T, err error) *MCPToolError {
-	var toolErr *MCPToolError
-
-	if !assert.True(t, errors.As(err, &toolErr)) {
-		t.FailNow()
-	}
-
-	return toolErr
-}
 
 func TestMCPAttachmentDecodeContent(t *testing.T) {
 	encoded := base64.StdEncoding.EncodeToString(mcpAttachmentTestPdfContent)
@@ -48,28 +37,28 @@ func TestMCPAttachmentDecodeContent(t *testing.T) {
 
 func TestMCPAttachmentDecodeContent_InvalidContent(t *testing.T) {
 	_, err := mcpAttachmentDecodeContent("content_base64", "", 1024)
-	assert.Equal(t, MCPToolErrorCodeRequired, getMCPAttachmentTestToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeRequired, mcpTestGetToolError(t, err).Code)
 
 	_, err = mcpAttachmentDecodeContent("content_base64", "   \n", 1024)
-	assert.Equal(t, MCPToolErrorCodeRequired, getMCPAttachmentTestToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeRequired, mcpTestGetToolError(t, err).Code)
 
 	// a client-local file name or path is never treated as an uploaded file
 	_, err = mcpAttachmentDecodeContent("content_base64", "/home/user/receipt.pdf", 1024)
-	toolErr := getMCPAttachmentTestToolError(t, err)
+	toolErr := mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeInvalidValue, toolErr.Code)
 	assert.Equal(t, "content_base64", toolErr.Field)
 
 	_, err = mcpAttachmentDecodeContent("content_base64", "receipt.pdf", 1024)
-	assert.Equal(t, MCPToolErrorCodeInvalidValue, getMCPAttachmentTestToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeInvalidValue, mcpTestGetToolError(t, err).Code)
 
 	_, err = mcpAttachmentDecodeContent("content_base64", "data:application/pdf,"+base64.StdEncoding.EncodeToString([]byte("abc")), 1024)
-	assert.Equal(t, MCPToolErrorCodeInvalidValue, getMCPAttachmentTestToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeInvalidValue, mcpTestGetToolError(t, err).Code)
 }
 
 func TestMCPAttachmentDecodeContent_SizeCap(t *testing.T) {
 	// the encoded content is longer than the encoded length of the maximum size, rejected before decoding
 	_, err := mcpAttachmentDecodeContent("content_base64", base64.StdEncoding.EncodeToString(make([]byte, 100)), 10)
-	toolErr := getMCPAttachmentTestToolError(t, err)
+	toolErr := mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeTooLarge, toolErr.Code)
 	assert.Equal(t, "content_base64", toolErr.Field)
 	assert.Equal(t, int64(10), *toolErr.Limit)
@@ -77,7 +66,7 @@ func TestMCPAttachmentDecodeContent_SizeCap(t *testing.T) {
 
 	// the encoded length of 5 bytes equals to the encoded length of 4 bytes, rejected after decoding
 	_, err = mcpAttachmentDecodeContent("content_base64", base64.StdEncoding.EncodeToString([]byte("12345")), 4)
-	toolErr = getMCPAttachmentTestToolError(t, err)
+	toolErr = mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeTooLarge, toolErr.Code)
 	assert.Equal(t, int64(4), *toolErr.Limit)
 	assert.Equal(t, int64(5), *toolErr.Actual)
@@ -113,20 +102,20 @@ func TestMCPAttachmentResolveExtension(t *testing.T) {
 	assert.Equal(t, "jpeg", extension)
 
 	_, err = mcpAttachmentResolveExtension("", "")
-	assert.Equal(t, MCPToolErrorCodeRequired, getMCPAttachmentTestToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeRequired, mcpTestGetToolError(t, err).Code)
 
 	_, err = mcpAttachmentResolveExtension("exe", "")
-	toolErr := getMCPAttachmentTestToolError(t, err)
+	toolErr := mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeInvalidValue, toolErr.Code)
 	assert.Equal(t, "file_extension", toolErr.Field)
 
 	_, err = mcpAttachmentResolveExtension("", "text/plain")
-	toolErr = getMCPAttachmentTestToolError(t, err)
+	toolErr = mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeInvalidValue, toolErr.Code)
 	assert.Equal(t, "content_type", toolErr.Field)
 
 	_, err = mcpAttachmentResolveExtension("png", "application/pdf")
-	toolErr = getMCPAttachmentTestToolError(t, err)
+	toolErr = mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeInvalidValue, toolErr.Code)
 	assert.Equal(t, "content_type", toolErr.Field)
 }
@@ -139,21 +128,21 @@ func TestMCPAttachmentValidateContent(t *testing.T) {
 	assert.Nil(t, mcpAttachmentValidateContent("content_base64", "webp", []byte("RIFF\x24\x00\x00\x00WEBPVP8 ")))
 
 	err := mcpAttachmentValidateContent("content_base64", "pdf", []byte("hello world"))
-	toolErr := getMCPAttachmentTestToolError(t, err)
+	toolErr := mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeInvalidValue, toolErr.Code)
 	assert.Equal(t, "content_base64", toolErr.Field)
 
 	err = mcpAttachmentValidateContent("content_base64", "pdf", mcpAttachmentTestPngContent)
-	assert.Equal(t, MCPToolErrorCodeInvalidValue, getMCPAttachmentTestToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeInvalidValue, mcpTestGetToolError(t, err).Code)
 
 	err = mcpAttachmentValidateContent("content_base64", "jpg", mcpAttachmentTestPngContent)
-	assert.Equal(t, MCPToolErrorCodeInvalidValue, getMCPAttachmentTestToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeInvalidValue, mcpTestGetToolError(t, err).Code)
 
 	err = mcpAttachmentValidateContent("content_base64", "png", mcpAttachmentTestPdfContent)
-	assert.Equal(t, MCPToolErrorCodeInvalidValue, getMCPAttachmentTestToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeInvalidValue, mcpTestGetToolError(t, err).Code)
 
 	err = mcpAttachmentValidateContent("content_base64", "exe", []byte("MZ"))
-	assert.Equal(t, MCPToolErrorCodeInvalidValue, getMCPAttachmentTestToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeInvalidValue, mcpTestGetToolError(t, err).Code)
 }
 
 func TestMCPAttachmentComputeChecksum(t *testing.T) {
@@ -194,10 +183,10 @@ func TestMCPAttachmentBuildInfo(t *testing.T) {
 
 func TestMCPAttachmentCheckEnabled(t *testing.T) {
 	err := mcpAttachmentCheckEnabled(nil)
-	assert.Equal(t, MCPToolErrorCodeNotSupported, getMCPAttachmentTestToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeNotSupported, mcpTestGetToolError(t, err).Code)
 
 	err = mcpAttachmentCheckEnabled(&settings.Config{EnableTransactionPictures: false})
-	assert.Equal(t, MCPToolErrorCodeNotSupported, getMCPAttachmentTestToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeNotSupported, mcpTestGetToolError(t, err).Code)
 
 	assert.Nil(t, mcpAttachmentCheckEnabled(&settings.Config{EnableTransactionPictures: true}))
 }
@@ -258,20 +247,20 @@ func TestUploadTransactionAttachmentToolHandler_ValidationBeforeSaving(t *testin
 		"content_base64": base64.StdEncoding.EncodeToString(mcpAttachmentTestPdfContent),
 		"file_extension": "pdf",
 	}), nil, &settings.Config{}, nil)
-	assert.Equal(t, MCPToolErrorCodeNotSupported, getMCPAttachmentTestToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeNotSupported, mcpTestGetToolError(t, err).Code)
 
 	// file type is required
 	_, _, err = MCPUploadTransactionAttachmentToolHandler.Handle(nil, newRequest(map[string]any{
 		"content_base64": base64.StdEncoding.EncodeToString([]byte("%PDF-1.4")),
 	}), nil, enabledConfig, nil)
-	assert.Equal(t, MCPToolErrorCodeRequired, getMCPAttachmentTestToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeRequired, mcpTestGetToolError(t, err).Code)
 
 	// file content exceeds the maximum size
 	_, _, err = MCPUploadTransactionAttachmentToolHandler.Handle(nil, newRequest(map[string]any{
 		"content_base64": base64.StdEncoding.EncodeToString(mcpAttachmentTestPdfContent),
 		"file_extension": "pdf",
 	}), nil, enabledConfig, nil)
-	toolErr := getMCPAttachmentTestToolError(t, err)
+	toolErr := mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeTooLarge, toolErr.Code)
 	assert.Equal(t, int64(16), *toolErr.Limit)
 
@@ -280,14 +269,14 @@ func TestUploadTransactionAttachmentToolHandler_ValidationBeforeSaving(t *testin
 		"content_base64": base64.StdEncoding.EncodeToString([]byte("not a pdf")),
 		"content_type":   "application/pdf",
 	}), nil, enabledConfig, nil)
-	assert.Equal(t, MCPToolErrorCodeInvalidValue, getMCPAttachmentTestToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeInvalidValue, mcpTestGetToolError(t, err).Code)
 
 	// a file name is not a file content
 	_, _, err = MCPUploadTransactionAttachmentToolHandler.Handle(nil, newRequest(map[string]any{
 		"content_base64": "receipt.pdf",
 		"file_extension": "pdf",
 	}), nil, enabledConfig, nil)
-	toolErr = getMCPAttachmentTestToolError(t, err)
+	toolErr = mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeInvalidValue, toolErr.Code)
 	assert.True(t, strings.Contains(toolErr.Message, "base64"))
 }

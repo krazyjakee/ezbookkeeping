@@ -50,18 +50,6 @@ body:
       label: Database
       description: The database system you are using, e.g. "MariaDB v11.7.2"
 
-  - type: dropdown
-    id: reproduce-on-demo-site
-    attributes:
-      label: Can you reproduce this bug on the upstream ezBookkeeping demo site?
-      description: |
-        Upstream ezBookkeeping demo site: https://ezbookkeeping-demo.mayswind.net/
-      options:
-        - "No"
-        - "Yes"
-    validations:
-      required: true
-
   - type: textarea
     id: additional-context
     attributes:

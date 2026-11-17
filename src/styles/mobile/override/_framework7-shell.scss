@@ -1,0 +1,336 @@
+/**
+ * Mobile app shell in the "Copper Instrument Panel" language (#29, docs/design/README.md).
+ *
+ * Covers the Framework7 frame around the pages: the glass material of bar buttons, navbars,
+ * the main tab bar (dock), bottom toolbars, sheets, the offline banner and touch targets.
+ * Page contents are styled by their own issues (#30–#34). Colors come from the shared tokens
+ * (src/styles/common/_tokens.scss); motion only uses transform / opacity and the motion tokens.
+ */
+:root.ios,
+:root.ios.dark {
+    /* Framework7 v9 "glass" (navbar buttons, toolbar panes, fabs): an instrument panel material,
+       a raised surface with a hairline instead of the liquid glass highlights */
+    --f7-glass-bg-color: rgba(var(--ebk-color-surface-raised-rgb), 0.9);
+    --f7-glass-shadow: inset 0 0 0 1px var(--ebk-color-hairline), var(--ebk-shadow-sm);
+
+    --f7-navbar-title-font-weight: 600;
+    --f7-navbar-text-color: var(--ebk-color-text-primary);
+    --f7-navbar-link-color: var(--ebk-color-text-primary);
+    --f7-toolbar-link-color: var(--ebk-color-text-primary);
+    --f7-tabbar-link-inactive-color: var(--ebk-color-text-secondary);
+    --f7-tabbar-link-active-color: var(--ebk-color-primary-text);
+    --f7-tabbar-label-font-weight: 500;
+
+    /* touch target of every important control in the shell */
+    --ebk-shell-touch-target: var(--ebk-touch-target-min, 44px);
+    --ebk-shell-dock-radius: var(--ebk-radius-xl);
+    --ebk-shell-dock-gap: 6px;
+}
+
+/* ---------- Navbar: title strip and back actions ---------- */
+
+.ios .navbar {
+    .title {
+        min-width: 0;
+        max-width: 100%;
+        overflow: hidden;
+        color: var(--ebk-color-text-primary);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* titles which open a menu (e.g. the transaction list type selector) get a full height hit area */
+    .title > .link {
+        min-height: var(--ebk-shell-touch-target);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .left > .link,
+    .right > .link {
+        min-width: var(--ebk-shell-touch-target);
+        min-height: var(--ebk-shell-touch-target);
+    }
+
+    .left > .link:focus-visible,
+    .right > .link:focus-visible,
+    .title > .link:focus-visible {
+        outline: var(--ebk-focus-outline);
+        outline-offset: calc(-1 * var(--ebk-focus-ring-width));
+        border-radius: var(--ebk-radius-pill);
+    }
+}
+
+/* home page: the ezrbookkeeping wordmark instead of a page title (D5); the class is set by MobileApp.vue */
+.ios .navbar.ebk-navbar-home .title {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ebk-space-2);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+
+    &::before {
+        content: '';
+        flex-shrink: 0;
+        width: 1.375em;
+        height: 1.375em;
+        border-radius: 6px;
+        background: var(--ebk-app-logo, none) center / contain no-repeat;
+    }
+}
+
+/* ---------- Bottom toolbars: touch targets ---------- */
+
+.ios .toolbar.toolbar-bottom {
+    .toolbar-inner > .link {
+        min-width: var(--ebk-shell-touch-target);
+        min-height: var(--ebk-shell-touch-target);
+    }
+
+    .toolbar-inner > .link:focus-visible {
+        outline: var(--ebk-focus-outline);
+        outline-offset: calc(-1 * var(--ebk-focus-ring-width));
+        border-radius: var(--ebk-radius-control);
+    }
+}
+
+/* ---------- Bottom tab bars: a docked instrument panel ---------- */
+
+/* the main tab bar and the compact page toolbars (filters, quick save, chart options) share one dock */
+.ios .toolbar.toolbar-bottom.tabbar:not(.login-page-fixed-bottom) {
+    /* the dock carries its own surface, the framework7 fade only has to cover the safe area */
+    &::before {
+        display: none;
+    }
+
+    > .toolbar-inner {
+        top: 0;
+        bottom: calc(var(--f7-safe-area-bottom) + var(--ebk-shell-dock-gap));
+        inset-inline: calc(var(--ebk-space-3) + var(--f7-safe-area-left)) calc(var(--ebk-space-3) + var(--f7-safe-area-right));
+        width: auto;
+        padding-inline: var(--ebk-space-2);
+        border-radius: var(--ebk-shell-dock-radius);
+        background-color: rgba(var(--ebk-color-surface-raised-rgb), 0.94);
+        box-shadow: inset 0 0 0 1px var(--ebk-color-hairline), var(--ebk-shadow-md);
+        backdrop-filter: saturate(160%) blur(16px);
+        -webkit-backdrop-filter: saturate(160%) blur(16px);
+    }
+}
+
+/* compact docks keep a 44px row inside the dock (the page content already reserves the full toolbar height) */
+.compact-tabbar.toolbar-bottom:not(.login-page-fixed-bottom) {
+    --f7-toolbar-height: calc(var(--ebk-shell-touch-target) + var(--ebk-shell-dock-gap) + 6px);
+}
+
+@media (max-width: 360px) {
+    .ios .toolbar.toolbar-bottom.tabbar:not(.login-page-fixed-bottom) > .toolbar-inner {
+        inset-inline: calc(var(--ebk-space-2) + var(--f7-safe-area-left)) calc(var(--ebk-space-2) + var(--f7-safe-area-right));
+        padding-inline: var(--ebk-space-1);
+    }
+}
+
+/* ---------- Main tab bar ---------- */
+
+.ios .toolbar.tabbar.main-tabbar {
+    > .toolbar-inner {
+        max-inline-size: 40rem;
+        margin-inline: auto;
+        padding: 0 var(--ebk-space-1);
+        gap: 0;
+    }
+
+    > .toolbar-inner > .link {
+        position: relative;
+        flex: 1 1 0;
+        min-width: 0;
+        padding: 2px 2px 4px;
+        color: var(--f7-tabbar-link-inactive-color);
+        transition: color var(--ebk-motion-duration-xs) var(--ebk-motion-ease-standard);
+        -webkit-tap-highlight-color: transparent;
+
+        /* copper indicator on the leading (top) edge of the dock: pressed, active or current item */
+        &::before {
+            content: '';
+            position: absolute;
+            inset-block-start: 0;
+            inset-inline-start: 50%;
+            width: 20px;
+            height: 2px;
+            margin-inline-start: -10px;
+            border-radius: 0 0 2px 2px;
+            background-color: var(--ebk-color-primary);
+            box-shadow: 0 0 8px rgba(var(--ebk-copper-500-rgb), 0.45);
+            opacity: 0;
+            transform: scaleX(0.4);
+            transition: opacity var(--ebk-motion-duration-sm) var(--ebk-motion-ease-standard),
+                transform var(--ebk-motion-duration-sm) var(--ebk-motion-ease-standard);
+            pointer-events: none;
+        }
+
+        &:active,
+        &.active-state,
+        &.tab-link-active,
+        &[aria-current="page"] {
+            color: var(--f7-tabbar-link-active-color);
+
+            &::before {
+                opacity: 1;
+                transform: scaleX(1);
+            }
+        }
+
+        &:focus-visible {
+            outline: var(--ebk-focus-outline);
+            outline-offset: -4px;
+            border-radius: calc(var(--ebk-shell-dock-radius) - 4px);
+        }
+
+        > i.icon {
+            flex-shrink: 0;
+        }
+
+        > .tabbar-label {
+            display: block;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            line-height: 1.25;
+        }
+    }
+
+    /* the framework7 v9 sliding glass highlight is replaced by the copper indicator above */
+    .tab-link-highlight {
+        display: none;
+    }
+
+    /* primary action: a copper filled key in the centre of the dock (D9) */
+    > .toolbar-inner > #homepage-add-button {
+        &::before {
+            display: none;
+        }
+
+        > .ebk-tabbar-add-key {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            width: max(var(--ebk-shell-touch-target), calc(var(--f7-tabbar-icon-size) * 1.9));
+            max-width: 100%;
+            height: max(var(--ebk-shell-touch-target), calc(var(--f7-tabbar-icon-size) + 14px));
+            border-radius: var(--ebk-radius-lg);
+            color: var(--ebk-color-on-primary);
+            background-color: var(--ebk-color-primary);
+            box-shadow: var(--ebk-glow), var(--ebk-shadow-sm);
+            transition: transform var(--ebk-motion-duration-xs) var(--ebk-motion-ease-standard),
+                opacity var(--ebk-motion-duration-xs) var(--ebk-motion-ease-standard);
+
+            > i.icon {
+                font-size: calc(var(--f7-tabbar-icon-size) * 0.85);
+                font-weight: 600;
+                line-height: 1;
+                color: inherit;
+            }
+        }
+
+        &:active > .ebk-tabbar-add-key,
+        &.active-state > .ebk-tabbar-add-key {
+            background-color: var(--ebk-color-primary-pressed);
+            transform: scale(0.96);
+        }
+
+        &:focus-visible {
+            outline: none;
+
+            > .ebk-tabbar-add-key {
+                outline: var(--ebk-focus-outline);
+                outline-offset: var(--ebk-focus-ring-offset);
+            }
+        }
+    }
+}
+
+/* ---------- Sheets and popups ---------- */
+
+.swipe-handler:after {
+    background: rgba(var(--ebk-color-text-secondary-rgb), 0.5);
+}
+
+.ios .sheet-modal:not(.numpad-sheet) {
+    box-shadow: var(--ebk-shadow-lg);
+}
+
+.ios .popup:not(.popup-tablet-fullscreen) {
+    --f7-popup-tablet-border-radius: var(--ebk-radius-xl);
+}
+
+/* ---------- Offline banner (MobileApp.vue) ---------- */
+
+.ebk-offline-banner {
+    position: fixed;
+    z-index: 13000; /* above toolbars, popups and sheets, below dialogs and notifications */
+    inset-block-start: calc(var(--f7-safe-area-top) + var(--f7-navbar-height) + var(--ebk-space-1));
+    inset-inline: calc(var(--ebk-space-3) + var(--f7-safe-area-left, 0px)) calc(var(--ebk-space-3) + var(--f7-safe-area-right, 0px));
+    margin-inline: auto;
+    max-width: 480px;
+    display: flex;
+    align-items: center;
+    gap: var(--ebk-space-2);
+    padding: var(--ebk-space-2) var(--ebk-space-3);
+    border-radius: var(--ebk-radius-lg);
+    border: 1px solid var(--ebk-color-hairline);
+    border-inline-start: 3px solid var(--ebk-color-warning);
+    background-color: var(--ebk-color-surface-raised);
+    box-shadow: var(--ebk-shadow-md);
+    color: var(--ebk-color-text-primary);
+    font-size: var(--ebk-smaller-font-size, 13px);
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+    pointer-events: none; /* informational only, never blocks the controls under it */
+
+    > .icon {
+        flex-shrink: 0;
+        font-size: 18px;
+        color: var(--ebk-color-warning);
+    }
+}
+
+/* page contents move down by the banner height (measured in MobileApp.vue) instead of being covered */
+:root.ebk-offline {
+    --f7-page-content-extra-padding-top: var(--ebk-offline-banner-space, 0px);
+}
+
+/* ---------- Reduced motion and forced colors ---------- */
+
+:root.ebk-reduce-motion .toolbar.tabbar.main-tabbar > .toolbar-inner > #homepage-add-button:active > .ebk-tabbar-add-key {
+    transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :root:not(.ebk-motion-full) .toolbar.tabbar.main-tabbar > .toolbar-inner > #homepage-add-button:active > .ebk-tabbar-add-key {
+        transform: none;
+    }
+}
+
+@media (forced-colors: active) {
+    .ios .toolbar.toolbar-bottom.tabbar > .toolbar-inner {
+        border: 1px solid CanvasText;
+        box-shadow: none;
+    }
+
+    .ios .toolbar.tabbar.main-tabbar > .toolbar-inner > .link::before {
+        display: none;
+    }
+
+    .ios .toolbar.tabbar.main-tabbar > .toolbar-inner > #homepage-add-button > .ebk-tabbar-add-key {
+        forced-color-adjust: none;
+        background-color: ButtonText;
+        color: ButtonFace;
+        box-shadow: none;
+    }
+
+    .ebk-offline-banner {
+        border-color: CanvasText;
+    }
+}

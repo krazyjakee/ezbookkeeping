@@ -39,9 +39,9 @@ ezrbookkeeping 并不是一个桌面应用，而是一个自托管的服务端�
 ezrbookkeeping 是开箱即用的，无需设置任何额外的设置项即可启动运行。但是如果你正式使用它，还需要正确配置以下几个配置项：
 
 1. `security` 节中的 `secret_key`（环境变量 `EBK_SECURITY_SECRET_KEY`）：需要设置为一个随机字符串，随机字符串可以使用 ezrbookkeeping 命令行工具 `ezbookkeeping security gen-secret-key` 或 `openssl rand -base64 32` 生成
-2. `server` 节中的 `domain`（环境变量 `EBK_SERVER_DOMAIN`）：需要设置为用户访问的域名或者 IP 地址（例如 `ezbookkeeping-demo.mayswind.net` 或 `192.168.1.2`）。如果设置错误将会导致用户头像或交易图片无法显示，以及 ezrbookkeeping 发送的邮件中的链接地址错误
+2. `server` 节中的 `domain`（环境变量 `EBK_SERVER_DOMAIN`）：需要设置为用户访问的域名或者 IP 地址（例如 `ezbookkeeping.example.com` 或 `192.168.1.2`）。如果设置错误将会导致用户头像或交易图片无法显示，以及 ezrbookkeeping 发送的邮件中的链接地址错误
 
-如果你想使用 Nginx 等反向代理，并且暴露给用户的协议、端口号与 ezrbookkeeping 的 Web 服务器设置不同，还需要设置 `server` 节中的 `root_url`（环境变量 `EBK_SERVER_ROOT_URL`），例如 `https://ezbookkeeping-demo.mayswind.net/`。
+如果你想使用 Nginx 等反向代理，并且暴露给用户的协议、端口号与 ezrbookkeeping 的 Web 服务器设置不同，还需要设置 `server` 节中的 `root_url`（环境变量 `EBK_SERVER_ROOT_URL`），例如 `https://ezbookkeeping.example.com/`。
 
 如果你想使用 MySQL 作为数据库，需要设置 `database` 节中的 `type`（环境变量 `EBK_DATABASE_TYPE`） 为 `mysql`，同时设置数据库主机 `host`（例如 `mysql.domain:3306` 或 `/var/run/mysqld/mysqld.sock`）、数据库名 `name`、数据库访问用户 `user`、数据库访问密码 `passwd`。
 
@@ -73,12 +73,9 @@ ezrbookkeeping 大部分数据都存储在数据库中，用户的头像、交�
 
 > 如何备份数据库和对象存储文件？
 >
-> 由于 ezrbookkeeping 使用的数据库系统和对象存储服务已经非常成熟，各系统官方及第三方也提供了非常方便的实用工具，因此 ezrbookkeeping 建议使用这些数据库实用工具及对象存储工具进行备份。例如，
-> 1. 使用 `mysqldump` Dump MySQL 数据库
-> 2. 使用 `mariadb-dump` Dump MariaDB 数据库
-> 3. 使用 `pg_dump` Dump PostgreSQL 数据库
-> 4. 使用 `rc` 复制 RustFS 对象存储中的文件
-> 5. 使用 `mc` 复制 MinIO 对象存储中的文件
+> ezrbookkeeping 内置了完整实例备份功能，可以备份整个数据库、对象存储中的所有上传文件（头像、交易图片 / 附件和自定义图标）以及配置文件，支持所有数据库和对象存储类型。可以使用 `ezbookkeeping backup create` 手动创建备份，在 `[backup]` 配置节中启用 `enable_scheduled_backup` 来定时备份并自动清理旧备份，使用 `ezbookkeeping backup restore` 恢复到全新的实例。通过环境变量或密钥文件提供的配置项不会包含在备份中。详细信息请参见 [Backup and Restore](/backup/)。
+>
+> 你也可以同时使用数据库和对象存储的原生工具（例如 `mysqldump`、`mariadb-dump`、`pg_dump`、`rc`、`mc`）进行备份。
 
 ## 如何迁移 ezrbookkeeping 的数据
 
@@ -119,7 +116,14 @@ ezrbookkeeping 是一个自托管的软件，通过你的浏览器进行访问�
 
 ezrbookkeeping 支持 PWA（Progressive Web Apps），你可以使用系统浏览器将其添加到手机屏幕，系统会自动缓存必须的静态文件。从手机主屏幕直接打开 ezrbookkeeping 时会像手机原生应用一样。
 
-详细步骤，参考 [教程](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/mobile/add_to_home_screen.gif)。
+添加步骤：
+
+1. 在手机的系统浏览器中打开 ezrbookkeeping 的移动版（例如 `https://your-server/mobile`）并登录。
+2. **iOS / iPadOS（Safari）：** 点击 **分享** 按钮，然后选择 **添加到主屏幕**。
+3. **Android（Chrome）：** 打开浏览器菜单，然后选择 **安装应用** 或 **添加到主屏幕**。
+4. 从主屏幕上新出现的图标打开 ezrbookkeeping。
+
+<img src="/images/screenshots/mobile_overview_light.jpg" alt="从主屏幕打开的 ezrbookkeeping 移动版首页" width="292" />
 
 ## ezrbookkeeping 的默认用户是什么
 

@@ -122,5 +122,5 @@ func TestMCPTxnParseQueryTransactionType(t *testing.T) {
 	assert.Equal(t, 0, int(transactionType))
 
 	_, err = mcpTxnParseQueryTransactionType("type", "unknown")
-	assert.Equal(t, "type", getMCPWriteGuardTestToolError(t, err).Field)
+	assert.Equal(t, "type", mcpTestGetToolError(t, err).Field)
 }

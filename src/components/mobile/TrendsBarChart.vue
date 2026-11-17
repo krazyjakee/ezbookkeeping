@@ -1,5 +1,5 @@
 <template>
-    <f7-list strong inset dividers class="skeleton-text" v-if="loading">
+    <f7-list strong inset dividers class="skeleton-text trends-bar-chart" :style="chartThemeStyle" v-if="loading">
         <f7-list-item class="statistics-list-item item-no-divider" link="#" :key="itemIdx" v-for="itemIdx in [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ]">
             <template #media>
                 <div class="display-flex no-padding-horizontal">
@@ -30,23 +30,29 @@
         <f7-list-item :title="tt('No transaction data')"></f7-list-item>
     </f7-list>
 
-    <f7-list strong inset dividers v-if="!loading && allDisplayDataItems && allDisplayDataItems.data && allDisplayDataItems.data.length">
+    <f7-list strong inset dividers class="trends-bar-chart" :style="chartThemeStyle" v-if="!loading && allDisplayDataItems && allDisplayDataItems.data && allDisplayDataItems.data.length">
         <f7-list-item class="item-no-divider display-none"></f7-list-item>
         <f7-list-item class="item-no-divider" v-if="allDisplayDataItems.legends && allDisplayDataItems.legends.length > 1">
-            <div class="display-flex" style="flex-wrap: wrap">
+            <div class="trends-bar-chart-legends">
                 <div class="trends-bar-chart-legend display-flex align-items-center"
+                     role="button" tabindex="0"
                      :class="{ 'trends-bar-chart-legend-unselected': !!unselectedLegends[legend.id] }"
+                     :aria-pressed="unselectedLegends[legend.id] ? 'false' : 'true'"
                      :key="idx"
                      v-for="(legend, idx) in allDisplayDataItems.legends"
-                     @click="toggleLegend(legend)">
-                    <f7-icon f7="app_fill" class="trends-bar-chart-legend-icon" :style="{ 'color': unselectedLegends[legend.id] ? '' : legend.color }"></f7-icon>
+                     @click="toggleLegend(legend)"
+                     @keydown.enter.prevent="toggleLegend(legend)"
+                     @keydown.space.prevent="toggleLegend(legend)">
+                    <span class="trends-bar-chart-symbol" aria-hidden="true"
+                          :class="`trends-bar-chart-symbol-${legend.symbol}`"
+                          :style="{ 'color': legend.color }"></span>
                     <span class="trends-bar-chart-legend-text">{{ legend.name }}</span>
                 </div>
             </div>
         </f7-list-item>
     </f7-list>
 
-    <f7-list strong inset dividers :key="`trends-bar-chart-${allDisplayDataItemsVersion}`"
+    <f7-list strong inset dividers class="trends-bar-chart" :style="chartThemeStyle" :key="`trends-bar-chart-${allDisplayDataItemsVersion}`"
              :virtual-list="useVirtualList"
              :virtual-list-params="useVirtualList ? { items: allDisplayDataItems.data, renderExternal, height: 'auto' } : undefined"
              v-if="!loading && allDisplayDataItems && allDisplayDataItems.data && allDisplayDataItems.data.length">
@@ -61,7 +67,7 @@
         >
             <template #media>
                 <div class="display-flex no-padding-horizontal">
-                    <div class="display-flex align-items-center statistics-icon">
+                    <div class="display-flex align-items-center statistics-icon trends-bar-chart-icon">
                         <f7-icon f7="calendar"></f7-icon>
                     </div>
                 </div>
@@ -77,7 +83,10 @@
                          :key="dataIdx"
                          v-for="(data, dataIdx) in item.items"
                          v-show="data.value.isPositive()">
-                        <div class="width-100 display-flex flex-direction-row">
+                        <div class="width-100 display-flex flex-direction-row align-items-center">
+                            <span class="trends-bar-chart-symbol trends-bar-chart-bar-symbol" aria-hidden="true"
+                                  :class="`trends-bar-chart-symbol-${data.symbol}`"
+                                  :style="{ 'color': data.color }"></span>
                             <div class="display-inline-flex" :style="{ 'width': data.value.divide(item.maxAmount).multiply(item.percent).toDoubleNumber() + '%' }">
                                 <f7-progressbar :progress="100" :style="{ '--f7-progressbar-progress-color': (data.color ? data.color : '') } "></f7-progressbar>
                             </div>
@@ -91,7 +100,7 @@
             </template>
 
             <template #after>
-                <span v-if="stacked || item.items.length <= 1">{{ formatAmountToLocalizedNumeralsWithCurrency(item.totalAmount, defaultCurrency) }}</span>
+                <span class="ebk-numeric trends-bar-chart-amount" v-if="stacked || item.items.length <= 1">{{ formatAmountToLocalizedNumeralsWithCurrency(item.totalAmount, defaultCurrency) }}</span>
             </template>
 
             <template #inner-end>
@@ -125,8 +134,14 @@ import {
     useTrendsChartBase
 } from '@/components/base/TrendsChartBase.ts'
 
+import {
+    getChartThemePalette,
+    getChartSeriesSymbol
+} from '@/components/base/ChartThemeBase.ts';
+
 import { useSettingsStore } from '@/stores/setting.ts';
 import { useUserStore } from '@/stores/user.ts';
+import { useEnvironmentsStore } from '@/stores/environment.ts';
 
 import { itemAndIndex } from '@/core/base.ts';
 import type { BigDecimal } from '@/core/numeral.ts';
@@ -164,6 +179,7 @@ interface TrendsBarChartLegend {
     readonly id: string;
     readonly name: string;
     readonly color: ColorStyleValue;
+    readonly symbol: string;
     readonly displayOrders: number[];
 }
 
@@ -216,6 +232,7 @@ const { allDateRanges, getItemName } = useTrendsChartBase(props);
 
 const settingsStore = useSettingsStore();
 const userStore = useUserStore();
+const environmentsStore = useEnvironmentsStore();
 
 const allDisplayDataItemsVersion = ref<number>(0);
 const unselectedLegends = ref<Record<string, boolean>>({});
@@ -227,6 +244,18 @@ const virtualDataItems = ref<TrendsBarChartVirtualListData>({
 
 const chartColors = computed<ColorValue[]>(() => settingsStore.chartColorList);
 const useVirtualList = computed<boolean>(() => allDisplayDataItems.value.legends.length <= 1 || props.stacked);
+
+// the same panel palette as the desktop ECharts charts (track at hairline strength, text and inactive legend colours)
+const chartThemeStyle = computed<Record<string, string>>(() => {
+    const palette = getChartThemePalette(environmentsStore.framework7DarkMode);
+
+    return {
+        '--ebk-chart-track-color': palette.hairline,
+        '--ebk-chart-text-primary': palette.textPrimary,
+        '--ebk-chart-text-secondary': palette.textSecondary,
+        '--ebk-chart-inactive-color': palette.axisLine
+    };
+});
 
 const allDisplayDataItems = computed<TrendsBarChartData>(() => {
     const allDateRangeItemsMap: Record<string, TrendsBarChartDataAmount[]> = {};
@@ -243,6 +272,7 @@ const allDisplayDataItems = computed<TrendsBarChartData>(() => {
             id: id,
             name: item.name ? getItemName(item.name) : id,
             color: getDisplayColor(props.useCustomColor && item.color ? item.color : chartColors.value[index % chartColors.value.length]),
+            symbol: getChartSeriesSymbol(legends.length), // a shape per series so series are distinguishable without colour (D7)
             displayOrders: item.displayOrders ? item.displayOrders : [0]
         };
 
@@ -483,25 +513,102 @@ watch(allDisplayDataItems, () => {
 </script>
 
 <style>
+.trends-bar-chart {
+    --f7-progressbar-bg-color: var(--ebk-chart-track-color);
+    --f7-progressbar-border-radius: 999px;
+
+    .statistics-percent-line .progressbar {
+        --f7-progressbar-bg-color: var(--ebk-chart-track-color);
+        height: 6px;
+    }
+
+    .statistics-list-item-text {
+        color: var(--ebk-chart-text-primary);
+    }
+}
+
+.trends-bar-chart-icon .f7-icons {
+    color: var(--ebk-chart-text-secondary);
+}
+
+.trends-bar-chart-amount {
+    color: var(--ebk-chart-text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.trends-bar-chart-legends {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+}
+
 .trends-bar-chart-legend {
-    margin-inline-end: 4px;
+    gap: 6px;
+    min-height: 32px;
     cursor: pointer;
-}
-
-.trends-bar-chart-legend-icon.f7-icons {
-    font-size: var(--ebk-trends-bar-chart-legend-icon-font-size);
-    margin-inline-end: 2px;
-}
-
-.trends-bar-chart-legend-unselected .trends-bar-chart-legend-icon.f7-icons {
-    color: #cccccc;
+    border-radius: var(--ebk-radius-control);
 }
 
 .trends-bar-chart-legend-text {
+    color: var(--ebk-chart-text-primary);
     font-size: var(--ebk-trends-bar-chart-legend-text-font-size);
 }
 
-.trends-bar-chart-legend-unselected .trends-bar-chart-legend-text {
-    color: #cccccc;
+.trends-bar-chart-legend-unselected {
+    .trends-bar-chart-symbol {
+        color: var(--ebk-chart-inactive-color) !important;
+    }
+
+    .trends-bar-chart-legend-text {
+        color: var(--ebk-chart-inactive-color);
+        text-decoration: line-through;
+    }
+}
+
+/* series shapes, the same order as the desktop chart symbols (ChartThemeBase CHART_SERIES_SYMBOLS) */
+.trends-bar-chart-symbol {
+    display: inline-block;
+    flex: 0 0 auto;
+    width: 10px;
+    height: 10px;
+    background-color: currentColor;
+}
+
+.trends-bar-chart-bar-symbol {
+    width: 8px;
+    height: 8px;
+    margin-inline-end: 6px;
+}
+
+.trends-bar-chart-symbol-circle {
+    border-radius: 50%;
+}
+
+.trends-bar-chart-symbol-roundRect {
+    border-radius: 3px;
+}
+
+.trends-bar-chart-symbol-triangle {
+    clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+.trends-bar-chart-symbol-diamond {
+    clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+
+.trends-bar-chart-symbol-pin {
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+}
+
+.trends-bar-chart-symbol-arrow {
+    clip-path: polygon(50% 0, 100% 100%, 50% 70%, 0 100%);
+}
+
+@media (forced-colors: active) {
+    .trends-bar-chart-symbol {
+        forced-color-adjust: none;
+        background-color: CanvasText;
+    }
 }
 </style>

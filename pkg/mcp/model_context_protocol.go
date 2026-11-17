@@ -1,7 +1,6 @@
 package mcp
 
 import (
-	"encoding/base64"
 	"encoding/json/jsontext"
 
 	"github.com/invopop/jsonschema"
@@ -198,33 +197,6 @@ func NewMCPTextContent(text string) *MCPTextContent {
 	return &MCPTextContent{
 		Type: "text",
 		Text: text,
-	}
-}
-
-// NewMCPImageContent creates a new instance of MCPImageContent with the given data and MIME type
-func NewMCPImageContent(data []byte, mimeType string) *MCPImageContent {
-	return &MCPImageContent{
-		Type:     "image",
-		MimeType: mimeType,
-		Data:     base64.StdEncoding.EncodeToString(data),
-	}
-}
-
-// NewMCPAudioContent creates a new instance of MCPAudioContent with the given data and MIME type
-func NewMCPAudioContent(data []byte, mimeType string) *MCPAudioContent {
-	return &MCPAudioContent{
-		Type:     "audio",
-		MimeType: mimeType,
-		Data:     base64.StdEncoding.EncodeToString(data),
-	}
-}
-
-// NewMCPResourceLink creates a new instance of MCPResourceLink with the given parameters
-func NewMCPResourceLink(uri string, name string) *MCPResourceLink {
-	return &MCPResourceLink{
-		URI:  uri,
-		Type: "resource_link",
-		Name: name,
 	}
 }
 

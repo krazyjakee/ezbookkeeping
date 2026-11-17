@@ -1,5 +1,5 @@
 <template>
-    <f7-segmented round class="add-transaction-button-group margin-horizontal" v-if="hasTransactionAddMenuItems">
+    <f7-segmented round class="add-transaction-button-group" v-if="hasTransactionAddMenuItems">
         <f7-button round large fill :icon-f7="finalDefaultActionIcon" :text="finalDefaultActionText" :style="buttonStyle"
                    @click="executeDefaultAction" />
         <f7-button round large fill class="add-transaction-menu-button" icon-f7="chevron_down"
@@ -8,7 +8,7 @@
                    :aria-label="tt('More')"/>
     </f7-segmented>
 
-    <f7-segmented round class="add-transaction-button-group margin-horizontal" v-else-if="!hasTransactionAddMenuItems" >
+    <f7-segmented round class="add-transaction-button-group" v-else-if="!hasTransactionAddMenuItems" >
         <f7-button round large fill :icon-f7="finalDefaultActionIcon" :text="finalDefaultActionText" :style="buttonStyle"
                    @click="executeDefaultAction" />
     </f7-segmented>

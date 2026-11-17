@@ -1,52 +1,204 @@
-.login-page-logo {
-    width: 76px;
-    height: 76px;
-    display: block;
-    margin: 0 auto;
-    border-radius: 12px;
-    box-shadow: 0 12px 28px rgba(var(--ebk-primary-color), 0.2);
-}
-
+/*
+ * Mobile authentication screens (guideline D8, §6.5): only the bracketed ACCOUNT ACCESS hero panel,
+ * on the grid canvas, below the wordmark. The panel is titled for each step (login, unlock).
+ */
 .login-page {
-    --ebk-login-page-background-color: #fff;
-    --f7-login-screen-content-bg-color:
-        radial-gradient(circle 110px at calc(100% - 18px) -18px, rgba(var(--ebk-primary-color), 0.08) 0 104px, transparent 110px),
-        radial-gradient(circle 85px at 9px calc(100% + 11px), rgba(var(--ebk-primary-color), 0.05) 0 80px, transparent 85px),
-        radial-gradient(circle at 50% 16%, rgba(var(--ebk-primary-color), 0.06) 0, rgba(var(--ebk-primary-color), 0.02) 180px, transparent 360px),
-        var(--ebk-login-page-background-color);
+    --f7-login-screen-content-bg-color: transparent;
+    background-color: var(--ebk-color-canvas);
+    background-image:
+        linear-gradient(to right, var(--ebk-color-grid-line) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--ebk-color-grid-line) 1px, transparent 1px);
+    background-size: var(--ebk-grid-size) var(--ebk-grid-size);
+    background-repeat: repeat;
 
     > .page-content {
         background: transparent;
     }
 }
 
-.dark .login-page,
-.dark.login-page {
-    --ebk-login-page-background-color: #000;
-    --f7-login-screen-content-bg-color:
-        radial-gradient(circle 110px at calc(100% - 18px) -18px, rgba(var(--ebk-primary-color), 0.12) 0 104px, transparent 110px),
-        radial-gradient(circle 85px at 9px calc(100% + 11px), rgba(var(--ebk-primary-color), 0.08) 0 80px, transparent 85px),
-        radial-gradient(circle at 50% 16%, rgba(var(--ebk-primary-color), 0.16) 0, rgba(var(--ebk-primary-color), 0.06) 180px, transparent 360px),
-        var(--ebk-login-page-background-color);
+.ebk-auth-wordmark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ebk-space-3);
+    margin-block: max(var(--ebk-space-6), calc(var(--f7-safe-area-top) + 6vh)) var(--ebk-space-4);
+    margin-inline: var(--ebk-space-4);
+
+    .ebk-auth-wordmark-logo {
+        width: 40px;
+        height: 40px;
+        border-radius: var(--ebk-radius-md);
+    }
+
+    .ebk-auth-wordmark-title {
+        color: var(--ebk-color-text-primary);
+        font-size: 24px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        line-height: 1.2;
+    }
 }
 
-.login-page-tile {
-    font-size: var(--ebk-login-page-title-font-size);
+.ebk-auth-panel {
+    max-width: 30rem;
+    margin-block: 0 var(--ebk-space-4);
+    margin-inline: max(var(--ebk-space-3), calc(var(--f7-safe-area-left) + var(--ebk-space-3))) max(var(--ebk-space-3), calc(var(--f7-safe-area-right) + var(--ebk-space-3)));
+    background-color: var(--ebk-color-surface);
+    box-shadow: var(--ebk-elevation-2);
+    animation: ebk-auth-panel-enter var(--ebk-motion-duration-lg) var(--ebk-motion-ease-emphasized) both;
+
+    @media (min-width: 33rem) {
+        margin-inline: auto;
+    }
+}
+
+@keyframes ebk-auth-panel-enter {
+    from {
+        opacity: 0;
+        transform: translateY(var(--ebk-motion-distance-md));
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.ebk-auth-panel-header {
+    padding-inline: var(--ebk-space-3);
+    font-size: 12px;
+
+    /* the hero panel carries brackets, so the strip does not repeat the start tick */
+    &::before {
+        display: none;
+    }
+}
+
+.ebk-auth-panel-live {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--ebk-color-copper-line);
+    opacity: 0.6;
+    transition: opacity var(--ebk-motion-duration-sm) var(--ebk-motion-ease-standard), transform var(--ebk-motion-duration-sm) var(--ebk-motion-ease-standard);
+
+    &.ebk-auth-panel-live--busy {
+        background-color: var(--ebk-color-primary);
+        box-shadow: var(--ebk-glow);
+        opacity: 1;
+        transform: scale(1.25);
+    }
+}
+
+.ebk-auth-panel-intro {
+    padding: var(--ebk-space-4) var(--ebk-space-3) var(--ebk-space-1);
+}
+
+.ebk-auth-title {
+    margin: 0 0 var(--ebk-space-1);
+    color: var(--ebk-color-text-primary);
+    font-size: 22px;
     font-weight: 600;
-    line-height: 1.3;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.ebk-auth-message {
+    margin: 0;
+    color: var(--ebk-color-text-secondary);
+    font-size: 15px;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+
+    & + & {
+        margin-block-start: var(--ebk-space-1);
+    }
+}
+
+.ebk-auth-sheet-message {
+    margin-block: 0 var(--ebk-space-2);
+    color: var(--ebk-color-text-secondary);
+    font-size: 15px;
+    line-height: 1.45;
+}
+
+.ebk-auth-status {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ebk-space-2);
+    margin-block-start: var(--ebk-space-3);
+    padding: var(--ebk-space-2) var(--ebk-space-3) var(--ebk-space-2) var(--ebk-space-4);
+    border: 1px solid var(--ebk-color-hairline);
+    border-radius: var(--ebk-radius-control);
+    background-color: var(--ebk-color-surface-sunken);
+    color: var(--ebk-color-text-primary);
+    font-size: 14px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset-block: -1px;
+        inset-inline-start: -1px;
+        width: 3px;
+        border-start-start-radius: var(--ebk-radius-control);
+        border-end-start-radius: var(--ebk-radius-control);
+        background-color: var(--ebk-color-primary);
+    }
+
+    > i.icon {
+        flex: 0 0 auto;
+        font-size: 18px;
+    }
+
+    &.ebk-auth-status--error {
+        border-color: color-mix(in srgb, var(--ebk-color-error) 40%, transparent);
+
+        &::before {
+            background-color: var(--ebk-color-error);
+        }
+
+        > i.icon {
+            color: var(--ebk-color-error);
+        }
+    }
+}
+
+.ebk-auth-panel-secondary {
+    padding: var(--ebk-space-3);
+    border-block-start: 1px solid var(--ebk-color-hairline);
+    color: var(--ebk-color-text-secondary);
+    font-size: 15px;
+    line-height: 1.4;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+
+.ebk-auth-password-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    align-self: center;
+    min-width: var(--ebk-touch-target-min);
+    min-height: var(--ebk-touch-target-min);
+    color: var(--ebk-color-text-secondary);
+
+    i.icon {
+        font-size: 20px;
+    }
 }
 
 .login-page-form {
-    --f7-list-item-min-height: 40px;
-    width: calc(100% - 32px);
-    margin-inline: auto;
+    --f7-list-item-min-height: 44px;
+    --f7-list-bg-color: transparent;
+    --f7-list-strong-bg-color: transparent;
+    width: auto;
+    margin: 0;
 
     > ul {
-        overflow: hidden;
-        border: 1px solid rgba(var(--ebk-primary-color), 0.18);
-        border-radius: 16px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-        transition: border-color 160ms ease, box-shadow 160ms ease;
+        background: transparent;
     }
 
     > ul::before,
@@ -54,9 +206,8 @@
         display: none;
     }
 
-    > ul:focus-within {
-        border-color: rgba(var(--ebk-primary-color), 0.55);
-        box-shadow: 0 0 0 3px rgba(var(--ebk-primary-color), 0.1), 0 8px 24px rgba(0, 0, 0, 0.07);
+    .item-input .item-content {
+        padding-inline-start: var(--ebk-space-3);
     }
 
     .login-page-utilities > .item-content > .item-inner {
@@ -94,34 +245,45 @@
         white-space: normal;
     }
 
+    .login-page-primary-action,
+    .login-page-secondary-action {
+        padding-inline: var(--ebk-space-3);
+    }
+
     .login-page-primary-action > .list-button,
     .login-page-secondary-action > .list-button {
         box-sizing: border-box;
-        min-height: var(--f7-list-item-min-height);
+        min-height: 44px;
         padding-block: 8px;
         line-height: 1.25;
         white-space: normal;
         text-wrap: balance;
-        border-radius: 14px;
+        border-radius: var(--ebk-radius-control);
         font-weight: 600;
-        transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+        transition: background-color var(--ebk-motion-duration-sm) var(--ebk-motion-ease-standard), box-shadow var(--ebk-motion-duration-sm) var(--ebk-motion-ease-standard);
     }
 
     .login-page-primary-action > .list-button {
-        background: var(--f7-theme-color);
-        color: #fff;
-        box-shadow: 0 8px 20px rgba(var(--ebk-primary-color), 0.22);
+        background: var(--ebk-color-primary);
+        color: var(--ebk-color-on-primary);
+    }
+
+    .login-page-primary-action > .list-button:focus-visible {
+        box-shadow: var(--ebk-glow);
     }
 
     .login-page-secondary-action > .list-button {
-        border: 1px solid rgba(var(--ebk-primary-color), 0.65);
-        background: rgba(var(--ebk-primary-color), 0.04);
+        border: 1px solid var(--ebk-color-hairline);
+        background: var(--ebk-color-surface-sunken);
+        color: var(--ebk-color-text-primary);
     }
 
-    .login-page-primary-action > .list-button:focus-visible,
-    .login-page-secondary-action > .list-button:focus-visible {
-        outline: 3px solid rgba(var(--ebk-primary-color), 0.18);
-        outline-offset: 2px;
+    .list-item-pincode-input > .item-content {
+        padding-inline: var(--ebk-space-3);
+
+        > .item-inner {
+            padding-inline-end: 0;
+        }
     }
 }
 
@@ -150,7 +312,7 @@
 
 .login-page-powered-by > a.link {
     display: inline !important;
-    color: var(--f7-theme-color);
+    color: var(--ebk-color-primary-text);
     font-size: var(--f7-block-footer-font-size);
     padding: 0 6px;
 }
@@ -167,6 +329,17 @@
 
 @media (min-height: 630px) {
     .login-page-bottom {
+        display: none;
+    }
+}
+
+@media (forced-colors: active) {
+    .login-page {
+        background-image: none;
+    }
+
+    .ebk-auth-panel-live,
+    .ebk-auth-status::before {
         display: none;
     }
 }

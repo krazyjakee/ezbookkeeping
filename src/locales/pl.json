@@ -120,6 +120,8 @@
             "720p": "720p (ok. {size} KiB)"
         },
         "misc": {
+            "nextOccurrence": "Następna: {date}",
+            "occurrencesLeft": "Pozostało: {count}",
             "nHour": "{n} godzina",
             "nHours": "{n} godzin",
             "nDay": "{n} dzień",

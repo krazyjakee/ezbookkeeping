@@ -127,6 +127,29 @@ ezrbookkeeping cron job utilities.
     * Options:
     * `--name name`, `-n name`: Cron job name.
 
+### backup
+
+ezrbookkeeping full-instance backup and restore. See [Backup and Restore](/backup/) for details.
+
+* `create`: Create a full-instance backup (database, uploaded files and configuration file).
+    * Options:
+    * `--output value`, `-o value`: Backup output directory. Optional. (default is `backup_path` in [Configuration - Backup](/configuration/#backup))
+    * `--no-config`: Do not include the configuration file in the backup. Optional.
+    * `--encrypt`: Encrypt the backup. Optional. (default is `backup_encrypt`)
+    * `--no-retention`: Do not remove old backups by the retention policy after the backup is created. Optional.
+    * `--passphrase-file value`: Read the backup encryption passphrase from the specified file. Optional. (default is `backup_passphrase`)
+* `list [backup directory]`: List backups (newest first) and the status of the latest backup run. (default directory is `backup_path`)
+* `verify <backup file>`: Verify a backup file (decryption, archive integrity, manifest, checksums, data validity and compatibility).
+    * Options:
+    * `--passphrase-file value`: Read the backup encryption passphrase from the specified file. Optional.
+* `restore <backup file>`: Restore a backup into the configured database and object storage, then print a verification report.
+    * Options:
+    * `--dry-run`: Only validate the backup and the target, do not modify anything. Optional.
+    * `--force`: Allow restoring into a non-empty target, all existing data in ezrbookkeeping tables will be deleted. Requires `--yes-overwrite-existing-data`. Optional.
+    * `--yes-overwrite-existing-data`: Confirm that existing data may be overwritten. Optional.
+    * `--config-output value`: Write the configuration file contained in the backup to the specified path. Optional.
+    * `--passphrase-file value`: Read the backup encryption passphrase from the specified file. Optional.
+
 ### security
 
 ezrbookkeeping security utilities.

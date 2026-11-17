@@ -31,11 +31,23 @@
                  v-if="!loading">
             <f7-list-item :id="getTagGroupDomId(tagGroup)"
                           :key="tagGroup.id"
-                          v-for="tagGroup in tagGroups">
+                          v-for="(tagGroup, index) in tagGroups">
                 <template #title>
                     <div class="display-flex">
                         <div class="transaction-tag-group-list-item-content list-item-valign-middle padding-inline-start-half">{{ tagGroup.name }}</div>
                     </div>
+                </template>
+                <template #after>
+                    <span class="ebk-m-move-buttons">
+                        <f7-link :class="{ 'disabled': displayOrderSaving || index <= 0 }"
+                                 :aria-label="tt('Move Up')" @click.stop.prevent="moveTagGroup(tagGroup, index, -1)">
+                            <f7-icon f7="arrow_up"></f7-icon>
+                        </f7-link>
+                        <f7-link :class="{ 'disabled': displayOrderSaving || index >= tagGroups.length - 1 }"
+                                 :aria-label="tt('Move Down')" @click.stop.prevent="moveTagGroup(tagGroup, index, 1)">
+                            <f7-icon f7="arrow_down"></f7-icon>
+                        </f7-link>
+                    </span>
                 </template>
             </f7-list-item>
         </f7-list>
@@ -143,6 +155,25 @@ function cancelSort(): void {
         if (!error.processed) {
             showToast(error.message || error);
         }
+    });
+}
+
+// non-drag alternative to the sort handle (guidelines §6.4), uses the same display order update as dragging
+function moveTagGroup(tagGroup: TransactionTagGroup, index: number, direction: number): void {
+    const to = index + direction;
+
+    if (to < 0 || to >= tagGroups.value.length) {
+        return;
+    }
+
+    transactionTagsStore.changeTagGroupDisplayOrder({
+        tagGroupId: tagGroup.id,
+        from: index,
+        to: to
+    }).then(() => {
+        displayOrderModified.value = true;
+    }).catch(error => {
+        showToast(error.message || error);
     });
 }
 

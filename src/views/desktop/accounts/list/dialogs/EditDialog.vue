@@ -47,7 +47,7 @@
                 <v-window class="d-flex flex-grow-1 disable-tab-transition w-100-window-container"
                           v-model="activeTab">
                     <v-window-item value="account">
-                        <v-form class="my-4">
+                        <v-form class="my-4 ebk-dialog-form">
                             <v-row>
                                 <v-col cols="12" md="12">
                                     <v-text-field
@@ -196,17 +196,25 @@
             </template>
 
             <template #footer>
-                <v-spacer/>
-                <v-tooltip :disabled="!inputIsEmpty" :text="inputEmptyProblemMessage ? tt(inputEmptyProblemMessage) : ''">
-                    <template v-slot:activator="{ props }">
-                        <div v-bind="props" class="d-inline-block">
-                            <v-btn :disabled="inputIsEmpty || loading || submitting" @click="save">
-                                {{ tt(saveButtonTitle) }}
-                                <v-progress-circular indeterminate size="22" class="ms-2" v-if="submitting"></v-progress-circular>
-                            </v-btn>
-                        </div>
-                    </template>
-                </v-tooltip>
+                <div class="ebk-dialog-footer">
+                    <div class="ebk-dialog-footer-status" role="status" aria-live="polite">
+                        <template v-if="footerStatus">
+                            <span class="ebk-dialog-footer-status-dot" :class="`ebk-dialog-footer-status-dot--${footerStatus.kind}`" aria-hidden="true"></span>
+                            <span>{{ footerStatus.text }}</span>
+                        </template>
+                    </div>
+                    <v-btn color="default" variant="outlined" :disabled="loading || submitting" @click="cancel">{{ tt('Cancel') }}</v-btn>
+                    <v-tooltip :disabled="!inputIsEmpty" :text="inputEmptyProblemMessage ? tt(inputEmptyProblemMessage) : ''">
+                        <template v-slot:activator="{ props }">
+                            <div v-bind="props" class="d-inline-block">
+                                <v-btn color="primary" variant="flat" :disabled="inputIsEmpty || loading || submitting" @click="save">
+                                    {{ tt(saveButtonTitle) }}
+                                    <v-progress-circular indeterminate size="22" class="ms-2" v-if="submitting"></v-progress-circular>
+                                </v-btn>
+                            </div>
+                        </template>
+                    </v-tooltip>
+                </div>
             </template>
         </two-column-dialog-layout>
     </v-dialog>
@@ -316,6 +324,27 @@ const isAccountModified = computed<boolean>(() => {
     } else { // Edit
         return !!initAccount.value && !isEquals(account.value.toModifyRequest(clientSessionId.value, subAccounts.value), initAccount.value.toModifyRequest(clientSessionId.value, initAccount.value.subAccounts));
     }
+});
+
+// footer status text at the start of the dialog footer (design guideline 4.4)
+const footerStatus = computed<{ kind: 'progress' | 'warning' | 'modified', text: string } | null>(() => {
+    if (loading.value) {
+        return null;
+    }
+
+    if (submitting.value) {
+        return { kind: 'progress', text: tt('Saving...') };
+    }
+
+    if (isAccountModified.value && inputIsEmpty.value && inputEmptyProblemMessage.value) {
+        return { kind: 'warning', text: tt(inputEmptyProblemMessage.value) };
+    }
+
+    if (isAccountModified.value) {
+        return { kind: 'modified', text: tt('Unsaved changes') };
+    }
+
+    return null;
 });
 
 function open(options?: { id?: string, currentAccount?: Account, category?: number }): Promise<AccountEditResponse> {

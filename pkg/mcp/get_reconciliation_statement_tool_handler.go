@@ -180,8 +180,8 @@ func (h *mcpGetReconciliationStatementToolHandler) Handle(c *core.WebContext, ca
 		Transactions:       make([]*MCPReconciliationStatementItem, 0),
 	}
 
-	response.OpeningBalance, response.OpeningSignedBalance, _ = mcpReportFormatBalances(account.Category, openingBalance)
-	response.ClosingBalance, response.ClosingSignedBalance, _ = mcpReportFormatBalances(account.Category, closingBalance)
+	response.OpeningBalance, response.OpeningSignedBalance, _ = mcpFormatAccountBalances(account.Category, openingBalance)
+	response.ClosingBalance, response.ClosingSignedBalance, _ = mcpFormatAccountBalances(account.Category, closingBalance)
 
 	if startUnixTime > 0 {
 		response.StartTime = utils.FormatUnixTimeToLongDateTimeWithTimezoneRFC3339Format(startUnixTime, timezone)

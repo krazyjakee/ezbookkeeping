@@ -2,11 +2,20 @@
     <div class="auth-illustration" :class="`auth-illustration--${variant}`" aria-hidden="true">
         <svg class="auth-illustration__art" :viewBox="variant === 'signup' ? '0 0 560 760' : '0 0 720 720'"
              fill="none" xmlns="http://www.w3.org/2000/svg" focusable="false">
+            <!-- Instrument dial behind every scene: hairline rings, scale ticks, cardinal marks and a copper sweep. No figures. -->
+            <g class="auth-illustration__dial" :transform="variant === 'signup' ? 'translate(280 380)' : 'translate(360 360)'">
+                <circle class="auth-illustration__dial-ring" :r="dialRadius + 22" />
+                <circle class="auth-illustration__dial-ring" :r="dialRadius" />
+                <circle class="auth-illustration__dial-ticks" :r="dialRadius - 9" stroke-width="10" :stroke-dasharray="dialTickDash" />
+                <path class="auth-illustration__dial-cardinal" :d="`M0 ${-dialRadius - 30}V${-dialRadius - 14}M0 ${dialRadius + 14}V${dialRadius + 30}M${-dialRadius - 30} 0H${-dialRadius - 14}M${dialRadius + 14} 0H${dialRadius + 30}`" />
+                <g class="auth-illustration__sweep">
+                    <circle class="auth-illustration__dial-arc" :r="dialRadius + 22" :stroke-dasharray="dialArcDash" :transform="'rotate(-150)'" />
+                </g>
+            </g>
             <g v-if="variant === 'login'" class="auth-illustration__scene">
-                <rect class="auth-illustration__backdrop" x="110" y="159" width="500" height="384" rx="138" transform="rotate(-8 360 352)" />
 
-                <g class="auth-illustration__shadow" transform="rotate(-4 360 353)">
-                    <g transform="rotate(7 506 224)">
+                <g class="auth-illustration__shadow">
+                    <g>
                         <path class="auth-illustration__paper" d="M479 170H531C536 170 540 174 540 179V271L532 266L524 271L516 266L508 271L500 266L492 271L484 266L476 271V179C476 174 477 170 479 170Z" />
                         <rect class="auth-illustration__accent" x="490" y="186" width="24" height="4" rx="2" />
                         <rect class="auth-illustration__rule" x="490" y="199" width="36" height="3" rx="1.5" />
@@ -61,8 +70,7 @@
             </g>
 
             <g v-else-if="variant === 'signup'" class="auth-illustration__scene">
-                <rect class="auth-illustration__backdrop" x="84" y="137" width="392" height="491" rx="132" transform="rotate(-6 280 382)" />
-                <g class="auth-illustration__shadow" transform="rotate(-4 280 375)">
+                <g class="auth-illustration__shadow">
                     <rect class="auth-illustration__tint" x="145" y="161" width="282" height="442" rx="24" />
                     <rect class="auth-illustration__paper" x="142" y="155" width="282" height="442" rx="24" />
                     <rect class="auth-illustration__paper" x="138" y="148" width="282" height="442" rx="24" />
@@ -82,8 +90,7 @@
             </g>
 
             <g v-else-if="variant === 'verify'" class="auth-illustration__scene">
-                <rect class="auth-illustration__backdrop" x="126" y="180" width="468" height="358" rx="130" transform="rotate(-7 360 359)" />
-                <g class="auth-illustration__shadow" transform="translate(360 354) scale(1.1) rotate(-5) translate(-360 -354)">
+                <g class="auth-illustration__shadow" transform="translate(360 354) scale(1.1) translate(-360 -354)">
                     <path class="auth-illustration__paper" d="M195 241H525C536 241 545 250 545 261V324C534 324 526 333 526 344C526 355 534 364 545 364V449C545 460 536 469 525 469H195C184 469 175 460 175 449V364C186 364 194 355 194 344C194 333 186 324 175 324V261C175 250 184 241 195 241Z" />
                     <rect class="auth-illustration__soft" x="209" y="275" width="44" height="42" rx="12" />
                     <path class="auth-illustration__accent-outline" d="M219 288H243V304H219V288ZM219 289L231 297L243 289" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
@@ -114,8 +121,7 @@
             </g>
 
             <g v-else-if="variant === 'unlock'" class="auth-illustration__scene">
-                <rect class="auth-illustration__backdrop" x="142" y="162" width="436" height="398" rx="130" transform="rotate(-7 360 361)" />
-                <g class="auth-illustration__shadow" transform="rotate(-4 360 360)">
+                <g class="auth-illustration__shadow">
                     <rect class="auth-illustration__tint" x="228" y="209" width="244" height="316" rx="23" />
                     <rect class="auth-illustration__paper" x="224" y="202" width="244" height="316" rx="23" />
                     <rect class="auth-illustration__paper" x="220" y="195" width="244" height="316" rx="23" />
@@ -139,8 +145,7 @@
             </g>
 
             <g v-else-if="variant === 'recovery'" class="auth-illustration__scene">
-                <rect class="auth-illustration__backdrop" x="119" y="183" width="482" height="354" rx="130" transform="rotate(-7 360 360)" />
-                <g class="auth-illustration__shadow" transform="rotate(-3 360 360)">
+                <g class="auth-illustration__shadow">
                     <rect class="auth-illustration__paper" x="160" y="252" width="400" height="240" rx="23" />
                     <path class="auth-illustration__soft" d="M174 268L348 392C355 398 365 398 372 392L546 268V468C546 474 541 479 535 479H185C179 479 174 474 174 468V268Z" />
                     <path class="auth-illustration__fine" d="M174 475L288 372M546 475L432 372" stroke-width="1.1" stroke-linecap="round" />
@@ -151,8 +156,7 @@
             </g>
 
             <g v-else class="auth-illustration__scene">
-                <rect class="auth-illustration__backdrop" x="126" y="183" width="468" height="354" rx="128" transform="rotate(-7 360 360)" />
-                <g class="auth-illustration__shadow" transform="translate(360 366) scale(1.1) rotate(-5) translate(-360 -352)">
+                <g class="auth-illustration__shadow" transform="translate(360 366) scale(1.1) translate(-360 -352)">
                     <path class="auth-illustration__paper" d="M195 241H521C532 241 541 250 541 261V289C529 289 521 298 521 310C521 322 529 331 541 331V432C541 443 532 452 521 452H195C184 452 175 443 175 432V331C187 331 195 322 195 310C195 298 187 289 175 289V261C175 250 184 241 195 241Z" />
                     <rect class="auth-illustration__soft" x="210" y="273" width="43" height="46" rx="12" />
                     <path class="auth-illustration__accent-outline" d="M223 286H240V307L236 304L232 307L227 304L223 307V286ZM227 292H236M227 297H234" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
@@ -189,8 +193,21 @@
 <script setup lang="ts">
 type AuthIllustrationVariant = 'login' | 'signup' | 'verify' | 'unlock' | 'recovery' | 'connect';
 
-defineProps<{
+import { computed } from 'vue';
+
+const props = defineProps<{
     variant: AuthIllustrationVariant;
     verified?: boolean;
 }>();
+
+const dialRadius = computed<number>(() => props.variant === 'signup' ? 226 : 250);
+const dialTickDash = computed<string>(() => {
+    const circumference = 2 * Math.PI * (dialRadius.value - 9);
+    const step = circumference / 72;
+    return `1.2 ${(step - 1.2).toFixed(3)}`;
+});
+const dialArcDash = computed<string>(() => {
+    const circumference = 2 * Math.PI * (dialRadius.value + 22);
+    return `${(circumference * 0.22).toFixed(3)} ${circumference.toFixed(3)}`;
+});
 </script>

@@ -1,13 +1,21 @@
 <template>
     <f7-app v-bind="f7params">
-        <f7-view id="main-view" main url="/"></f7-view>
+        <f7-view id="main-view" class="safe-areas" main url="/"></f7-view>
+        <Transition name="ebk-fade">
+            <div ref="offlineBanner" class="ebk-offline-banner" role="status" aria-live="polite" v-if="isOffline">
+                <i class="icon f7-icons" aria-hidden="true">wifi_slash</i>
+                <span>{{ tt('You are offline. Changes cannot be saved until the connection is restored.') }}</span>
+            </div>
+        </Transition>
+        <!-- framework7 toasts and notifications have no live region, their text is mirrored here so it is announced (#36, WCAG 4.1.3) -->
+        <div class="ebk-visually-hidden" role="status" aria-live="polite" aria-atomic="true">{{ liveMessage }}</div>
     </f7-app>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, watch, onMounted, onBeforeUnmount, useTemplateRef } from 'vue';
 
-import type { Framework7Parameters, Notification, Actions, Dialog, Popover, Popup, Sheet } from 'framework7/types';
+import type { Framework7Parameters, Notification, Actions, Dialog, Popover, Popup, Router, Sheet } from 'framework7/types';
 import { f7ready } from 'framework7-vue';
 import routes from './router/mobile.ts';
 
@@ -100,6 +108,10 @@ const f7params = ref<Framework7Parameters>({
         backdrop: true,
         closeOnEscape: true
     },
+    input: {
+        // keep a focused input away from the on-screen keyboard and the bottom toolbar (android scrolls by default, ios scrolls natively)
+        scrollIntoViewCentered: true
+    },
     smartSelect: {
         routableModals: false
     },
@@ -115,7 +127,25 @@ const f7params = ref<Framework7Parameters>({
     }
 });
 
+const offlineBanner = useTemplateRef<HTMLElement>('offlineBanner');
+const liveMessage = ref<string>('');
+
+function announce(element: HTMLElement | undefined | null): void {
+    const text = element?.textContent?.replace(/\s+/g, ' ').trim();
+
+    if (!text) {
+        return;
+    }
+
+    // clear first, so the same message repeated is announced again
+    liveMessage.value = '';
+    window.setTimeout(() => {
+        liveMessage.value = text;
+    }, 50);
+}
+
 const notification = ref<Notification.Notification | null>(null);
+const isOffline = ref<boolean>(typeof navigator !== 'undefined' && navigator.onLine === false);
 
 const hasPushPopupBackdrop = ref<boolean | undefined>(undefined);
 const hasBackdrop = ref<boolean | undefined>(undefined);
@@ -145,6 +175,146 @@ function setThemeColorMeta(darkMode: boolean | undefined): void {
     }
 }
 
+function updateOnlineState(): void {
+    isOffline.value = navigator.onLine === false;
+}
+
+let offlineBannerResizeObserver: ResizeObserver | null = null;
+
+// the offline banner sits below the navbar, page contents move down by its height instead of being covered by it
+function updateOfflineBannerSpace(): void {
+    const root = document.documentElement;
+    const banner = offlineBanner.value;
+
+    if (isOffline.value && banner) {
+        root.classList.add('ebk-offline');
+        root.style.setProperty('--ebk-offline-banner-space', `${Math.ceil(banner.getBoundingClientRect().height) + 8}px`);
+    } else {
+        root.classList.remove('ebk-offline');
+        root.style.removeProperty('--ebk-offline-banner-space');
+    }
+}
+
+function setupDialogAccessibility(dialog: Dialog.Dialog): void {
+    const dialogElement = dialog.el as HTMLElement | undefined;
+
+    if (!dialogElement) {
+        return;
+    }
+
+    const titleElement = dialogElement.querySelector<HTMLElement>('.dialog-title');
+
+    if (!dialogElement.hasAttribute('role')) {
+        dialogElement.setAttribute('role', dialogElement.querySelector('.dialog-buttons') ? 'alertdialog' : 'dialog');
+    }
+
+    dialogElement.setAttribute('aria-modal', 'true');
+
+    if (titleElement) {
+        if (!titleElement.id) {
+            titleElement.id = `ebk-dialog-title-${Date.now().toString(36)}`;
+        }
+
+        dialogElement.setAttribute('aria-labelledby', titleElement.id);
+    }
+
+    // dialogs with inputs (prompts) focus their input, the others focus the safe action:
+    // the first non-primary button (cancel), or the only button of an alert
+    if (dialogElement.querySelector('input, textarea, select') || dialogElement.contains(document.activeElement)) {
+        return;
+    }
+
+    const buttons = Array.from(dialogElement.querySelectorAll<HTMLButtonElement>('.dialog-buttons > .dialog-button'));
+    const safeButton = buttons.length > 1 ? buttons.find(button => !button.classList.contains('button-fill')) : buttons[0];
+
+    safeButton?.focus({ preventScroll: true });
+}
+
+// the home page navbar shows the wordmark instead of a page title (D5, docs/design/README.md §5.2)
+function markHomePageNavbar(page: Router.Page | undefined): void {
+    const navbarEl = page?.navbarEl || page?.el?.querySelector<HTMLElement>(':scope > .navbar');
+
+    if (!navbarEl || page?.route?.path !== '/' || navbarEl.classList.contains('ebk-navbar-home')) {
+        return;
+    }
+
+    navbarEl.classList.add('ebk-navbar-home');
+    navbarEl.style.setProperty('--ebk-app-logo', `url("${APPLICATION_LOGO_PATH}")`);
+
+    // the logo changes the title width, let framework7 center the title again
+    page?.app?.navbar?.size(navbarEl);
+}
+
+const DISABLEABLE_CONTROL_SELECTOR = 'a.link, a.button, a.list-button, a.item-link, a.actions-button, .actions-button, a.tab-link';
+let disabledStateObserver: MutationObserver | null = null;
+let hiddenPagesObserver: MutationObserver | null = null;
+
+function syncDisabledControlState(element: Element): void {
+    const disabled = element.classList.contains('disabled') || !!element.parentElement?.classList.contains('disabled');
+
+    if (disabled && element.getAttribute('aria-disabled') !== 'true') {
+        element.setAttribute('aria-disabled', 'true');
+    } else if (!disabled && element.getAttribute('aria-disabled') === 'true') {
+        element.removeAttribute('aria-disabled');
+    }
+}
+
+function syncDisabledControlStates(root: Element, changedClassOnly?: boolean): void {
+    if (root.matches(DISABLEABLE_CONTROL_SELECTOR)) {
+        syncDisabledControlState(root);
+    }
+
+    // a "disabled" class on a list item applies to its list button, other subtrees only change with added nodes
+    const scope = changedClassOnly ? Array.from(root.children) : Array.from(root.querySelectorAll(DISABLEABLE_CONTROL_SELECTOR));
+
+    for (const element of scope) {
+        if (element.matches(DISABLEABLE_CONTROL_SELECTOR)) {
+            syncDisabledControlState(element);
+        }
+    }
+}
+
+// pages (and their navbars) kept in the stack behind the current page stay in the DOM, take them out of the tab order
+// and the accessibility tree while they are hidden (#36, WCAG 2.4.3)
+function syncHiddenPagesInert(): void {
+    document.querySelectorAll<HTMLElement>('.view .page, .view .navbar').forEach(element => {
+        const hidden = element.classList.contains('page-previous') || element.classList.contains('navbar-previous');
+
+        if (hidden && !element.hasAttribute('inert')) {
+            element.setAttribute('inert', '');
+        } else if (!hidden && element.hasAttribute('inert')) {
+            element.removeAttribute('inert');
+        }
+    });
+}
+
+// framework7 renders the navbar back link as an icon-only link without text, give it an accessible name, and expose the
+// page heading and main region (#36, WCAG 1.3.1 / 4.1.2)
+function labelNavbarBackLinks(page: Router.Page | undefined): void {
+    const navbarEl = page?.navbarEl || page?.el?.querySelector<HTMLElement>(':scope > .navbar');
+
+    // page structure for assistive technology: the navbar title is the page heading, the page content is the main region
+    const titleEl = navbarEl?.querySelector<HTMLElement>('.title');
+
+    if (titleEl && !titleEl.hasAttribute('role')) {
+        titleEl.setAttribute('role', 'heading');
+        titleEl.setAttribute('aria-level', '1');
+    }
+
+    const pageContentEl = page?.el?.querySelector<HTMLElement>(':scope > .page-content');
+
+    if (pageContentEl && !pageContentEl.hasAttribute('role')) {
+        pageContentEl.setAttribute('role', 'main');
+    }
+
+    navbarEl?.querySelectorAll<HTMLElement>('.link.back').forEach(link => {
+        if (!link.textContent?.trim() && (!link.hasAttribute('aria-label') || link.dataset['ebkBackLabel'])) {
+            link.setAttribute('aria-label', tt('Back'));
+            link.dataset['ebkBackLabel'] = 'true';
+        }
+    });
+}
+
 function onBackdropChanged(element: { push?: boolean, opened?: boolean }): void {
     if (element.push) {
         hasPushPopupBackdrop.value = element.opened;
@@ -166,12 +336,50 @@ onMounted(() => {
         f7.on('actionsClose', (actions: Actions.Actions) => onBackdropChanged(actions));
         f7.on('dialogOpen', (dialog: Dialog.Dialog) => onBackdropChanged(dialog));
         f7.on('dialogClose', (dialog: Dialog.Dialog) => onBackdropChanged(dialog));
+        f7.on('dialogOpened', (dialog: Dialog.Dialog) => setupDialogAccessibility(dialog));
+        f7.on('toastOpen', (toast: { el?: HTMLElement }) => announce(toast?.el));
+        f7.on('notificationOpen', (notification: { el?: HTMLElement }) => announce(notification?.el));
         f7.on('popoverOpen', (popover: Popover.Popover) => onBackdropChanged(popover));
         f7.on('popoverClose', (popover: Popover.Popover) => onBackdropChanged(popover));
         f7.on('popupOpen', (popup: Popup.Popup) => onBackdropChanged(popup));
         f7.on('popupClose', (popup: Popup.Popup) => onBackdropChanged(popup));
         f7.on('sheetOpen', (sheet: Sheet.Sheet) => onBackdropChanged(sheet));
         f7.on('sheetClose', (sheet: Sheet.Sheet) => onBackdropChanged(sheet));
+
+        f7.on('pageInit', (page: Router.Page) => {
+            markHomePageNavbar(page);
+            labelNavbarBackLinks(page);
+        });
+        f7.on('pageBeforeIn', (page: Router.Page) => {
+            markHomePageNavbar(page);
+            labelNavbarBackLinks(page);
+            page?.el?.removeAttribute('inert');
+            page?.navbarEl?.removeAttribute('inert');
+        });
+
+        // the page stack also changes without page events (initial browser history match), so follow the page classes
+        const mainViewEl = document.getElementById('main-view');
+        let hiddenPagesSyncScheduled = false;
+
+        if (mainViewEl) {
+            hiddenPagesObserver = new MutationObserver(mutations => {
+                if (hiddenPagesSyncScheduled || !mutations.some(mutation => (mutation.target as Element).matches?.('.page, .navbar') || mutation.type === 'childList')) {
+                    return;
+                }
+
+                hiddenPagesSyncScheduled = true;
+                requestAnimationFrame(() => {
+                    hiddenPagesSyncScheduled = false;
+                    syncHiddenPagesInert();
+                });
+            });
+            hiddenPagesObserver.observe(mainViewEl, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
+        }
+
+        const currentPageEl = document.querySelector<HTMLElement & { f7Page?: Router.Page }>('#main-view > .page-current');
+        markHomePageNavbar(currentPageEl?.f7Page);
+        labelNavbarBackLinks(currentPageEl?.f7Page);
+        syncHiddenPagesInert();
 
         f7.on('pageBeforeOut', () => {
             if (isModalShowing()) {
@@ -214,16 +422,64 @@ onMounted(() => {
         });
     });
 
+    if (typeof ResizeObserver !== 'undefined') {
+        offlineBannerResizeObserver = new ResizeObserver(() => updateOfflineBannerSpace());
+    }
+
+    window.addEventListener('online', updateOnlineState);
+    window.addEventListener('offline', updateOnlineState);
+    updateOnlineState();
+
     document.addEventListener('DOMContentLoaded', () => {
         const languageInfo = getCurrentLanguageInfo();
         initMapProvider(languageInfo?.alternativeLanguageTag);
     });
+
+    // framework7 marks disabled links and buttons with a "disabled" class only, expose the state to assistive technology (#36, WCAG 4.1.2)
+    syncDisabledControlStates(document.body);
+    disabledStateObserver = new MutationObserver(mutations => {
+        for (const mutation of mutations) {
+            if (mutation.type === 'attributes') {
+                syncDisabledControlStates(mutation.target as Element, true);
+            } else {
+                mutation.addedNodes.forEach(node => {
+                    if (node.nodeType === Node.ELEMENT_NODE) {
+                        syncDisabledControlStates(node as Element);
+                    }
+                });
+            }
+        }
+    });
+    disabledStateObserver.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
 
     document.addEventListener('dragstart', (e) => {
         if (!e.target || !('closest' in e.target) || !isFunction(e.target.closest) || !e.target.closest('.dragenabled')) {
             e.preventDefault();
         }
     }, true);
+});
+
+watch(offlineBanner, (newElement, oldElement) => {
+    if (oldElement) {
+        offlineBannerResizeObserver?.unobserve(oldElement);
+    }
+
+    if (newElement) {
+        offlineBannerResizeObserver?.observe(newElement);
+    }
+
+    updateOfflineBannerSpace();
+}, { flush: 'post' });
+
+watch(isOffline, () => updateOfflineBannerSpace(), { flush: 'post' });
+
+onBeforeUnmount(() => {
+    disabledStateObserver?.disconnect();
+    disabledStateObserver = null;
+    hiddenPagesObserver?.disconnect();
+    hiddenPagesObserver = null;
+    offlineBannerResizeObserver?.disconnect();
+    offlineBannerResizeObserver = null;
 });
 
 watch(currentNotificationContent, (newValue) => {

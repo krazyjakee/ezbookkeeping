@@ -1,7 +1,7 @@
 <template>
     <main-page-layout no-navbar>
         <template #content>
-            <overview-dashboard :layout="layout" :loading="loadingOverview" @refresh="reload" />
+            <overview-dashboard :layout="layout" :loading="loadingOverview" :load-failed="loadingFailed" @refresh="reload" />
         </template>
     </main-page-layout>
 </template>
@@ -42,6 +42,7 @@ const overviewStore = useOverviewStore();
 const desktopPageStore = useDesktopPageStore();
 
 const loadingOverview = ref<boolean>(true);
+const loadingFailed = ref<boolean>(false);
 
 const layout = computed<DesktopOverviewLayout>(() => {
     try {
@@ -121,12 +122,14 @@ function reload(force: boolean): void {
 
     Promise.all(promises).then(() => {
         loadingOverview.value = false;
+        loadingFailed.value = false;
 
         if (force) {
             desktopPageStore.addToast('Data has been updated');
         }
     }).catch(error => {
         loadingOverview.value = false;
+        loadingFailed.value = !error.isUpToDate;
 
         if (!error.processed) {
             desktopPageStore.addErrorToast(error);
@@ -140,19 +143,3 @@ if (isUserLogined() && isUserUnlocked()) {
     reload(false);
 }
 </script>
-
-<style>
-.overview-card-background {
-    position: absolute;
-    inline-size: 9rem;
-    inset-block-end: 0;
-    inset-inline-end: 0;
-}
-
-.overview-card-background-image {
-    position: absolute;
-    inline-size: 5rem;
-    inset-block-end: 0.5rem;
-    inset-inline-end: 1rem;
-}
-</style>

@@ -160,8 +160,9 @@ export default defineConfig(() => {
                     name: 'ezrbookkeeping',
                     short_name: 'ezrbookkeeping',
                     description: 'ezrbookkeeping, a business-focused fork of ezBookkeeping, an open source, self-hosted bookkeeping app that is easy to use.',
-                    theme_color: '#C67E48',
-                    background_color: '#F6F7F8',
+                    // splash and browser chrome follow the light canvas; dark is applied at runtime via the theme-color meta
+                    theme_color: '#F7F4EF',
+                    background_color: '#F7F4EF',
                     start_url: './',
                     scope: './',
                     display: 'standalone',

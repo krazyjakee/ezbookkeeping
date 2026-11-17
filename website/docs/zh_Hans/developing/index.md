@@ -26,7 +26,29 @@ $ git clone https://github.com/krazyjakee/ezbookkeeping.git
 
 ## 编译
 
-您可以使用 `build.sh` / `build.bat` / `build.ps1` 脚本构建前端文件、后端文件、完整包以及 Docker 镜像。
+您可以使用 `build.sh` / `build.bat` / `build.ps1` 脚本构建前端文件、后端文件和完整包。`build.sh` 还支持构建 Docker 镜像。
+
+## 验证
+
+在仓库根目录安装锁定版本的前端依赖，然后分别运行检查：
+
+```shell
+npm ci
+npm run lint
+npm test
+npm run build
+go vet ./...
+go test ./...
+go build .
+```
+
+`npm run lint` 检查 TypeScript 和 ESLint，不会修改文件。若要应用 ESLint 自动修复，请显式运行 `npm run lint:fix`。
+
+部分 Go 测试会请求第三方在线 API。在 POSIX shell 中，可以运行 `BUILD_PIPELINE=1 go test ./...`，使用省略这些请求的 CI 模式。在 CI 中同时设置 `CHECK_3RD_API=1` 可启用这些测试。在 PowerShell 中，请先使用 `$env:BUILD_PIPELINE = "1"` 和 `$env:CHECK_3RD_API = "1"` 设置相应变量，再运行 Go 测试。
+
+构建脚本默认执行静态检查和测试。`SKIP_TESTS` 是传递给 `go test -skip` 的测试名称正则表达式，并非布尔值。若要省略全部测试，请使用脚本的 `--no-test` 或 `-NoTest` 选项。
+
+## 构建目标
 
 ### 构建前端文件
 

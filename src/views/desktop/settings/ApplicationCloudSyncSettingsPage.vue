@@ -1,11 +1,17 @@
 <template>
     <v-row>
         <v-col cols="12">
-            <v-card>
-                <template #title>
-                    <span>{{ tt('Settings Sync') }}</span>
-                    <v-progress-circular indeterminate size="20" class="ms-3" v-if="loading"></v-progress-circular>
-                </template>
+            <v-card class="ebk-settings-panel">
+                <header class="ebk-panel-header-strip ebk-settings-panel-header">
+                    <h2 class="ebk-settings-panel-title">{{ tt('Settings Sync') }}</h2>
+                    <div class="ebk-panel-header-actions">
+                        <v-progress-circular indeterminate size="18" v-if="loading"></v-progress-circular>
+                        <span class="ebk-settings-status" :class="{ 'ebk-settings-status--on': isEnableCloudSync }" v-if="!loading">
+                            <v-icon size="16" :icon="isEnableCloudSync ? mdiCloudCheckOutline : mdiCloudOffOutline" />
+                            <span>{{ isEnableCloudSync ? tt('Enabled') : tt('Disabled') }}</span>
+                        </span>
+                    </div>
+                </header>
 
                 <v-card-text class="mt-2">
                     <v-skeleton-loader class="skeleton-no-margin pt-1 pb-2" type="text" style="width: 150px" :loading="true" v-if="loading"></v-skeleton-loader>
@@ -23,10 +29,11 @@
                                         :disabled="loading || enabling || disabling"
                                         v-model="openedPanel">
                         <v-expansion-panel class="border" value="synchronizedSettings">
-                            <v-expansion-panel-title class="expand-panel-title-with-bg py-0">
+                            <!-- the panel is always open and read-only: a static header (not a button), so the More menu button is not nested in another button -->
+                            <div class="v-expansion-panel-title v-expansion-panel-title--active expand-panel-title-with-bg py-0">
                                 <div class="d-flex align-center justify-center w-100">
                                     <div class="w-100">
-                                        <span>{{ tt('Synchronized Settings') }}</span>
+                                        <span role="heading" aria-level="3">{{ tt('Synchronized Settings') }}</span>
                                     </div>
                                     <v-btn density="comfortable" color="default" variant="text" class="ms-2"
                                            :aria-label="tt('More')" :disabled="loading || enabling || disabling" :icon="true">
@@ -49,12 +56,12 @@
                                         </v-menu>
                                     </v-btn>
                                 </div>
-                            </v-expansion-panel-title>
+                            </div>
                             <v-expansion-panel-text>
                                 <v-list rounded density="comfortable" class="pa-0">
                                     <template :key="categorizedItems.categoryName"
                                               v-for="(categorizedItems, categoryIdx) in ALL_APPLICATION_CLOUD_SETTINGS">
-                                        <v-divider v-if="categoryIdx > 0"/>
+                                        <v-divider role="presentation" v-if="categoryIdx > 0"/>
 
                                         <v-list-item>
                                             <template #prepend>
@@ -71,12 +78,13 @@
                                             </template>
                                         </v-list-item>
 
-                                        <v-divider/>
+                                        <v-divider role="presentation"/>
 
+                                        <div role="listitem">
                                         <v-list rounded density="comfortable" class="pa-0 ms-4">
                                             <template :key="settingItem.settingKey"
                                                       v-for="(settingItem, itemIdx) in categorizedItems.items">
-                                                <v-divider v-if="itemIdx > 0"/>
+                                                <v-divider role="presentation" v-if="itemIdx > 0"/>
 
                                                 <v-list-item>
                                                     <template #prepend>
@@ -93,6 +101,7 @@
                                                 </v-list-item>
                                             </template>
                                         </v-list>
+                                        </div>
                                     </template>
                                 </v-list>
                             </v-expansion-panel-text>
@@ -100,25 +109,16 @@
                     </v-expansion-panels>
                 </v-card-text>
 
-                <v-divider/>
-
-                <v-card-text>
-                    <v-row>
-                        <v-col cols="12" class="d-flex flex-wrap gap-4">
-                            <v-btn :disabled="loading || enabling || disabling || !hasEnabledApplicationCloudSettings" v-if="!isEnableCloudSync" @click="enable(false)">
-                                {{ tt('Enable Settings Sync') }}
-                                <v-progress-circular indeterminate size="22" class="ms-2" v-if="enabling"></v-progress-circular>
-                            </v-btn>
-                            <v-btn :disabled="loading || enabling || disabling || !hasEnabledApplicationCloudSettings" v-if="isEnableCloudSync" @click="enable(true)">
-                                {{ tt('Update Synchronized Settings') }}
-                                <v-progress-circular indeterminate size="22" class="ms-2" v-if="enabling"></v-progress-circular>
-                            </v-btn>
-                            <v-btn :disabled="loading || enabling || disabling" v-if="isEnableCloudSync" @click="disable">
-                                {{ tt('Disable Settings Sync') }}
-                                <v-progress-circular indeterminate size="22" class="ms-2" v-if="disabling"></v-progress-circular>
-                            </v-btn>
-                        </v-col>
-                    </v-row>
+                <v-card-text class="ebk-settings-panel-footer">
+                    <v-btn color="primary" :loading="enabling" :disabled="loading || enabling || disabling || !hasEnabledApplicationCloudSettings" v-if="!isEnableCloudSync" @click="enable(false)">
+                        {{ tt('Enable Settings Sync') }}
+                    </v-btn>
+                    <v-btn color="primary" :loading="enabling" :disabled="loading || enabling || disabling || !hasEnabledApplicationCloudSettings" v-if="isEnableCloudSync" @click="enable(true)">
+                        {{ tt('Update Synchronized Settings') }}
+                    </v-btn>
+                    <v-btn color="error" variant="tonal" :loading="disabling" :disabled="loading || enabling || disabling" v-if="isEnableCloudSync" @click="disable">
+                        {{ tt('Disable Settings Sync') }}
+                    </v-btn>
                 </v-card-text>
             </v-card>
         </v-col>
@@ -141,6 +141,8 @@ import {
     mdiSelectInverse,
     mdiCellphone,
     mdiMonitor,
+    mdiCloudCheckOutline,
+    mdiCloudOffOutline
 } from '@mdi/js';
 
 const { tt } = useI18n();

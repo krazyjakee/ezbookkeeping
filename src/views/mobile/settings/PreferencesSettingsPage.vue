@@ -1,9 +1,37 @@
 <template>
-    <f7-page>
+    <f7-page class="ebk-settings-page">
         <f7-navbar :title="tt('Preferences')" :back-link="tt('Back')"></f7-navbar>
 
-        <f7-block-title class="margin-top">{{ tt('General Settings') }}</f7-block-title>
+        <f7-block-title class="margin-top">{{ tt('Appearance') }}</f7-block-title>
         <f7-list strong inset dividers class="settings-list">
+            <f7-list-item
+                link="#"
+                class="item-truncate-after-text"
+                popover-open=".theme-preference-popover-menu"
+            >
+                <template #after-title>
+                    <div class="item-actual-title">
+                        <span>{{ tt('Theme') }}</span>
+                    </div>
+                </template>
+                <template #after>
+                    {{ findNameByValue(allThemes, currentTheme) }}
+                </template>
+                <f7-popover class="theme-preference-popover-menu">
+                    <f7-list dividers>
+                        <f7-list-item link="#" no-chevron popover-close
+                                      :title="option.name"
+                                      :class="{ 'list-item-selected': currentTheme === option.value }"
+                                      :key="option.value"
+                                      v-for="option in allThemes"
+                                      @click="currentTheme = option.value">
+                            <template #after>
+                                <f7-icon class="list-item-checked-icon" f7="checkmark_alt" v-if="currentTheme === option.value"></f7-icon>
+                            </template>
+                        </f7-list-item>
+                    </f7-list>
+                </f7-popover>
+            </f7-list-item>
             <f7-list-item
                 link="#"
                 class="item-truncate-after-text"
@@ -32,6 +60,10 @@
                     </f7-list>
                 </f7-popover>
             </f7-list-item>
+        </f7-list>
+
+        <f7-block-title>{{ tt('General Settings') }}</f7-block-title>
+        <f7-list strong inset dividers class="settings-list">
             <f7-list-item>
                 <template #after-title>
                     {{ tt('Show Account Balance') }}
@@ -537,7 +569,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch, onBeforeUnmount } from 'vue';
 
 import { useI18n } from '@/locales/helpers.ts';
 import { useI18nUIComponents } from '@/lib/ui/mobile.ts';
@@ -565,6 +597,7 @@ const {
 } = useI18n();
 const { showToast } = useI18nUIComponents();
 const {
+    allThemes,
     loadingAccounts,
     loadingTransactionCategories,
     loadingTags,
@@ -619,6 +652,16 @@ const allMotionPreferences = computed<NameValue[]>(() => [
     { name: tt('Reduced'), value: MotionPreference.Reduce },
     { name: tt('Full'), value: MotionPreference.Full }
 ]);
+
+const currentTheme = computed<string>({
+    get: () => settingsStore.appSettings.theme,
+    set: value => {
+        if (value !== settingsStore.appSettings.theme) {
+            settingsStore.setTheme(value);
+            location.reload();
+        }
+    }
+});
 
 const motionPreference = computed<string>({
     get: () => settingsStore.appSettings.motionPreference,
@@ -711,4 +754,26 @@ function init(): void {
 }
 
 init();
+
+// settings apply and save immediately; confirm each save with a toast, as the desktop snackbar does (guideline 6.5)
+let settingsSavedToastTimer: ReturnType<typeof setTimeout> | null = null;
+
+watch(() => settingsStore.appSettings, () => {
+    if (settingsSavedToastTimer) {
+        clearTimeout(settingsSavedToastTimer);
+    }
+
+    // several values changed by one action are confirmed once
+    settingsSavedToastTimer = setTimeout(() => {
+        settingsSavedToastTimer = null;
+        showToast('Settings saved');
+    }, 200);
+}, { deep: true });
+
+onBeforeUnmount(() => {
+    if (settingsSavedToastTimer) {
+        clearTimeout(settingsSavedToastTimer);
+        settingsSavedToastTimer = null;
+    }
+});
 </script>

@@ -149,7 +149,12 @@ func mcpTransactionCategoryDescribe(category *models.TransactionCategory, catego
 
 // mcpTransactionCategoryNewResolver returns a new resolver of transaction categories
 func mcpTransactionCategoryNewResolver(categoryMap map[int64]*models.TransactionCategory) *mcpEntityResolver[*models.TransactionCategory] {
-	return newMCPEntityResolver[*models.TransactionCategory]("transaction category",
+	return mcpTransactionCategoryNewNamedResolver("transaction category", categoryMap)
+}
+
+// mcpTransactionCategoryNewNamedResolver returns a new resolver of transaction categories which uses the given entity name in error messages
+func mcpTransactionCategoryNewNamedResolver(entityName string, categoryMap map[int64]*models.TransactionCategory) *mcpEntityResolver[*models.TransactionCategory] {
+	return newMCPEntityResolver[*models.TransactionCategory](entityName,
 		func(category *models.TransactionCategory) int64 {
 			return category.CategoryId
 		},

@@ -50,20 +50,28 @@
             </f7-list-item>
         </f7-list>
 
-        <f7-list strong inset dividers class="margin-vertical-half" v-if="!exchangeRatesData || !exchangeRatesData.exchangeRates || !exchangeRatesData.exchangeRates.length">
-            <f7-list-item :title="tt('No exchange rates data')"></f7-list-item>
-        </f7-list>
+        <div class="margin-horizontal margin-vertical-half" v-if="!exchangeRatesData || !exchangeRatesData.exchangeRates || !exchangeRatesData.exchangeRates.length">
+            <state-panel type="empty" :title="tt('No exchange rates data')">
+                <template #actions>
+                    <f7-button outline @click="update()" v-if="isUserCustomExchangeRates">{{ tt('Update') }}</f7-button>
+                    <f7-button outline @click="reload(undefined)" v-else>{{ tt('Refresh') }}</f7-button>
+                </template>
+            </state-panel>
+        </div>
 
-        <f7-list strong inset dividers class="margin-vertical" v-if="exchangeRatesData && exchangeRatesData.exchangeRates && exchangeRatesData.exchangeRates.length">
+        <f7-block-title class="ebk-m-section-title ebk-technical-heading margin-top"
+                        v-if="exchangeRatesData && exchangeRatesData.exchangeRates && exchangeRatesData.exchangeRates.length">{{ tt('Exchange Rate') }}</f7-block-title>
+        <f7-list strong inset dividers class="exchange-rate-list margin-top-half margin-bottom" v-if="exchangeRatesData && exchangeRatesData.exchangeRates && exchangeRatesData.exchangeRates.length">
             <f7-list-item swipeout
+                          :class="{ 'list-item-selected': exchangeRate.currencyCode === baseCurrency }"
                           :id="getExchangeRateDomId(exchangeRate)"
                           :after="getFinalConvertedAmount(exchangeRate, true)"
                           :key="baseCurrencyChangedTime + '_' + exchangeRate.currencyCode" v-for="exchangeRate in availableExchangeRates"
                           @swipeout:closed="onExchangeRateSwipeoutClosed()">
                 <template #title>
-                    <div class="no-padding no-margin">
-                        <span style="margin-inline-end: 5px">{{ exchangeRate.currencyDisplayName }}</span>
-                        <small class="smaller">{{ exchangeRate.currencyCode }}</small>
+                    <div class="no-padding no-margin display-flex align-items-center">
+                        <span class="ebk-m-code">{{ exchangeRate.currencyCode }}</span>
+                        <span class="exchange-rate-name">{{ exchangeRate.currencyDisplayName }}</span>
                     </div>
                 </template>
                 <f7-swipeout-actions :left="textDirection === TextDirection.RTL"
@@ -83,7 +91,9 @@
             </f7-list-item>
         </f7-list>
 
-        <f7-list strong inset dividers class="margin-vertical" v-if="exchangeRatesData && exchangeRatesData.exchangeRates && exchangeRatesData.exchangeRates.length">
+        <f7-block-title class="ebk-m-section-title ebk-technical-heading"
+                        v-if="exchangeRatesData && exchangeRatesData.exchangeRates && exchangeRatesData.exchangeRates.length">{{ tt('Data source') }}</f7-block-title>
+        <f7-list strong inset dividers class="margin-top-half margin-bottom" v-if="exchangeRatesData && exchangeRatesData.exchangeRates && exchangeRatesData.exchangeRates.length">
             <f7-list-item v-if="exchangeRatesDataUpdateTime">
                 <small>{{ tt('Last Updated') }}</small>
                 <small>{{ exchangeRatesDataUpdateTime }}</small>
@@ -127,6 +137,8 @@
 </template>
 
 <script setup lang="ts">
+import StatePanel from '@/components/common/StatePanel.vue';
+
 import { ref, computed } from 'vue';
 import type { Router } from 'framework7/types';
 
@@ -326,6 +338,16 @@ exchangeRatesStore.getLatestExchangeRates({
 </script>
 
 <style>
+.exchange-rate-list .item-after {
+    color: var(--ebk-color-text-primary);
+    font-weight: 600;
+}
+
+.exchange-rate-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .currency-base-amount {
     line-height: 53px;
 }

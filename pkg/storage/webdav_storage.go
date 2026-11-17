@@ -2,9 +2,12 @@ package storage
 
 import (
 	"bytes"
+	"encoding/xml"
 	"io"
 	"net/http"
+	"net/url"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/mayswind/ezbookkeeping/pkg/core"
@@ -216,6 +219,153 @@ func (s *WebDAVObjectStorage) Delete(ctx core.Context, path string) error {
 	return nil
 }
 
+// List returns the paths of all the objects in this storage
+func (s *WebDAVObjectStorage) List(ctx core.Context) ([]string, error) {
+	rootUrl, err := url.Parse(s.getFinalDirectoryUrl(s.rootPath))
+
+	if err != nil {
+		return nil, err
+	}
+
+	paths := make([]string, 0)
+	pendingDirectories := []string{""}
+	visitedDirectories := make(map[string]bool)
+
+	for len(pendingDirectories) > 0 {
+		currentDirectory := pendingDirectories[0]
+		pendingDirectories = pendingDirectories[1:]
+
+		if visitedDirectories[currentDirectory] {
+			continue
+		}
+
+		visitedDirectories[currentDirectory] = true
+		entries, err := s.listDirectory(ctx, rootUrl, currentDirectory)
+
+		if err != nil {
+			return nil, err
+		}
+
+		for _, entry := range entries {
+			if entry.isDirectory {
+				pendingDirectories = append(pendingDirectories, entry.relativePath)
+			} else {
+				paths = append(paths, entry.relativePath)
+			}
+		}
+	}
+
+	sort.Strings(paths)
+
+	return paths, nil
+}
+
+type webDAVDirectoryEntry struct {
+	relativePath string
+	isDirectory  bool
+}
+
+type webDAVMultiStatus struct {
+	Responses []webDAVResponse `xml:"response"`
+}
+
+type webDAVResponse struct {
+	Href      string `xml:"href"`
+	PropStats []struct {
+		Status string `xml:"status"`
+		Prop   struct {
+			ResourceType struct {
+				Collection *struct{} `xml:"collection"`
+			} `xml:"resourcetype"`
+		} `xml:"prop"`
+	} `xml:"propstat"`
+}
+
+func (s *WebDAVObjectStorage) listDirectory(ctx core.Context, rootUrl *url.URL, relativeDirectory string) ([]webDAVDirectoryEntry, error) {
+	directoryUrl := s.getFinalDirectoryUrl(strings.TrimSuffix(s.rootPath, "/") + "/" + relativeDirectory)
+	requestBody := `<?xml version="1.0" encoding="utf-8"?><propfind xmlns="DAV:"><prop><resourcetype/></prop></propfind>`
+	req, err := http.NewRequest("PROPFIND", directoryUrl, strings.NewReader(requestBody))
+
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Depth", "1")
+	req.Header.Set("Content-Type", "application/xml; charset=utf-8")
+	req.SetBasicAuth(s.webDavConfig.Username, s.webDavConfig.Password)
+	resp, err := s.httpClient.Do(req)
+
+	if err != nil {
+		log.Errorf(ctx, "[webdav_storage.listDirectory] cannot list directory, because %s", err.Error())
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, nil
+	}
+
+	if resp.StatusCode != http.StatusMultiStatus && resp.StatusCode != http.StatusOK {
+		log.Errorf(ctx, "[webdav_storage.listDirectory] cannot list directory, http status code is %d", resp.StatusCode)
+		return nil, errs.ErrSystemError
+	}
+
+	multiStatus := &webDAVMultiStatus{}
+
+	if err := xml.Unmarshal(body, multiStatus); err != nil {
+		return nil, err
+	}
+
+	rootPath := strings.TrimSuffix(rootUrl.Path, "/") + "/"
+	entries := make([]webDAVDirectoryEntry, 0, len(multiStatus.Responses))
+
+	for _, response := range multiStatus.Responses {
+		hrefUrl, err := url.Parse(strings.TrimSpace(response.Href))
+
+		if err != nil {
+			return nil, err
+		}
+
+		hrefPath := hrefUrl.Path
+
+		if !strings.HasPrefix(hrefPath, rootPath) {
+			// some servers return the href without the url-encoded form of the root path, compare the decoded form
+			if unescapedRootPath, err := url.PathUnescape(rootPath); err == nil && strings.HasPrefix(hrefPath, unescapedRootPath) {
+				rootPath = unescapedRootPath
+			} else {
+				continue
+			}
+		}
+
+		relativePath := strings.Trim(hrefPath[len(rootPath):], "/")
+
+		if relativePath == "" || relativePath == strings.Trim(relativeDirectory, "/") {
+			continue
+		}
+
+		isDirectory := false
+
+		for _, propStat := range response.PropStats {
+			if propStat.Prop.ResourceType.Collection != nil {
+				isDirectory = true
+			}
+		}
+
+		entries = append(entries, webDAVDirectoryEntry{
+			relativePath: relativePath,
+			isDirectory:  isDirectory,
+		})
+	}
+
+	return entries, nil
+}
+
 func (s *WebDAVObjectStorage) directoryExists(ctx core.Context, path string) (bool, error) {
 	req, err := http.NewRequest("PROPFIND", s.getFinalDirectoryUrl(path), nil)
 
@@ -223,6 +373,8 @@ func (s *WebDAVObjectStorage) directoryExists(ctx core.Context, path string) (bo
 		return false, err
 	}
 
+	// without a Depth header the request means "infinity", which many servers (e.g. Apache mod_dav) reject with 403
+	req.Header.Set("Depth", "0")
 	req.SetBasicAuth(s.webDavConfig.Username, s.webDavConfig.Password)
 	resp, err := s.httpClient.Do(req)
 

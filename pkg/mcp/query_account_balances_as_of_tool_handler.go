@@ -163,7 +163,7 @@ func (h *mcpQueryAccountBalancesAsOfToolHandler) Handle(c *core.WebContext, call
 			signedBalance = big.NewInt(0)
 		}
 
-		displayBalance, signed, outstandingBalance := mcpReportFormatBalances(account.Category, signedBalance)
+		displayBalance, signed, outstandingBalance := mcpFormatAccountBalances(account.Category, signedBalance)
 		item := &MCPAccountBalanceAsOfItem{
 			AccountId:            utils.Int64ToString(account.AccountId),
 			AccountName:          account.Name,

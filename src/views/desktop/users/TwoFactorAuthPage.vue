@@ -1,11 +1,17 @@
 <template>
     <v-row>
         <v-col cols="12">
-            <v-card :class="{ 'disabled': loading }">
-                <template #title>
-                    <span>{{ tt('Two-Factor Authentication') }}</span>
-                    <v-progress-circular indeterminate size="20" class="ms-3" v-if="loading"></v-progress-circular>
-                </template>
+            <v-card class="ebk-settings-panel" :class="{ 'disabled': loading }">
+                <header class="ebk-panel-header-strip ebk-settings-panel-header">
+                    <h2 class="ebk-settings-panel-title">{{ tt('Two-Factor Authentication') }}</h2>
+                    <div class="ebk-panel-header-actions">
+                        <v-progress-circular indeterminate size="18" v-if="loading"></v-progress-circular>
+                        <span class="ebk-settings-status" :class="{ 'ebk-settings-status--on': status === true }" v-if="!loading && status !== null && status !== undefined">
+                            <v-icon size="16" :icon="status === true ? mdiShieldCheckOutline : mdiShieldOffOutline" />
+                            <span>{{ status === true ? tt('Enabled') : tt('Disabled') }}</span>
+                        </span>
+                    </div>
+                </header>
 
                 <v-card-text class="mt-2">
                     <v-skeleton-loader class="skeleton-no-margin pt-1" type="text" style="width: 150px" :loading="true" v-if="loading"></v-skeleton-loader>
@@ -21,14 +27,19 @@
                 </v-card-text>
 
                 <v-card-text class="pt-0 pb-4" v-if="status === false && new2FAQRCode">
-                    <v-img alt="qrcode" class="img-qrcode" :src="new2FAQRCode" />
-                    <v-row>
-                        <v-col cols="12" md="3">
+                    <div class="ebk-settings-qrcode-frame">
+                        <v-img alt="qrcode" class="img-qrcode" :src="new2FAQRCode" />
+                    </div>
+                    <v-row class="mt-2">
+                        <v-col cols="12" md="4">
                             <v-text-field
                                 type="number"
+                                name="passcode"
                                 autocomplete="one-time-code"
-                                variant="underlined"
+                                inputmode="numeric"
+                                :autofocus="true"
                                 :disabled="loading || enabling || enableConfirming || disabling"
+                                :label="tt('Passcode')"
                                 :placeholder="tt('Passcode')"
                                 v-model="currentPasscode"
                                 @keyup.enter="enableConfirm"
@@ -41,10 +52,11 @@
                     <v-row>
                         <v-col cols="12" md="6">
                             <v-text-field
+                                name="current-password"
                                 autocomplete="current-password"
                                 type="password"
-                                variant="underlined"
                                 :disabled="loading || enabling || enableConfirming || disabling"
+                                :label="tt('Current Password')"
                                 :placeholder="tt('Current Password')"
                                 v-model="currentPassword"
                             />
@@ -52,49 +64,41 @@
                     </v-row>
                 </v-card-text>
 
-                <v-divider v-if="(status === false && new2FAQRCode) || status === true"/>
-
-                <v-card-text v-if="!loading">
-                    <v-row>
-                        <v-col cols="12" class="d-flex flex-wrap gap-4">
-                            <v-btn :disabled="!currentPassword || loading || disabling " v-if="status === true" @click="disable">
-                                {{ tt('Disable Two-Factor Authentication') }}
-                                <v-progress-circular indeterminate size="22" class="ms-2" v-if="disabling"></v-progress-circular>
-                            </v-btn>
-                            <v-btn :disabled="!currentPassword || loading || regenerating" v-if="status === true" @click="regenerateBackupCode()">
-                                {{ tt('Regenerate Backup Codes') }}
-                                <v-progress-circular indeterminate size="22" class="ms-2" v-if="regenerating"></v-progress-circular>
-                            </v-btn>
-                            <v-btn :disabled="loading || enabling" v-if="status === false && !new2FAQRCode" @click="enable">
-                                {{ tt('Enable Two-Factor Authentication') }}
-                                <v-progress-circular indeterminate size="22" class="ms-2" v-if="enabling"></v-progress-circular>
-                            </v-btn>
-                            <v-btn :disabled="!currentPasscode || loading || enableConfirming" v-if="status === false && new2FAQRCode" @click="enableConfirm">
-                                {{ tt('Continue') }}
-                                <v-progress-circular indeterminate size="22" class="ms-2" v-if="enableConfirming"></v-progress-circular>
-                            </v-btn>
-                        </v-col>
-                    </v-row>
+                <v-card-text class="ebk-settings-panel-footer" v-if="!loading">
+                    <v-btn color="error" variant="tonal" :loading="disabling" :disabled="!currentPassword || loading || disabling " v-if="status === true" @click="disable">
+                        {{ tt('Disable Two-Factor Authentication') }}
+                    </v-btn>
+                    <v-btn color="default" variant="outlined" :loading="regenerating" :disabled="!currentPassword || loading || regenerating" v-if="status === true" @click="regenerateBackupCode()">
+                        {{ tt('Regenerate Backup Codes') }}
+                    </v-btn>
+                    <v-btn color="primary" :loading="enabling" :disabled="loading || enabling" v-if="status === false && !new2FAQRCode" @click="enable">
+                        {{ tt('Enable Two-Factor Authentication') }}
+                    </v-btn>
+                    <v-btn color="primary" :loading="enableConfirming" :disabled="!currentPasscode || loading || enableConfirming" v-if="status === false && new2FAQRCode" @click="enableConfirm">
+                        {{ tt('Continue') }}
+                    </v-btn>
                 </v-card-text>
             </v-card>
         </v-col>
 
         <v-col cols="12">
-            <v-card v-if="currentBackupCode">
-                <template #title>
-                    <span>{{ tt('Backup Code') }}</span>
-                    <v-btn density="compact" color="default" variant="text" size="24" class="ms-2"
-                           :aria-label="tt('Copy')" :icon="true" @click="copyBackupCodes">
-                        <v-icon :icon="mdiContentCopy" size="20" />
-                        <v-tooltip activator="parent">{{ tt('Copy') }}</v-tooltip>
-                    </v-btn>
-                </template>
+            <v-card class="ebk-settings-panel" v-if="currentBackupCode">
+                <header class="ebk-panel-header-strip ebk-settings-panel-header">
+                    <h2 class="ebk-settings-panel-title">{{ tt('Backup Code') }}</h2>
+                    <div class="ebk-panel-header-actions">
+                        <v-btn density="compact" color="default" variant="text" size="28"
+                               :aria-label="tt('Copy')" :icon="true" @click="copyBackupCodes">
+                            <v-icon :icon="mdiContentCopy" size="18" />
+                            <v-tooltip activator="parent">{{ tt('Copy') }}</v-tooltip>
+                        </v-btn>
+                    </div>
+                </header>
 
                 <v-card-text class="mt-2">
                     <span class="text-body-large" v-if="status === true">
                         {{ tt('Please copy these backup codes to safe place, the following backup codes will be displayed only once. If these codes were lost, you can regenerate them at any time.') }}
                     </span>
-                    <v-textarea no-resize class="backup-code mt-4" :readonly="true" :rows="10" :value="currentBackupCode"/>
+                    <v-textarea no-resize class="backup-code ebk-font-mono mt-4" :readonly="true" :rows="10" :aria-label="tt('Backup Code')" :value="currentBackupCode"/>
                 </v-card-text>
             </v-card>
         </v-col>
@@ -113,7 +117,9 @@ import { KnownErrorCode } from '@/consts/api.ts';
 import { copyTextToClipboard } from '@/lib/ui/common.ts';
 
 import {
-    mdiContentCopy
+    mdiContentCopy,
+    mdiShieldCheckOutline,
+    mdiShieldOffOutline
 } from '@mdi/js';
 
 const { tt } = useI18n();

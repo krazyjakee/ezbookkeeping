@@ -16,6 +16,12 @@ export default defineConfig({
     base: websiteBasePath,
     srcDir: './docs',
     cleanUrls: true,
+    head: [
+        ['link', { rel: 'icon', type: 'image/png', sizes: '32x32', href: `${websiteBasePath}images/logo.png` }],
+        ['link', { rel: 'apple-touch-icon', href: `${websiteBasePath}images/touchicon.png` }],
+        // canvas colour; the theme updates it when the dark mode changes (see theme/index.ts)
+        ['meta', { name: 'theme-color', content: '#f7f4ef' }]
+    ],
     metaChunk: true,
     lastUpdated: true,
     markdown: {
@@ -121,6 +127,7 @@ export default defineConfig({
                             { text: 'Configuration', link: '/configuration/' },
                             { text: 'Exchange Rates', link: '/exchange_rates/' },
                             { text: 'Command Line', link: '/command_line/' },
+                            { text: 'Backup and Restore', link: '/backup/' },
                             { text: 'Troubleshooting', link: '/troubleshooting/'}
                         ]
                     },

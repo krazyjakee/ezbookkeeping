@@ -28,13 +28,22 @@
             <f7-list-item :title="tt('Import Presets')" :after="displayDataStatistics ? displayDataStatistics.totalImportPresetCount : '-'"></f7-list-item>
         </f7-list>
 
-        <f7-list strong inset dividers class="margin-vertical" :class="{ 'disabled': loading }">
-            <f7-list-button :class="{ 'disabled': !dataStatistics || !dataStatistics.totalTransactionCount || dataStatistics.totalTransactionCount === '0' }"
-                            v-if="isDataExportingEnabled()"
-                            @click="exportedData = null; showExportDataSheet = true">{{ tt('Export Data') }}</f7-list-button>
-        </f7-list>
+        <template v-if="isDataExportingEnabled()">
+            <f7-block-title class="ebk-m-section-title ebk-technical-heading">{{ tt('Export Data') }}</f7-block-title>
+            <f7-list strong inset dividers class="margin-top-half margin-bottom" :class="{ 'disabled': loading }">
+                <f7-list-item :footer="tt('Export all transaction data to file.')">
+                    <template #title>{{ tt('Transactions') }}</template>
+                    <template #after>
+                        <span class="ebk-m-figure">{{ displayDataStatistics ? displayDataStatistics.totalTransactionCount : '-' }}</span>
+                    </template>
+                </f7-list-item>
+                <f7-list-button :class="{ 'disabled': !dataStatistics || !dataStatistics.totalTransactionCount || dataStatistics.totalTransactionCount === '0' }"
+                                @click="exportedData = null; showExportDataSheet = true">{{ tt('Export Data') }}</f7-list-button>
+            </f7-list>
+        </template>
 
-        <f7-list strong inset dividers class="margin-vertical" :class="{ 'disabled': loading }">
+        <f7-block-title class="ebk-m-section-title ebk-m-section-title--danger ebk-technical-heading">{{ tt('Danger Zone') }}</f7-block-title>
+        <f7-list strong inset dividers class="ebk-m-danger-list margin-top-half margin-bottom" :class="{ 'disabled': loading }">
             <f7-list-button color="red" @click="clearAllTransactions(null)">{{ tt('Clear All Transactions') }}</f7-list-button>
             <f7-list-button color="red" @click="clearAllData(null)">{{ tt('Clear All Data') }}</f7-list-button>
         </f7-list>
@@ -62,6 +71,7 @@
                 </div>
                 <div class="padding-horizontal padding-bottom">
                     <p class="no-margin-top margin-bottom-half">{{ tt('It may take a long time, please wait for a few minutes.') }}</p>
+                    <f7-progressbar class="margin-bottom-half" infinite v-if="exportingData"></f7-progressbar>
                     <f7-button large fill :class="{ 'disabled': exportingData }" :text="tt('Continue')" @click="exportData" v-if="!exportedData"></f7-button>
                     <f7-button large fill external :text="tt('Save Data')" :download="exportFileName" :href="exportedData" target="_blank" v-if="exportedData"></f7-button>
                     <div class="margin-top text-align-center">

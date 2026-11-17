@@ -1,5 +1,5 @@
 <template>
-    <v-col cols="12" md="12" v-if="fileTypeInfo?.subTypes">
+    <v-col cols="12" :md="hasFormatAndEncoding ? 6 : 12" v-if="fileTypeInfo?.subTypes">
         <v-select
             item-title="displayName"
             item-value="type"
@@ -11,7 +11,7 @@
         />
     </v-col>
 
-    <v-col cols="12" md="12" v-if="!fileTypeInfo?.dataFromTextbox && supportedEncodings">
+    <v-col cols="12" :md="hasFormatAndEncoding ? 6 : 12" v-if="!fileTypeInfo?.dataFromTextbox && supportedEncodings">
         <v-select
             item-title="displayName"
             item-value="encoding"
@@ -23,7 +23,7 @@
         />
     </v-col>
 
-    <v-col cols="12" md="12" v-if="isCustomFileFormat">
+    <v-col cols="12" :md="hasHandlingMethodAndAdditionalOptions ? 6 : 12" v-if="isCustomFileFormat">
         <v-select
             item-title="displayName"
             item-value="type"
@@ -38,7 +38,7 @@
         />
     </v-col>
 
-    <v-col cols="12" md="12" v-if="supportedAdditionalOptions">
+    <v-col cols="12" :md="hasHandlingMethodAndAdditionalOptions ? 6 : 12" v-if="supportedAdditionalOptions">
         <v-select
             :disabled="disabled"
             :label="tt('Additional Options')"
@@ -72,6 +72,7 @@
             persistent-placeholder
             rows="2"
             :disabled="disabled"
+            :label="tt('Additional Prompt')"
             :placeholder="tt('Additional Prompt')"
             v-model="additionalPrompt"
         />
@@ -127,6 +128,10 @@ const additionalOptionsMenuState = ref<boolean>(false);
 const isCustomFileFormat = computed<boolean>(() => props.fileTypeInfo?.type === 'dsv' || props.fileTypeInfo?.type === 'dsv_data' || props.fileTypeInfo?.type === 'excel');
 const supportedAdditionalOptions = computed(() => props.fileTypeInfo?.supportedAdditionalOptions);
 const supportedAIAdditionalPrompt = computed<boolean>(() => !!props.fileTypeInfo?.supportedAIAdditionalPrompt);
+
+// related fields sit side by side on desktop (design guideline 4.4 paired fields)
+const hasFormatAndEncoding = computed<boolean>(() => !!props.fileTypeInfo?.subTypes && !props.fileTypeInfo?.dataFromTextbox && !!props.supportedEncodings);
+const hasHandlingMethodAndAdditionalOptions = computed<boolean>(() => isCustomFileFormat.value && !!supportedAdditionalOptions.value);
 
 const fileSubType = computed<string>({
     get: () => props.fileSubType,

@@ -1,5 +1,5 @@
 <template>
-    <f7-page>
+    <f7-page class="ebk-settings-page">
         <f7-navbar>
             <f7-nav-left :back-link="tt('Back')"></f7-nav-left>
             <f7-nav-title :title="tt('Text Size')"></f7-nav-title>

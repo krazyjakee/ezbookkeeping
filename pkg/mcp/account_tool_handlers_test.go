@@ -1,7 +1,6 @@
 package mcp
 
 import (
-	"errors"
 	"strings"
 	"testing"
 
@@ -10,17 +9,6 @@ import (
 	"github.com/mayswind/ezbookkeeping/pkg/core"
 	"github.com/mayswind/ezbookkeeping/pkg/models"
 )
-
-func mcpAccountTestGetToolError(t *testing.T, err error) *MCPToolError {
-	t.Helper()
-	var toolErr *MCPToolError
-
-	if !errors.As(err, &toolErr) {
-		t.Fatalf("expected MCPToolError, but got %v", err)
-	}
-
-	return toolErr
-}
 
 func TestMCPAccountCreatePlan_SingleAccount(t *testing.T) {
 	plan, err := MCPCreateAccountToolHandler.buildCreatePlan(1, &MCPCreateAccountRequest{
@@ -72,7 +60,7 @@ func TestMCPAccountCreatePlan_OutstandingBalanceForAssetAccount(t *testing.T) {
 		OpeningBalanceTime: "2024-01-01T00:00:00Z",
 	})
 
-	toolErr := mcpAccountTestGetToolError(t, err)
+	toolErr := mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeNotSupported, toolErr.Code)
 	assert.Equal(t, "outstanding_balance", toolErr.Field)
 }
@@ -87,7 +75,7 @@ func TestMCPAccountCreatePlan_BothBalances(t *testing.T) {
 		OpeningBalanceTime: "2024-01-01T00:00:00Z",
 	})
 
-	toolErr := mcpAccountTestGetToolError(t, err)
+	toolErr := mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeInvalidValue, toolErr.Code)
 }
 
@@ -99,7 +87,7 @@ func TestMCPAccountCreatePlan_BalanceTimeRequired(t *testing.T) {
 		OpeningBalance: "1.00",
 	})
 
-	toolErr := mcpAccountTestGetToolError(t, err)
+	toolErr := mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeRequired, toolErr.Code)
 	assert.Equal(t, "opening_balance_time", toolErr.Field)
 }
@@ -111,7 +99,7 @@ func TestMCPAccountCreatePlan_NameTooLong(t *testing.T) {
 		Currency: "GBP",
 	})
 
-	toolErr := mcpAccountTestGetToolError(t, err)
+	toolErr := mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeTooLong, toolErr.Code)
 	assert.Equal(t, "name", toolErr.Field)
 	assert.Equal(t, int64(mcpAccountNameMaxLength), *toolErr.Limit)
@@ -126,7 +114,7 @@ func TestMCPAccountCreatePlan_CommentTooLong(t *testing.T) {
 		Comment:  strings.Repeat("中", mcpAccountCommentMaxLength+1),
 	})
 
-	toolErr := mcpAccountTestGetToolError(t, err)
+	toolErr := mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeTooLong, toolErr.Code)
 	assert.Equal(t, "comment", toolErr.Field)
 	assert.Equal(t, int64(mcpAccountCommentMaxLength), *toolErr.Limit)
@@ -138,7 +126,7 @@ func TestMCPAccountCreatePlan_InvalidCurrency(t *testing.T) {
 		Category: "cash",
 	})
 
-	toolErr := mcpAccountTestGetToolError(t, err)
+	toolErr := mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeRequired, toolErr.Code)
 	assert.Equal(t, "currency", toolErr.Field)
 
@@ -148,7 +136,7 @@ func TestMCPAccountCreatePlan_InvalidCurrency(t *testing.T) {
 		Currency: "XXXX",
 	})
 
-	toolErr = mcpAccountTestGetToolError(t, err)
+	toolErr = mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeInvalidValue, toolErr.Code)
 
 	_, err = MCPCreateAccountToolHandler.buildCreatePlan(1, &MCPCreateAccountRequest{
@@ -157,7 +145,7 @@ func TestMCPAccountCreatePlan_InvalidCurrency(t *testing.T) {
 		Currency: core.AccountCurrencyNotSetValue,
 	})
 
-	toolErr = mcpAccountTestGetToolError(t, err)
+	toolErr = mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeInvalidValue, toolErr.Code)
 }
 
@@ -169,7 +157,7 @@ func TestMCPAccountCreatePlan_CreditCardFieldsForNonCreditCard(t *testing.T) {
 		CreditCardStatementDate: 5,
 	})
 
-	toolErr := mcpAccountTestGetToolError(t, err)
+	toolErr := mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeNotSupported, toolErr.Code)
 	assert.Equal(t, "credit_card_statement_date", toolErr.Field)
 
@@ -180,7 +168,7 @@ func TestMCPAccountCreatePlan_CreditCardFieldsForNonCreditCard(t *testing.T) {
 		CreditCardLimit: "1000",
 	})
 
-	toolErr = mcpAccountTestGetToolError(t, err)
+	toolErr = mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeNotSupported, toolErr.Code)
 	assert.Equal(t, "credit_card_limit", toolErr.Field)
 }
@@ -209,7 +197,7 @@ func TestMCPAccountCreatePlan_CreditCard(t *testing.T) {
 		CreditCardStatementDate: 29,
 	})
 
-	toolErr := mcpAccountTestGetToolError(t, err)
+	toolErr := mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeOutOfRange, toolErr.Code)
 }
 
@@ -256,7 +244,7 @@ func TestMCPAccountCreatePlan_MultiSubAccountsInvalid(t *testing.T) {
 		},
 	})
 
-	toolErr := mcpAccountTestGetToolError(t, err)
+	toolErr := mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeNotSupported, toolErr.Code)
 	assert.Equal(t, "currency", toolErr.Field)
 
@@ -270,7 +258,7 @@ func TestMCPAccountCreatePlan_MultiSubAccountsInvalid(t *testing.T) {
 		},
 	})
 
-	toolErr = mcpAccountTestGetToolError(t, err)
+	toolErr = mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeNotSupported, toolErr.Code)
 	assert.Equal(t, "opening_balance", toolErr.Field)
 
@@ -282,7 +270,7 @@ func TestMCPAccountCreatePlan_MultiSubAccountsInvalid(t *testing.T) {
 		},
 	})
 
-	toolErr = mcpAccountTestGetToolError(t, err)
+	toolErr = mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeRequired, toolErr.Code)
 	assert.Equal(t, "sub_accounts[0].currency", toolErr.Field)
 
@@ -295,7 +283,7 @@ func TestMCPAccountCreatePlan_MultiSubAccountsInvalid(t *testing.T) {
 		},
 	})
 
-	toolErr = mcpAccountTestGetToolError(t, err)
+	toolErr = mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeRequired, toolErr.Code)
 	assert.Equal(t, "currency", toolErr.Field)
 }
@@ -323,7 +311,7 @@ func TestMCPAccountFindExistingForSkip(t *testing.T) {
 	assert.Nil(t, account)
 
 	_, err = mcpAccountFindExistingForSkip(accounts, "Dup", models.ACCOUNT_CATEGORY_CASH)
-	toolErr := mcpAccountTestGetToolError(t, err)
+	toolErr := mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeAmbiguousName, toolErr.Code)
 	assert.Equal(t, 2, len(toolErr.Candidates))
 	assert.Equal(t, "5", toolErr.Candidates[0].Id)
@@ -385,13 +373,13 @@ func TestMCPAccountUpdatePlan(t *testing.T) {
 
 	newCurrency := "USD"
 	_, err = MCPUpdateAccountToolHandler.buildUpdatePlan(1, &MCPUpdateAccountRequest{Currency: &newCurrency}, accounts[2], accounts)
-	toolErr := mcpAccountTestGetToolError(t, err)
+	toolErr := mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeNotSupported, toolErr.Code)
 	assert.Equal(t, "currency", toolErr.Field)
 
 	newCategory := "cash"
 	_, err = MCPUpdateAccountToolHandler.buildUpdatePlan(1, &MCPUpdateAccountRequest{Category: &newCategory}, accounts[1], accounts)
-	toolErr = mcpAccountTestGetToolError(t, err)
+	toolErr = mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeNotSupported, toolErr.Code)
 	assert.Equal(t, "category", toolErr.Field)
 
@@ -403,7 +391,7 @@ func TestMCPAccountUpdatePlan(t *testing.T) {
 	assert.Equal(t, int64(2), plan.toUpdateAccounts[1].AccountId)
 
 	_, err = MCPUpdateAccountToolHandler.buildUpdatePlan(1, &MCPUpdateAccountRequest{AddSubAccounts: []*MCPCreateAccountSubAccountRequest{{Name: "USD", Currency: "USD"}}}, accounts[2], accounts)
-	toolErr = mcpAccountTestGetToolError(t, err)
+	toolErr = mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeNotSupported, toolErr.Code)
 	assert.Equal(t, "add_sub_accounts", toolErr.Field)
 
@@ -422,7 +410,7 @@ func TestMCPAccountUpdatePlan(t *testing.T) {
 
 	newStatementDate := 5
 	_, err = MCPUpdateAccountToolHandler.buildUpdatePlan(1, &MCPUpdateAccountRequest{CreditCardStatementDate: &newStatementDate}, accounts[2], accounts)
-	toolErr = mcpAccountTestGetToolError(t, err)
+	toolErr = mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeNotSupported, toolErr.Code)
 	assert.Equal(t, "credit_card_statement_date", toolErr.Field)
 }

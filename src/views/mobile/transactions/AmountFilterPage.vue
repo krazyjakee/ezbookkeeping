@@ -8,41 +8,47 @@
             </f7-nav-right>
         </f7-navbar>
 
-        <f7-list form strong inset dividers class="margin-vertical-half" v-if="!showAllOption || type">
-            <f7-list-item
-                class="amount-filter-amount"
-                link="#" no-chevron
-                :class="amountFontSizeClass"
-                :header="amount1Header"
-                :title="formatAmountToLocalizedNumeralsWithCurrency(parseBigDecimal(amount1))"
-                @click="showAmount1Sheet = true"
-            >
-                <number-pad-sheet :min-value="TRANSACTION_MIN_AMOUNT"
-                                  :max-value="TRANSACTION_MAX_AMOUNT"
-                                  v-model:show="showAmount1Sheet"
-                                  v-model="amount1"
-                ></number-pad-sheet>
-            </f7-list-item>
-
-            <f7-list-item
-                class="amount-filter-amount"
-                link="#" no-chevron
-                :class="amountFontSizeClass"
-                :header="amount2Header"
-                :title="formatAmountToLocalizedNumeralsWithCurrency(parseBigDecimal(amount2))"
-                @click="showAmount2Sheet = true"
-                v-if="amountCount === 2"
-            >
-                <number-pad-sheet :min-value="TRANSACTION_MIN_AMOUNT"
-                                  :max-value="TRANSACTION_MAX_AMOUNT"
-                                  v-model:show="showAmount2Sheet"
-                                  v-model="amount2"
-                ></number-pad-sheet>
-            </f7-list-item>
-        </f7-list>
+        <section class="ebk-panel amount-filter-panel margin-vertical-half" v-if="!showAllOption || type">
+            <header class="ebk-panel-header-strip">
+                <span>{{ tt('Amount') }}</span>
+            </header>
+            <f7-list form dividers class="no-margin amount-filter-amount-list">
+                <f7-list-item
+                    class="amount-filter-amount"
+                    link="#" no-chevron
+                    :class="amountFontSizeClass"
+                    :header="amount1Header"
+                    :title="formatAmountToLocalizedNumeralsWithCurrency(parseBigDecimal(amount1))"
+                    @click="showAmount1Sheet = true"
+                >
+                    <number-pad-sheet :min-value="TRANSACTION_MIN_AMOUNT"
+                                      :max-value="TRANSACTION_MAX_AMOUNT"
+                                      v-model:show="showAmount1Sheet"
+                                      v-model="amount1"
+                    ></number-pad-sheet>
+                </f7-list-item>
+    
+                <f7-list-item
+                    class="amount-filter-amount"
+                    link="#" no-chevron
+                    :class="amountFontSizeClass"
+                    :header="amount2Header"
+                    :title="formatAmountToLocalizedNumeralsWithCurrency(parseBigDecimal(amount2))"
+                    @click="showAmount2Sheet = true"
+                    v-if="amountCount === 2"
+                >
+                    <number-pad-sheet :min-value="TRANSACTION_MIN_AMOUNT"
+                                      :max-value="TRANSACTION_MAX_AMOUNT"
+                                      v-model:show="showAmount2Sheet"
+                                      v-model="amount2"
+                    ></number-pad-sheet>
+                </f7-list-item>
+            </f7-list>
+        </section>
 
         <f7-list form strong inset dividers class="margin-vertical">
             <f7-list-item :title="tt('All')"
+                          :class="{ 'list-item-selected': type === '' }"
                           @click="type = ''"
                           v-if="props.showAllOption">
                 <template #after>
@@ -51,6 +57,7 @@
             </f7-list-item>
 
             <f7-list-item :key="filterType.type" :title="tt(filterType.name)"
+                          :class="{ 'list-item-selected': type === filterType.type }"
                           v-for="filterType in AmountFilterType.values()"
                           @click="type = filterType.type">
                 <template #after>
@@ -212,7 +219,27 @@ init();
 </script>
 
 <style>
+.amount-filter-panel {
+    margin-inline: var(--f7-list-inset-side-margin, 16px);
+    border-radius: var(--f7-list-inset-border-radius, var(--ebk-radius-lg));
+}
+
+.amount-filter-panel .list.amount-filter-amount-list > ul {
+    background: transparent;
+    border-radius: 0 0 var(--f7-list-inset-border-radius, var(--ebk-radius-lg)) var(--f7-list-inset-border-radius, var(--ebk-radius-lg));
+}
+
+.amount-filter-panel .list.amount-filter-amount-list > ul::before,
+.amount-filter-panel .list.amount-filter-amount-list > ul::after {
+    display: none;
+}
+
 .amount-filter-amount {
     line-height: 46px;
+}
+
+.amount-filter-amount .item-title {
+    font-weight: 600;
+    font-variant-numeric: var(--ebk-font-numeric);
 }
 </style>

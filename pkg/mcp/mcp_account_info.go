@@ -3,6 +3,7 @@ package mcp
 import (
 	"errors"
 	"fmt"
+	"math/big"
 	"sort"
 	"strings"
 	"time"
@@ -148,7 +149,7 @@ func mcpAccountGetTextualId(accountId int64) string {
 
 // mcpAccountBuildSubAccountInfo returns the sub-account information of the account model
 func mcpAccountBuildSubAccountInfo(account *models.Account) *MCPAccountSubAccountInfo {
-	signedBalance, displayBalance, outstandingBalance := getMCPDisplayBalances(account)
+	displayBalance, signedBalance, outstandingBalance := mcpFormatAccountBalances(account.Category, big.NewInt(account.Balance))
 
 	return &MCPAccountSubAccountInfo{
 		Id:                 mcpAccountGetTextualId(account.AccountId),
@@ -172,7 +173,7 @@ func mcpAccountBuildSubAccountInfo(account *models.Account) *MCPAccountSubAccoun
 
 // mcpAccountBuildInfo returns the account information of the account model and its sub-account models
 func mcpAccountBuildInfo(account *models.Account, subAccounts []*models.Account, includeHiddenSubAccounts bool) *MCPAccountInfo {
-	signedBalance, displayBalance, outstandingBalance := getMCPDisplayBalances(account)
+	displayBalance, signedBalance, outstandingBalance := mcpFormatAccountBalances(account.Category, big.NewInt(account.Balance))
 
 	accountInfo := &MCPAccountInfo{
 		Id:                 mcpAccountGetTextualId(account.AccountId),

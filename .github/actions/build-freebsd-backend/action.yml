@@ -19,7 +19,7 @@ inputs:
     description: "Whether to run integration tests that call third party APIs. If set to '1', the tests will be run. Otherwise, the tests will be skipped."
   skip-tests:
     required: false
-    description: "Whether to skip tests when building the FreeBSD backend. If set to '1', the tests will be skipped. Otherwise, the tests will be run."
+    description: "Go test-name regular expression passed to go test -skip. Empty means no tests are excluded by this input."
   architecture:
     required: true
     description: "The name of the architecture to build the FreeBSD package for."

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/go-co-op/gocron/v2"
+	"github.com/robfig/cron/v3"
 )
 
 // CronJobPeriod represents the cron job period
@@ -76,4 +77,32 @@ func (p CronJobFixedTimePeriod) GetInterval() time.Duration {
 // ToJobDefinition returns the gocron job definition of the period of CronJobFixedTimePeriod
 func (p CronJobFixedTimePeriod) ToJobDefinition() gocron.JobDefinition {
 	return gocron.OneTimeJob(gocron.OneTimeJobStartDateTime(p.Time))
+}
+
+// CronJobCronExpressionPeriod represents the period of execution defined by a standard cron expression (minute hour day month weekday)
+type CronJobCronExpressionPeriod struct {
+	Expression string
+}
+
+// GetInterval returns the (approximate) interval time between two executions of the period of CronJobCronExpressionPeriod
+func (p CronJobCronExpressionPeriod) GetInterval() time.Duration {
+	schedule, err := cron.ParseStandard(p.Expression)
+
+	if err != nil {
+		return 24 * time.Hour
+	}
+
+	next := schedule.Next(time.Now())
+	nextNext := schedule.Next(next)
+
+	if next.IsZero() || nextNext.IsZero() {
+		return 24 * time.Hour
+	}
+
+	return nextNext.Sub(next)
+}
+
+// ToJobDefinition returns the gocron job definition of the period of CronJobCronExpressionPeriod
+func (p CronJobCronExpressionPeriod) ToJobDefinition() gocron.JobDefinition {
+	return gocron.CronJob(p.Expression, false)
 }

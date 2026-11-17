@@ -1,53 +1,75 @@
 <template>
-    <f7-card class="home-summary-card no-margin-top margin-bottom" :class="{ 'skeleton-text': loading }" :style="cardStyle">
-        <f7-card-header class="display-block" :style="cardHeaderStyle">
-            <p class="no-margin">
-                <span class="card-header-content" v-if="loading">
-                    <span class="home-summary-month">Month</span>
-                    <span>·</span>
-                    <small>Expense</small>
+    <overview-widget-panel bracketed class="mobile-monthly-position"
+                           :class="`mobile-monthly-position--height-${height || 3}`"
+                           :title="tt('Monthly Position')"
+                           :meta="displayDateRange?.thisMonth?.displayTime"
+                           :loading="loading"
+                           :custom-background-color="customBackgroundColor"
+                           :custom-text-color="customTextColor">
+        <template #actions>
+            <f7-link :aria-label="showAmountInHomePage ? tt('Hide Amount') : tt('Show Amount')"
+                     @click="showAmountInHomePage = !showAmountInHomePage">
+                <f7-icon :f7="showAmountInHomePage ? 'eye_slash' : 'eye'"></f7-icon>
+            </f7-link>
+        </template>
+
+        <div class="mobile-overview-hero">
+            <span class="mobile-overview-label ebk-technical-heading">{{ tt('Net assets') }}</span>
+            <span class="mobile-overview-hero-amount ebk-numeric" :class="{ 'skeleton-text': loading }">{{ netAssets }}</span>
+        </div>
+
+        <div class="mobile-overview-pair">
+            <div>
+                <span class="mobile-overview-label ebk-technical-heading">
+                    <span class="mobile-overview-label-arrow" aria-hidden="true">↑</span>{{ tt('Income') }}
                 </span>
-                <span class="card-header-content" v-else>
-                    <span class="home-summary-month">{{ displayDateRange?.thisMonth?.displayTime }}</span>
-                    <span>·</span>
-                    <small>{{ tt('Expense') }}</small>
+                <span class="mobile-overview-pair-amount" :class="{ 'skeleton-text': loading }">
+                    <signed-amount type="income" :text="displayIncome" :hide-sign="isHiddenOrZero(currentIncomeAmount)" v-if="displayIncome" />
+                    <span v-else>-</span>
                 </span>
-            </p>
-            <p class="no-margin">
-                <span class="month-expense" v-if="loading">0.00 USD</span>
-                <span class="month-expense" v-else>{{ transactionOverview?.thisMonth ? getDisplayExpenseAmount(transactionOverview.thisMonth) : '-' }}</span>
-                <f7-link class="display-inline-flex margin-inline-start-half" :style="iconStyle"
-                         :aria-label="showAmountInHomePage ? tt('Hide Amount') : tt('Show Amount')"
-                         @click="showAmountInHomePage = !showAmountInHomePage">
-                    <f7-icon class="ebk-hide-icon" :f7="showAmountInHomePage ? 'eye_slash_fill' : 'eye_fill'"></f7-icon>
-                </f7-link>
-            </p>
-            <p class="no-margin">
-                <small class="home-summary-misc" v-if="loading">Monthly income 0.00 USD</small>
-                <small class="home-summary-misc" v-else>
-                    <span>{{ tt('Monthly income') }}</span>
-                    <span>{{ transactionOverview?.thisMonth ? getDisplayIncomeAmount(transactionOverview.thisMonth) : '-' }}</span>
-                </small>
-            </p>
-        </f7-card-header>
-    </f7-card>
+            </div>
+            <div>
+                <span class="mobile-overview-label ebk-technical-heading">
+                    <span class="mobile-overview-label-arrow" aria-hidden="true">↓</span>{{ tt('Expense') }}
+                </span>
+                <span class="mobile-overview-pair-amount" :class="{ 'skeleton-text': loading }">
+                    <signed-amount type="expense" :text="displayExpense" :hide-sign="isHiddenOrZero(currentExpenseAmount)" v-if="displayExpense" />
+                    <span v-else>-</span>
+                </span>
+            </div>
+        </div>
+
+        <div class="mobile-overview-detail-row mobile-overview-net-line">
+            <span class="ebk-technical-heading">{{ tt('Net Cash Flow') }}</span>
+            <span :class="{ 'skeleton-text': loading }">
+                <signed-amount :type="netType" :text="displayNet" :hide-sign="isHiddenOrZero(currentNetIncomeAmount)" v-if="displayNet" />
+                <span v-else>-</span>
+            </span>
+        </div>
+    </overview-widget-panel>
 </template>
 
 <script setup lang="ts">
+import OverviewWidgetPanel from './OverviewWidgetPanel.vue';
+import SignedAmount from '@/components/common/SignedAmount.vue';
+
 import { computed } from 'vue';
 
 import { useI18n } from '@/locales/helpers.ts';
 import { usePeriodStatisticsWidgetBase } from '@/views/base/overview/PeriodStatisticsWidgetBase.ts';
+import { useAssetSummaryWidgetBase } from '@/views/base/overview/AssetSummaryWidgetBase.ts';
 
 import { useEnvironmentsStore } from '@/stores/environment.ts';
 
+import type { BigDecimal } from '@/core/numeral.ts';
 import type { ColorValue } from '@/core/color.ts';
+import { DateRange } from '@/core/datetime.ts';
 import {
     DEFAULT_MOBILE_OVERVIEW_WIDGET_LIGHT_BACKGROUND_COLOR,
     DEFAULT_MOBILE_OVERVIEW_WIDGET_DARK_BACKGROUND_COLOR
 } from '@/consts/color.ts';
 
-import { getDisplayColor, getContrastTextColor, getContrastIconColor } from '@/lib/color.ts';
+import { getDisplayColor, getContrastTextColor } from '@/lib/color.ts';
 
 const props = defineProps<{
     loading: boolean;
@@ -56,47 +78,61 @@ const props = defineProps<{
     darkBackgroundColor?: ColorValue;
 }>();
 
+const { tt } = useI18n();
+
 const environmentsStore = useEnvironmentsStore();
 
-const isDarkMode = computed<boolean>(() => environmentsStore.framework7DarkMode || false);
-const backgroundColor = computed<ColorValue>(() => isDarkMode.value ?
-    props.darkBackgroundColor ?? DEFAULT_MOBILE_OVERVIEW_WIDGET_DARK_BACKGROUND_COLOR :
-    props.lightBackgroundColor ?? DEFAULT_MOBILE_OVERVIEW_WIDGET_LIGHT_BACKGROUND_COLOR);
-const foregroundColor = computed<ColorValue>(() => getContrastTextColor(backgroundColor.value));
-const iconColor = computed<ColorValue>(() => getContrastIconColor(backgroundColor.value));
-
-const cardStyle = computed<Record<string, string>>(() => ({
-    'background-color': getDisplayColor(backgroundColor.value),
-    'color': getDisplayColor(foregroundColor.value)
-}));
-
-const cardHeaderStyle = computed<Record<string, string>>(() => {
-    const finalStyle: Record<string, string> = {
-        color: getDisplayColor(foregroundColor.value)
-    };
-
-    if (props.height === 1) {
-        finalStyle['padding-top'] = '10px';
-    } else if (props.height === 2) {
-        finalStyle['padding-top'] = '60px';
-    } else {
-        finalStyle['padding-top'] = '120px';
-    }
-
-    return finalStyle;
-});
-
-const iconStyle = computed<Record<string, string>>(() => ({
-    color: getDisplayColor(iconColor.value),
-    opacity: '1'
-}));
-
-const { tt } = useI18n();
 const {
     showAmountInHomePage,
     displayDateRange,
-    transactionOverview,
-    getDisplayIncomeAmount,
-    getDisplayExpenseAmount
-} = usePeriodStatisticsWidgetBase({});
+    currentOverviewItem,
+    currentIncomeAmount,
+    currentExpenseAmount,
+    currentNetIncomeAmount,
+    currentDisplayIncomeAmount,
+    currentDisplayExpenseAmount,
+    getDisplayAmount
+} = usePeriodStatisticsWidgetBase({
+    dateType: DateRange.ThisMonth.type
+});
+
+const { netAssets } = useAssetSummaryWidgetBase('overview');
+
+const isDarkMode = computed<boolean>(() => environmentsStore.framework7DarkMode || false);
+const customBackground = computed<ColorValue | undefined>(() => {
+    if (isDarkMode.value) {
+        return props.darkBackgroundColor && props.darkBackgroundColor !== DEFAULT_MOBILE_OVERVIEW_WIDGET_DARK_BACKGROUND_COLOR ? props.darkBackgroundColor : undefined;
+    } else {
+        return props.lightBackgroundColor && props.lightBackgroundColor !== DEFAULT_MOBILE_OVERVIEW_WIDGET_LIGHT_BACKGROUND_COLOR ? props.lightBackgroundColor : undefined;
+    }
+});
+const customBackgroundColor = computed<string | undefined>(() => customBackground.value ? getDisplayColor(customBackground.value) : undefined);
+const customTextColor = computed<string | undefined>(() => customBackground.value ? getDisplayColor(getContrastTextColor(customBackground.value)) : undefined);
+
+const displayIncome = computed<string>(() => currentDisplayIncomeAmount.value);
+const displayExpense = computed<string>(() => currentDisplayExpenseAmount.value);
+const netType = computed<'income' | 'expense'>(() => currentNetIncomeAmount.value.isNegative() ? 'expense' : 'income');
+const displayNet = computed<string>(() => {
+    const item = currentOverviewItem.value;
+
+    if (!item?.valid) {
+        return '';
+    }
+
+    return getDisplayAmount(currentNetIncomeAmount.value.abs(), item.incompleteIncomeAmount || item.incompleteExpenseAmount);
+});
+
+function isHiddenOrZero(amount: BigDecimal): boolean {
+    return !showAmountInHomePage.value || amount.isZero();
+}
 </script>
+
+<style>
+.mobile-monthly-position--height-1 {
+    --mobile-overview-panel-padding: var(--ebk-space-2) var(--ebk-space-3);
+}
+
+.mobile-monthly-position--height-3 .mobile-overview-panel-body {
+    padding-block: var(--ebk-space-4);
+}
+</style>

@@ -28,16 +28,24 @@
             </f7-segmented>
         </f7-block>
 
+        <section class="ebk-panel transaction-edit-amount-panel margin-vertical-half skeleton-text" v-if="loading">
+            <header class="ebk-panel-header-strip">
+                <span>Amount · USD</span>
+            </header>
+            <f7-list dividers class="no-margin transaction-edit-amount-list">
+                <f7-list-item
+                    class="transaction-edit-amount ebk-large-amount"
+                    header="Expense Amount" title="0.00">
+                </f7-list-item>
+                <f7-list-item
+                    class="transaction-edit-amount ebk-large-amount"
+                    header="Transfer In Amount" title="0.00" v-if="transaction.type === TransactionType.Transfer">
+                </f7-list-item>
+            </f7-list>
+        </section>
+
         <f7-list strong inset dividers class="margin-vertical-half skeleton-text" v-if="loading">
             <f7-list-input label="Template Name" placeholder="Template Name" v-if="pageTypeAndMode?.type === TransactionEditPageType.Template"></f7-list-input>
-            <f7-list-item
-                class="transaction-edit-amount ebk-large-amount"
-                header="Expense Amount" title="0.00">
-            </f7-list-item>
-            <f7-list-item
-                class="transaction-edit-amount ebk-large-amount"
-                header="Transfer In Amount" title="0.00" v-if="transaction.type === TransactionType.Transfer">
-            </f7-list-item>
             <f7-list-item class="list-item-with-header-and-title list-item-title-hide-overflow" header="Category" title="Category Names" v-if="transaction.type !== TransactionType.ModifyBalance"></f7-list-item>
             <f7-list-item class="list-item-with-header-and-title" header="Account" title="Account Name"></f7-list-item>
             <f7-list-item class="list-item-with-header-and-title" header="Destination Account" title="Account Name" v-if="transaction.type === TransactionType.Transfer"></f7-list-item>
@@ -55,7 +63,49 @@
             <f7-list-input type="textarea" label="Description" placeholder="Your transaction description (optional)"></f7-list-input>
         </f7-list>
 
-        <f7-list form strong inset dividers class="margin-vertical-half" v-else-if="!loading">
+        <template v-if="!loading">
+        <section class="ebk-panel transaction-edit-amount-panel margin-vertical-half">
+            <header class="ebk-panel-header-strip">
+                <span class="transaction-edit-amount-panel-title">{{ tt('Amount') }}<template v-if="sourceAccountCurrency"> · {{ sourceAccountCurrency }}</template></span>
+                <span class="ebk-panel-header-actions transaction-edit-amount-type" :class="amountTypeLabelClass">{{ amountTypeLabel }}</span>
+            </header>
+            <f7-list dividers class="no-margin transaction-edit-amount-list">
+                <f7-list-item
+                    class="transaction-edit-amount"
+                    link="#" no-chevron
+                    :class="sourceAmountClass"
+                    :header="sourceAmountTitle"
+                    :title="getDisplayAmount(parseBigDecimal(transaction.sourceAmount), transaction.hideAmount, sourceAccountCurrency)"
+                    @click="showSourceAmountSheet = true"
+                >
+                    <number-pad-sheet :min-value="TRANSACTION_MIN_AMOUNT"
+                                      :max-value="TRANSACTION_MAX_AMOUNT"
+                                      :currency="sourceAccountCurrency"
+                                      v-model:show="showSourceAmountSheet"
+                                      v-model="transaction.sourceAmount"
+                    ></number-pad-sheet>
+                </f7-list-item>
+
+                <f7-list-item
+                    class="transaction-edit-amount text-color-primary"
+                    link="#" no-chevron
+                    :class="destinationAmountClass"
+                    :header="transferInAmountTitle"
+                    :title="getDisplayAmount(parseBigDecimal(transaction.destinationAmount), transaction.hideAmount, destinationAccountCurrency)"
+                    @click="showDestinationAmountSheet = true"
+                    v-if="transaction.type === TransactionType.Transfer"
+                >
+                    <number-pad-sheet :min-value="TRANSACTION_MIN_AMOUNT"
+                                      :max-value="TRANSACTION_MAX_AMOUNT"
+                                      :currency="destinationAccountCurrency"
+                                      v-model:show="showDestinationAmountSheet"
+                                      v-model="transaction.destinationAmount"
+                    ></number-pad-sheet>
+                </f7-list-item>
+            </f7-list>
+        </section>
+
+        <f7-list form strong inset dividers class="margin-vertical-half transaction-edit-details-list">
             <f7-list-input
                 type="text"
                 autocomplete="off"
@@ -65,44 +115,10 @@
                 v-model:value="transaction.name"
                 v-if="pageTypeAndMode?.type === TransactionEditPageType.Template && transaction instanceof TransactionTemplate"
             ></f7-list-input>
-
-            <f7-list-item
-                class="transaction-edit-amount"
-                link="#" no-chevron
-                :class="sourceAmountClass"
-                :header="sourceAmountTitle"
-                :title="getDisplayAmount(parseBigDecimal(transaction.sourceAmount), transaction.hideAmount, sourceAccountCurrency)"
-                @click="showSourceAmountSheet = true"
-            >
-                <number-pad-sheet :min-value="TRANSACTION_MIN_AMOUNT"
-                                  :max-value="TRANSACTION_MAX_AMOUNT"
-                                  :currency="sourceAccountCurrency"
-                                  v-model:show="showSourceAmountSheet"
-                                  v-model="transaction.sourceAmount"
-                ></number-pad-sheet>
-            </f7-list-item>
-
-            <f7-list-item
-                class="transaction-edit-amount text-color-primary"
-                link="#" no-chevron
-                :class="destinationAmountClass"
-                :header="transferInAmountTitle"
-                :title="getDisplayAmount(parseBigDecimal(transaction.destinationAmount), transaction.hideAmount, destinationAccountCurrency)"
-                @click="showDestinationAmountSheet = true"
-                v-if="transaction.type === TransactionType.Transfer"
-            >
-                <number-pad-sheet :min-value="TRANSACTION_MIN_AMOUNT"
-                                  :max-value="TRANSACTION_MAX_AMOUNT"
-                                  :currency="destinationAccountCurrency"
-                                  v-model:show="showDestinationAmountSheet"
-                                  v-model="transaction.destinationAmount"
-                ></number-pad-sheet>
-            </f7-list-item>
-
             <f7-list-item
                 class="list-item-with-header-and-title list-item-title-hide-overflow"
                 key="expenseCategorySelection"
-                link="#" no-chevron
+                link="#" :no-chevron="mode === TransactionEditPageMode.View"
                 :class="{ 'disabled': !hasVisibleExpenseCategories && !canAddNewCategory, 'readonly': mode === TransactionEditPageMode.View }"
                 :header="tt('Category')"
                 @click="showCategorySheet = true"
@@ -138,7 +154,7 @@
             <f7-list-item
                 class="list-item-with-header-and-title list-item-title-hide-overflow"
                 key="incomeCategorySelection"
-                link="#" no-chevron
+                link="#" :no-chevron="mode === TransactionEditPageMode.View"
                 :class="{ 'disabled': !hasVisibleIncomeCategories && !canAddNewCategory, 'readonly': mode === TransactionEditPageMode.View }"
                 :header="tt('Category')"
                 @click="showCategorySheet = true"
@@ -174,7 +190,7 @@
             <f7-list-item
                 class="list-item-with-header-and-title list-item-title-hide-overflow"
                 key="transferCategorySelection"
-                link="#" no-chevron
+                link="#" :no-chevron="mode === TransactionEditPageMode.View"
                 :class="{ 'disabled': !hasVisibleTransferCategories && !canAddNewCategory, 'readonly': mode === TransactionEditPageMode.View }"
                 :header="tt('Category')"
                 @click="showCategorySheet = true"
@@ -209,7 +225,7 @@
 
             <f7-list-item
                 class="list-item-with-header-and-title"
-                link="#" no-chevron
+                link="#" :no-chevron="mode === TransactionEditPageMode.View"
                 :class="{ 'disabled': !allVisibleAccounts.length || (mode === TransactionEditPageMode.Edit && transaction.type === TransactionType.ModifyBalance), 'readonly': mode === TransactionEditPageMode.View }"
                 :header="tt(sourceAccountTitle)"
                 :title="sourceAccountName"
@@ -232,7 +248,7 @@
 
             <f7-list-item
                 class="list-item-with-header-and-title"
-                link="#" no-chevron
+                link="#" :no-chevron="mode === TransactionEditPageMode.View"
                 :class="{ 'disabled': !allVisibleAccounts.length, 'readonly': mode === TransactionEditPageMode.View }"
                 :header="tt('Destination Account')"
                 :title="destinationAccountName"
@@ -256,7 +272,7 @@
 
             <f7-list-item
                 class="transaction-edit-datetime list-item-with-header-and-title"
-                link="#" no-chevron
+                link="#" :no-chevron="mode === TransactionEditPageMode.View"
                 :class="{ 'disabled': mode === TransactionEditPageMode.Edit && transaction.type === TransactionType.ModifyBalance, 'readonly': mode === TransactionEditPageMode.View && transaction.utcOffset === currentTimezoneOffsetMinutes }"
                 v-if="pageTypeAndMode?.type === TransactionEditPageType.Transaction"
             >
@@ -278,7 +294,7 @@
 
             <f7-list-item
                 class="list-item-with-header-and-title"
-                link="#" no-chevron
+                link="#" :no-chevron="mode === TransactionEditPageMode.View"
                 :class="{ 'readonly': mode === TransactionEditPageMode.View }"
                 :header="tt('Scheduled Transaction Frequency')"
                 :title="transactionDisplayScheduledFrequency"
@@ -293,7 +309,7 @@
 
             <f7-list-item
                 class="transaction-edit-datetime list-item-with-header-and-title"
-                link="#" no-chevron
+                link="#" :no-chevron="mode === TransactionEditPageMode.View"
                 :class="{ 'readonly': mode === TransactionEditPageMode.View }"
                 :header="tt('Start Date')"
                 :title="transactionDisplayScheduledStartDate"
@@ -307,7 +323,7 @@
 
             <f7-list-item
                 class="transaction-edit-datetime list-item-with-header-and-title"
-                link="#" no-chevron
+                link="#" :no-chevron="mode === TransactionEditPageMode.View"
                 :class="{ 'readonly': mode === TransactionEditPageMode.View }"
                 :header="tt('End Date')"
                 :title="transactionDisplayScheduledEndDate"
@@ -350,7 +366,7 @@
             </f7-list-item>
 
             <f7-list-item
-                link="#" no-chevron
+                link="#" :no-chevron="mode === TransactionEditPageMode.View"
                 class="list-item-with-header-and-title list-item-title-hide-overflow"
                 :class="{ 'readonly': mode === TransactionEditPageMode.View && !transaction.geoLocation }"
                 :header="tt('Geographic Location')"
@@ -372,7 +388,7 @@
             </f7-list-item>
 
             <f7-list-item
-                link="#" no-chevron
+                link="#" :no-chevron="mode === TransactionEditPageMode.View"
                 :class="{ 'readonly': mode === TransactionEditPageMode.View }"
                 :header="tt('Tags')"
                 @click="showTransactionTagSheet = true"
@@ -400,8 +416,20 @@
                 </template>
             </f7-list-item>
 
+            <f7-list-input
+                type="textarea"
+                class="transaction-edit-comment"
+                style="height: auto"
+                autocomplete="off"
+                :class="{ 'readonly': mode === TransactionEditPageMode.View }"
+                :label="transactionDescriptionTitle"
+                :placeholder="mode !== TransactionEditPageMode.View ? tt('Your transaction description (optional)') : ''"
+                v-textarea-auto-size
+                v-model:value="transaction.comment"
+            ></f7-list-input>
             <f7-list-item
                 link="#" no-chevron
+                class="transaction-edit-pictures"
                 :header="tt('Pictures')"
                 v-if="showTransactionPictures || (transaction.pictures && transaction.pictures.length > 0)"
             >
@@ -445,18 +473,21 @@
                 </template>
             </f7-list-item>
 
-            <f7-list-input
-                type="textarea"
-                class="transaction-edit-comment"
-                style="height: auto"
-                autocomplete="off"
-                :class="{ 'readonly': mode === TransactionEditPageMode.View }"
-                :label="transactionDescriptionTitle"
-                :placeholder="mode !== TransactionEditPageMode.View ? tt('Your transaction description (optional)') : ''"
-                v-textarea-auto-size
-                v-model:value="transaction.comment"
-            ></f7-list-input>
+            <f7-list-item
+                link="#"
+                class="transaction-edit-attach-receipt"
+                :title="tt('Attach receipt — PDF or image')"
+                @click="showTransactionPictures = true; showOpenPictureDialog()"
+                v-if="pageTypeAndMode?.type === TransactionEditPageType.Transaction && isTransactionPicturesEnabled() && canAddTransactionPicture && !showTransactionPictures && (!transaction.pictures || !transaction.pictures.length)"
+            >
+                <template #media>
+                    <span class="transaction-edit-attach-receipt-icon" aria-hidden="true">
+                        <f7-icon f7="paperclip"></f7-icon>
+                    </span>
+                </template>
+            </f7-list-item>
         </f7-list>
+        </template>
 
         <f7-actions close-by-outside-click close-on-escape :opened="showGeoLocationActionSheet" @actions:closed="showGeoLocationActionSheet = false">
             <f7-actions-group>
@@ -767,6 +798,26 @@ const sourceAmountClass = computed<Record<string, boolean>>(() => {
 
     return classes;
 });
+
+const amountTypeLabel = computed<string>(() => {
+    switch (transaction.value.type) {
+        case TransactionType.Expense:
+            return tt('Expense');
+        case TransactionType.Income:
+            return tt('Income');
+        case TransactionType.Transfer:
+            return tt('Transfer');
+        case TransactionType.ModifyBalance:
+            return tt('Modify Balance');
+        default:
+            return '';
+    }
+});
+
+const amountTypeLabelClass = computed<Record<string, boolean>>(() => ({
+    'text-expense': transaction.value.type === TransactionType.Expense,
+    'text-income': transaction.value.type === TransactionType.Income
+}));
 
 const destinationAmountClass = computed<Record<string, boolean>>(() => {
     const classes: Record<string, boolean> = {
@@ -1673,7 +1724,41 @@ init();
     margin-inline-end: 5px;
     font-size: var(--ebk-category-separate-icon-font-size);
     line-height: 16px;
-    color: var(--f7-color-gray-tint);
+    color: var(--ebk-color-text-secondary);
+}
+
+/* Amount panel (design guidelines §6.2): the largest element of the editor, labelled with currency and type */
+.transaction-edit-amount-panel {
+    margin-inline: var(--f7-list-inset-side-margin, 16px);
+    border-radius: var(--f7-list-inset-border-radius, var(--ebk-radius-lg));
+    overflow: visible;
+}
+
+.transaction-edit-amount-panel .transaction-edit-amount-panel-title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.transaction-edit-amount-panel .transaction-edit-amount-type {
+    font-size: var(--ebk-font-technical-size);
+    font-weight: var(--ebk-font-technical-weight);
+}
+
+.transaction-edit-amount-panel .list.transaction-edit-amount-list {
+    --f7-list-bg-color: transparent;
+    --f7-list-strong-bg-color: transparent;
+}
+
+.transaction-edit-amount-panel .list.transaction-edit-amount-list > ul {
+    background: transparent;
+    border-radius: 0 0 var(--f7-list-inset-border-radius, var(--ebk-radius-lg)) var(--f7-list-inset-border-radius, var(--ebk-radius-lg));
+}
+
+.transaction-edit-amount-panel .list.transaction-edit-amount-list > ul::before,
+.transaction-edit-amount-panel .list.transaction-edit-amount-list > ul::after {
+    display: none;
 }
 
 .transaction-edit-amount {
@@ -1681,11 +1766,33 @@ init();
 }
 
 .transaction-edit-amount .item-title {
-    font-weight: bolder;
+    font-weight: 600;
+    font-variant-numeric: var(--ebk-font-numeric);
 }
 
 .transaction-edit-amount .item-header {
     padding-top: calc(var(--f7-typography-padding) / 2);
+}
+
+/* Attach receipt row: reuses the existing picture / PDF / camera action sheet */
+.transaction-edit-attach-receipt .item-title {
+    color: var(--ebk-color-primary-text);
+    font-weight: 500;
+}
+
+.transaction-edit-attach-receipt-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px dashed var(--ebk-color-copper-line);
+    border-radius: var(--ebk-radius-control);
+    color: var(--ebk-color-primary-text);
+}
+
+.transaction-edit-attach-receipt-icon .icon {
+    font-size: 18px;
 }
 
 .transaction-edit-datetime .item-title {
@@ -1748,8 +1855,8 @@ init();
     height: 100%;
     position: absolute;
     z-index: 10;
-    background-color: rgba(0, 0, 0, 0.4);
-    border-radius: 8px;
+    background-color: rgba(0, 0, 0, 0.45);
+    border-radius: var(--ebk-radius-control);
 }
 
 .transaction-pictures .transaction-picture-container .transaction-picture .picture-control-icon {
@@ -1770,15 +1877,21 @@ init();
     left: 0;
     width: 100%;
     height: 100%;
-    border-radius: 8px;
+    border-radius: var(--ebk-radius-control);
+}
+
+.transaction-pictures .transaction-picture-container .transaction-picture {
+    position: relative;
+    border: 1px solid var(--ebk-color-hairline);
+    border-radius: var(--ebk-radius-control);
+    box-sizing: border-box;
 }
 
 .transaction-pictures .transaction-picture-container .transaction-picture .transaction-picture-document {
     width: 100%;
     height: 100%;
-    border-radius: 8px;
-    background-color: var(--f7-list-bg-color);
-    border: 1px solid var(--f7-list-item-border-color, #ccc);
+    border-radius: var(--ebk-radius-control);
+    background-color: var(--ebk-color-surface-sunken);
     box-sizing: border-box;
 }
 
@@ -1796,7 +1909,9 @@ init();
 .transaction-pictures .transaction-picture-add {
     width: calc(var(--ebk-transaction-picture-size) - 2px);
     height: calc(var(--ebk-transaction-picture-size) - 4px);
-    border: 2px dashed #ccc;
-    border-radius: 8px;
+    border: 1px dashed var(--ebk-color-copper-line);
+    border-radius: var(--ebk-radius-control);
+    background-color: rgba(var(--ebk-color-surface-sunken-rgb), 0.6);
+    color: var(--ebk-color-primary-text);
 }
 </style>

@@ -10,6 +10,7 @@ import (
 	"github.com/mayswind/ezbookkeeping/pkg/errs"
 	"github.com/mayswind/ezbookkeeping/pkg/log"
 	"github.com/mayswind/ezbookkeeping/pkg/models"
+	"github.com/mayswind/ezbookkeeping/pkg/services"
 	"github.com/mayswind/ezbookkeeping/pkg/utils"
 )
 
@@ -179,22 +180,7 @@ func mcpTransactionTemplateNewReferenceData(accounts []*models.Account, categori
 }
 
 func (d *mcpTransactionTemplateReferenceData) resolveAccount(idField string, id string, nameField string, name string) (*models.Account, error) {
-	resolver := newMCPEntityResolver[*models.Account]("account",
-		func(account *models.Account) int64 { return account.AccountId },
-		func(account *models.Account) string { return account.Name },
-		func(account *models.Account) string {
-			description := getMCPAccountCategoryName(account.Category) + ", " + account.Currency
-
-			if parentAccount, exists := d.accountMap[account.ParentAccountId]; exists && account.ParentAccountId != models.LevelOneAccountParentId {
-				description = description + ", sub-account of \"" + parentAccount.Name + "\""
-			}
-
-			if account.Hidden {
-				description = description + ", hidden"
-			}
-
-			return description
-		})
+	resolver := mcpAccountNewResolver()
 
 	var account *models.Account
 	var err error
@@ -229,24 +215,7 @@ func (d *mcpTransactionTemplateReferenceData) resolveAccount(idField string, id 
 }
 
 func (d *mcpTransactionTemplateReferenceData) resolveCategory(id string, name string, categoryType models.TransactionCategoryType) (*models.TransactionCategory, error) {
-	resolver := newMCPEntityResolver[*models.TransactionCategory]("category",
-		func(category *models.TransactionCategory) int64 { return category.CategoryId },
-		func(category *models.TransactionCategory) string { return category.Name },
-		func(category *models.TransactionCategory) string {
-			description := getMCPCategoryTypeName(category.Type)
-
-			if parentCategory, exists := d.categoryMap[category.ParentCategoryId]; exists {
-				description = description + ", sub-category of \"" + parentCategory.Name + "\""
-			} else if category.ParentCategoryId == models.LevelOneTransactionCategoryParentId {
-				description = description + ", primary category"
-			}
-
-			if category.Hidden {
-				description = description + ", hidden"
-			}
-
-			return description
-		})
+	resolver := mcpTransactionCategoryNewNamedResolver("category", d.categoryMap)
 
 	var category *models.TransactionCategory
 	var err error
@@ -284,21 +253,9 @@ func (d *mcpTransactionTemplateReferenceData) resolveCategory(id string, name st
 	return category, nil
 }
 
+// resolveTagIds resolves the tag ids by ids or names, the caller (mcpTransactionTemplateBuildModel) must check the maximum tags count first
 func (d *mcpTransactionTemplateReferenceData) resolveTagIds(tagIds []string, tagNames []string) ([]int64, error) {
-	if len(tagIds)+len(tagNames) > mcpTransactionTemplateMaximumTagsCount {
-		return nil, NewMCPTooManyItemsError("tag_ids/tag_names", mcpTransactionTemplateMaximumTagsCount, len(tagIds)+len(tagNames))
-	}
-
-	resolver := newMCPEntityResolver[*models.TransactionTag]("tag",
-		func(tag *models.TransactionTag) int64 { return tag.TagId },
-		func(tag *models.TransactionTag) string { return tag.Name },
-		func(tag *models.TransactionTag) string {
-			if tag.Hidden {
-				return "hidden"
-			}
-
-			return ""
-		})
+	resolver := newMCPTransactionTagResolver(nil)
 
 	visibleTags := make([]*models.TransactionTag, 0, len(d.tags))
 
@@ -656,19 +613,6 @@ func mcpTransactionTemplateBuildModel(input *mcpTransactionTemplateInput, templa
 	return template, nil
 }
 
-// mcpTransactionTemplateGetLocation returns the timezone of the scheduled transaction template (same as the server-side scheduler)
-func mcpTransactionTemplateGetLocation(template *models.TransactionTemplate) *time.Location {
-	location := time.FixedZone("Template Timezone", int(template.ScheduledTimezoneUtcOffset)*60)
-
-	if len(template.ScheduledTimezoneName) > 0 {
-		if loadedLocation, err := time.LoadLocation(template.ScheduledTimezoneName); err == nil {
-			location = loadedLocation
-		}
-	}
-
-	return location
-}
-
 // mcpTransactionTemplateIsScheduleValid returns whether the schedule of the template can create transactions
 func mcpTransactionTemplateIsScheduleValid(template *models.TransactionTemplate) bool {
 	if template.TemplateType != models.TRANSACTION_TEMPLATE_TYPE_SCHEDULE || template.ScheduledFrequency == "" {
@@ -709,7 +653,7 @@ func mcpTransactionTemplateGetOccurrences(template *models.TransactionTemplate, 
 		return occurrences, true
 	}
 
-	location := mcpTransactionTemplateGetLocation(template)
+	location := services.GetScheduledTransactionTemplateLocation(template)
 	fromTimeInUTC := time.Unix(fromUnixTime, 0).UTC()
 	firstDayUnixTimeInUTC := time.Date(fromTimeInUTC.Year(), fromTimeInUTC.Month(), fromTimeInUTC.Day(), 0, 0, 0, 0, time.UTC).Unix()
 
@@ -735,15 +679,7 @@ func mcpTransactionTemplateGetOccurrences(template *models.TransactionTemplate, 
 			continue
 		}
 
-		if !mcpTransactionTemplateIsOccurrenceDay(template, frequencyValues, *transactionTime, location) {
-			continue
-		}
-
-		if template.ScheduledStartTime != nil && *template.ScheduledStartTime > transactionTime.Unix() {
-			continue
-		}
-
-		if template.ScheduledEndTime != nil && *template.ScheduledEndTime < transactionTime.Unix() {
+		if !services.IsScheduledTransactionTemplateOccurrence(template, frequencyValues, *transactionTime, location) {
 			continue
 		}
 
@@ -757,60 +693,9 @@ func mcpTransactionTemplateGetOccurrences(template *models.TransactionTemplate, 
 	return occurrences, false
 }
 
-// mcpTransactionTemplateIsOccurrenceDay returns whether the scheduled transaction would be created at the specified transaction time (same rules as the server-side scheduler)
-func mcpTransactionTemplateIsOccurrenceDay(template *models.TransactionTemplate, frequencyValues []int64, transactionTime time.Time, location *time.Location) bool {
-	switch template.ScheduledFrequencyType {
-	case models.TRANSACTION_SCHEDULE_FREQUENCY_TYPE_DAILY:
-		return true
-	case models.TRANSACTION_SCHEDULE_FREQUENCY_TYPE_WEEKLY:
-		for i := 0; i < len(frequencyValues); i++ {
-			if frequencyValues[i] == int64(transactionTime.Weekday()) {
-				return true
-			}
-		}
-
-		return false
-	case models.TRANSACTION_SCHEDULE_FREQUENCY_TYPE_MONTHLY:
-		maxDayInMonth := int64(utils.GetMaxDayOfMonth(transactionTime.Year(), transactionTime.Month()))
-
-		for i := 0; i < len(frequencyValues); i++ {
-			value := frequencyValues[i]
-
-			if value < 0 {
-				value = maxDayInMonth + value + 1
-			}
-
-			if value == int64(transactionTime.Day()) {
-				return true
-			}
-		}
-
-		return false
-	case models.TRANSACTION_SCHEDULE_FREQUENCY_TYPE_YEARLY:
-		for i := 0; i < len(frequencyValues); i++ {
-			if frequencyValues[i] == int64(transactionTime.Month())*100+int64(transactionTime.Day()) {
-				return true
-			}
-		}
-
-		return false
-	case models.TRANSACTION_SCHEDULE_FREQUENCY_TYPE_EVERY_N_DAYS:
-		if template.ScheduledStartTime == nil || len(frequencyValues) != 1 || frequencyValues[0] <= 0 {
-			return false
-		}
-
-		startDate := time.Unix(*template.ScheduledStartTime, 0).In(location)
-		daysDiff := utils.GetDaysBetweenDates(startDate, transactionTime)
-
-		return daysDiff >= 0 && int64(daysDiff)%frequencyValues[0] == 0
-	default:
-		return false
-	}
-}
-
 // mcpTransactionTemplateBuildScheduleInfo returns the schedule information of the scheduled transaction template at the specified time
 func mcpTransactionTemplateBuildScheduleInfo(template *models.TransactionTemplate, nowUnixTime int64) *MCPTransactionTemplateScheduleInfo {
-	location := mcpTransactionTemplateGetLocation(template)
+	location := services.GetScheduledTransactionTemplateLocation(template)
 	scheduleInfo := &MCPTransactionTemplateScheduleInfo{
 		FrequencyType: mcpTransactionTemplateFrequencyTypeNameMap[template.ScheduledFrequencyType],
 		Frequency:     template.ScheduledFrequency,
@@ -970,7 +855,7 @@ func mcpTransactionTemplateBuildInputFromTemplate(template *models.TransactionTe
 	}
 
 	if template.TemplateType == models.TRANSACTION_TEMPLATE_TYPE_SCHEDULE {
-		location := mcpTransactionTemplateGetLocation(template)
+		location := services.GetScheduledTransactionTemplateLocation(template)
 		input.FrequencyType = mcpTransactionTemplateFrequencyTypeNameMap[template.ScheduledFrequencyType]
 		input.Frequency = template.ScheduledFrequency
 		input.Timezone = template.ScheduledTimezoneName
