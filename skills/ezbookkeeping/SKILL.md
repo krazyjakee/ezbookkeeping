@@ -1,9 +1,9 @@
 ---
 name: ezbookkeeping
-description: Use ezbookkeeping2 API Tools script to record new transactions, query transactions, retrieve account information, retrieve categories, retrieve tags, and retrieve exchange rate data in the self hosted bookkeeping application ezbookkeeping2.
+description: Use ezrbookkeeping API Tools script to record new transactions, query transactions, retrieve account information, retrieve categories, retrieve tags, and retrieve exchange rate data in the self hosted bookkeeping application ezrbookkeeping.
 ---
 
-# ezbookkeeping2 API Tools
+# ezrbookkeeping API Tools
 
 ## Usage
 
@@ -57,9 +57,9 @@ The meanings of these environment variables are as follows:
 
 | Variable | Required | Description |
 | --- | --- | --- |
-| `EBKTOOL_SERVER_BASEURL` | Required | ezbookkeeping2 server base URL (e.g., `http://localhost:8080`) |
-| `EBKTOOL_TOKEN` | Required | ezbookkeeping2 API token |
+| `EBKTOOL_SERVER_BASEURL` | Required | ezrbookkeeping server base URL (e.g., `http://localhost:8080`) |
+| `EBKTOOL_TOKEN` | Required | ezrbookkeeping API token |
 
 ## Reference
 
-ezbookkeeping2: [https://krazyjakee.github.io/ezbookkeeping/](https://krazyjakee.github.io/ezbookkeeping/)
+ezrbookkeeping: [https://krazyjakee.github.io/ezbookkeeping/](https://krazyjakee.github.io/ezbookkeeping/)

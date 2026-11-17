@@ -62,7 +62,7 @@ services:
     restart: always
 
   ezbookkeeping:
-    image: krazyjakee/ezbookkeeping2:latest-snapshot
+    image: krazyjakee/ezrbookkeeping:latest-snapshot
     container_name: ezbookkeeping
     hostname: "ezbookkeeping-server"
     mem_limit: 128m

@@ -1,5 +1,5 @@
 /**
- * ezbookkeeping2 shared motion primitives (see docs/design/motion.md).
+ * ezrbookkeeping shared motion primitives (see docs/design/motion.md).
  *
  * Vue <Transition> presets: ebk-fade, ebk-rise, ebk-scale, ebk-reveal, ebk-route
  * CSS classes: .ebk-animate-fade-in, .ebk-animate-rise-in, .ebk-animate-reveal,
@@ -200,7 +200,7 @@ $ebk-motion-exempt-selectors: '.v-progress-circular, .v-progress-linear, .preloa
         display: none !important;
     }
 
-    // ezbookkeeping2 presets become opacity-only changes of at most 120ms
+    // ezrbookkeeping presets become opacity-only changes of at most 120ms
     :is(.ebk-fade-enter-active, .ebk-fade-leave-active,
         .ebk-rise-enter-active, .ebk-rise-leave-active,
         .ebk-scale-enter-active, .ebk-scale-leave-active,

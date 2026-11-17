@@ -13,16 +13,16 @@ With the MCP protocol, you can use your preferred AI tools to add transactions (
 
 ## Configuration
 
-By default, ezbookkeeping2 does not enable the MCP server. You can enable it by updating the `enable_mcp` setting in the configuration file or by setting the environment variable. For details, see the [Configuration - MCP](/configuration/#mcp-model-context-protocol). After enabled, the "Generate Token" button will appear on "User Settings" -> "Security" page in the desktop version.
+By default, ezrbookkeeping does not enable the MCP server. You can enable it by updating the `enable_mcp` setting in the configuration file or by setting the environment variable. For details, see the [Configuration - MCP](/configuration/#mcp-model-context-protocol). After enabled, the "Generate Token" button will appear on "User Settings" -> "Security" page in the desktop version.
 
 ## Integration with AI Tools
 
-The MCP service of ezbookkeeping2 requires a special token to access. You can go to "User Settings" -> "Security" and click the "Generate Token" button in desktop version, and then enter your password. Alternatively, you can generate the token by the `user-session-new` command in ezbookkeeping2's CLI, for more details, see the [Command Line](/command_line/#userdata).
+The MCP service of ezrbookkeeping requires a special token to access. You can go to "User Settings" -> "Security" and click the "Generate Token" button in desktop version, and then enter your password. Alternatively, you can generate the token by the `user-session-new` command in ezrbookkeeping's CLI, for more details, see the [Command Line](/command_line/#userdata).
 
 > [!NOTE] TIP
 > If the IP address used to access the MCP server is fixed (e.g., within a home network), you can restrict specific IP addresses that can access the MCP server. For details, see the [Configuration - MCP](/configuration/#mcp-model-context-protocol).
 
-Then, copy the following code into your AI tool's MCP server configuration to enable it to access and interact with ezbookkeeping2 data.
+Then, copy the following code into your AI tool's MCP server configuration to enable it to access and interact with ezrbookkeeping data.
 
 ```json
 {
@@ -276,7 +276,7 @@ Receipt pictures and PDF documents can be uploaded, attached, inspected, downloa
 * **Upload cap**: the decoded content must not exceed `attachments.max_file_size_bytes` of `get_server_capabilities` (the `max_transaction_picture_size` setting, 10 MiB by default), so the base64 text must not exceed `attachments.max_upload_base64_length`. Oversized content fails with `too_large` (with `limit` and `actual` in bytes) before it is decoded. Downloads are bounded by the same limit.
 * **Content, not file names**: only the base64 encoded content in `content_base64` is uploaded. A file name or a path on the client machine is never read or treated as an upload, and fails as invalid base64.
 * **Validation**: the file type is taken from `file_extension` (e.g. `jpg`, `png`, `gif`, `webp`, `pdf`) or `content_type` (e.g. `image/jpeg`, `application/pdf`); if both are set, they must match. The content must match the file type (the same magic bytes check as the web upload for PDF documents, and the detected type for images), otherwise the upload fails with `invalid_value`. A dry run performs the same checks without saving.
-* **Metadata**: ezbookkeeping2 stores the attachment ID, the transaction association, the file type, and the original file name (sanitized: directory parts and control characters are removed, at most 255 characters), byte size and SHA-256 checksum recorded at upload, both for uploads through MCP and through the web interface. In addition, the SHA-256 checksum is computed from the stored bytes whenever an attachment is listed, inspected or downloaded (`checksum_source: stored_file`), and `integrity_verified` reports whether the stored bytes still match the recorded size and checksum. Attachments uploaded by older versions have no recorded metadata and use the computed checksum only.
+* **Metadata**: ezrbookkeeping stores the attachment ID, the transaction association, the file type, and the original file name (sanitized: directory parts and control characters are removed, at most 255 characters), byte size and SHA-256 checksum recorded at upload, both for uploads through MCP and through the web interface. In addition, the SHA-256 checksum is computed from the stored bytes whenever an attachment is listed, inspected or downloaded (`checksum_source: stored_file`), and `integrity_verified` reports whether the stored bytes still match the recorded size and checksum. Attachments uploaded by older versions have no recorded metadata and use the computed checksum only.
 * **Limits and permissions**: a transaction can have at most `attachments.max_count_per_transaction` attachments. Attaching, detaching and deleting attachments of a transaction require the transaction to be within the user's transaction edit scope and not in a hidden account, as in the web interface.
 * **Staged workflow**: upload the receipt with `upload_transaction_attachment` (without `transaction_id`), then pass the returned ID in `attachment_ids` of `add_transaction`, or in `add_attachment_ids` of `update_transaction`. If a step fails, the uploaded attachment stays unattached; find it with `list_transaction_attachments` (without `transaction_id`) and retry, or delete it with `delete_transaction_attachment`. When `upload_transaction_attachment` is called with `transaction_id` but attaching fails, the response contains `attach_error` and the saved (unattached) attachment ID.
 

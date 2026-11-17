@@ -1,7 +1,7 @@
 {
     "global": {
         "app": {
-            "title": "ezbookkeeping2"
+            "title": "ezrbookkeeping"
         }
     },
     "language": {
@@ -181,23 +181,23 @@
             "ruleCount": "{count} rules",
             "accountActivationAndResendValidationEmailTip": "Ο σύνδεσμος ενεργοποίησης λογαριασμού στάλθηκε στη διεύθυνση email σας: {email}. Αν δεν λάβετε το email, συμπληρώστε ξανά τον κωδικό πρόσβασης και κάντε κλικ στο παρακάτω κουμπί για επανάληψη αποστολής του email επαλήθευσης.",
             "resendValidationEmailTip": "Αν δεν λάβετε το email, συμπληρώστε ξανά τον κωδικό πρόσβασης και κάντε κλικ στο παρακάτω κουμπί για επανάληψη αποστολής του email επαλήθευσης στο: {email}",
-            "oauth2bindTip": "Συνδέεστε στον χρήστη {userName} μέσω {providerName}. Εισαγάγετε τον κωδικό πρόσβασης ezbookkeeping2 για επαλήθευση."
+            "oauth2bindTip": "Συνδέεστε στον χρήστη {userName} μέσω {providerName}. Εισαγάγετε τον κωδικό πρόσβασης ezrbookkeeping για επαλήθευση."
         }
     },
     "dataExport": {
-        "defaultExportFilename": "ezbookkeeping2_export_data",
-        "exportFilename": "ezbookkeeping2_{nickname}_export_data",
-        "defaultExportStatisticsFileName": "ezbookkeeping2_statistics_data",
-        "exportStatisticsFileName": "ezbookkeeping2_{nickname}_statistics_data",
-        "defaultExportReconciliationStatementsFileName": "ezbookkeeping2_reconciliation_statements",
-        "exportReconciliationStatementsFileName": "ezbookkeeping2_{nickname}_reconciliation_statements",
-        "defaultInsightsExplorerQueryFileName": "ezbookkeeping2_insights_explorer_query",
-        "insightsExplorerQueryFileName": "ezbookkeeping2_{nickname}_insights_explorer_query",
-        "defaultImportDataMappingFileName": "ezbookkeeping2_import_data_mapping",
-        "defaultImportHandlingScript": "ezbookkeeping2_handling_script",
-        "defaultImportReplaceRuleFileName": "ezbookkeeping2_import_replace_rule",
-        "defaultImportCheckResultFileName": "ezbookkeeping2_import_check_result",
-        "defaultOverviewLayoutFileName": "ezbookkeeping2_overview_layout"
+        "defaultExportFilename": "ezrbookkeeping_export_data",
+        "exportFilename": "ezrbookkeeping_{nickname}_export_data",
+        "defaultExportStatisticsFileName": "ezrbookkeeping_statistics_data",
+        "exportStatisticsFileName": "ezrbookkeeping_{nickname}_statistics_data",
+        "defaultExportReconciliationStatementsFileName": "ezrbookkeeping_reconciliation_statements",
+        "exportReconciliationStatementsFileName": "ezrbookkeeping_{nickname}_reconciliation_statements",
+        "defaultInsightsExplorerQueryFileName": "ezrbookkeeping_insights_explorer_query",
+        "insightsExplorerQueryFileName": "ezrbookkeeping_{nickname}_insights_explorer_query",
+        "defaultImportDataMappingFileName": "ezrbookkeeping_import_data_mapping",
+        "defaultImportHandlingScript": "ezrbookkeeping_handling_script",
+        "defaultImportReplaceRuleFileName": "ezrbookkeeping_import_replace_rule",
+        "defaultImportCheckResultFileName": "ezrbookkeeping_import_check_result",
+        "defaultOverviewLayoutFileName": "ezrbookkeeping_overview_layout"
     },
     "calendar": {
         "Gregorian": "Γρηγοριανό",
@@ -1820,8 +1820,8 @@
     "Date is too early": "Η ημερομηνία είναι υπερβολικά πρώιμη",
     "User Canceled": "Ακυρώθηκε από τον χρήστη",
     "Unable to load language resources. Please try again.": "Unable to load language resources. Please try again.",
-    "Welcome to ezbookkeeping2": "Καλώς ήρθατε στο ezbookkeeping2",
-    "Please log in with your ezbookkeeping2 account": "Συνδεθείτε με τον λογαριασμό σας στο ezbookkeeping2",
+    "Welcome to ezrbookkeeping": "Καλώς ήρθατε στο ezrbookkeeping",
+    "Please log in with your ezrbookkeeping account": "Συνδεθείτε με τον λογαριασμό σας στο ezrbookkeeping",
     "Unlock Application": "Ξεκλείδωμα εφαρμογής",
     "Please enter your PIN code or use WebAuthn to unlock application": "Εισαγάγετε τον κωδικό PIN ή χρησιμοποιήστε WebAuthn για να ξεκλειδώσετε την εφαρμογή",
     "Please enter your PIN code to unlock application": "Εισαγάγετε τον κωδικό PIN για να ξεκλειδώσετε την εφαρμογή",

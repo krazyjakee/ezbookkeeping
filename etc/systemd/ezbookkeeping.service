@@ -1,5 +1,5 @@
 [Unit]
-Description=ezbookkeeping2, a business-focused fork of ezBookkeeping, an open source, self-hosted bookkeeping app
+Description=ezrbookkeeping, a business-focused fork of ezBookkeeping, an open source, self-hosted bookkeeping app
 After=syslog.target
 After=network.target
 After=mariadb.service mysqld.service postgresql.service

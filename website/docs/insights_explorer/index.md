@@ -17,7 +17,7 @@ After opening the Insights Explorer page, click "New Exploration" to create a ne
 
 ### Import / Export Query
 
-ezbookkeeping2 supports importing and exporting Insights Explorer queries in JSON format, making it easy to generate queries programmatically. You can click the three dot menu in the upper right corner, then select Import Queries or Export Queries. The query format is as follows:
+ezrbookkeeping supports importing and exporting Insights Explorer queries in JSON format, making it easy to generate queries programmatically. You can click the three dot menu in the upper right corner, then select Import Queries or Export Queries. The query format is as follows:
 
 ```json
 [
@@ -43,7 +43,7 @@ When `conditions` contains multiple query conditions, they are stored in infix e
 
 The `relation` field of the first condition must be `first`, indicating that it is the first condition in the query. Each subsequent condition uses either `and` or `or` to define its logical relationship with the preceding condition.
 
-ezbookkeeping2 also supports parentheses to control operator precedence. For the first condition inside a parenthesized group, the `relation` field must be `and(` or `or(`, indicating both the logical relationship with the previous condition and the start of a parenthesized expression. At the end of the group, insert a special condition that contains only the `relation` field with the value `)`, indicating the closing parenthesis.
+ezrbookkeeping also supports parentheses to control operator precedence. For the first condition inside a parenthesized group, the `relation` field must be `and(` or `or(`, indicating both the logical relationship with the previous condition and the start of a parenthesized expression. At the end of the group, insert a special condition that contains only the `relation` field with the value `)`, indicating the closing parenthesis.
 
 Example:
 
@@ -202,9 +202,9 @@ You can select individual transactions using the checkboxes in the leftmost colu
 
 ## Chart
 
-ezbookkeeping2 supports various chart types. You can use different fields from your transaction data or query as the horizontal axis or categories, and apply various aggregation functions to transaction amounts or counts to generate the chart values.
+ezrbookkeeping supports various chart types. You can use different fields from your transaction data or query as the horizontal axis or categories, and apply various aggregation functions to transaction amounts or counts to generate the chart values.
 
-The following value metrics and their calculation formulas are supported by ezbookkeeping2:
+The following value metrics and their calculation formulas are supported by ezrbookkeeping:
 
 > In the formulas below, let `n` be the number of transactions and `d` be the number of active days (days with at least one transaction). Let `I` denote the total income and `E` denote the total expense. Let `x₁, x₂, …, xₙ` denote the individual transaction amounts (all converted to the default currency). Let `x₍₁₎ ≤ x₍₂₎ ≤ … ≤ x₍ₙ₎` denote the amounts in ascending order. Let `Q1` and `Q3` denote the first and third quartiles, and `IQR = Q3 − Q1`.
 

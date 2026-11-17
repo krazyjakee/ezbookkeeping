@@ -65,7 +65,7 @@
 
                             <div class="auth-powered-by text-center">
                                 <span>Powered by </span>
-                                <a href="https://github.com/krazyjakee/ezbookkeeping" target="_blank">ezbookkeeping2</a>&nbsp;<span>{{ version }}</span>
+                                <a href="https://github.com/krazyjakee/ezbookkeeping" target="_blank">ezrbookkeeping</a>&nbsp;<span>{{ version }}</span>
                             </div>
                         </v-card-text>
                     </v-card>

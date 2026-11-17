@@ -1,13 +1,13 @@
 import { type HeadConfig, defineConfig, resolveSiteDataByRoute } from 'vitepress';
 
-const websiteName: string = 'ezbookkeeping2';
+const websiteName: string = 'ezrbookkeeping';
 const websiteBasePath: string = '/ezbookkeeping/';
 const websiteUrlRootUrl: string = 'https://krazyjakee.github.io/ezbookkeeping';
 const repositoryUrl: string = 'https://github.com/krazyjakee/ezbookkeeping';
-const titleEn: string = 'ezbookkeeping2 - stable, self-hosted bookkeeping for businesses';
-const titleZhHans: string = 'ezbookkeeping2 - 稳定、面向企业的自托管 (self-hosted) 记账应用';
-const descriptionEn: string = 'ezbookkeeping2 is a stable, business-focused, self-hosted bookkeeping app. A fork of mayswind/ezbookkeeping focused on maturity and business use.';
-const descriptionZhHans: string = 'ezbookkeeping2 是一款稳定、面向企业的自托管 (self-hosted) 记账应用，是 mayswind/ezbookkeeping 的分支，专注于成熟度与商业用途。';
+const titleEn: string = 'ezrbookkeeping - stable, self-hosted bookkeeping for businesses';
+const titleZhHans: string = 'ezrbookkeeping - 稳定、面向企业的自托管 (self-hosted) 记账应用';
+const descriptionEn: string = 'ezrbookkeeping is a stable, business-focused, self-hosted bookkeeping app. A fork of mayswind/ezbookkeeping focused on maturity and business use.';
+const descriptionZhHans: string = 'ezrbookkeeping 是一款稳定、面向企业的自托管 (self-hosted) 记账应用，是 mayswind/ezbookkeeping 的分支，专注于成熟度与商业用途。';
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
@@ -94,7 +94,7 @@ export default defineConfig({
                         items: [
                             { text: 'Release Notes', link: `${repositoryUrl}/releases` },
                             { text: 'Packaged Files', link: `${repositoryUrl}/releases` },
-                            { text: 'Docker Images', link: 'https://hub.docker.com/r/krazyjakee/ezbookkeeping2' }
+                            { text: 'Docker Images', link: 'https://hub.docker.com/r/krazyjakee/ezrbookkeeping' }
                         ]
                     },
                     { text: 'FAQ', link: '/faq/' }
@@ -189,7 +189,7 @@ export default defineConfig({
                         items: [
                             { text: '更新日志', link: `${repositoryUrl}/releases` },
                             { text: '打包文件', link: `${repositoryUrl}/releases` },
-                            { text: 'Docker 镜像', link: 'https://hub.docker.com/r/krazyjakee/ezbookkeeping2' }
+                            { text: 'Docker 镜像', link: 'https://hub.docker.com/r/krazyjakee/ezrbookkeeping' }
                         ]
                     },
                     { text: '常见问题', link: '/zh_Hans/faq/' }

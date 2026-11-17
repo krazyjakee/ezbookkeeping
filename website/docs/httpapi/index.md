@@ -4,11 +4,11 @@ title: API
 
 # API
 
-ezbookkeeping2 provides HTTP API for the frontend interface, and these API can also be used directly by users to implement more automation functions.
+ezrbookkeeping provides HTTP API for the frontend interface, and these API can also be used directly by users to implement more automation functions.
 
 ## Usage
 
-The API of ezbookkeeping2 verifies user identity by tokens. You can enable the option to generate API tokens by updating `enable_api_token` in the configuration file or by setting the environment variable. For details, see [Configuration - Security](/configuration/#security). After enabled, the "Generate Token" button will appear on "User Settings" -> "Security" page in the desktop version, and you can also generate the token by the `user-session-new` command in ezbookkeeping2's CLI, for more details, see the [Command Line](/command_line/#userdata).
+The API of ezrbookkeeping verifies user identity by tokens. You can enable the option to generate API tokens by updating `enable_api_token` in the configuration file or by setting the environment variable. For details, see [Configuration - Security](/configuration/#security). After enabled, the "Generate Token" button will appear on "User Settings" -> "Security" page in the desktop version, and you can also generate the token by the `user-session-new` command in ezrbookkeeping's CLI, for more details, see the [Command Line](/command_line/#userdata).
 
 Then you can use the token to access the API.
 
@@ -49,7 +49,7 @@ If both headers are provided, `X-Timezone-Name` takes precedence.
 
 ## API Tool Script
 
-ezbookkeeping2 provides a tool script called **ezbookkeeping2 API Tools** that allows users or AI agents to conveniently call the API endpoints from the command line using **sh** or **PowerShell**. You only need to configure two environment variables: the ezbookkeeping2 server address and the API token.
+ezrbookkeeping provides a tool script called **ezrbookkeeping API Tools** that allows users or AI agents to conveniently call the API endpoints from the command line using **sh** or **PowerShell**. You only need to configure two environment variables: the ezrbookkeeping server address and the API token.
 
 **Linux / macOS**
 

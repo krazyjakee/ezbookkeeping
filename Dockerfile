@@ -39,8 +39,8 @@ RUN ./build.sh frontend
 # Package docker image
 FROM alpine:3.24.3
 LABEL maintainer="krazyjakee (https://github.com/krazyjakee/ezbookkeeping)" \
-      org.opencontainers.image.title="ezbookkeeping2" \
-      org.opencontainers.image.description="ezbookkeeping2, a business-focused fork of ezBookkeeping, an open source, self-hosted bookkeeping app" \
+      org.opencontainers.image.title="ezrbookkeeping" \
+      org.opencontainers.image.description="ezrbookkeeping, a business-focused fork of ezBookkeeping, an open source, self-hosted bookkeeping app" \
       org.opencontainers.image.source="https://github.com/krazyjakee/ezbookkeeping" \
       org.opencontainers.image.url="https://github.com/krazyjakee/ezbookkeeping" \
       org.opencontainers.image.documentation="https://krazyjakee.github.io/ezbookkeeping/" \

@@ -4,7 +4,7 @@ title: 翻译
 
 # 翻译
 
-ezbookkeeping2 支持多语言和本地化设置，前端和后端分别有自己的多语言文件。前端多语言文件在 `/src/locales/`，后端多语言文件在 `/pkg/locales/`。所有语言文件需要以语言标签（单一语言子标签 或 语言子标签加书写体子标签，例如 `en`、`fr`、`zh-Hans`、`zh-Hant`）命名。
+ezrbookkeeping 支持多语言和本地化设置，前端和后端分别有自己的多语言文件。前端多语言文件在 `/src/locales/`，后端多语言文件在 `/pkg/locales/`。所有语言文件需要以语言标签（单一语言子标签 或 语言子标签加书写体子标签，例如 `en`、`fr`、`zh-Hans`、`zh-Hant`）命名。
 
 > 有关语言标签的更多信息，请参考 [RFC56​​46](https://www.rfc-editor.org/rfc/rfc5646.html)。所有可用语言标签可从这里 [IANA registry language-subtag-registry](https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry) 找到。
 
@@ -27,13 +27,13 @@ ezbookkeeping2 支持多语言和本地化设置，前端和后端分别有自�
 
 ## 检查未翻译的条目
 
-ezbookkeeping2 的仓库在每次更新词条时都会自动计算各个语言的翻译完成度及未翻译的条目，并将这些信息记录在 [ezBookkeeping-i18n-badge](https://github.com/mayswind/ezBookkeeping-i18n-badge) 仓库中。
+ezrbookkeeping 的仓库在每次更新词条时都会自动计算各个语言的翻译完成度及未翻译的条目，并将这些信息记录在 [ezBookkeeping-i18n-badge](https://github.com/mayswind/ezBookkeeping-i18n-badge) 仓库中。
 
 你可以打开这个仓库中的 [untranslated](https://github.com/mayswind/ezBookkeeping-i18n-badge/tree/main/untranslated) 文件夹，找到对应语言的 JSON 文件，里面列出了所有未翻译的条目，包括所在文件、词条路径以及原始的英文文本，你可以根据这些信息来进行完善翻译内容。
 
 ## 国际化
 
-ezbookkeeping2 允许用户更改多项区域设置，如日期、时间、数字和货币格式。当用户没有修改时，这些区域设置将使用语言文件中配置的默认值。这些默认值都在语言文件的 `default` 对象中。
+ezrbookkeeping 允许用户更改多项区域设置，如日期、时间、数字和货币格式。当用户没有修改时，这些区域设置将使用语言文件中配置的默认值。这些默认值都在语言文件的 `default` 对象中。
 
 这里是所有需要配置默认值的设置和说明：
 

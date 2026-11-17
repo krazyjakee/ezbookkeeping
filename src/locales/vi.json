@@ -1,7 +1,7 @@
 {
     "global": {
         "app": {
-            "title": "ezbookkeeping2"
+            "title": "ezrbookkeeping"
         }
     },
     "language": {
@@ -181,23 +181,23 @@
             "ruleCount": "{count} rules",
             "accountActivationAndResendValidationEmailTip": "Liên kết kích hoạt tài khoản đã được gửi tới email của bạn: {email}. Nếu bạn không nhận được email, vui lòng nhập lại mật khẩu và nhấp nút bên dưới để gửi lại email xác nhận.",
             "resendValidationEmailTip": "Nếu bạn không nhận được email, vui lòng nhập lại mật khẩu và nhấp nút bên dưới để gửi lại email xác nhận tới: {email}",
-            "oauth2bindTip": "You're signing in to the {userName} user using {providerName}. Please enter your ezbookkeeping2 password to verify."
+            "oauth2bindTip": "You're signing in to the {userName} user using {providerName}. Please enter your ezrbookkeeping password to verify."
         }
     },
     "dataExport": {
-        "defaultExportFilename": "ezbookkeeping2_export_data",
-        "exportFilename": "ezbookkeeping2_{nickname}_export_data",
-        "defaultExportStatisticsFileName": "ezbookkeeping2_statistics_data",
-        "exportStatisticsFileName": "ezbookkeeping2_{nickname}_statistics_data",
-        "defaultExportReconciliationStatementsFileName": "ezbookkeeping2_reconciliation_statements",
-        "exportReconciliationStatementsFileName": "ezbookkeeping2_{nickname}_reconciliation_statements",
-        "defaultInsightsExplorerQueryFileName": "ezbookkeeping2_insights_explorer_query",
-        "insightsExplorerQueryFileName": "ezbookkeeping2_{nickname}_insights_explorer_query",
-        "defaultImportDataMappingFileName": "ezbookkeeping2_import_data_mapping",
-        "defaultImportHandlingScript": "ezbookkeeping2_handling_script",
-        "defaultImportReplaceRuleFileName": "ezbookkeeping2_import_replace_rule",
-        "defaultImportCheckResultFileName": "ezbookkeeping2_import_check_result",
-        "defaultOverviewLayoutFileName": "ezbookkeeping2_overview_layout"
+        "defaultExportFilename": "ezrbookkeeping_export_data",
+        "exportFilename": "ezrbookkeeping_{nickname}_export_data",
+        "defaultExportStatisticsFileName": "ezrbookkeeping_statistics_data",
+        "exportStatisticsFileName": "ezrbookkeeping_{nickname}_statistics_data",
+        "defaultExportReconciliationStatementsFileName": "ezrbookkeeping_reconciliation_statements",
+        "exportReconciliationStatementsFileName": "ezrbookkeeping_{nickname}_reconciliation_statements",
+        "defaultInsightsExplorerQueryFileName": "ezrbookkeeping_insights_explorer_query",
+        "insightsExplorerQueryFileName": "ezrbookkeeping_{nickname}_insights_explorer_query",
+        "defaultImportDataMappingFileName": "ezrbookkeeping_import_data_mapping",
+        "defaultImportHandlingScript": "ezrbookkeeping_handling_script",
+        "defaultImportReplaceRuleFileName": "ezrbookkeeping_import_replace_rule",
+        "defaultImportCheckResultFileName": "ezrbookkeeping_import_check_result",
+        "defaultOverviewLayoutFileName": "ezrbookkeeping_overview_layout"
     },
     "calendar": {
         "Gregorian": "Gregorian",
@@ -1820,8 +1820,8 @@
     "Date is too early": "Ngày quá sớm",
     "User Canceled": "User Canceled",
     "Unable to load language resources. Please try again.": "Unable to load language resources. Please try again.",
-    "Welcome to ezbookkeeping2": "Chào mừng đến với ezbookkeeping2",
-    "Please log in with your ezbookkeeping2 account": "Vui lòng đăng nhập bằng tài khoản ezbookkeeping2 của bạn",
+    "Welcome to ezrbookkeeping": "Chào mừng đến với ezrbookkeeping",
+    "Please log in with your ezrbookkeeping account": "Vui lòng đăng nhập bằng tài khoản ezrbookkeeping của bạn",
     "Unlock Application": "Mở khóa ứng dụng",
     "Please enter your PIN code or use WebAuthn to unlock application": "Vui lòng nhập mã PIN hoặc sử dụng WebAuthn để mở khóa ứng dụng",
     "Please enter your PIN code to unlock application": "Vui lòng nhập mã PIN để mở khóa ứng dụng",

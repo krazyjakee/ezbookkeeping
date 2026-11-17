@@ -4,8 +4,8 @@ title: "Run on Kubernetes"
 
 # Run on Kubernetes
 
-For production deployments in Kubernetes, ezbookkeeping2 can be deployed referring to the following manifests. This example demonstrates a production-ready setup with:
-- ezbookkeeping2 deployment with persistent storages for SQLite database (For simplicity, the example uses SQLite. But for production deployments, please use MySQL or PostgreSQL instead) and user uploads
+For production deployments in Kubernetes, ezrbookkeeping can be deployed referring to the following manifests. This example demonstrates a production-ready setup with:
+- ezrbookkeeping deployment with persistent storages for SQLite database (For simplicity, the example uses SQLite. But for production deployments, please use MySQL or PostgreSQL instead) and user uploads
 - Ingress configuration with TLS/HTTPS support
 
 Before applying these manifests, make sure to:
@@ -20,7 +20,7 @@ Before applying these manifests, make sure to:
 
 ### secret.yaml
 
-Contains sensitive data including ezbookkeeping2's secret key for session encryption.
+Contains sensitive data including ezrbookkeeping's secret key for session encryption.
 
 ```yaml:line-numbers
 apiVersion: v1
@@ -29,13 +29,13 @@ metadata:
   name: ezbookkeeping-secret
 type: Opaque
 data:
-  # Set this to a random string. You can generate one using the ezbookkeeping2 CLI command "ezbookkeeping security gen-secret-key" or "openssl rand -base64 32"
+  # Set this to a random string. You can generate one using the ezrbookkeeping CLI command "ezbookkeeping security gen-secret-key" or "openssl rand -base64 32"
   EBK_SECURITY_SECRET_KEY: XXX
 ```
 
 ### ezbookkeeping.yaml
 
-ezbookkeeping2 application Deployment.
+ezrbookkeeping application Deployment.
 
 ```yaml:line-numbers
 ---
@@ -97,7 +97,7 @@ spec:
         runAsGroup: 1000
         fsGroup: 1000
       containers:
-      - image: "krazyjakee/ezbookkeeping2:latest" # you can set specific version here (e.g. 1.2.0) for manual update control
+      - image: "krazyjakee/ezrbookkeeping:latest" # you can set specific version here (e.g. 1.2.0) for manual update control
         imagePullPolicy: Always # Required for "latest" tag to ensure fresh image pulls. Use "IfNotPresent" for specific versions
         name: "ezbookkeeping"
         env:

@@ -49,7 +49,7 @@
                     </p>
                     <hr/>
                     <p>
-                        <span>ezbookkeeping2 is a fork of ezBookkeeping by MaysWind. ezBookkeeping's codebase and localization translation rely on contributions from the community. The following people have contributed to ezBookkeeping:</span>
+                        <span>ezrbookkeeping is a fork of ezBookkeeping by MaysWind. ezBookkeeping's codebase and localization translation rely on contributions from the community. The following people have contributed to ezBookkeeping:</span>
                     </p>
                     <div>
                         <strong>Original Project Maintainer</strong>
@@ -105,7 +105,7 @@
                         </tbody>
                     </table>
                     <p class="margin-top margin-bottom">
-                        <span>ezbookkeeping2 also contains additional third party software and illustration.</span><br/>
+                        <span>ezrbookkeeping also contains additional third party software and illustration.</span><br/>
                         <span>All the third party software / illustration included or linked is redistributed under the terms and conditions of their original licenses.</span>
                     </p>
                     <p :key="licenseInfo.name" v-for="licenseInfo in thirdPartyLicenses">
@@ -206,8 +206,8 @@ const documentUrl = computed<string>(() => {
 
 function updateDiagnosisInformation(supportsWebAuthn: boolean, hasClipboardPermission: boolean, hasGeolocationPermission: boolean): void {
     diagnosisInformation.value =
-        `ezbookkeeping2 Frontend Version: ${clientVersion}\n` +
-        `ezbookkeeping2 Backend Version: ${serverDisplayVersion.value}\n` +
+        `ezrbookkeeping Frontend Version: ${clientVersion}\n` +
+        `ezrbookkeeping Backend Version: ${serverDisplayVersion.value}\n` +
         `User Agent: ${navigator.userAgent}\n` +
         `Security Context: ${window.isSecureContext}\n` +
         `Standalone: ${isiOSHomeScreenMode()}\n` +
@@ -220,7 +220,7 @@ function updateDiagnosisInformation(supportsWebAuthn: boolean, hasClipboardPermi
         `Clipboard Permission Granted: ${hasClipboardPermission}\n` +
         `Geolocation API Supported: ${!!navigator.geolocation}\n` +
         `Geolocation Permission Granted: ${hasGeolocationPermission}\n` +
-        `ezbookkeeping2 Server Settings:\n${getStringifiedServerSetting()}`;
+        `ezrbookkeeping Server Settings:\n${getStringifiedServerSetting()}`;
 }
 
 function showDiagnosisInformation(): void {

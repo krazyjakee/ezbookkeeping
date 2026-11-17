@@ -6,7 +6,7 @@ title: Developing
 
 ## Preparation
 
-ezbookkeeping2 is written in Golang and TypeScript. You should install [Git](https://git-scm.com/), [Golang](https://golang.org/), [GCC](https://gcc.gnu.org/), [Node.js](https://nodejs.org/) and [NPM](https://www.npmjs.com/) before you start to develop. The release package and docker image of ezbookkeeping2 is compiled in Golang 1.27 and Node.js 26.x. The Go versions required by previous ezbookkeeping2 releases can be found in [System Requirements](/installation/system_requirements).
+ezrbookkeeping is written in Golang and TypeScript. You should install [Git](https://git-scm.com/), [Golang](https://golang.org/), [GCC](https://gcc.gnu.org/), [Node.js](https://nodejs.org/) and [NPM](https://www.npmjs.com/) before you start to develop. The release package and docker image of ezrbookkeeping is compiled in Golang 1.27 and Node.js 26.x. The Go versions required by previous ezrbookkeeping releases can be found in [System Requirements](/installation/system_requirements).
 
 ## Download the source code
 
@@ -77,31 +77,31 @@ The backend file will be built and be placed in the project directory and the fi
 **Linux / macOS**
 
 ```shell
-$ ./build.sh package -o ezbookkeeping2.tar.gz
+$ ./build.sh package -o ezrbookkeeping.tar.gz
 ```
 
-All the files will be built and be packaged in `ezbookkeeping2.tar.gz`.
+All the files will be built and be packaged in `ezrbookkeeping.tar.gz`.
 
 **Windows**
 
 ```shell
-> .\build.bat package -o ezbookkeeping2.zip
+> .\build.bat package -o ezrbookkeeping.zip
 ```
 
 or
 
 ```powershell
-PS > .\build.ps1 package -Output ezbookkeeping2.zip
+PS > .\build.ps1 package -Output ezrbookkeeping.zip
 ```
 
-All the files will be packaged in `ezbookkeeping2.zip`.
+All the files will be packaged in `ezrbookkeeping.zip`.
 
 ### Building docker image
 
 **Linux**
 
 ```shell
-$ ./build.sh docker -t ezbookkeeping2:release
+$ ./build.sh docker -t ezrbookkeeping:release
 ```
 
-The docker image will be built and be tagged with `ezbookkeeping2:release`.
+The docker image will be built and be tagged with `ezrbookkeeping:release`.

@@ -6,7 +6,7 @@ import (
 
 var ko = &LocaleTextItems{
 	GlobalTextItems: &GlobalTextItems{
-		AppName: "ezbookkeeping2",
+		AppName: "ezrbookkeeping",
 	},
 	DefaultTypes: &DefaultTypes{
 		DecimalSeparator:    core.DECIMAL_SEPARATOR_DOT,

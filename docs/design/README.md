@@ -1,10 +1,10 @@
-# ezbookkeeping2 design brief: "Copper Instrument Panel"
+# ezrbookkeeping design brief: "Copper Instrument Panel"
 
-This is the shared design reference for the sci-fi revamp milestone (#24–#37). Implementation issues cite it, and design review checks against it. The product name (`ezbookkeeping2`) and attribution follow #23.
+This is the shared design reference for the sci-fi revamp milestone (#24–#37). Implementation issues cite it, and design review checks against it. The product name (`ezrbookkeeping`) and attribution follow #23.
 
 ## 1. Direction
 
-ezbookkeeping2 should feel like a **precision instrument panel for money**. It is calm, technical and trustworthy, not a game UI.
+ezrbookkeeping should feel like a **precision instrument panel for money**. It is calm, technical and trustworthy, not a game UI.
 
 - **Information first.** Amounts, dates, accounts and states are the brightest things on screen. Decoration sits one step behind content.
 - **Copper as signal, not paint.** The brand copper `#C67E48` marks focus, selection, primary actions and live state. Large surfaces stay warm neutral.

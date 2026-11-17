@@ -4,13 +4,13 @@ title: "System Requirements"
 
 # System Requirements
 
-ezbookkeeping2 can be deployed on mainstream operating systems and accessed through modern web browsers. Below are the minimum supported operating system and browser versions for each ezbookkeeping2 release line.
+ezrbookkeeping can be deployed on mainstream operating systems and accessed through modern web browsers. Below are the minimum supported operating system and browser versions for each ezrbookkeeping release line.
 
-## Operating systems supported for deploying the ezbookkeeping2 server
+## Operating systems supported for deploying the ezrbookkeeping server
 
-The operating systems that can run the ezbookkeeping2 server are the same as those supported by Golang. The table below lists the Golang versions required by each ezbookkeeping2 release, along with the minimum supported OS versions.
+The operating systems that can run the ezrbookkeeping server are the same as those supported by Golang. The table below lists the Golang versions required by each ezrbookkeeping release, along with the minimum supported OS versions.
 
-| ezbookkeeping2 Version | Golang Version | Minimum Linux Kernel Version | Minimum Windows Version | Minimum macOS Version |
+| ezrbookkeeping Version | Golang Version | Minimum Linux Kernel Version | Minimum Windows Version | Minimum macOS Version |
 | --- | --- | --- | --- | --- |
 | v2.0.0 and later | 1.27 | ≥ 3.2 | ≥ Windows 10 / Windows Server 2016 | ≥ macOS 13 Ventura |
 | v1.5.x – v1.6.x | 1.26 | ≥ 3.2 | ≥ Windows 10 / Windows Server 2016 | ≥ macOS 12 Monterey |
@@ -24,11 +24,11 @@ The operating systems that can run the ezbookkeeping2 server are the same as tho
 
 The Linux versions listed above apply only to the amd64, arm64 and armv6/v7 architectures. For other architectures, please refer to the official Golang documentation. For more details on supported operating systems, please visit the official Golang documentation: [https://go.dev/wiki/MinimumRequirements](https://go.dev/wiki/MinimumRequirements).
 
-## Browsers supported for accessing the ezbookkeeping2 interface
+## Browsers supported for accessing the ezrbookkeeping interface
 
-If you've already deployed the ezbookkeeping2 server program, you can access ezbookkeeping2 directly through your web browser. The table below lists the minimum browser versions required for each ezbookkeeping2 release.
+If you've already deployed the ezrbookkeeping server program, you can access ezrbookkeeping directly through your web browser. The table below lists the minimum browser versions required for each ezrbookkeeping release.
 
-| ezbookkeeping2 Version | Minimum Chrome Version | Minimum Edge Version | Minimum Firefox Version | Minimum Safari Version |
+| ezrbookkeeping Version | Minimum Chrome Version | Minimum Edge Version | Minimum Firefox Version | Minimum Safari Version |
 | --- | --- | --- | --- | --- |
 | v2.0.x and later | ≥ 119 (October 2023) | ≥ 119 (November 2023) | ≥ 128 (July 2024) | ≥ 16.4 (March 2023) |
 | v1.1.x – v1.6.x | ≥ 91 (May 2021) | ≥ 91 (April 2021) | ≥ 91 (August 2021) | ≥ 15.4 (March 2022) |

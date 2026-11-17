@@ -3,34 +3,34 @@ import { isEnableDebug } from './settings.ts';
 function logDebug(msg: string, obj?: unknown): void {
     if (isEnableDebug()) {
         if (obj) {
-            console.debug('[ezbookkeeping2 Debug] ' + msg, obj);
+            console.debug('[ezrbookkeeping Debug] ' + msg, obj);
         } else {
-            console.debug('[ezbookkeeping2 Debug] ' + msg);
+            console.debug('[ezrbookkeeping Debug] ' + msg);
         }
     }
 }
 
 function logInfo(msg: string, obj?: unknown): void {
     if (obj) {
-        console.info('[ezbookkeeping2 Info] ' + msg, obj);
+        console.info('[ezrbookkeeping Info] ' + msg, obj);
     } else {
-        console.info('[ezbookkeeping2 Info] ' + msg);
+        console.info('[ezrbookkeeping Info] ' + msg);
     }
 }
 
 function logWarn(msg: string, obj?: unknown): void {
     if (obj) {
-        console.warn('[ezbookkeeping2 Warn] ' + msg, obj);
+        console.warn('[ezrbookkeeping Warn] ' + msg, obj);
     } else {
-        console.warn('[ezbookkeeping2 Warn] ' + msg);
+        console.warn('[ezrbookkeeping Warn] ' + msg);
     }
 }
 
 function logError(msg: string, obj?: unknown): void {
     if (obj) {
-        console.error('[ezbookkeeping2 Error] ' + msg, obj);
+        console.error('[ezrbookkeeping Error] ' + msg, obj);
     } else {
-        console.error('[ezbookkeeping2 Error] ' + msg);
+        console.error('[ezrbookkeeping Error] ' + msg);
     }
 }
 

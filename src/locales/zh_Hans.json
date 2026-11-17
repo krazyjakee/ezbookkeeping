@@ -1,7 +1,7 @@
 {
     "global": {
         "app": {
-            "title": "ezbookkeeping2"
+            "title": "ezrbookkeeping"
         }
     },
     "language": {
@@ -181,23 +181,23 @@
             "ruleCount": "{count} 条规则",
             "accountActivationAndResendValidationEmailTip": "账号激活链接已经发送到您的邮箱地址：{email}，如果您没有收到邮件，请再次输入密码并点击下方的按钮重新发送验证邮件。",
             "resendValidationEmailTip": "如果您没有收到邮件，请再次输入密码并点击下方的按钮重新发送验证邮件到：{email}",
-            "oauth2bindTip": "您正在使用 {providerName} 登录 \"{userName}\" 用户，请输入你的 ezbookkeeping2 的密码进行验证。"
+            "oauth2bindTip": "您正在使用 {providerName} 登录 \"{userName}\" 用户，请输入你的 ezrbookkeeping 的密码进行验证。"
         }
     },
     "dataExport": {
-        "defaultExportFilename": "ezbookkeeping2_导出数据",
-        "exportFilename": "ezbookkeeping2_{nickname}_导出数据",
-        "defaultExportStatisticsFileName": "ezbookkeeping2_统计数据",
-        "exportStatisticsFileName": "ezbookkeeping2_{nickname}_统计数据",
-        "defaultExportReconciliationStatementsFileName": "ezbookkeeping2_对账单",
-        "exportReconciliationStatementsFileName": "ezbookkeeping2_{nickname}_对账单",
-        "defaultInsightsExplorerQueryFileName": "ezbookkeeping2_洞察探索查询",
-        "insightsExplorerQueryFileName": "ezbookkeeping2_{nickname}_洞察探索查询",
-        "defaultImportDataMappingFileName": "ezbookkeeping2_导入数据映射文件",
-        "defaultImportHandlingScript": "ezbookkeeping2_导入处理脚本",
-        "defaultImportReplaceRuleFileName": "ezbookkeeping2_导入替换规则文件",
-        "defaultImportCheckResultFileName": "ezbookkeeping2_导入检查结果",
-        "defaultOverviewLayoutFileName": "ezbookkeeping2_总览布局"
+        "defaultExportFilename": "ezrbookkeeping_导出数据",
+        "exportFilename": "ezrbookkeeping_{nickname}_导出数据",
+        "defaultExportStatisticsFileName": "ezrbookkeeping_统计数据",
+        "exportStatisticsFileName": "ezrbookkeeping_{nickname}_统计数据",
+        "defaultExportReconciliationStatementsFileName": "ezrbookkeeping_对账单",
+        "exportReconciliationStatementsFileName": "ezrbookkeeping_{nickname}_对账单",
+        "defaultInsightsExplorerQueryFileName": "ezrbookkeeping_洞察探索查询",
+        "insightsExplorerQueryFileName": "ezrbookkeeping_{nickname}_洞察探索查询",
+        "defaultImportDataMappingFileName": "ezrbookkeeping_导入数据映射文件",
+        "defaultImportHandlingScript": "ezrbookkeeping_导入处理脚本",
+        "defaultImportReplaceRuleFileName": "ezrbookkeeping_导入替换规则文件",
+        "defaultImportCheckResultFileName": "ezrbookkeeping_导入检查结果",
+        "defaultOverviewLayoutFileName": "ezrbookkeeping_总览布局"
     },
     "calendar": {
         "Gregorian": "公历",
@@ -1820,8 +1820,8 @@
     "Date is too early": "日期过早",
     "User Canceled": "用户已取消",
     "Unable to load language resources. Please try again.": "无法加载语言资源，请重试。",
-    "Welcome to ezbookkeeping2": "欢迎使用 ezbookkeeping2",
-    "Please log in with your ezbookkeeping2 account": "请使用您的 ezbookkeeping2 账号登录",
+    "Welcome to ezrbookkeeping": "欢迎使用 ezrbookkeeping",
+    "Please log in with your ezrbookkeeping account": "请使用您的 ezrbookkeeping 账号登录",
     "Unlock Application": "解锁应用",
     "Please enter your PIN code or use WebAuthn to unlock application": "请输入您的 PIN 码，或使用 WebAuthn 解锁应用",
     "Please enter your PIN code to unlock application": "请输入您的 PIN 码解锁应用",

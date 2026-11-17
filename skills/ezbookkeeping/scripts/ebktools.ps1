@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
 
-# ezbookkeeping2 API Tools
-# A command-line tool for calling ezbookkeeping2 APIs
+# ezrbookkeeping API Tools
+# A command-line tool for calling ezrbookkeeping APIs
 
 param(
     [Parameter(Position=0)]
@@ -528,7 +528,7 @@ $API_CONFIGS = @(
     }
     @{
         Name = "server-version"
-        Description = "Retrieve ezbookkeeping2 server version information"
+        Description = "Retrieve ezrbookkeeping server version information"
         Method = "GET"
         Path = "systems/version.json"
         RequiresTimezone = $false
@@ -1152,16 +1152,16 @@ function Show-Help {
     $exampleTimezoneName = Get-ExampleTimezoneName
     $exampleTimezoneOffset = Get-ExampleTimezoneOffset
 
-    Write-Host "ezbookkeeping2 API Tools"
+    Write-Host "ezrbookkeeping API Tools"
     Write-Host ""
-    Write-Host "A command-line tool for calling ezbookkeeping2 APIs"
+    Write-Host "A command-line tool for calling ezrbookkeeping APIs"
     Write-Host ""
     Write-Host "Usage:"
     Write-Host "    ebktools.ps1 [-tzName <name>] [-tzOffset <offset>] [-rawResponse] <command> [command-options]"
     Write-Host ""
     Write-Host "Environment Variables (Required):"
-    Write-Host "    EBKTOOL_SERVER_BASEURL      ezbookkeeping2 server base URL (e.g., http://localhost:8080)"
-    Write-Host "    EBKTOOL_TOKEN               ezbookkeeping2 API token"
+    Write-Host "    EBKTOOL_SERVER_BASEURL      ezrbookkeeping server base URL (e.g., http://localhost:8080)"
+    Write-Host "    EBKTOOL_TOKEN               ezrbookkeeping API token"
     Write-Host ""
     Write-Host "    You can also set the above environment variables in a '.env' file located in the current directory, parent directory or home directory."
     Write-Host ""
@@ -1369,7 +1369,7 @@ function Invoke-Api {
 
     if (-not $serverBaseUrl) {
         Write-Red "Error: Environment variable 'EBKTOOL_SERVER_BASEURL' is not set."
-        Write-Host "Please set it to your ezbookkeeping2 server base URL (e.g., http://localhost:8080)"
+        Write-Host "Please set it to your ezrbookkeeping server base URL (e.g., http://localhost:8080)"
         exit 1
     }
 

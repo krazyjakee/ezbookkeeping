@@ -4,31 +4,31 @@ title: "通过 Docker 运行"
 
 # 通过 Docker 运行
 
-访问 [Docker Hub](https://hub.docker.com/r/krazyjakee/ezbookkeeping2) 查看所有镜像和标签。
+访问 [Docker Hub](https://hub.docker.com/r/krazyjakee/ezrbookkeeping) 查看所有镜像和标签。
 
 **最近发布镜像**
 
-[![最近发布镜像](https://img.shields.io/docker/v/krazyjakee/ezbookkeeping2?sort=semver&style=flat-square)](https://hub.docker.com/r/krazyjakee/ezbookkeeping2)
+[![最近发布镜像](https://img.shields.io/docker/v/krazyjakee/ezrbookkeeping?sort=semver&style=flat-square)](https://hub.docker.com/r/krazyjakee/ezrbookkeeping)
 
-`krazyjakee/ezbookkeeping2:latest`
+`krazyjakee/ezrbookkeeping:latest`
 
 **指定版本的发布镜像**
 
-`krazyjakee/ezbookkeeping2:{version}`
+`krazyjakee/ezrbookkeeping:{version}`
 
 **最近每日构建镜像**
 
-`krazyjakee/ezbookkeeping2:latest-snapshot`
+`krazyjakee/ezrbookkeeping:latest-snapshot`
 
 ## 启动 Docker 镜像
 
 示例：
 
 ```shell
-$ docker run -d -p8080:8080 --name ezbookkeeping krazyjakee/ezbookkeeping2
+$ docker run -d -p8080:8080 --name ezbookkeeping krazyjakee/ezrbookkeeping
 ```
 
-执行完该命令后，ezbookkeeping2 将会使用默认的配置在后台启动，并监听端口 `8080`。
+执行完该命令后，ezrbookkeeping 将会使用默认的配置在后台启动，并监听端口 `8080`。
 
 容器中的默认路径：
 
@@ -44,7 +44,7 @@ $ docker run -d -p8080:8080 --name ezbookkeeping krazyjakee/ezbookkeeping2
 如果你想继续使用 `sqlite3` 作为数据库，并持久化保存这些数据，你必须使用 Docker 持久化数据卷或挂载宿主机的路径到容器内，否则当容器被重建或删除时，所有数据将会丢失。
 
 > [!NOTE] 提示
-> ezbookkeeping2 建议仅测试时使用 SQLite 数据库。如果您确定使用 ezbookkeeping2，建议使用 MySQL 或 PostgreSQL 数据库，以提供更好的性能和稳定性。
+> ezrbookkeeping 建议仅测试时使用 SQLite 数据库。如果您确定使用 ezrbookkeeping，建议使用 MySQL 或 PostgreSQL 数据库，以提供更好的性能和稳定性。
 
 此外，默认对象存储使用本地文件系统，默认路径是 `/ezbookkeeping/storage/`，如果你使用本地文件系统存储对象数据（例如用户上传的图片），你也需要使用 Docker 持久化数据卷或挂载宿主机的路径到容器内。
 
@@ -56,7 +56,7 @@ $ docker volume create ezbookkeeping-data
 $ docker volume create ezbookkeeping-storage
 
 # 使用持久化数据卷运行容器
-$ docker run -d -p8080:8080 --name ezbookkeeping -v ezbookkeeping-data:/ezbookkeeping/data -v ezbookkeeping-storage:/ezbookkeeping/storage krazyjakee/ezbookkeeping2
+$ docker run -d -p8080:8080 --name ezbookkeeping -v ezbookkeeping-data:/ezbookkeeping/data -v ezbookkeeping-storage:/ezbookkeeping/storage krazyjakee/ezrbookkeeping
 ```
 
 ### 挂载宿主机路径运行容器
@@ -69,17 +69,17 @@ $ chown 1000:1000 /var/lib/ezbookkeeping/data
 $ chown 1000:1000 /var/lib/ezbookkeeping/storage
 
 # 挂载宿主机路径运行容器
-$ docker run -d -p8080:8080 --name ezbookkeeping -v /var/lib/ezbookkeeping/data:/ezbookkeeping/data -v /var/lib/ezbookkeeping/storage:/ezbookkeeping/storage krazyjakee/ezbookkeeping2
+$ docker run -d -p8080:8080 --name ezbookkeeping -v /var/lib/ezbookkeeping/data:/ezbookkeeping/data -v /var/lib/ezbookkeeping/storage:/ezbookkeeping/storage krazyjakee/ezrbookkeeping
 ```
 
-运行 ezbookkeeping2 的 用户ID（UID）和 分组ID（GID）都是 `1000`，所以你需要保证当你想修改路径或挂载数据卷时，ezbookkeeping2 使用的目录有权限被 UID/GID `1000` 读/写。
+运行 ezrbookkeeping 的 用户ID（UID）和 分组ID（GID）都是 `1000`，所以你需要保证当你想修改路径或挂载数据卷时，ezrbookkeeping 使用的目录有权限被 UID/GID `1000` 读/写。
 
 ## 自定义配置
 
 如果你想替换配置文件，你可以挂载自定义的配置文件到 `/ezbookkeeping/conf/ezbookkeeping.ini`，或通过环境变量 `EBK_CONF_PATH` 修改配置文件的路径。
 
 如果你只是想修改部分选项，你只要使用环境变量就可以设置这些值。
-配置文件中所有的选项都可以通过如下的环境变量名被覆盖：`EBK_{SECTION_NAME}_{OPTION_NAME}`。除此之外，ezbookkeeping2 还支持通过环境变量从指定文件中加载指定配置项的值，具体参考 [配置](/zh_Hans/configuration/)。
+配置文件中所有的选项都可以通过如下的环境变量名被覆盖：`EBK_{SECTION_NAME}_{OPTION_NAME}`。除此之外，ezrbookkeeping 还支持通过环境变量从指定文件中加载指定配置项的值，具体参考 [配置](/zh_Hans/configuration/)。
 
 > [!IMPORTANT] 注意
 > 在部署到生产环境之前，您必须生成一个随机值并将其设置到 `secret_key` 配置中以保证您数据的安全。你可以通过执行 `ezbookkeeping security gen-secret-key` 或 `openssl rand -base64 32` 获取一个随机密钥。
@@ -96,7 +96,7 @@ $ docker run -d -p8080:8080 --name ezbookkeeping -v /var/lib/ezbookkeeping/data:
 version: "2"
 services:
   ezbookkeeping:
-    image: krazyjakee/ezbookkeeping2
+    image: krazyjakee/ezrbookkeeping
     container_name: ezbookkeeping
     hostname: "ezbookkeeping"
     ports:

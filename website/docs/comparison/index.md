@@ -1,16 +1,16 @@
 ---
-title: Feature Comparison (ezbookkeeping2 vs. Firefly III vs. Actual Budget)
+title: Feature Comparison (ezrbookkeeping vs. Firefly III vs. Actual Budget)
 ---
 
 # Feature Comparison
 
-Below is a feature comparison between ezbookkeeping2 and the open-source, self-hosted personal finance software Firefly III and Actual Budget, based on information as of January 2026.
+Below is a feature comparison between ezrbookkeeping and the open-source, self-hosted personal finance software Firefly III and Actual Budget, based on information as of January 2026.
 
-ezbookkeeping2 does not cover every possible need, so you can choose the software that best aligns with your top priorities. The latest feature list of ezbookkeeping2 is available in [Feature List](/features/).
+ezrbookkeeping does not cover every possible need, so you can choose the software that best aligns with your top priorities. The latest feature list of ezrbookkeeping is available in [Feature List](/features/).
 
 ## Basic Information
 
-| Item | ezbookkeeping2 | Firefly III | Actual Budget |
+| Item | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | Compared Version | v1.3.2 | v6.4.16 | v26.1.0 |
 | Development Period | 2020–present | 2014–present | 2022–present |
@@ -26,7 +26,7 @@ ezbookkeeping2 does not cover every possible need, so you can choose the softwar
 
 ## Performance
 
-| Item | ezbookkeeping2 | Firefly III | Actual Budget |
+| Item | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | Docker Image Tag | `1.3.2` | `version-6.4.16` | `26.1.0-alpine` |
 | Docker Image Size (`linux/amd64`) | 57.7 MiB | 795 MiB | 188 MiB |
@@ -42,7 +42,7 @@ ezbookkeeping2 does not cover every possible need, so you can choose the softwar
 
 ## User Interface
 
-| Item | ezbookkeeping2 | Firefly III | Actual Budget |
+| Item | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | Desktop interface | ✅ Supported | ✅ Supported | ✅ Supported |
 | Mobile interface | ✅ Native mobile pages with app-like experience | ⚠️ Provided via responsive desktop UI | ⚠️ Mobile-oriented web pages |
@@ -54,7 +54,7 @@ ezbookkeeping2 does not cover every possible need, so you can choose the softwar
 
 ## Transaction Capabilities
 
-| Item | ezbookkeeping2 | Firefly III | Actual Budget |
+| Item | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | Date | ✅ Supported | ✅ Supported | ✅ Supported |
 | Time | ✅ Supported (to the second) | ✅ Supported (to the minute) | ❌ Not supported |
@@ -76,7 +76,7 @@ ezbookkeeping2 does not cover every possible need, so you can choose the softwar
 
 ## Transaction Category Capabilities
 
-| Item | ezbookkeeping2 | Firefly III | Actual Budget |
+| Item | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | Two-level categories | ✅ Supported | ❌ Not supported | ❌ Not supported |
 | Expense categories | ✅ Supported | ⚠️ Not distinguished | ⚠️ Not distinguished |
@@ -89,7 +89,7 @@ ezbookkeeping2 does not cover every possible need, so you can choose the softwar
 
 ## Account Capabilities
 
-| Item | ezbookkeeping2 | Firefly III | Actual Budget |
+| Item | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | Account name | ✅ Supported | ✅ Supported | ✅ Supported |
 | Account types | ✅ Multiple types supported | ✅ Multiple types supported | ❌ Not supported |
@@ -104,13 +104,13 @@ ezbookkeeping2 does not cover every possible need, so you can choose the softwar
 
 ## Budgeting Features
 
-| Item | ezbookkeeping2 | Firefly III | Actual Budget |
+| Item | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | Budgeting feature | ❌ Not supported | ✅ Supported | ✅ Supported |
 
 ## Transaction Query Features
 
-| Item | ezbookkeeping2 | Firefly III | Actual Budget |
+| Item | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | Transaction list view | ✅ Supported | ✅ Supported | ✅ Supported |
 | Transaction calendar view | ✅ Supported | ❌ Not supported | ✅ Supported |
@@ -125,7 +125,7 @@ ezbookkeeping2 does not cover every possible need, so you can choose the softwar
 
 ## Statistics & Analysis
 
-| Item | ezbookkeeping2 | Firefly III | Actual Budget |
+| Item | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | Category income / expense proportion charts | ✅ Supported | ✅ Supported | ✅ Supported |
 | Account income / expense proportion charts | ✅ Supported | ❌ Not supported | ✅ Supported |
@@ -152,7 +152,7 @@ ezbookkeeping2 does not cover every possible need, so you can choose the softwar
 
 ## Import Features
 
-| Item | ezbookkeeping2 | Firefly III | Actual Budget |
+| Item | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | CSV | ✅ Built-in support | ✅ Via Data Importer | ✅ Built-in support |
 | CSV column-mapping import | ✅ Supports import / export rules, shareable via community | ✅ Data Importer has built-in preset rules | ⚠️ Mapping rules must be set each time |
@@ -178,21 +178,21 @@ ezbookkeeping2 does not cover every possible need, so you can choose the softwar
 
 ## Export Features
 
-| Item | ezbookkeeping2 | Firefly III | Actual Budget |
+| Item | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | CSV | ✅ Supported | ✅ Supported | ✅ Supported |
 | Export based on filters | ✅ Supported | ❌ Not supported | ✅ Supported |
 
 ## Data Management
 
-| Item | ezbookkeeping2 | Firefly III | Actual Budget |
+| Item | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | Clear account transactions | ✅ Supported | ✅ Supported | ❌ Not supported |
 | Clear all data | ✅ Supported | ✅ Supported | ❌ Not supported |
 
 ## Security
 
-| Item | ezbookkeeping2 | Firefly III | Actual Budget |
+| Item | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | Two-factor authentication (2FA) | ✅ Supported | ✅ Supported | ❌ Not supported |
 | OIDC login | ✅ Supported | ❌ Not supported | ✅ Supported |
@@ -208,7 +208,7 @@ ezbookkeeping2 does not cover every possible need, so you can choose the softwar
 
 ## Artificial Intelligence
 
-| Item | ezbookkeeping2 | Firefly III | Actual Budget |
+| Item | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | Model Context Protocol (MCP) | ✅ Built-in support | ⚠️ Via third-party software | ⚠️ Via third-party software |
 | MCP access IP whitelist | ✅ Supported | ❌ Not supported | ❌ Not supported |
@@ -216,14 +216,14 @@ ezbookkeeping2 does not cover every possible need, so you can choose the softwar
 
 ## Exchange Rate Data
 
-| Item | ezbookkeeping2 | Firefly III | Actual Budget |
+| Item | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | Built-in exchange rate sources | ✅ Synced from official services of 16 central banks (up to 150 currencies) | ⚠️ Synced from Firefly III website (30 currencies) | ❌ Not supported |
 | Manual exchange rate input | ✅ Supported | ✅ Supported | ❌ Not supported |
 
 ## Personalization
 
-| Item | ezbookkeeping2 | Firefly III | Actual Budget |
+| Item | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | Font size settings | ✅ Supported on mobile version | ❌ Not supported | ❌ Not supported |
 | User avatars | ✅ Supported | ❌ Not supported | ❌ Not supported |
@@ -231,7 +231,7 @@ ezbookkeeping2 does not cover every possible need, so you can choose the softwar
 
 ## Internationalization & Localization
 
-| Item | ezbookkeeping2 | Firefly III | Actual Budget |
+| Item | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | Multi-language support | ✅ Supported | ✅ Supported | ✅ Supported |
 | Number of supported languages | ✅ 19 languages | ✅ 34 languages | ✅ 15 languages |

@@ -2,7 +2,7 @@
 layout: home
 
 hero:
-    name: "ezbookkeeping2"
+    name: "ezrbookkeeping"
     text: "Stable, self-hosted bookkeeping for businesses"
     tagline: "A business-focused fork of mayswind/ezbookkeeping. Stability, maturity and business use come first. Personal life logging is out of scope."
     actions:
@@ -99,7 +99,7 @@ sitemap:
           url: https://github.com/krazyjakee/ezbookkeeping/releases
           external: true
         - name: Docker Repository
-          url: https://hub.docker.com/r/krazyjakee/ezbookkeeping2
+          url: https://hub.docker.com/r/krazyjakee/ezrbookkeeping
           external: true
     - name: Help
       links:

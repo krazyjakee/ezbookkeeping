@@ -4,11 +4,11 @@ title: 配置
 
 # 配置
 
-ezbookkeeping2 使用 ini 文件作为配置文件。
+ezrbookkeeping 使用 ini 文件作为配置文件。
 默认的配置文件路径是 `%WORKING_DIR%/conf/ezbookkeeping.ini`。
-使用 ezbookkeeping2 命令行时，你可以使用 `--conf-path` 参数指定自定义的配置文件路径。
+使用 ezrbookkeeping 命令行时，你可以使用 `--conf-path` 参数指定自定义的配置文件路径。
 
-除此之外，ezbookkeeping2 还支持通过环境变量设置配置。
+除此之外，ezrbookkeeping 还支持通过环境变量设置配置。
 
 1. 如果你想直接通过环境变量设置配置项并覆盖配置文件中的配置项，你可以使用如下的环境变量名（环境变量名需要为大写）：`EBK_{SECTION_NAME}_{OPTION_NAME}`。例如，将数据库类型设置为 `mysql`，你可以定义环境变量 `EBK_DATABASE_TYPE=mysql`
 2. 如果你想通过环境变量设置从指定文件中加载配置项的内容并覆盖配置文件中的配置项，你可以使用如下的环境变量名（环境变量名需要为大写）：`EBKCFP_{SECTION_NAME}_{OPTION_NAME}`。例如，将数据库密码从指定文件中加载，你可以定义环境变量 `EBKCFP_DATABASE_PASSWD=/run/secrets/database_password`，然后将数据库密码放在 `/run/secrets/database_password` 文件中
@@ -32,8 +32,8 @@ ezbookkeeping2 使用 ini 文件作为配置文件。
 | `protocol` | `http` | Web 服务器提供的协议，支持 `http`、`https` 或 `socket`。 |
 | `http_addr` | `0.0.0.0` | `http` 或 `https` 协议下绑定的 IP 地址。 `0.0.0.0` 表示绑定到所有网卡设备。 |
 | `http_port` | `8080` | `http` 或 `https` 协议下绑定的 Http 端口。 |
-| `domain` | `localhost` | 访问 ezbookkeeping2 使用的域名（例如 `ezbookkeeping-demo.mayswind.net`）。 |
-| `root_url` | `%(protocol)s://%(domain)s:%(http_port)s/` | 在浏览器中访问 ezbookkeeping2 的完整路径（例如 `https://ezbookkeeping-demo.mayswind.net/`），支持占位符：`%(protocol)s`, `%(domain)s` 和 `%(http_port)s`。如果用户在浏览器访问时的协议和端口号与上述设置（`protocol` 和 `http_port`）相同，该项可以使用默认值。 |
+| `domain` | `localhost` | 访问 ezrbookkeeping 使用的域名（例如 `ezbookkeeping-demo.mayswind.net`）。 |
+| `root_url` | `%(protocol)s://%(domain)s:%(http_port)s/` | 在浏览器中访问 ezrbookkeeping 的完整路径（例如 `https://ezbookkeeping-demo.mayswind.net/`），支持占位符：`%(protocol)s`, `%(domain)s` 和 `%(http_port)s`。如果用户在浏览器访问时的协议和端口号与上述设置（`protocol` 和 `http_port`）相同，该项可以使用默认值。 |
 | `cert_file` |  | `https` 协议使用的证书文件路径。 |
 | `cert_key_file` |  | `https` 协议使用的证书私钥文件路径。 |
 | `unix_socket` |  | `unix` 协议使用的 Unix Socket 路径。 |
@@ -149,7 +149,7 @@ ezbookkeeping2 使用 ini 文件作为配置文件。
 
 | 选项名 | 默认值 | 描述 |
 | --- | --- | --- |
-| `llm_provider` |  | 用于交易文本识别的大语言模型 (LLM) 提供方，支持 `openai`、`openai_compatible`、`openai_responses_compatible`、`anthropic`、`anthropic_compatible`、`openrouter`、`ollama`、`lm_studio` 和 `google_ai`。使用第三方大语言模型提供方时，请注意潜在的隐私风险，具体参考 [常见问题 - ezbookkeeping2 使用了哪些第三方服务，以及是否会使用我的个人数据](/zh_Hans/faq/#ezbookkeeping-使用了哪些第三方服务-以及是否会使用我的个人数据)。 |
+| `llm_provider` |  | 用于交易文本识别的大语言模型 (LLM) 提供方，支持 `openai`、`openai_compatible`、`openai_responses_compatible`、`anthropic`、`anthropic_compatible`、`openrouter`、`ollama`、`lm_studio` 和 `google_ai`。使用第三方大语言模型提供方时，请注意潜在的隐私风险，具体参考 [常见问题 - ezrbookkeeping 使用了哪些第三方服务，以及是否会使用我的个人数据](/zh_Hans/faq/#ezbookkeeping-使用了哪些第三方服务-以及是否会使用我的个人数据)。 |
 | `enable_thinking` |  | 是否启用大语言模型的思考功能，支持如下级别<br/>`off`：禁用思考（支持所有提供方）。<br/>`low` / `medium` / `high` / `xhigh`：启用相应思考级别（支持`openai`、`openai_compatible`、`openai_responses_compatible`、`openrouter`、`ollama`、`lm_studio` 和 `google_ai` 提供方）。<br/>`on`：启用默认思考级别（支持 `anthropic`、`anthropic_compatible`、`ollama` 和 `lm_studio` 提供方）。<br/>留空使用大语言模型提供方默认设置。 |
 | `openai_api_key` |  | 使用 `openai` 大语言模型提供方时，OpenAI 的 API Secret Key，请访问 [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys) 获取更多信息。 |
 | `openai_model_id` |  | 使用 `openai` 大语言模型提供方时，用于识别交易文本并创建交易的模型ID。 |
@@ -185,7 +185,7 @@ ezbookkeeping2 使用 ini 文件作为配置文件。
 
 | 选项名 | 默认值 | 描述 |
 | --- | --- | --- |
-| `llm_provider` |  | 用于收据图片识别的大语言模型 (LLM) 提供方，支持 `openai`、`openai_compatible`、`openai_responses_compatible`、`anthropic`、`anthropic_compatible`、`openrouter`、`ollama`、`lm_studio` 和 `google_ai`。使用的大语言模型提供方以及模型必须支持视觉语言模型（VLM）能力。使用第三方大语言模型提供方时，请注意潜在的隐私风险，具体参考 [常见问题 - ezbookkeeping2 使用了哪些第三方服务，以及是否会使用我的个人数据](/zh_Hans/faq/#ezbookkeeping-使用了哪些第三方服务-以及是否会使用我的个人数据)。 |
+| `llm_provider` |  | 用于收据图片识别的大语言模型 (LLM) 提供方，支持 `openai`、`openai_compatible`、`openai_responses_compatible`、`anthropic`、`anthropic_compatible`、`openrouter`、`ollama`、`lm_studio` 和 `google_ai`。使用的大语言模型提供方以及模型必须支持视觉语言模型（VLM）能力。使用第三方大语言模型提供方时，请注意潜在的隐私风险，具体参考 [常见问题 - ezrbookkeeping 使用了哪些第三方服务，以及是否会使用我的个人数据](/zh_Hans/faq/#ezbookkeeping-使用了哪些第三方服务-以及是否会使用我的个人数据)。 |
 | `enable_thinking` |  | 是否启用大语言模型的思考功能，支持如下级别<br/>`off`：禁用思考（支持所有提供方）。<br/>`low` / `medium` / `high` / `xhigh`：启用相应思考级别（支持`openai`、`openai_compatible`、`openai_responses_compatible`、`openrouter`、`ollama`、`lm_studio` 和 `google_ai` 提供方）。<br/>`on`：启用默认思考级别（支持 `anthropic`、`anthropic_compatible`、`ollama` 和 `lm_studio` 提供方）。<br/>留空使用大语言模型提供方默认设置。 |
 | `openai_api_key` |  | 使用 `openai` 大语言模型提供方时，OpenAI 的 API Secret Key，请访问 [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys) 获取更多信息。 |
 | `openai_model_id` |  | 使用 `openai` 大语言模型提供方时，用于识别收据图片并创建交易的模型ID。 |
@@ -221,7 +221,7 @@ ezbookkeeping2 使用 ini 文件作为配置文件。
 
 | 选项名 | 默认值 | 描述 |
 | --- | --- | --- |
-| `llm_provider` |  | 用于代码生成的大语言模型 (LLM) 提供方，支持 `openai`、`openai_compatible`、`openai_responses_compatible`、`anthropic`、`anthropic_compatible`、`openrouter`、`ollama`、`lm_studio` 和 `google_ai`。使用第三方大语言模型提供方时，请注意潜在的隐私风险，具体参考 [常见问题 - ezbookkeeping2 使用了哪些第三方服务，以及是否会使用我的个人数据](/zh_Hans/faq/#ezbookkeeping-使用了哪些第三方服务-以及是否会使用我的个人数据)。 |
+| `llm_provider` |  | 用于代码生成的大语言模型 (LLM) 提供方，支持 `openai`、`openai_compatible`、`openai_responses_compatible`、`anthropic`、`anthropic_compatible`、`openrouter`、`ollama`、`lm_studio` 和 `google_ai`。使用第三方大语言模型提供方时，请注意潜在的隐私风险，具体参考 [常见问题 - ezrbookkeeping 使用了哪些第三方服务，以及是否会使用我的个人数据](/zh_Hans/faq/#ezbookkeeping-使用了哪些第三方服务-以及是否会使用我的个人数据)。 |
 | `enable_thinking` |  | 是否启用大语言模型的思考功能，支持如下级别<br/>`off`：禁用思考（支持所有提供方）。<br/>`low` / `medium` / `high` / `xhigh`：启用相应思考级别（支持`openai`、`openai_compatible`、`openai_responses_compatible`、`openrouter`、`ollama`、`lm_studio` 和 `google_ai` 提供方）。<br/>`on`：启用默认思考级别（支持 `anthropic`、`anthropic_compatible`、`ollama` 和 `lm_studio` 提供方）。<br/>留空使用大语言模型提供方默认设置。 |
 | `openai_api_key` |  | 使用 `openai` 大语言模型提供方时，OpenAI 的 API Secret Key，请访问 [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys) 获取更多信息。 |
 | `openai_model_id` |  | 使用 `openai` 大语言模型提供方时，用于代码生成的模型ID。 |
@@ -285,7 +285,7 @@ ezbookkeeping2 使用 ini 文件作为配置文件。
 
 | 选项名 | 默认值 | 描述 |
 | --- | --- | --- |
-| `secret_key` |  | 作为密钥使用，**为了保证您的数据安全，请在第一次运行 ezbookkeeping2 前修改该值**。你可以通过执行 `ezbookkeeping security gen-secret-key` 或 `openssl rand -base64 32` 获取一个随机密钥。 |
+| `secret_key` |  | 作为密钥使用，**为了保证您的数据安全，请在第一次运行 ezrbookkeeping 前修改该值**。你可以通过执行 `ezbookkeeping security gen-secret-key` 或 `openssl rand -base64 32` 获取一个随机密钥。 |
 | `trusted_proxy_ips` | `10.0.0.0/8, 169.254.0.0/16, 127.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16` | 使用逗号分隔的可信代理的 IP 地址（CIDR 格式）列表。只有当远程地址在这个列表中时，才能从诸如 `X-Forwarded-For`、`X-Real-IP` 或 `X-Real-Port` 等请求头中获取用户真实的 IP 地址或端口。 |
 | `token_expired_time` | `2592000` | 令牌过期时间（60 – 4294967295 秒）。 |
 | `token_min_refresh_interval` | `86400` | 令牌最小刷新间隔（0 – 4294967295 秒)，该值应当小于令牌过期时间。设置为 `0` 时则每次刷新前端时都会刷新令牌。 |
@@ -312,14 +312,14 @@ ezbookkeeping2 使用 ini 文件作为配置文件。
 | 选项名 | 默认值 | 描述 |
 | --- | --- | --- |
 | `enable_internal_auth` | `true` | 是否开启用户名、密码登录（`internal`）。 |
-| `enable_oauth2_auth` | `false` | 是否开启使用外部 OAuth 2.0 登录。ezbookkeeping2 的 OAuth 2.0 回调路径为 `/oauth/callback`，例如你的 ezbookkeeping2 地址为 [`https://ezbookkeeping-demo.mayswind.net/`](https://ezbookkeeping-demo.mayswind.net/)，则回调地址为 [`https://ezbookkeeping-demo.mayswind.net/oauth2/callback`](https://ezbookkeeping-demo.mayswind.net/oauth2/callback)。 |
+| `enable_oauth2_auth` | `false` | 是否开启使用外部 OAuth 2.0 登录。ezrbookkeeping 的 OAuth 2.0 回调路径为 `/oauth/callback`，例如你的 ezrbookkeeping 地址为 [`https://ezbookkeeping-demo.mayswind.net/`](https://ezbookkeeping-demo.mayswind.net/)，则回调地址为 [`https://ezbookkeeping-demo.mayswind.net/oauth2/callback`](https://ezbookkeeping-demo.mayswind.net/oauth2/callback)。 |
 | `enable_two_factor` | `true` | 使用 `internal` 身份验证时，是否开启两步验证。 |
 | `enable_forget_password` | `true` | 使用 `internal` 身份验证时，是否启用用户密码重置。（SMTP 服务器必须配置） |
 | `forget_password_require_email_verify` | `true` | 使用 `internal` 身份验证时，用户使用密码重置时是否要求邮箱必须验证。 |
 | `oauth2_provider` |  | 使用 `oauth2` 身份验证时，OAuth 2.0 提供方，支持 `oidc`、`nextcloud` 和 `github`。 |
 | `oauth2_client_id` |  | 使用 `oauth2` 身份验证时，OAuth 2.0 客户端 ID。 |
 | `oauth2_client_secret` |  | 使用 `oauth2` 身份验证时，OAuth 2.0 客户端密钥。 |
-| `oauth2_user_identifier` | `email` | 使用 `oauth2` 身份验证时，用于将 OAuth 2.0 返回的用户与 ezbookkeeping2 中现有用户进行匹配的字段，支持 `email` 和 `username`。 |
+| `oauth2_user_identifier` | `email` | 使用 `oauth2` 身份验证时，用于将 OAuth 2.0 返回的用户与 ezrbookkeeping 中现有用户进行匹配的字段，支持 `email` 和 `username`。 |
 | `oauth2_use_pkce` | `false` | 使用 `oauth2` 身份验证时，是否启用 PKCE。 |
 | `oauth2_auto_register` | `true` | 使用 `oauth2` 身份验证时，当 OAuth 2.0 返回的用户没有注册时自动创建新用户。（需要 `enable_register` 设置为 `true`） |
 | `oauth2_state_expired_time` | `300` | 使用 `oauth2` 身份验证时，OAuth 2.0 认证过程的超时时间（60 – 4294967295 秒）。 |

@@ -4,25 +4,25 @@ title: "Installation"
 
 # Introduction
 
-ezbookkeeping2 is an open source, powerful, self-hosted personal finance app that is easy to use. It helps you record daily transactions, import data from various sources, and quickly search and filter your bills. You can analyze historical data using built-in charts or perform custom queries with your own chart dimensions to better understand spending patterns and financial trends. ezbookkeeping2 is easy to deploy, and you can start it with just one single Docker command. Designed to be resource-efficient, it runs smoothly on devices such as Raspberry Pi, NAS, and MicroServers.
+ezrbookkeeping is an open source, powerful, self-hosted personal finance app that is easy to use. It helps you record daily transactions, import data from various sources, and quickly search and filter your bills. You can analyze historical data using built-in charts or perform custom queries with your own chart dimensions to better understand spending patterns and financial trends. ezrbookkeeping is easy to deploy, and you can start it with just one single Docker command. Designed to be resource-efficient, it runs smoothly on devices such as Raspberry Pi, NAS, and MicroServers.
 
-ezbookkeeping2 offers tailored interfaces for both mobile and desktop devices. With support for PWA (Progressive Web Apps), you can even [add it to your mobile home screen](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/mobile/add_to_home_screen.gif) and use it like a native app.
+ezrbookkeeping offers tailored interfaces for both mobile and desktop devices. With support for PWA (Progressive Web Apps), you can even [add it to your mobile home screen](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/mobile/add_to_home_screen.gif) and use it like a native app.
 
-ezbookkeeping2 uses a lightweight tech stack and an efficient architecture to keep the application minimal, while still providing powerful features. You can explore all supported features in [Feature List](/features/).
+ezrbookkeeping uses a lightweight tech stack and an efficient architecture to keep the application minimal, while still providing powerful features. You can explore all supported features in [Feature List](/features/).
 
 ## Run with Docker
-Visit [Docker Hub](https://hub.docker.com/r/krazyjakee/ezbookkeeping2) to see all images and tags.
+Visit [Docker Hub](https://hub.docker.com/r/krazyjakee/ezrbookkeeping) to see all images and tags.
 
 **Latest Release:**
 
 ```shell
-$ docker run -p8080:8080 krazyjakee/ezbookkeeping2
+$ docker run -p8080:8080 krazyjakee/ezrbookkeeping
 ```
 
 **Latest Daily Build:**
 
 ```shell
-$ docker run -p8080:8080 krazyjakee/ezbookkeeping2:latest-snapshot
+$ docker run -p8080:8080 krazyjakee/ezrbookkeeping:latest-snapshot
 ```
 
 > [!NOTE] Note
@@ -43,7 +43,7 @@ $ ./ezbookkeeping server run
 > .\ezbookkeeping.exe server run
 ```
 
-By default, ezbookkeeping2 listens on port 8080. You can then visit `http://{YOUR_HOST_ADDRESS}:8080/` .
+By default, ezrbookkeeping listens on port 8080. You can then visit `http://{YOUR_HOST_ADDRESS}:8080/` .
 
 ## Build from Source
 Make sure you have [Golang](https://golang.org/), [GCC](https://gcc.gnu.org/), [Node.js](https://nodejs.org/) and [NPM](https://www.npmjs.com/) installed. Then download the source code, and follow these steps:
@@ -51,24 +51,24 @@ Make sure you have [Golang](https://golang.org/), [GCC](https://gcc.gnu.org/), [
 **Linux / macOS / FreeBSD**
 
 ```shell
-$ ./build.sh package -o ezbookkeeping2.tar.gz
+$ ./build.sh package -o ezrbookkeeping.tar.gz
 ```
 
-All the files will be packaged in `ezbookkeeping2.tar.gz`.
+All the files will be packaged in `ezrbookkeeping.tar.gz`.
 
 **Windows**
 
 ```shell
-> .\build.bat package -o ezbookkeeping2.zip
+> .\build.bat package -o ezrbookkeeping.zip
 ```
 
 or
 
 ```powershell
-PS > .\build.ps1 package -Output ezbookkeeping2.zip
+PS > .\build.ps1 package -Output ezrbookkeeping.zip
 ```
 
-All the files will be packaged in `ezbookkeeping2.zip`.
+All the files will be packaged in `ezrbookkeeping.zip`.
 
 You can also build a Docker image. Make sure you have [Docker](https://www.docker.com/) installed, then follow these steps:
 

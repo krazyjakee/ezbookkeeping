@@ -1,5 +1,5 @@
 name: Bug Report
-description: Report a bug in ezbookkeeping2
+description: Report a bug in ezrbookkeeping
 body:
   - type: checkboxes
     id: checkboxes
@@ -33,8 +33,8 @@ body:
   - type: input
     id: ezbookkeeping-version
     attributes:
-      label: ezbookkeeping2 Version
-      description: ezbookkeeping2 version and commit hash of your instance, e.g. "v1.0.0 (20e2444)"
+      label: ezrbookkeeping Version
+      description: ezrbookkeeping version and commit hash of your instance, e.g. "v1.0.0 (20e2444)"
     validations:
       required: true
 
@@ -42,7 +42,7 @@ body:
     id: server-os
     attributes:
       label: Server Operating System
-      description: The operating system information you are using to deploy ezbookkeeping2, e.g "Debian GNU/Linux 11 amd64"
+      description: The operating system information you are using to deploy ezrbookkeeping, e.g "Debian GNU/Linux 11 amd64"
 
   - type: input
     id: server-database

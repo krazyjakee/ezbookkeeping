@@ -43,7 +43,7 @@ goto :pre_parse_args
     goto :check_dependency
 
 :show_help
-    echo ezbookkeeping2 build script for Windows
+    echo ezrbookkeeping build script for Windows
     echo.
     echo Usage:
     echo     build.cmd type [options]
@@ -231,7 +231,7 @@ goto :pre_parse_args
         set "package_file_name=%package_file_name%-%build_date%"
     )
 
-    set "package_file_name=ezbookkeeping2-%package_file_name%-windows.zip"
+    set "package_file_name=ezrbookkeeping-%package_file_name%-windows.zip"
 
     if defined PACKAGE_FILENAME set "package_file_name=%PACKAGE_FILENAME%"
 

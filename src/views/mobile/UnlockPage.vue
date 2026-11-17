@@ -37,7 +37,7 @@
 
                 <div class="login-page-powered-by margin-top-half">
                     <span>Powered by</span>
-                    <f7-link @click="openExternalUrl('https://github.com/krazyjakee/ezbookkeeping')" target="_blank">ezbookkeeping2</f7-link>
+                    <f7-link @click="openExternalUrl('https://github.com/krazyjakee/ezbookkeeping')" target="_blank">ezrbookkeeping</f7-link>
                     <span>{{ version }}</span>
                 </div>
             </f7-block-footer>
@@ -48,7 +48,7 @@
 
             <div class="login-page-powered-by margin-top-half">
                 <span>Powered by</span>
-                <f7-link @click="openExternalUrl('https://github.com/krazyjakee/ezbookkeeping')" target="_blank">ezbookkeeping2</f7-link>
+                <f7-link @click="openExternalUrl('https://github.com/krazyjakee/ezbookkeeping')" target="_blank">ezrbookkeeping</f7-link>
                 <span>{{ version }}</span>
             </div>
         </f7-toolbar>

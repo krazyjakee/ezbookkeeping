@@ -1,4 +1,4 @@
-# ezbookkeeping2
+# ezrbookkeeping
 
 > **A business-focused fork of [mayswind/ezbookkeeping](https://github.com/mayswind/ezbookkeeping).**
 > Upstream is moving toward personal life logging: experiences, memories and photographs. This fork sticks to bookkeeping and puts these first:
@@ -9,15 +9,15 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/krazyjakee/ezbookkeeping/blob/main/LICENSE)
 [![Latest Release](https://img.shields.io/github/release/krazyjakee/ezbookkeeping.svg?style=flat)](https://github.com/krazyjakee/ezbookkeeping/releases)
 [![Latest Build](https://img.shields.io/github/actions/workflow/status/krazyjakee/ezbookkeeping/build-snapshot.yml?branch=main)](https://github.com/krazyjakee/ezbookkeeping/actions/workflows/build-snapshot.yml)
-[![Latest Docker Image Size](https://img.shields.io/docker/image-size/krazyjakee/ezbookkeeping2.svg?style=flat)](https://hub.docker.com/r/krazyjakee/ezbookkeeping2)
-[![Docker Pulls](https://img.shields.io/docker/pulls/krazyjakee/ezbookkeeping2)](https://hub.docker.com/r/krazyjakee/ezbookkeeping2)
+[![Latest Docker Image Size](https://img.shields.io/docker/image-size/krazyjakee/ezrbookkeeping.svg?style=flat)](https://hub.docker.com/r/krazyjakee/ezrbookkeeping)
+[![Docker Pulls](https://img.shields.io/docker/pulls/krazyjakee/ezrbookkeeping)](https://hub.docker.com/r/krazyjakee/ezrbookkeeping)
 [![Documentation](https://img.shields.io/badge/docs-krazyjakee.github.io-blue.svg)](https://krazyjakee.github.io/ezbookkeeping/)
 [![Forked from mayswind/ezbookkeeping](https://img.shields.io/badge/forked%20from-mayswind%2Fezbookkeeping-lightgrey.svg?logo=github)](https://github.com/mayswind/ezbookkeeping)
 
 ## Introduction
-ezbookkeeping2 is an open source, powerful, self-hosted personal finance app that is easy to use. It helps you record daily transactions, import data from various sources, and quickly search and filter your bills. You can analyze historical data using built-in charts or perform custom queries with your own chart dimensions to better understand spending patterns and financial trends. ezbookkeeping2 is easy to deploy, and you can start it with just one single Docker command. Designed to be resource-efficient, it runs smoothly on devices such as home servers, NAS and Raspberry Pi.
+ezrbookkeeping is an open source, powerful, self-hosted personal finance app that is easy to use. It helps you record daily transactions, import data from various sources, and quickly search and filter your bills. You can analyze historical data using built-in charts or perform custom queries with your own chart dimensions to better understand spending patterns and financial trends. ezrbookkeeping is easy to deploy, and you can start it with just one single Docker command. Designed to be resource-efficient, it runs smoothly on devices such as home servers, NAS and Raspberry Pi.
 
-ezbookkeeping2 offers tailored interfaces for mobile and desktop devices. With PWA (Progressive Web Apps) support, you can [add it to your mobile home screen](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/mobile/add_to_home_screen.gif) and use it like a native app.
+ezrbookkeeping offers tailored interfaces for mobile and desktop devices. With PWA (Progressive Web Apps) support, you can [add it to your mobile home screen](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/mobile/add_to_home_screen.gif) and use it like a native app.
 
 Upstream ezBookkeeping live demo: [https://ezbookkeeping-demo.mayswind.net](https://ezbookkeeping-demo.mayswind.net)
 
@@ -65,34 +65,34 @@ For a full list of features, visit the [Full Feature List](https://krazyjakee.gi
 
 ## Screenshots
 ### Desktop Version
-[![ezbookkeeping2](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/desktop/en.png)](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/desktop/en.png)
+[![ezrbookkeeping](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/desktop/en.png)](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/desktop/en.png)
 
 ### Mobile Version
-[![ezbookkeeping2](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/mobile/en.png)](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/mobile/en.png)
+[![ezrbookkeeping](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/mobile/en.png)](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/mobile/en.png)
 
 ## Installation
 ### Run with Docker
-Visit [Docker Hub](https://hub.docker.com/r/krazyjakee/ezbookkeeping2) to see all images and tags.
+Visit [Docker Hub](https://hub.docker.com/r/krazyjakee/ezrbookkeeping) to see all images and tags.
 
 **Latest Release:**
 
-    $ docker run -p8080:8080 krazyjakee/ezbookkeeping2
+    $ docker run -p8080:8080 krazyjakee/ezrbookkeeping
 
 **Latest Daily Build:**
 
-    $ docker run -p8080:8080 krazyjakee/ezbookkeeping2:latest-snapshot
+    $ docker run -p8080:8080 krazyjakee/ezrbookkeeping:latest-snapshot
 
-For production use of ezbookkeeping2, you need to mount a persistent volume when starting the container to prevent data loss. For more information, see [documentation](https://krazyjakee.github.io/ezbookkeeping/installation/installation-docker).
+For production use of ezrbookkeeping, you need to mount a persistent volume when starting the container to prevent data loss. For more information, see [documentation](https://krazyjakee.github.io/ezbookkeeping/installation/installation-docker).
 
 Image tags: `latest`, `X`, `X.Y` and `X.Y.Z` for releases; `latest-snapshot`, `SNAPSHOT-YYYYMMDD` and `sha-<commit>` for daily builds of `main`.
 
 #### Migrating from mayswind/ezbookkeeping
-Just change the image from `mayswind/ezbookkeeping` to `krazyjakee/ezbookkeeping2` and keep everything else: the same volumes (`/ezbookkeeping/data`, `/ezbookkeeping/storage`, `/ezbookkeeping/log`), the same UID/GID `1000`, the same configuration file (`/ezbookkeeping/conf/ezbookkeeping.ini`) and the same `EBK_` environment variables. No data migration is needed. Back up your data first, see [Migrating from ezBookkeeping](https://krazyjakee.github.io/ezbookkeeping/installation/migrating) for details.
+Just change the image from `mayswind/ezbookkeeping` to `krazyjakee/ezrbookkeeping` and keep everything else: the same volumes (`/ezbookkeeping/data`, `/ezbookkeeping/storage`, `/ezbookkeeping/log`), the same UID/GID `1000`, the same configuration file (`/ezbookkeeping/conf/ezbookkeeping.ini`) and the same `EBK_` environment variables. No data migration is needed. Back up your data first, see [Migrating from ezBookkeeping](https://krazyjakee.github.io/ezbookkeeping/installation/migrating) for details.
 
 ### Install from Binary
 Download the latest release: [https://github.com/krazyjakee/ezbookkeeping/releases](https://github.com/krazyjakee/ezbookkeeping/releases)
 
-Release archives are named `ezbookkeeping2-<version>-<os>-<arch>`; the executable inside is still named `ezbookkeeping`.
+Release archives are named `ezrbookkeeping-<version>-<os>-<arch>`; the executable inside is still named `ezbookkeeping`.
 
 **Linux / macOS / FreeBSD**
 
@@ -102,26 +102,26 @@ Release archives are named `ezbookkeeping2-<version>-<os>-<arch>`; the executabl
 
     > .\ezbookkeeping.exe server run
 
-By default, ezbookkeeping2 listens on port 8080. You can then visit `http://{YOUR_HOST_ADDRESS}:8080/` .
+By default, ezrbookkeeping listens on port 8080. You can then visit `http://{YOUR_HOST_ADDRESS}:8080/` .
 
 ### Build from Source
 Make sure you have [Golang](https://golang.org/), [GCC](https://gcc.gnu.org/), [Node.js](https://nodejs.org/) and [NPM](https://www.npmjs.com/) installed. Then download the source code, and follow these steps:
 
 **Linux / macOS / FreeBSD**
 
-    $ ./build.sh package -o ezbookkeeping2.tar.gz
+    $ ./build.sh package -o ezrbookkeeping.tar.gz
 
-All the files will be packaged in `ezbookkeeping2.tar.gz`.
+All the files will be packaged in `ezrbookkeeping.tar.gz`.
 
 **Windows**
 
-    > .\build.bat package -o ezbookkeeping2.zip
+    > .\build.bat package -o ezrbookkeeping.zip
 
 or
 
-    PS > .\build.ps1 package -Output ezbookkeeping2.zip
+    PS > .\build.ps1 package -Output ezrbookkeeping.zip
 
-All the files will be packaged in `ezbookkeeping2.zip`.
+All the files will be packaged in `ezrbookkeeping.zip`.
 
 You can also build a Docker image. Make sure you have [Docker](https://www.docker.com/) installed, then follow these steps:
 
@@ -138,10 +138,10 @@ If you would like to contribute code, you can fork the repository and open a pul
 
 Improvements to documentation, feature suggestions, and other forms of feedback are also appreciated.
 
-You can view existing contributors on the [Contributor Graph](https://github.com/krazyjakee/ezbookkeeping/graphs/contributors). ezbookkeeping2 builds on the work of [MaysWind](https://github.com/mayswind) and all [upstream ezBookkeeping contributors](https://github.com/mayswind/ezbookkeeping/graphs/contributors).
+You can view existing contributors on the [Contributor Graph](https://github.com/krazyjakee/ezbookkeeping/graphs/contributors). ezrbookkeeping builds on the work of [MaysWind](https://github.com/mayswind) and all [upstream ezBookkeeping contributors](https://github.com/mayswind/ezbookkeeping/graphs/contributors).
 
 ## Translating
-Help make ezbookkeeping2 accessible to users around the world. We welcome help to improve existing translations or add new ones. If you would like to contribute a translation, please refer to the [translation guide](https://krazyjakee.github.io/ezbookkeeping/translating).
+Help make ezrbookkeeping accessible to users around the world. We welcome help to improve existing translations or add new ones. If you would like to contribute a translation, please refer to the [translation guide](https://krazyjakee.github.io/ezbookkeeping/translating).
 
 Currently available translations:
 
@@ -177,7 +177,7 @@ Currently available translations:
 1. [中文 (简体)](https://krazyjakee.github.io/ezbookkeeping/zh_Hans)
 
 ## Compatibility
-ezbookkeeping2 only changes the product name, Docker image (`krazyjakee/ezbookkeeping2`) and release archive names (`ezbookkeeping2-<version>-<os>-<arch>`). The following identifiers are intentionally unchanged, so existing installations upgrade without data migration:
+ezrbookkeeping only changes the product name, Docker image (`krazyjakee/ezrbookkeeping`) and release archive names (`ezrbookkeeping-<version>-<os>-<arch>`). The following identifiers are intentionally unchanged, so existing installations upgrade without data migration:
 
 - Executable name `ezbookkeeping` (inside release archives and the Docker image)
 - Configuration file `conf/ezbookkeeping.ini` and all of its keys, and the `EBK_` environment variable prefix
@@ -192,4 +192,4 @@ See [Migrating from ezBookkeeping](https://krazyjakee.github.io/ezbookkeeping/in
 ## License
 [MIT](https://github.com/krazyjakee/ezbookkeeping/blob/main/LICENSE)
 
-ezbookkeeping2 is based on [ezBookkeeping](https://github.com/mayswind/ezbookkeeping), Copyright (c) 2020-2026 MaysWind.
+ezrbookkeeping is based on [ezBookkeeping](https://github.com/mayswind/ezbookkeeping), Copyright (c) 2020-2026 MaysWind.

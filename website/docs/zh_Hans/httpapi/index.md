@@ -4,11 +4,11 @@ title: API
 
 # API
 
-ezbookkeeping2 为前端界面提供 HTTP API 接口，同时这些接口也可以被用户直接使用以实现更多自动化的功能。
+ezrbookkeeping 为前端界面提供 HTTP API 接口，同时这些接口也可以被用户直接使用以实现更多自动化的功能。
 
 ## 使用
 
-ezbookkeeping2 的 API 通过令牌来验证用户身份，您可以修改配置文件中的 `enable_api_token` 或修改环境变量开启生成 API 令牌的功能，具体可以参考 [配置 - 安全](/zh_Hans/configuration/#安全)。开启后在桌面版的 “用户设置” -> “安全” 页面中会出现 “生成令牌” 按钮，也可以通过 ezbookkeeping2 的命令行工具 `user-session-new` 进行生成，具体可以参考 [命令行](/zh_Hans/command_line/#userdata)。
+ezrbookkeeping 的 API 通过令牌来验证用户身份，您可以修改配置文件中的 `enable_api_token` 或修改环境变量开启生成 API 令牌的功能，具体可以参考 [配置 - 安全](/zh_Hans/configuration/#安全)。开启后在桌面版的 “用户设置” -> “安全” 页面中会出现 “生成令牌” 按钮，也可以通过 ezrbookkeeping 的命令行工具 `user-session-new` 进行生成，具体可以参考 [命令行](/zh_Hans/command_line/#userdata)。
 
 然后您就可以使用该令牌访问 API。
 
@@ -49,7 +49,7 @@ API 接口的返回结果是 JSON 对象，如下：
 
 ## API 工具脚本
 
-ezbookkeeping2 提供了一个名为 **ezbookkeeping2 API Tools** 的工具脚本，方便用户或 AI Agent 使用 **sh** 或 **Powershell** 命令行调用 API 接口，您只需要配置 ezbookkeeping2 服务器的地址和 API 令牌两个环境变量即可使用。
+ezrbookkeeping 提供了一个名为 **ezrbookkeeping API Tools** 的工具脚本，方便用户或 AI Agent 使用 **sh** 或 **Powershell** 命令行调用 API 接口，您只需要配置 ezrbookkeeping 服务器的地址和 API 令牌两个环境变量即可使用。
 
 **Linux / macOS**
 

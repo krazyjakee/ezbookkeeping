@@ -8,7 +8,7 @@ on:
 
 # Image name used for local tagging only; this workflow never pushes.
 env:
-  DOCKER_IMAGE_NAME: ${{ vars.DOCKER_IMAGE_NAME || 'krazyjakee/ezbookkeeping2' }}
+  DOCKER_IMAGE_NAME: ${{ vars.DOCKER_IMAGE_NAME || 'krazyjakee/ezrbookkeeping' }}
 
 jobs:
   setup:
@@ -37,8 +37,8 @@ jobs:
           tags: |
             type=raw,value=dev-${{ github.run_id }}
           labels: |
-            org.opencontainers.image.title=ezbookkeeping2
-            org.opencontainers.image.description=ezbookkeeping2, a business-focused fork of ezBookkeeping, an open source, self-hosted bookkeeping app
+            org.opencontainers.image.title=ezrbookkeeping
+            org.opencontainers.image.description=ezrbookkeeping, a business-focused fork of ezBookkeeping, an open source, self-hosted bookkeeping app
             org.opencontainers.image.documentation=https://krazyjakee.github.io/ezbookkeeping/
             org.opencontainers.image.licenses=MIT
             maintainer=krazyjakee (https://github.com/krazyjakee/ezbookkeeping)
@@ -52,7 +52,7 @@ jobs:
           echo "ezbookkeeping_docker_bake_meta_artifact_name=ezbookkeeping-build-dev-docker-bake-meta-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
           echo "ezbookkeeping_docker_digests_file_path=${{ runner.temp }}/digests" >> "$GITHUB_OUTPUT"
           echo "ezbookkeeping_docker_digests_artifact_name_prefix=ezbookkeeping-build-dev-digests-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
-          echo "ezbookkeeping_package_file_name_prefix=ezbookkeeping2-dev-package-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
+          echo "ezbookkeeping_package_file_name_prefix=ezrbookkeeping-dev-package-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
           echo "ezbookkeeping_backend_artifact_name_prefix=ezbookkeeping-build-dev-backend-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
 
       - name: Rename docker bake meta file

@@ -1,5 +1,5 @@
 name: Feature Request
-description: Request a feature or enhancement for ezbookkeeping2
+description: Request a feature or enhancement for ezrbookkeeping
 body:
   - type: checkboxes
     id: checkboxes

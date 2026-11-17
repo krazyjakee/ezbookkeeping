@@ -1,7 +1,7 @@
 {
     "global": {
         "app": {
-            "title": "ezbookkeeping2"
+            "title": "ezrbookkeeping"
         }
     },
     "language": {
@@ -181,23 +181,23 @@
             "ruleCount": "Počet pravidiel: {count}",
             "accountActivationAndResendValidationEmailTip": "Odkaz na aktiváciu účtu bol odoslaný na váš e-mail: {email}. Ak e-mail nedostanete, zadajte znova heslo a kliknutím na tlačidlo nižšie ho pošlite znova.",
             "resendValidationEmailTip": "Ak e-mail nedostanete, zadajte znova heslo a kliknutím na tlačidlo nižšie pošlite overovací e-mail znova na: {email}",
-            "oauth2bindTip": "Prihlasujete sa k používateľovi {userName} cez {providerName}. Pre overenie zadajte svoje heslo do ezbookkeeping2."
+            "oauth2bindTip": "Prihlasujete sa k používateľovi {userName} cez {providerName}. Pre overenie zadajte svoje heslo do ezrbookkeeping."
         }
     },
     "dataExport": {
-        "defaultExportFilename": "ezbookkeeping2_export_data",
-        "exportFilename": "ezbookkeeping2_{nickname}_export_data",
-        "defaultExportStatisticsFileName": "ezbookkeeping2_statistics_data",
-        "exportStatisticsFileName": "ezbookkeeping2_{nickname}_statistics_data",
-        "defaultExportReconciliationStatementsFileName": "ezbookkeeping2_reconciliation_statements",
-        "exportReconciliationStatementsFileName": "ezbookkeeping2_{nickname}_reconciliation_statements",
-        "defaultInsightsExplorerQueryFileName": "ezbookkeeping2_insights_explorer_query",
-        "insightsExplorerQueryFileName": "ezbookkeeping2_{nickname}_insights_explorer_query",
-        "defaultImportDataMappingFileName": "ezbookkeeping2_import_data_mapping",
-        "defaultImportHandlingScript": "ezbookkeeping2_handling_script",
-        "defaultImportReplaceRuleFileName": "ezbookkeeping2_import_replace_rule",
-        "defaultImportCheckResultFileName": "ezbookkeeping2_import_check_result",
-        "defaultOverviewLayoutFileName": "ezbookkeeping2_overview_layout"
+        "defaultExportFilename": "ezrbookkeeping_export_data",
+        "exportFilename": "ezrbookkeeping_{nickname}_export_data",
+        "defaultExportStatisticsFileName": "ezrbookkeeping_statistics_data",
+        "exportStatisticsFileName": "ezrbookkeeping_{nickname}_statistics_data",
+        "defaultExportReconciliationStatementsFileName": "ezrbookkeeping_reconciliation_statements",
+        "exportReconciliationStatementsFileName": "ezrbookkeeping_{nickname}_reconciliation_statements",
+        "defaultInsightsExplorerQueryFileName": "ezrbookkeeping_insights_explorer_query",
+        "insightsExplorerQueryFileName": "ezrbookkeeping_{nickname}_insights_explorer_query",
+        "defaultImportDataMappingFileName": "ezrbookkeeping_import_data_mapping",
+        "defaultImportHandlingScript": "ezrbookkeeping_handling_script",
+        "defaultImportReplaceRuleFileName": "ezrbookkeeping_import_replace_rule",
+        "defaultImportCheckResultFileName": "ezrbookkeeping_import_check_result",
+        "defaultOverviewLayoutFileName": "ezrbookkeeping_overview_layout"
     },
     "calendar": {
         "Gregorian": "Gregoriánsky",
@@ -1820,8 +1820,8 @@
     "Date is too early": "Dátum je príliš skorý",
     "User Canceled": "Zrušené používateľom",
     "Unable to load language resources. Please try again.": "Unable to load language resources. Please try again.",
-    "Welcome to ezbookkeeping2": "Vitajte v ezbookkeeping2",
-    "Please log in with your ezbookkeeping2 account": "Prihláste sa svojím účtom ezbookkeeping2",
+    "Welcome to ezrbookkeeping": "Vitajte v ezrbookkeeping",
+    "Please log in with your ezrbookkeeping account": "Prihláste sa svojím účtom ezrbookkeeping",
     "Unlock Application": "Odomknúť aplikáciu",
     "Please enter your PIN code or use WebAuthn to unlock application": "Na odomknutie zadajte PIN alebo použite WebAuthn",
     "Please enter your PIN code to unlock application": "Na odomknutie zadajte PIN",

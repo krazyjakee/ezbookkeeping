@@ -6,7 +6,7 @@ import (
 
 var el = &LocaleTextItems{
 	GlobalTextItems: &GlobalTextItems{
-		AppName: "ezbookkeeping2",
+		AppName: "ezrbookkeeping",
 	},
 	DefaultTypes: &DefaultTypes{
 		DecimalSeparator:    core.DECIMAL_SEPARATOR_COMMA,

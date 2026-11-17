@@ -1,7 +1,7 @@
 {
     "global": {
         "app": {
-            "title": "ezbookkeeping2"
+            "title": "ezrbookkeeping"
         }
     },
     "language": {
@@ -181,23 +181,23 @@
             "ruleCount": "{count} rules",
             "accountActivationAndResendValidationEmailTip": "Посилання для активації облікового запису було надіслано на вашу електронну адресу: {email}. Якщо ви не отримали лист, введіть пароль ще раз і натисніть кнопку нижче, щоб надіслати лист повторно.",
             "resendValidationEmailTip": "Якщо ви не отримали лист, введіть пароль ще раз і натисніть кнопку нижче, щоб надіслати лист повторно на адресу: {email}",
-            "oauth2bindTip": "Ви входите як користувач {userName}, використовуючи {providerName}. Введіть пароль ezbookkeeping2 для підтвердження."
+            "oauth2bindTip": "Ви входите як користувач {userName}, використовуючи {providerName}. Введіть пароль ezrbookkeeping для підтвердження."
         }
     },
     "dataExport": {
-        "defaultExportFilename": "ezbookkeeping2_export_data",
-        "exportFilename": "ezbookkeeping2_{nickname}_export_data",
-        "defaultExportStatisticsFileName": "ezbookkeeping2_statistics_data",
-        "exportStatisticsFileName": "ezbookkeeping2_{nickname}_statistics_data",
-        "defaultExportReconciliationStatementsFileName": "ezbookkeeping2_reconciliation_statements",
-        "exportReconciliationStatementsFileName": "ezbookkeeping2_{nickname}_reconciliation_statements",
-        "defaultInsightsExplorerQueryFileName": "ezbookkeeping2_insights_explorer_query",
-        "insightsExplorerQueryFileName": "ezbookkeeping2_{nickname}_insights_explorer_query",
-        "defaultImportDataMappingFileName": "ezbookkeeping2_import_data_mapping",
-        "defaultImportHandlingScript": "ezbookkeeping2_handling_script",
-        "defaultImportReplaceRuleFileName": "ezbookkeeping2_import_replace_rule",
-        "defaultImportCheckResultFileName": "ezbookkeeping2_import_check_result",
-        "defaultOverviewLayoutFileName": "ezbookkeeping2_overview_layout"
+        "defaultExportFilename": "ezrbookkeeping_export_data",
+        "exportFilename": "ezrbookkeeping_{nickname}_export_data",
+        "defaultExportStatisticsFileName": "ezrbookkeeping_statistics_data",
+        "exportStatisticsFileName": "ezrbookkeeping_{nickname}_statistics_data",
+        "defaultExportReconciliationStatementsFileName": "ezrbookkeeping_reconciliation_statements",
+        "exportReconciliationStatementsFileName": "ezrbookkeeping_{nickname}_reconciliation_statements",
+        "defaultInsightsExplorerQueryFileName": "ezrbookkeeping_insights_explorer_query",
+        "insightsExplorerQueryFileName": "ezrbookkeeping_{nickname}_insights_explorer_query",
+        "defaultImportDataMappingFileName": "ezrbookkeeping_import_data_mapping",
+        "defaultImportHandlingScript": "ezrbookkeeping_handling_script",
+        "defaultImportReplaceRuleFileName": "ezrbookkeeping_import_replace_rule",
+        "defaultImportCheckResultFileName": "ezrbookkeeping_import_check_result",
+        "defaultOverviewLayoutFileName": "ezrbookkeeping_overview_layout"
     },
     "calendar": {
         "Gregorian": "Григоріанський",
@@ -1820,8 +1820,8 @@
     "Date is too early": "Дата занадто рання",
     "User Canceled": "Скасовано користувачем",
     "Unable to load language resources. Please try again.": "Unable to load language resources. Please try again.",
-    "Welcome to ezbookkeeping2": "Ласкаво просимо до ezbookkeeping2",
-    "Please log in with your ezbookkeeping2 account": "Будь ласка, увійдіть до свого облікового запису ezbookkeeping2",
+    "Welcome to ezrbookkeeping": "Ласкаво просимо до ezrbookkeeping",
+    "Please log in with your ezrbookkeeping account": "Будь ласка, увійдіть до свого облікового запису ezrbookkeeping",
     "Unlock Application": "Розблокувати застосунок",
     "Please enter your PIN code or use WebAuthn to unlock application": "Будь ласка, введіть PIN-код або скористайтеся WebAuthn для розблокування застосунку",
     "Please enter your PIN code to unlock application": "Будь ласка, введіть PIN-код для розблокування застосунку",

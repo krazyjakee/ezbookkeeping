@@ -17,7 +17,7 @@ import (
 // UserData represents the data command
 var UserData = &cli.Command{
 	Name:  "userdata",
-	Usage: "ezbookkeeping2 user data maintenance",
+	Usage: "ezrbookkeeping user data maintenance",
 	Commands: []*cli.Command{
 		{
 			Name:   "user-add",

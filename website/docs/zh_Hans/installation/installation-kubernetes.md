@@ -4,8 +4,8 @@ title: "在 Kubernetes 上运行"
 
 # 在 Kubernetes 上运行
 
-对于在 Kubernetes 上的生产环境部署，ezbookkeeping2 可以参考以下清单文件进行部署。该示例包含了以下可用于生产环境的设置：
-- 部署 ezbookkeeping2，并使用持久化存储保存 SQLite 数据库（为简化起见，示例中使用的是 SQLite。但对于生产环境部署，请使用 MySQL 或 PostgreSQL）与用户上传内容
+对于在 Kubernetes 上的生产环境部署，ezrbookkeeping 可以参考以下清单文件进行部署。该示例包含了以下可用于生产环境的设置：
+- 部署 ezrbookkeeping，并使用持久化存储保存 SQLite 数据库（为简化起见，示例中使用的是 SQLite。但对于生产环境部署，请使用 MySQL 或 PostgreSQL）与用户上传内容
 - 配置支持 TLS/HTTPS 的 Ingress
 
 在应用这些 Manifest 文件之前，请确保：
@@ -20,7 +20,7 @@ title: "在 Kubernetes 上运行"
 
 ### secret.yaml
 
-该文件用于存储敏感信息，包括 ezbookkeeping2 的会话加密密钥。
+该文件用于存储敏感信息，包括 ezrbookkeeping 的会话加密密钥。
 
 ```yaml:line-numbers
 apiVersion: v1
@@ -29,13 +29,13 @@ metadata:
   name: ezbookkeeping-secret
 type: Opaque
 data:
-  # 需要设置为一个随机字符串，随机字符串可以使用 ezbookkeeping2 命令行工具 "ezbookkeeping security gen-secret-key" 或 "openssl rand -base64 32" 生成
+  # 需要设置为一个随机字符串，随机字符串可以使用 ezrbookkeeping 命令行工具 "ezbookkeeping security gen-secret-key" 或 "openssl rand -base64 32" 生成
   EBK_SECURITY_SECRET_KEY: XXX
 ```
 
 ### ezbookkeeping.yaml
 
-ezbookkeeping2 应用的部署配置。
+ezrbookkeeping 应用的部署配置。
 
 ```yaml:line-numbers
 ---
@@ -97,7 +97,7 @@ spec:
         runAsGroup: 1000
         fsGroup: 1000
       containers:
-      - image: "krazyjakee/ezbookkeeping2:latest" # 你可以在这里指定具体的版本号（例如 1.2.0）手动控制升级
+      - image: "krazyjakee/ezrbookkeeping:latest" # 你可以在这里指定具体的版本号（例如 1.2.0）手动控制升级
         imagePullPolicy: Always # 使用 "latest" 标签时需保持始终拉取镜像，使用具体版本号时可以使用 "IfNotPresent"
         name: "ezbookkeeping"
         env:

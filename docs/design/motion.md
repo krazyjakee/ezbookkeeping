@@ -1,6 +1,6 @@
 # Motion system
 
-This page documents the shared motion primitives introduced by #26. Motion in ezbookkeeping2 should be responsive and purposeful. It confirms what happened and never holds the user back.
+This page documents the shared motion primitives introduced by #26. Motion in ezrbookkeeping should be responsive and purposeful. It confirms what happened and never holds the user back.
 
 - **Tokens:** `src/styles/common/_tokens.scss`
 - **Transition presets and classes:** `src/styles/common/_motion.scss`
@@ -89,7 +89,7 @@ How it is applied:
 | --- | --- |
 | Root classes | `<html>` gets `ebk-reduce-motion` when the state is reduced, and `ebk-motion-full` when the user chose **Full**. The pre-paint script in `src/*.html` sets them before the first paint, then `initMotionPreference()` (called in `desktop-main.ts` and `mobile-main.ts`) keeps them in sync |
 | Tokens | Under the class (or the `prefers-reduced-motion` media query unless `ebk-motion-full` is set), durations drop to 120ms or less, distances become 0, scale-from becomes 1, and stagger becomes 0 |
-| ezbookkeeping2 presets | Become opacity-only, linear, 120ms, with no delay |
+| ezrbookkeeping presets | Become opacity-only, linear, 120ms, with no delay |
 | Other CSS transitions and animations | Collapse to 1ms with one iteration (finished at once, but `transitionend` / `animationend` still fire, so the frameworks don't hang). Loading indicators are exempt |
 | Vuetify | Ripples are hidden. `VDialog`, `VMenu`, `VSelect` and `VAutocomplete` default to the CSS `fade-transition` instead of the Web Animations dialog transition (Vuetify global defaults, updated reactively in `desktop-main.ts`) |
 | Framework7 | `animate: false` for views/router, actions, dialog, popover, popup and sheet, both in the startup parameters and at runtime (`src/MobileApp.vue`). Modals that already exist are covered by the CSS collapse |

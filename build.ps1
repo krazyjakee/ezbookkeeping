@@ -29,7 +29,7 @@ function Check-Dependency {
 }
 
 function Show-Help {
-    Write-Host "ezbookkeeping2 build script for Windows PowerShell"
+    Write-Host "ezrbookkeeping build script for Windows PowerShell"
     Write-Host ""
     Write-Host "Usage:"
     Write-Host "    build.ps1 type [options]"
@@ -172,7 +172,7 @@ function Build-Frontend {
 }
 
 function Build-Package {
-    $packageFileName = "ezbookkeeping2-$Version"
+    $packageFileName = "ezrbookkeeping-$Version"
 
     if (-not $Release) {
         $packageFileName = "$packageFileName-$BuildDate"

@@ -4,11 +4,11 @@ title: Troubleshooting
 
 # Troubleshooting
 
-ezbookkeeping2 outputs logs to `log/ezbookkeeping.log` by default. You can review this log file to troubleshoot issues.
+ezrbookkeeping outputs logs to `log/ezbookkeeping.log` by default. You can review this log file to troubleshoot issues.
 
 ## Log Format
 
-ezbookkeeping2 includes three types of logs: general log, request log and query log. Each log entry contains a Trace ID associated with the current request or background task, which allows you to correlate all log entries for a single operation.
+ezrbookkeeping includes three types of logs: general log, request log and query log. Each log entry contains a Trace ID associated with the current request or background task, which allows you to correlate all log entries for a single operation.
 
 ### General Log
 
@@ -26,7 +26,7 @@ The request log records information about each HTTP request, including the reque
 [YYYY-MM-DD HH:mm:ss] [REQUEST] [Trace ID] HTTP_Status_Code ezBookkeeping_Error_Code User_ID Client_IP Request_Method Request_URL Response_Time_ms
 ```
 
-> If no error occurred during the request, the ezbookkeeping2 error code will be `0`.
+> If no error occurred during the request, the ezrbookkeeping error code will be `0`.
 >
 > If the request was made by an unauthenticated user, the user ID will be `-`.
 
@@ -40,35 +40,35 @@ The query log records detailed information about each database query, including 
 
 ## Common Issues
 
-### ezbookkeeping2 fails to start
+### ezrbookkeeping fails to start
 
-When ezbookkeeping2 fails to start, the log will usually contain relevant error messages, such as insufficient permissions, configuration errors, port conflicts, or database connection failures. Review the log file for detailed error information and clues to help diagnose the issue.
+When ezrbookkeeping fails to start, the log will usually contain relevant error messages, such as insufficient permissions, configuration errors, port conflicts, or database connection failures. Review the log file for detailed error information and clues to help diagnose the issue.
 
-If no log entries are recorded when starting ezbookkeeping2, check whether your operating system meets the minimum system requirements. See [System Requirements](/installation/system_requirements) for details.
+If no log entries are recorded when starting ezrbookkeeping, check whether your operating system meets the minimum system requirements. See [System Requirements](/installation/system_requirements) for details.
 
 ### Configuration changes not taking effect
 
-ezbookkeeping2 loads configuration from the configuration file or environment variables at startup. If you modify a configuration item while ezbookkeeping2 is running, you must restart ezbookkeeping2 for the changes to take effect. Changes made to the configuration file will not take effect until ezbookkeeping2 is restarted.
+ezrbookkeeping loads configuration from the configuration file or environment variables at startup. If you modify a configuration item while ezrbookkeeping is running, you must restart ezrbookkeeping for the changes to take effect. Changes made to the configuration file will not take effect until ezrbookkeeping is restarted.
 
-At startup, ezbookkeeping2 outputs the current effective configuration values. You can review these values in the startup log to confirm whether the updated configuration has been loaded correctly.
+At startup, ezrbookkeeping outputs the current effective configuration values. You can review these values in the startup log to confirm whether the updated configuration has been loaded correctly.
 
-In addition, some features in the frontend interface also depend on server-side configuration. ezbookkeeping2 passes server-side configuration to the frontend via `http://{YOUR_HOST_ADDRESS}/server_settings.js`. Please verify that your browser has loaded this URL correctly. If the browser has cached this file, try clearing the browser cache and reloading the page. The configuration parameter names in `server_settings.js` differ from those in the server-side configuration. You can refer to the source code [server_settings.go](https://github.com/krazyjakee/ezbookkeeping/blob/main/pkg/api/server_settings.go) for more details.
+In addition, some features in the frontend interface also depend on server-side configuration. ezrbookkeeping passes server-side configuration to the frontend via `http://{YOUR_HOST_ADDRESS}/server_settings.js`. Please verify that your browser has loaded this URL correctly. If the browser has cached this file, try clearing the browser cache and reloading the page. The configuration parameter names in `server_settings.js` differ from those in the server-side configuration. You can refer to the source code [server_settings.go](https://github.com/krazyjakee/ezbookkeeping/blob/main/pkg/api/server_settings.go) for more details.
 
 ### Content display issues
 
-If you encounter content display issues while using ezbookkeeping2, such as uploaded user avatars or transaction images not displaying, links in email verification or password recovery emails being inaccessible, or OAuth 2.0 login not redirecting back to ezbookkeeping2 correctly, this may be caused by an incorrect access path configuration. ezbookkeeping2 uses the `domain` and `root_url` configuration items when generating these addresses.
+If you encounter content display issues while using ezrbookkeeping, such as uploaded user avatars or transaction images not displaying, links in email verification or password recovery emails being inaccessible, or OAuth 2.0 login not redirecting back to ezrbookkeeping correctly, this may be caused by an incorrect access path configuration. ezrbookkeeping uses the `domain` and `root_url` configuration items when generating these addresses.
 
-Make sure the `domain` setting in your configuration is correct. If you're using a reverse proxy such as Nginx, and the access protocol or port number differs from what the ezbookkeeping2 server provides, you also need to update the `root_url` setting. For details, see [Configuration - Web Server](/configuration/#web-server). ezbookkeeping2 uses these settings to generate URLs for uploaded user avatars and transaction images.
+Make sure the `domain` setting in your configuration is correct. If you're using a reverse proxy such as Nginx, and the access protocol or port number differs from what the ezrbookkeeping server provides, you also need to update the `root_url` setting. For details, see [Configuration - Web Server](/configuration/#web-server). ezrbookkeeping uses these settings to generate URLs for uploaded user avatars and transaction images.
 
-If the images still don't appear after verifying these settings, you can use the developer tool in your browser to check whether the image URLs match the configured addresses. If they don't, review the configuration values shown in ezbookkeeping2's startup logs to ensure they match your expected settings. If not, adjust the configuration or restart ezbookkeeping2.
+If the images still don't appear after verifying these settings, you can use the developer tool in your browser to check whether the image URLs match the configured addresses. If they don't, review the configuration values shown in ezrbookkeeping's startup logs to ensure they match your expected settings. If not, adjust the configuration or restart ezrbookkeeping.
 
 ### Errors when importing data
 
-For security reasons, ezbookkeeping2 does not display detailed error messages on the frontend when an import fails. Instead, these errors are recorded in the log. When a data import fails, ezbookkeeping2 logs the cause of the error along with the affected row number or record index. If you encounter errors during data import, review the log file for detailed error information and clues to help diagnose the issue.
+For security reasons, ezrbookkeeping does not display detailed error messages on the frontend when an import fails. Instead, these errors are recorded in the log. When a data import fails, ezrbookkeeping logs the cause of the error along with the affected row number or record index. If you encounter errors during data import, review the log file for detailed error information and clues to help diagnose the issue.
 
 ### Other Issues
 
-If you encounter other issues while using ezbookkeeping2, you can refer to the [FAQ](/faq/) page, which collects common questions and their solutions. If you cannot find a solution there, you can seek community assistance through the following channels:
+If you encounter other issues while using ezrbookkeeping, you can refer to the [FAQ](/faq/) page, which collects common questions and their solutions. If you cannot find a solution there, you can seek community assistance through the following channels:
 
 - Search for related issues on GitHub Issues: https://github.com/krazyjakee/ezbookkeeping/issues
 - If that does not provide a solution, you can open a new issue on GitHub Issues and describe your problem.

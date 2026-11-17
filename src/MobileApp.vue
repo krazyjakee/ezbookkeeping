@@ -49,7 +49,7 @@ function isEnableFramework7Animate(): boolean {
 }
 
 const f7params = ref<Framework7Parameters>({
-    name: 'ezbookkeeping2',
+    name: 'ezrbookkeeping',
     theme: 'ios',
     colors: {
         primary: '#c67e48'

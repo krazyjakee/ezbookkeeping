@@ -1,16 +1,16 @@
 ---
-title: 功能对比（ezbookkeeping2 vs. Firefly III vs. Actual Budget）
+title: 功能对比（ezrbookkeeping vs. Firefly III vs. Actual Budget）
 ---
 
 # 功能对比
 
-以下为 ezbookkeeping2 与其他的开源、自托管的个人记账软件 Firefly III 和 Actual Budget 的功能对比情况，对比时间为 2026年1月。
+以下为 ezrbookkeeping 与其他的开源、自托管的个人记账软件 Firefly III 和 Actual Budget 的功能对比情况，对比时间为 2026年1月。
 
-ezbookkeeping2 并不是万能的，你可以根据自己最强烈的需求选择最适合自己的软件。ezbookkeeping2 最新的功能列表可以在 [功能列表](/zh_Hans/features/) 中查看。
+ezrbookkeeping 并不是万能的，你可以根据自己最强烈的需求选择最适合自己的软件。ezrbookkeeping 最新的功能列表可以在 [功能列表](/zh_Hans/features/) 中查看。
 
 ## 基本信息
 
-| 项目 | ezbookkeeping2 | Firefly III | Actual Budget |
+| 项目 | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | 对比版本号 | v1.3.2 | v6.4.16 | v26.1.0 |
 | 开发时间 | 2020年至今 | 2014年至今 | 2022年至今 |
@@ -26,7 +26,7 @@ ezbookkeeping2 并不是万能的，你可以根据自己最强烈的需求选�
 
 ## 性能
 
-| 项目 | ezbookkeeping2 | Firefly III | Actual Budget |
+| 项目 | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | Docker 镜像 Tag | `1.3.2` | `version-6.4.16` | `26.1.0-alpine` |
 | Docker 镜像容量（`linux/amd64`） | 57.7 MiB | 795 MiB | 188 MiB |
@@ -42,7 +42,7 @@ ezbookkeeping2 并不是万能的，你可以根据自己最强烈的需求选�
 
 ## 用户界面
 
-| 项目 | ezbookkeeping2 | Firefly III | Actual Budget |
+| 项目 | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | 桌面版界面 | ✅ 支持 | ✅ 支持 | ✅ 支持 |
 | 移动版界面 | ✅ 支持原生移动版页面，提供原生应用体验 | ⚠️ 通过响应式桌面版界面 | ⚠️ 提供面向移动设备的网页 |
@@ -54,7 +54,7 @@ ezbookkeeping2 并不是万能的，你可以根据自己最强烈的需求选�
 
 ## 交易功能
 
-| 项目 | ezbookkeeping2 | Firefly III | Actual Budget |
+| 项目 | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | 日期 | ✅ 支持 | ✅ 支持 | ✅ 支持 |
 | 时间 | ✅ 支持（到秒） | ✅ 支持（到分钟） | ❌ 不支持 |
@@ -76,7 +76,7 @@ ezbookkeeping2 并不是万能的，你可以根据自己最强烈的需求选�
 
 ## 交易分类功能
 
-| 项目 | ezbookkeeping2 | Firefly III | Actual Budget |
+| 项目 | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | 两级分类 | ✅ 支持 | ❌ 不支持 | ❌ 不支持 |
 | 支出分类 | ✅ 支持 | ⚠️ 不区分 | ⚠️ 不区分 |
@@ -89,7 +89,7 @@ ezbookkeeping2 并不是万能的，你可以根据自己最强烈的需求选�
 
 ## 账户功能
 
-| 项目 | ezbookkeeping2 | Firefly III | Actual Budget |
+| 项目 | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | 账户名称 | ✅ 支持 | ✅ 支持 | ✅ 支持 |
 | 账户类型 | ✅ 支持多种类型 | ✅ 支持多种类型 | ❌ 不支持 |
@@ -104,13 +104,13 @@ ezbookkeeping2 并不是万能的，你可以根据自己最强烈的需求选�
 
 ## 预算功能
 
-| 项目 | ezbookkeeping2 | Firefly III | Actual Budget |
+| 项目 | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | 预算功能 | ❌ 不支持 | ✅ 支持 | ✅ 支持 |
 
 ## 交易查询功能
 
-| 项目 | ezbookkeeping2 | Firefly III | Actual Budget |
+| 项目 | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | 交易列表视图 | ✅ 支持 | ✅ 支持 | ✅ 支持 |
 | 交易日历视图 | ✅ 支持 | ❌ 不支持 | ✅ 支持 |
@@ -125,7 +125,7 @@ ezbookkeeping2 并不是万能的，你可以根据自己最强烈的需求选�
 
 ## 统计 & 分析
 
-| 项目 | ezbookkeeping2 | Firefly III | Actual Budget |
+| 项目 | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | 分类收支占比图 | ✅ 支持 | ✅ 支持 | ✅ 支持 |
 | 账户收支占比图 | ✅ 支持 | ❌ 不支持 | ✅ 支持 |
@@ -152,7 +152,7 @@ ezbookkeeping2 并不是万能的，你可以根据自己最强烈的需求选�
 
 ## 导入功能
 
-| 项目 | ezbookkeeping2 | Firefly III | Actual Budget |
+| 项目 | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | CSV | ✅ 内置支持 | ✅ 通过 Data Importer 支持 | ✅ 内置支持 |
 | CSV 列映射导入 | ✅ 支持导入与导出规则，可以通过社区分享 | ✅ Data Importer 内置预设规则 | ⚠️ 需要每次设置映射规则 |
@@ -178,21 +178,21 @@ ezbookkeeping2 并不是万能的，你可以根据自己最强烈的需求选�
 
 ## 导出功能
 
-| 项目 | ezbookkeeping2 | Firefly III | Actual Budget |
+| 项目 | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | CSV | ✅ 支持 | ✅ 支持 | ✅ 支持 |
 | 根据筛选结果导出 | ✅ 支持 | ❌ 不支持 | ✅ 支持 |
 
 ## 数据管理
 
-| 项目 | ezbookkeeping2 | Firefly III | Actual Budget |
+| 项目 | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | 账户交易清空 | ✅ 支持 | ✅ 支持 | ❌ 不支持 |
 | 全部数据清空 | ✅ 支持 | ✅ 支持 | ❌ 不支持 |
 
 ## 安全
 
-| 项目 | ezbookkeeping2 | Firefly III | Actual Budget |
+| 项目 | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | 两步验证 (2FA) | ✅ 支持 | ✅ 支持 | ❌ 不支持 |
 | OIDC 登录 | ✅ 支持 | ❌ 不支持 | ✅ 支持 |
@@ -208,7 +208,7 @@ ezbookkeeping2 并不是万能的，你可以根据自己最强烈的需求选�
 
 ## 人工智能
 
-| 项目 | ezbookkeeping2 | Firefly III | Actual Budget |
+| 项目 | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | Model Context Protocol (MCP) | ✅ 内置支持 | ⚠️ 通过第三方软件 | ⚠️ 通过第三方软件 |
 | MCP 访问 IP 白名单 | ✅ 支持 | ❌ 不支持 | ❌ 不支持 |
@@ -216,14 +216,14 @@ ezbookkeeping2 并不是万能的，你可以根据自己最强烈的需求选�
 
 ## 汇率数据
 
-| 项目 | ezbookkeeping2 | Firefly III | Actual Budget |
+| 项目 | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | 内置汇率数据源 | ✅ 从 16 家央行官方服务同步（最多 150 种货币） | ⚠️ 从 Firefly III 网站同步（30 种货币） | ❌ 不支持 |
 | 手动设置汇率 | ✅ 支持 | ✅ 支持 | ❌ 不支持 |
 
 ## 个性化
 
-| 项目 | ezbookkeeping2 | Firefly III | Actual Budget |
+| 项目 | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | 文字大小设置 | ✅ 移动版支持 | ❌ 不支持 | ❌ 不支持 |
 | 用户头像 | ✅ 支持 | ❌ 不支持 | ❌ 不支持 |
@@ -231,7 +231,7 @@ ezbookkeeping2 并不是万能的，你可以根据自己最强烈的需求选�
 
 ## 国际化 & 本地化
 
-| 项目 | ezbookkeeping2 | Firefly III | Actual Budget |
+| 项目 | ezrbookkeeping | Firefly III | Actual Budget |
 | --- | --- | --- | --- |
 | 多语言支持 | ✅ 支持 | ✅ 支持 | ✅ 支持 |
 | 支持的语言数量 | ✅ 19 种语言 | ✅ 34 种语言 | ✅ 15 种语言 |

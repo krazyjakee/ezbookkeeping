@@ -157,9 +157,9 @@ export default defineConfig(() => {
                 injectRegister: false,
                 manifestFilename: 'manifest.json',
                 manifest: {
-                    name: 'ezbookkeeping2',
-                    short_name: 'ezbookkeeping2',
-                    description: 'ezbookkeeping2, a business-focused fork of ezBookkeeping, an open source, self-hosted bookkeeping app that is easy to use.',
+                    name: 'ezrbookkeeping',
+                    short_name: 'ezrbookkeeping',
+                    description: 'ezrbookkeeping, a business-focused fork of ezBookkeeping, an open source, self-hosted bookkeeping app that is easy to use.',
                     theme_color: '#C67E48',
                     background_color: '#F6F7F8',
                     start_url: './',

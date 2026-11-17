@@ -4,13 +4,13 @@ title: "系统要求"
 
 # 系统要求
 
-ezbookkeeping2 支持在主流的操作系统上部署，同时支持在现代浏览器上访问其界面。以下列出了 ezbookkeeping2 各个版本支持的操作系统和浏览器的最低版本要求。
+ezrbookkeeping 支持在主流的操作系统上部署，同时支持在现代浏览器上访问其界面。以下列出了 ezrbookkeeping 各个版本支持的操作系统和浏览器的最低版本要求。
 
-## 支持部署 ezbookkeeping2 服务端程序的操作系统
+## 支持部署 ezrbookkeeping 服务端程序的操作系统
 
-运行 ezbookkeeping2 服务端的操作系统与 Golang 支持的操作系统相同，下表列出了 ezbookkeeping2 各个版本依赖的 Golang 的版本以及支持操作系统的最低版本。
+运行 ezrbookkeeping 服务端的操作系统与 Golang 支持的操作系统相同，下表列出了 ezrbookkeeping 各个版本依赖的 Golang 的版本以及支持操作系统的最低版本。
 
-| ezbookkeeping2 版本 | Golang 版本 | Linux Kernel 最低版本 | Windows 最低版本 | macOS 最低版本 |
+| ezrbookkeeping 版本 | Golang 版本 | Linux Kernel 最低版本 | Windows 最低版本 | macOS 最低版本 |
 | --- | --- | --- | --- | --- |
 | v2.0.0 及更新 | 1.27 | ≥ 3.2 | ≥ Windows 10 / Windows Server 2016 | ≥ macOS 13 Ventura |
 | v1.5.x – v1.6.x | 1.26 | ≥ 3.2 | ≥ Windows 10 / Windows Server 2016 | ≥ macOS 12 Monterey |
@@ -24,11 +24,11 @@ ezbookkeeping2 支持在主流的操作系统上部署，同时支持在现代�
 
 上述 Linux 版本仅表示 amd64、arm64 和 armv6/v7 架构下的版本，其他架构下支持的版本请参考 Golang 官方文档。更多 Golang 支持的操作系统的信息，请访问 Golang 官方文档：[https://go.dev/wiki/MinimumRequirements](https://go.dev/wiki/MinimumRequirements)。
 
-## 支持访问 ezbookkeeping2 界面的浏览器
+## 支持访问 ezrbookkeeping 界面的浏览器
 
-如果你已经部署了 ezbookkeeping2 的服务端程序，你可以直接使用你的浏览器访问 ezbookkeeping2，下表列出了 ezbookkeeping2 各个版本支持的浏览器的最低版本。
+如果你已经部署了 ezrbookkeeping 的服务端程序，你可以直接使用你的浏览器访问 ezrbookkeeping，下表列出了 ezrbookkeeping 各个版本支持的浏览器的最低版本。
 
-| ezbookkeeping2 版本 | Chrome 最低版本 | Edge 最低版本 | Firefox 最低版本 | Safari 最低版本 |
+| ezrbookkeeping 版本 | Chrome 最低版本 | Edge 最低版本 | Firefox 最低版本 | Safari 最低版本 |
 | --- | --- | --- | --- | --- |
 | v2.0.x 及更新 | ≥ 119 (2023年10月) | ≥ 119 (2023年11月) | ≥ 128 (2024年7月) | ≥ 16.4 (2023年3月) |
 | v1.1.x – v1.6.x | ≥ 91 (2021年5月) | ≥ 91 (2021年4月) | ≥ 91 (2021年8月) | ≥ 15.4 (2022年3月) |

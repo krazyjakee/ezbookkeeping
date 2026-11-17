@@ -2,7 +2,7 @@
 layout: home
 
 hero:
-    name: "ezbookkeeping2"
+    name: "ezrbookkeeping"
     text: "稳定、面向企业的自托管记账应用"
     tagline: "mayswind/ezbookkeeping 的商业化分支。稳定性、成熟度与商业用途优先，不包含个人生活记录功能。"
     actions:
@@ -99,7 +99,7 @@ sitemap:
           url: https://github.com/krazyjakee/ezbookkeeping/releases
           external: true
         - name: Docker 仓库
-          url: https://hub.docker.com/r/krazyjakee/ezbookkeeping2
+          url: https://hub.docker.com/r/krazyjakee/ezrbookkeeping
           external: true
     - name: 帮助
       links:
