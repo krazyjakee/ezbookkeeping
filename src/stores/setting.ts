@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { defineStore } from 'pinia';
 
 import {
@@ -37,6 +37,7 @@ import {
     clearSettings
 } from '@/lib/settings.ts';
 
+import { setMotionPreference as applyMotionPreference } from '@/lib/motion.ts';
 import logger from '@/lib/logger.ts';
 import services from '@/lib/services.ts';
 
@@ -59,6 +60,9 @@ export const useSettingsStore = defineStore('settings', () => {
     });
 
     const accountCategoryDisplayOrders = computed<Record<number, number>>(() => AccountCategory.allDisplayOrders(appSettings.value.accountCategoryOrders));
+
+    // keep the motion state (root classes, chart / framework animations) in sync with the setting, including resets
+    watch(() => appSettings.value.motionPreference, value => applyMotionPreference(value), { immediate: true });
 
     function updateApplicationSettingsValueAndAppSettingsFromCloudSetting(key: string, value: string | number | boolean | Record<string, boolean>): void {
         const keyItems = key.split('.');
@@ -195,6 +199,11 @@ export const useSettingsStore = defineStore('settings', () => {
     function setEnableAnimate(value: boolean): void {
         updateApplicationSettingsValue('animate', value);
         appSettings.value.animate = value;
+    }
+
+    function setMotionPreference(value: string): void {
+        updateApplicationSettingsValue('motionPreference', value);
+        appSettings.value.motionPreference = value;
     }
 
     // Application Lock
@@ -662,6 +671,7 @@ export const useSettingsStore = defineStore('settings', () => {
         setChartColors,
         setEnableSwipeBack,
         setEnableAnimate,
+        setMotionPreference,
         // -- Application Lock
         setEnableApplicationLock,
         setEnableApplicationLockWebAuthn,

@@ -1,3 +1,5 @@
+@use '../common/tokens';
+@use '../common/motion';
 @use './variable';
 @use './override/vuetify';
 @use './override/vue-datepicker';

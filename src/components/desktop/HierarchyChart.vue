@@ -23,6 +23,7 @@ import { type AxisChartSourceDataItem, ChartValueType } from '@/core/chart.ts';
 import { isArray, isString, isNumber } from '@/lib/common.ts';
 import { BIG_DECIMAL_ZERO, parseBigDecimal, isBigDecimal } from '@/lib/numeral.ts';
 import { getDisplayColor } from '@/lib/color.ts';
+import { getChartAnimationOptions } from '@/lib/motion.ts';
 
 export type HierarchyChartDisplayType = 'treemap' | 'sunburst';
 
@@ -182,7 +183,7 @@ const chartOptions = computed<object>(() => {
                 }
             }
         ],
-        animation: !props.skeleton,
+        ...getChartAnimationOptions(!props.skeleton),
         nodeClick: false
     };
 

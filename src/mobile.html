@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes"/>
     <meta name="apple-mobile-web-app-title" content="ezbookkeeping2"/>
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-    <meta name="theme-color" content="#f6f6f8">
+    <meta name="theme-color" content="#f7f4ef">
     <meta name="format-detection" content="telephone=no"/>
     <meta name="description" content="ezbookkeeping2 is a business-focused fork of ezBookkeeping, an open source, self-hosted bookkeeping app that is easy to use.">
     <title>ezbookkeeping2</title>
@@ -67,6 +67,38 @@
             document.querySelector('html').removeAttribute('dir');
             document.getElementById('framework7-css').href = '{{framework7-ltr-css-filepath}}';
         }
+    </script>
+    <script>
+        /* apply the persisted (or system) theme and motion preference before the first paint, see docs/design/tokens.md */
+        (function () {
+            var root = document.documentElement;
+            var settings = {};
+
+            try {
+                settings = JSON.parse(localStorage.getItem('ebk_app_settings') || '{}') || {};
+            } catch (ex) {
+                settings = {};
+            }
+
+            var theme = settings.theme;
+            var motion = settings.motionPreference;
+            var matches = function (query) {
+                return !!(window.matchMedia && window.matchMedia(query).matches);
+            };
+            var dark = theme === 'dark' || (theme !== 'light' && matches('(prefers-color-scheme: dark)'));
+            var reduced = motion === 'reduce' || (motion !== 'full' && matches('(prefers-reduced-motion: reduce)'));
+
+            root.setAttribute('data-ebk-theme', dark ? 'dark' : 'light');
+            root.classList.toggle('dark', dark);
+            root.classList.toggle('ebk-reduce-motion', reduced);
+            root.classList.toggle('ebk-motion-full', motion === 'full');
+
+            var themeColorMeta = document.querySelector('meta[name=theme-color]');
+
+            if (themeColorMeta && dark) {
+                themeColorMeta.setAttribute('content', '#0b0a09');
+            }
+        })();
     </script>
     <script src="./server_settings.js"></script>
 </head>

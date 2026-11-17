@@ -19,12 +19,38 @@
     --f7-notification-title-text-transform: unset;
 
     --ebk-icon-default-color: #000;
-    --ebk-primary-color: 198, 126, 72;
     --ebk-chevron-icon-color: rgba(0, 0, 0, 0.2);
     --ebk-transaction-tag-chip-bg-color: rgba(0, 0, 0, 0.04);
+
+    /* shared tokens (colors, spacing, radius, shadows, motion...) are defined in src/styles/common/_tokens.scss */
+    --ebk-header-strip-height: 36px;
+    --ebk-bars-bg-opacity: 1;
+}
+
+/**
+ * Framework7 adapter: maps the shared tokens to Framework7 variables.
+ * All of these live on the root element, so the dark values follow `:root.dark` automatically.
+ * `:root.ios.dark` is listed to win over framework7's own `.ios.dark` declarations.
+ */
+:root.ios,
+:root.ios.dark {
+    --f7-page-bg-color: var(--ebk-color-canvas);
+    --f7-bars-bg-color: rgba(var(--ebk-color-canvas-rgb), var(--ebk-bars-bg-opacity));
+    --f7-bars-bg-color-rgb: var(--ebk-color-canvas-rgb);
+    --f7-block-strong-bg-color: var(--ebk-color-surface);
+    --f7-list-strong-bg-color: var(--ebk-color-surface);
+    --f7-list-group-title-bg-color: var(--ebk-color-surface-sunken);
+    --f7-text-color: var(--ebk-color-text-primary);
+    --f7-block-title-text-color: var(--ebk-color-text-secondary);
+    --f7-block-footer-text-color: var(--ebk-color-text-secondary);
+    --f7-list-item-footer-text-color: var(--ebk-color-text-secondary);
+    --f7-list-item-after-text-color: var(--ebk-color-text-secondary);
+    --f7-list-outline-border-color: var(--ebk-color-hairline);
 }
 
 :root.dark {
+    --ebk-bars-bg-opacity: 0.5;
+
     --f7-fab-bg-color: var(--f7-glass-bg-color);
     --f7-fab-pressed-bg-color: var(--f7-glass-bg-color);
     --f7-fab-text-color: var(--f7-theme-color);

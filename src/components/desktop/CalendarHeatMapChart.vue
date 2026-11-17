@@ -30,6 +30,7 @@ import {
     isBigDecimal
 } from '@/lib/numeral.ts';
 import { parseDateTimeFromKnownDateTimeFormat } from '@/lib/datetime.ts';
+import { getChartAnimationOptions } from '@/lib/motion.ts';
 
 interface HeatMapData {
     allOriginalDataMap: Record<string, BigDecimal>;
@@ -246,7 +247,7 @@ const chartOptions = computed<object>(() => {
         series: mapObjectToArray(heatMapData.value.data, (item, _, index) => {
             return {
                 type: 'heatmap',
-                animation: !props.skeleton,
+                ...getChartAnimationOptions(!props.skeleton),
                 coordinateSystem: 'calendar',
                 calendarIndex: index,
                 data: item.data,

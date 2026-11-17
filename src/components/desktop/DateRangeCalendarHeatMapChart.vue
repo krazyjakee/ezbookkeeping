@@ -39,6 +39,7 @@ import {
     parseDateTimeFromUnixTime,
     parseDateTimeFromKnownDateTimeFormat
 } from '@/lib/datetime.ts';
+import { getChartAnimationOptions } from '@/lib/motion.ts';
 
 interface HeatMapData {
     allOriginalDataMap: Record<string, BigDecimal>;
@@ -251,7 +252,7 @@ const chartOptions = computed<object>(() => {
         },
         series: {
             type: 'heatmap',
-            animation: !props.skeleton,
+            ...getChartAnimationOptions(!props.skeleton),
             coordinateSystem: 'calendar',
             data: heatMapData.value.data,
             label: {

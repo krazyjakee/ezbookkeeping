@@ -158,6 +158,12 @@ if (settingsStore.appSettings.theme === ThemeType.Light) {
     theme.change(getSystemTheme());
 }
 
+// keep the root theme attribute (used by the shared design tokens and set before first paint in desktop.html) in sync with vuetify
+watch(() => theme.global.current.value.dark, isDarkTheme => {
+    document.documentElement.setAttribute('data-ebk-theme', isDarkTheme ? ThemeType.Dark : ThemeType.Light);
+    document.querySelector('meta[name=theme-color]')?.setAttribute('content', isDarkTheme ? '#0b0a09' : '#f7f4ef');
+}, { immediate: true });
+
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (e) {
     if (settingsStore.appSettings.theme === 'auto') {
         if (e.matches) {

@@ -22,6 +22,7 @@ import { type AxisChartSourceDataItem, ChartValueType } from '@/core/chart.ts';
 import { BIG_DECIMAL_ZERO, isBigDecimal } from '@/lib/numeral.ts';
 import { max } from '@/lib/math.ts';
 import { getDisplayColor } from '@/lib/color.ts';
+import { getChartAnimationOptions } from '@/lib/motion.ts';
 
 interface RadarChartData {
     indicators: RadarChartDataItem[];
@@ -229,7 +230,7 @@ const chartOptions = computed<object>(() => {
                         shadowColor: 'rgba(0, 0, 0, 0.5)',
                     }
                 },
-                animation: !props.skeleton
+                ...getChartAnimationOptions(!props.skeleton)
             }
         ] : [],
         media: [

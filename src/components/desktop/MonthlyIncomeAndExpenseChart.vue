@@ -42,6 +42,7 @@ import { type TransactionMonthlyIncomeAndExpenseData } from '@/models/transactio
 import { BIG_DECIMAL_ZERO, parseBigDecimal } from '@/lib/numeral.ts';
 import { parseDateTimeFromUnixTime } from '@/lib/datetime.ts';
 import { getExpenseAndIncomeAmountColor } from '@/lib/ui/common.ts';
+import { getChartAnimationOptions } from '@/lib/motion.ts';
 
 export interface MonthlyIncomeAndExpenseCardClickEvent {
     transactionType: TransactionType;
@@ -142,6 +143,7 @@ const chartOptions = computed<object>(() => {
     const amountGap = maxAmount.subtract(minAmount);
 
     return {
+        ...getChartAnimationOptions(),
         tooltip: {
             trigger: 'axis',
             axisPointer: props.chartType === TrendChartType.Area.type ? {

@@ -8,7 +8,7 @@
 html {
     min-width: 320px;
     min-height: 100%;
-    background: rgb(var(--v-theme-background, 246, 246, 244));
+    background: var(--ebk-color-canvas, rgb(var(--v-theme-background, 247, 244, 239)));
     overflow-y: scroll;
 }
 
@@ -33,10 +33,6 @@ a:where(:not(
 
 #app {
     min-height: calc(var(--vh, 1vh) * 100);
-}
-
-:focus-visible {
-    outline: none;
 }
 
 ::selection {

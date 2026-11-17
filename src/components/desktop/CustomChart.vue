@@ -49,7 +49,7 @@
                 <div class="w-100 h-100 d-flex align-center justify-content-center" v-if="executionError">
                     <v-alert class="mb-3" density="compact" type="error" variant="tonal" :text="executionError" />
                 </div>
-                <v-chart autoresize :option="chartOptions" :update-options="{ notMerge: true }"
+                <v-chart autoresize :option="displayChartOptions" :update-options="{ notMerge: true }"
                          v-if="!executionError && chartOptions" />
             </div>
         </v-col>
@@ -94,6 +94,7 @@ import type { TransactionExplorerQuery } from '@/models/explorer.ts';
 import { parseBigDecimal } from '@/lib/numeral.ts';
 import { parseDateTimeFromUnixTimeWithTimezoneOffset } from '@/lib/datetime.ts';
 import { generateRandomUUID } from '@/lib/misc.ts';
+import { isReducedMotion } from '@/lib/motion.ts';
 import logger from '@/lib/logger.ts';
 
 import {
@@ -222,6 +223,8 @@ const snackbarForFailureReason = useTemplateRef<SnackBarType>('snackbarForFailur
 const sandboxLoaded = ref<boolean>(false);
 const customScript = ref<string>('');
 const chartOptions = ref<Record<string, unknown>>({});
+// chart options are user defined, only turn off the chart animations when motion is reduced
+const displayChartOptions = computed<Record<string, unknown>>(() => isReducedMotion() ? { ...chartOptions.value, animation: false } : chartOptions.value);
 const executingScript = ref<boolean>(false);
 const executionError = ref<string>('');
 const aiModeState = ref<CustomChartAIState>(CustomChartAIState.Idle);

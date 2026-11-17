@@ -4,6 +4,34 @@
 
         <f7-block-title class="margin-top">{{ tt('General Settings') }}</f7-block-title>
         <f7-list strong inset dividers class="settings-list">
+            <f7-list-item
+                link="#"
+                class="item-truncate-after-text"
+                popover-open=".motion-preference-popover-menu"
+            >
+                <template #after-title>
+                    <div class="item-actual-title">
+                        <span>{{ tt('Motion') }}</span>
+                    </div>
+                </template>
+                <template #after>
+                    {{ findNameByValue(allMotionPreferences, motionPreference) }}
+                </template>
+                <f7-popover class="motion-preference-popover-menu">
+                    <f7-list dividers>
+                        <f7-list-item link="#" no-chevron popover-close
+                                      :title="option.name"
+                                      :class="{ 'list-item-selected': motionPreference === option.value }"
+                                      :key="option.value"
+                                      v-for="option in allMotionPreferences"
+                                      @click="motionPreference = option.value">
+                            <template #after>
+                                <f7-icon class="list-item-checked-icon" f7="checkmark_alt" v-if="motionPreference === option.value"></f7-icon>
+                            </template>
+                        </f7-list-item>
+                    </f7-list>
+                </f7-popover>
+            </f7-list-item>
             <f7-list-item>
                 <template #after-title>
                     {{ tt('Show Account Balance') }}
@@ -520,7 +548,8 @@ import { useAccountsStore } from '@/stores/account.ts';
 import { useTransactionCategoriesStore } from '@/stores/transactionCategory.ts';
 import { useTransactionTagsStore } from '@/stores/transactionTag.ts';
 
-import type { TypeAndDisplayName } from '@/core/base.ts';
+import type { NameValue, TypeAndDisplayName } from '@/core/base.ts';
+import { MotionPreference } from '@/core/setting.ts';
 import { CategoryType } from '@/core/category.ts';
 import { TransactionAmountType, TransactionQuickSaveButtonStyle } from '@/core/transaction.ts';
 import { DEFAULT_RECONCILIATION_STATEMENT_DATE_RANGE_IN_MOBILE } from '@/core/statistics.ts';
@@ -584,6 +613,17 @@ const showReconciliationStatementDefaultDateRangePopup = ref<boolean>(false);
 const allTransactionQuickSaveButtonStyles = computed<TypeAndDisplayName[]>(() => getAllTransactionQuickSaveButtonStyles());
 const allTransactionQuickAddButtonActionTypes = computed<TypeAndDisplayName[]>(() => getAllTransactionQuickAddButtonActionTypes());
 const allCreditCardAmountDisplayTypes = computed<TypeAndDisplayName[]>(() => getAllCreditCardAmountDisplayTypes());
+
+const allMotionPreferences = computed<NameValue[]>(() => [
+    { name: tt('System Default'), value: MotionPreference.System },
+    { name: tt('Reduced'), value: MotionPreference.Reduce },
+    { name: tt('Full'), value: MotionPreference.Full }
+]);
+
+const motionPreference = computed<string>({
+    get: () => settingsStore.appSettings.motionPreference,
+    set: (value: string) => settingsStore.setMotionPreference(value)
+});
 
 const overviewPageLayoutDisplayContent = computed<string>(() => {
     try {

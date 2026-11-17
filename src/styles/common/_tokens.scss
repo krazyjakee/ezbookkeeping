@@ -1,0 +1,370 @@
+/**
+ * ezbookkeeping2 shared design tokens ("Copper Instrument Panel").
+ *
+ * This file is the single source of the design tokens described in docs/design/README.md
+ * and documented in docs/design/tokens.md. It is consumed by both the desktop (Vuetify)
+ * and the mobile (Framework7) style entry points. Framework specific variables
+ * (--v-theme-*, --f7-*) are mapped from these tokens by the framework adapters:
+ *  - desktop: src/desktop-main.ts (Vuetify theme) and src/styles/desktop/_variable.scss
+ *  - mobile: src/styles/mobile/_variable.scss (Framework7 CSS variables)
+ *
+ * Theme dependent tokens are declared on every theme scope, because custom properties
+ * that reference other custom properties are resolved where they are declared:
+ *  - light: `:root` (default) and `.v-theme--light`
+ *  - dark: `:root[data-ebk-theme="dark"]` (set before first paint, see src/*.html),
+ *          `:root.dark` (Framework7) and `.v-theme--dark` (Vuetify)
+ */
+
+$ebk-light-theme-selectors: ':root, .v-theme--light';
+$ebk-dark-theme-selectors: ':root[data-ebk-theme="dark"], :root.dark, .v-theme--dark';
+
+// Languages using the Latin script, technical headings are uppercased only for these
+$ebk-latin-script-languages: en, de, es, fr, it, nl, pl, pt, ro, sk, sl, tr, vi;
+
+@mixin ebk-derived-theme-tokens {
+    --ebk-color-canvas: rgb(var(--ebk-color-canvas-rgb));
+    --ebk-color-surface: rgb(var(--ebk-color-surface-rgb));
+    --ebk-color-surface-raised: rgb(var(--ebk-color-surface-raised-rgb));
+    --ebk-color-surface-sunken: rgb(var(--ebk-color-surface-sunken-rgb));
+    --ebk-color-text-primary: rgb(var(--ebk-color-text-primary-rgb));
+    --ebk-color-text-secondary: rgb(var(--ebk-color-text-secondary-rgb));
+    --ebk-color-hairline: rgba(var(--ebk-color-hairline-rgb), var(--ebk-color-hairline-opacity));
+    --ebk-color-copper-line: rgba(var(--ebk-copper-500-rgb), var(--ebk-color-copper-line-opacity));
+    --ebk-color-selected-background: rgba(var(--ebk-copper-500-rgb), var(--ebk-color-selected-opacity));
+    --ebk-color-grid-line: rgba(var(--ebk-color-text-primary-rgb), var(--ebk-grid-opacity));
+
+    --ebk-focus-outline: var(--ebk-focus-ring-width) solid var(--ebk-focus-ring-color);
+    --ebk-glow: 0 0 0 1px var(--ebk-color-copper-line), 0 0 12px rgba(var(--ebk-copper-500-rgb), 0.25);
+
+    --ebk-shadow-sm: 0 1px 2px rgba(var(--ebk-shadow-color), var(--ebk-shadow-sm-opacity-1)), 0 3px 10px rgba(var(--ebk-shadow-color), var(--ebk-shadow-sm-opacity-2));
+    --ebk-shadow-md: 0 7px 24px rgba(var(--ebk-shadow-color), var(--ebk-shadow-md-opacity));
+    --ebk-shadow-lg: 0 16px 44px rgba(var(--ebk-shadow-color), var(--ebk-shadow-lg-opacity));
+    --ebk-elevation-1: var(--ebk-shadow-sm);
+    --ebk-elevation-2: var(--ebk-shadow-md);
+    --ebk-elevation-3: var(--ebk-shadow-lg);
+
+    // Legacy aliases (kept so existing components keep working)
+    --ebk-surface: var(--ebk-color-surface-rgb);
+    --ebk-surface-muted: var(--ebk-color-surface-sunken-rgb);
+    --ebk-surface-raised: var(--ebk-color-surface-raised-rgb);
+    --ebk-border: var(--ebk-color-hairline-rgb);
+}
+
+:root {
+    /* Copper ramp (theme independent) */
+    --ebk-copper-50: #fbf3ec;
+    --ebk-copper-100: #f3dfcd;
+    --ebk-copper-300: #dfa97f;
+    --ebk-copper-500: #c67e48;
+    --ebk-copper-600: #b67443;
+    --ebk-copper-700: #97592f;
+    --ebk-copper-900: #5a3219;
+    --ebk-copper-500-rgb: 198, 126, 72;
+    --ebk-copper-600-rgb: 182, 116, 67;
+    --ebk-copper-700-rgb: 151, 89, 47;
+
+    --ebk-color-primary: var(--ebk-copper-500);
+    --ebk-color-primary-hover: var(--ebk-copper-600);
+    --ebk-color-primary-pressed: var(--ebk-copper-700);
+    // legacy RGB triplet of the primary color
+    --ebk-primary-color: 198, 126, 72;
+
+    /* Semantic status colors (never remapped, always paired with a label, icon or shape) */
+    --ebk-color-success: #4cd964;
+    --ebk-color-info: #2196f3;
+    --ebk-color-warning: #ff9500;
+    --ebk-color-error: #ff3b30;
+
+    /* Focus */
+    --ebk-focus-ring-width: 2px;
+    --ebk-focus-ring-offset: 2px;
+    // legacy soft focus halo
+    --ebk-focus-ring: 0 0 0 3px rgba(var(--ebk-primary-color), 0.16);
+
+    /* Spacing (4px scale) */
+    --ebk-space-0: 0;
+    --ebk-space-1: 0.25rem;
+    --ebk-space-2: 0.5rem;
+    --ebk-space-3: 0.75rem;
+    --ebk-space-4: 1rem;
+    --ebk-space-5: 1.25rem;
+    --ebk-space-6: 1.5rem;
+
+    /* Radius */
+    --ebk-radius-sm: 0.375rem;
+    --ebk-radius-md: 0.625rem;
+    --ebk-radius-lg: 0.75rem;
+    --ebk-radius-xl: 1rem;
+    --ebk-radius-control: 0.5rem;
+    --ebk-radius-panel: var(--ebk-radius-md);
+    --ebk-radius-pill: 999px;
+
+    /* Density and geometry */
+    --ebk-density-table-row-height: 44px;
+    --ebk-touch-target-min: 44px;
+    --ebk-header-strip-height: 40px;
+    --ebk-bracket-size: 10px;
+    --ebk-grid-size: 24px;
+    --ebk-grid-opacity: 0.035;
+
+    /* Layers */
+    --ebk-z-base: 0;
+    --ebk-z-raised: 1;
+    --ebk-z-sticky: 5;
+    --ebk-z-navigation: 1000;
+    --ebk-z-overlay: 2400;
+    --ebk-z-snackbar: 9000;
+    --ebk-z-tooltip: 9000;
+    --ebk-z-toast: 10000;
+
+    /* Typography */
+    --ebk-font-body: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+        "PingFang SC", "Hiragino Sans", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC",
+        "Apple SD Gothic Neo", "Malgun Gothic", "Nirmala UI", "Noto Sans Devanagari", "Noto Sans Bengali",
+        "Noto Sans Tamil", "Noto Sans Kannada", "Leelawadee UI", "Thonburi", "Noto Sans Thai", "Noto Sans",
+        sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    --ebk-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --ebk-font-numeric: tabular-nums;
+    --ebk-font-technical-size: 0.75rem;
+    --ebk-font-technical-weight: 600;
+    --ebk-font-technical-letter-spacing: 0.08em;
+
+    /* Motion */
+    --ebk-motion-duration-xs: 90ms;
+    --ebk-motion-duration-sm: 160ms;
+    --ebk-motion-duration-md: 240ms;
+    --ebk-motion-duration-lg: 360ms;
+    --ebk-motion-duration-reduced: 120ms;
+    --ebk-motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+    --ebk-motion-ease-emphasized: cubic-bezier(0.3, 0, 0, 1);
+    --ebk-motion-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+    --ebk-motion-distance-sm: 4px;
+    --ebk-motion-distance-md: 12px;
+    --ebk-motion-scale-from: 0.96;
+    --ebk-motion-stagger: 30ms;
+    // stagger at most 6 items (index 0..5)
+    --ebk-motion-stagger-max-index: 5;
+
+    // Legacy aliases
+    --ebk-transition-fast: var(--ebk-motion-duration-sm) var(--ebk-motion-ease-standard);
+    --ebk-transition-base: var(--ebk-motion-duration-md) var(--ebk-motion-ease-standard);
+}
+
+#{$ebk-light-theme-selectors} {
+    --ebk-color-canvas-rgb: 247, 244, 239;
+    --ebk-color-surface-rgb: 255, 255, 255;
+    --ebk-color-surface-raised-rgb: 255, 255, 255;
+    --ebk-color-surface-sunken-rgb: 241, 236, 229;
+    --ebk-color-text-primary-rgb: 43, 36, 33;
+    --ebk-color-text-secondary-rgb: 107, 96, 90;
+    --ebk-color-hairline-rgb: 54, 47, 42;
+    --ebk-color-hairline-opacity: 0.14;
+    --ebk-color-copper-line-opacity: 0.45;
+    --ebk-color-selected-opacity: 0.1;
+    --ebk-color-primary-text: var(--ebk-copper-700);
+    --ebk-focus-ring-color: var(--ebk-copper-600);
+
+    --ebk-shadow-color: 68, 48, 34;
+    --ebk-shadow-sm-opacity-1: 0.05;
+    --ebk-shadow-sm-opacity-2: 0.035;
+    --ebk-shadow-md-opacity: 0.1;
+    --ebk-shadow-lg-opacity: 0.16;
+
+    @include ebk-derived-theme-tokens;
+}
+
+#{$ebk-dark-theme-selectors} {
+    --ebk-color-canvas-rgb: 11, 10, 9;
+    --ebk-color-surface-rgb: 22, 20, 18;
+    --ebk-color-surface-raised-rgb: 30, 27, 24;
+    --ebk-color-surface-sunken-rgb: 16, 14, 12;
+    --ebk-color-text-primary-rgb: 244, 235, 225;
+    --ebk-color-text-secondary-rgb: 185, 173, 162;
+    --ebk-color-hairline-rgb: 236, 226, 217;
+    --ebk-color-hairline-opacity: 0.12;
+    --ebk-color-copper-line-opacity: 0.55;
+    --ebk-color-selected-opacity: 0.16;
+    --ebk-color-primary-text: var(--ebk-copper-500);
+    --ebk-focus-ring-color: var(--ebk-copper-500);
+
+    --ebk-shadow-color: 0, 0, 0;
+    --ebk-shadow-sm-opacity-1: 0.18;
+    --ebk-shadow-sm-opacity-2: 0.14;
+    --ebk-shadow-md-opacity: 0.28;
+    --ebk-shadow-lg-opacity: 0.42;
+
+    @include ebk-derived-theme-tokens;
+}
+
+:root {
+    color-scheme: light;
+    background-color: var(--ebk-color-canvas);
+}
+
+:root[data-ebk-theme="dark"],
+:root.dark {
+    color-scheme: dark;
+}
+
+/* Reduced motion: movement collapses to opacity changes of at most 120ms */
+@mixin ebk-reduced-motion-tokens {
+    --ebk-motion-duration-sm: var(--ebk-motion-duration-reduced);
+    --ebk-motion-duration-md: var(--ebk-motion-duration-reduced);
+    --ebk-motion-duration-lg: var(--ebk-motion-duration-reduced);
+    --ebk-motion-distance-sm: 0px;
+    --ebk-motion-distance-md: 0px;
+    --ebk-motion-scale-from: 1;
+    --ebk-motion-stagger: 0ms;
+}
+
+:root.ebk-reduce-motion {
+    @include ebk-reduced-motion-tokens;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :root:not(.ebk-motion-full) {
+        @include ebk-reduced-motion-tokens;
+    }
+}
+
+/* Global wiring: focus ring, tabular numerals */
+:where(:focus-visible):not(input, textarea, select, [contenteditable="true"], [contenteditable=""], [tabindex="-1"]) {
+    outline: var(--ebk-focus-outline);
+    outline-offset: var(--ebk-focus-ring-offset);
+}
+
+.ebk-numeric,
+.text-expense,
+.text-income,
+body :is([class*="amount"], [class*="balance"]) {
+    font-variant-numeric: var(--ebk-font-numeric);
+}
+
+.ebk-font-mono {
+    font-family: var(--ebk-font-mono);
+}
+
+/* Technical headings and panel header strips */
+.ebk-technical-heading,
+.ebk-panel-header-strip {
+    font-size: var(--ebk-font-technical-size);
+    font-weight: var(--ebk-font-technical-weight);
+    letter-spacing: var(--ebk-font-technical-letter-spacing) !important;
+    line-height: 1.25;
+}
+
+@each $lang in $ebk-latin-script-languages {
+    .ebk-technical-heading:lang(#{$lang}),
+    .ebk-panel-header-strip:lang(#{$lang}) {
+        text-transform: uppercase;
+    }
+}
+
+.ebk-panel-header-strip {
+    display: flex;
+    align-items: center;
+    gap: var(--ebk-space-2);
+    min-height: var(--ebk-header-strip-height);
+    padding-inline: var(--ebk-space-4);
+    border-block-end: 1px solid var(--ebk-color-hairline);
+    color: var(--ebk-color-text-secondary);
+
+    > .ebk-panel-header-actions {
+        margin-inline-start: auto;
+        text-transform: none;
+        letter-spacing: normal !important;
+    }
+}
+
+/* Canvas grid texture (page canvas only, never under dense tables) */
+.ebk-canvas-grid {
+    background-color: var(--ebk-color-canvas);
+    background-image:
+        linear-gradient(to right, var(--ebk-color-grid-line) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--ebk-color-grid-line) 1px, transparent 1px);
+    background-size: var(--ebk-grid-size) var(--ebk-grid-size);
+}
+
+/* Panels */
+.ebk-panel {
+    position: relative;
+    border: 1px solid var(--ebk-color-hairline);
+    border-radius: var(--ebk-radius-panel);
+    background-color: var(--ebk-color-surface);
+    color: var(--ebk-color-text-primary);
+    box-shadow: var(--ebk-elevation-1);
+}
+
+.ebk-panel--active,
+.ebk-panel--selected {
+    border-inline-start-color: var(--ebk-color-copper-line);
+}
+
+.ebk-panel--bracketed::before,
+.ebk-panel--bracketed::after {
+    content: '';
+    position: absolute;
+    width: calc(var(--ebk-radius-panel) + var(--ebk-bracket-size));
+    height: calc(var(--ebk-radius-panel) + var(--ebk-bracket-size));
+    border: 0 solid var(--ebk-color-copper-line);
+    pointer-events: none;
+}
+
+.ebk-panel--bracketed::before {
+    inset-block-start: -1px;
+    inset-inline-start: -1px;
+    border-block-start-width: 1px;
+    border-inline-start-width: 1px;
+    border-start-start-radius: var(--ebk-radius-panel);
+}
+
+.ebk-panel--bracketed::after {
+    inset-block-end: -1px;
+    inset-inline-end: -1px;
+    border-block-end-width: 1px;
+    border-inline-end-width: 1px;
+    border-end-end-radius: var(--ebk-radius-panel);
+}
+
+/* Glow (focused control, primary hover, active navigation item, live indicators only) */
+.ebk-glow {
+    box-shadow: var(--ebk-glow);
+}
+
+.ebk-glow-focus:focus-visible {
+    outline: var(--ebk-focus-outline);
+    outline-offset: var(--ebk-focus-ring-offset);
+    box-shadow: var(--ebk-glow);
+}
+
+.ebk-glow-focus:focus-within {
+    box-shadow: var(--ebk-glow);
+}
+
+@media (forced-colors: active) {
+    .ebk-canvas-grid {
+        background-image: none;
+    }
+
+    .ebk-panel--bracketed::before,
+    .ebk-panel--bracketed::after {
+        display: none;
+    }
+
+    .ebk-panel,
+    .ebk-glow,
+    .ebk-glow-focus:focus-visible,
+    .ebk-glow-focus:focus-within {
+        box-shadow: none;
+    }
+
+    :where(:focus-visible):not(input, textarea, select, [contenteditable="true"], [contenteditable=""], [tabindex="-1"]) {
+        outline-color: Highlight;
+    }
+}
+
+@media print {
+    .ebk-canvas-grid {
+        background-image: none !important;
+    }
+}

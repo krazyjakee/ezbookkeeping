@@ -28,6 +28,7 @@ import { AccountBalanceTrendChartType, ChartDateAggregationType } from '@/core/s
 import { isArray } from '@/lib/common.ts';
 import { BIG_DECIMAL_POSITIVE_INFINITY, BIG_DECIMAL_NEGATIVE_INFINITY, parseBigDecimal } from '@/lib/numeral.ts';
 import { getExpenseAndIncomeAmountColor } from '@/lib/ui/common.ts';
+import { getChartAnimationOptions } from '@/lib/motion.ts';
 
 interface DesktopAccountBalanceTrendsChartProps extends CommonAccountBalanceTrendsChartProps {
     legendName: string;
@@ -92,7 +93,7 @@ const trendsChartData = computed<AccountBalanceTrendsChartData>(() => {
         selected: true,
         type: 'line',
         stack: 'a',
-        animation: !props.skeleton,
+        ...getChartAnimationOptions(!props.skeleton),
         data: []
     };
     const originalData: (BigDecimal | BigDecimal[])[] = [];

@@ -21,6 +21,22 @@
                         </div>
 
                         <div class="setting-item">
+                            <span>{{ tt('Motion') }}</span>
+                            <v-spacer/>
+                            <v-select
+                                class="ms-4"
+                                density="compact"
+                                item-title="name"
+                                item-value="value"
+                                persistent-placeholder
+                                max-width="400px"
+                                :placeholder="tt('Motion')"
+                                :items="allMotionPreferences"
+                                v-model="motionPreference"
+                            />
+                        </div>
+
+                        <div class="setting-item">
                             <span>{{ tt('Timezone') }}</span>
                             <v-spacer/>
                             <v-autocomplete
@@ -476,8 +492,9 @@ import { useAccountsStore } from '@/stores/account.ts';
 import { useTransactionCategoriesStore } from '@/stores/transactionCategory.ts';
 import { useTransactionTagsStore } from '@/stores/transactionTag.ts';
 import { useDesktopPageStore } from '@/stores/desktopPage.ts';
-import type { NameNumeralValue } from '@/core/base.ts';
+import type { NameValue, NameNumeralValue } from '@/core/base.ts';
 import { ThemeType } from '@/core/theme.ts';
+import { MotionPreference } from '@/core/setting.ts';
 import { type LocalizedDateRange, DateRangeScene } from '@/core/datetime.ts';
 import { CategoryType } from '@/core/category.ts';
 import { TransactionAmountType } from '@/core/transaction.ts';
@@ -566,6 +583,17 @@ const currentTheme = computed<string>({
             }
         }
     }
+});
+
+const allMotionPreferences = computed<NameValue[]>(() => [
+    { name: tt('System Default'), value: MotionPreference.System },
+    { name: tt('Reduced'), value: MotionPreference.Reduce },
+    { name: tt('Full'), value: MotionPreference.Full }
+]);
+
+const motionPreference = computed<string>({
+    get: () => settingsStore.appSettings.motionPreference,
+    set: (value: string) => settingsStore.setMotionPreference(value)
 });
 
 const desktopOverviewPageLayoutDisplayContent = computed(() => {

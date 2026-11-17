@@ -29,6 +29,12 @@ export type ApplicationSettingKey = string;
 export type ApplicationSettingValue = string | number | boolean | Record<string, ApplicationSettingSubValue>;
 export type ApplicationSettingSubValue = string | number | boolean | Record<string, boolean> | Record<string, number>;
 
+export enum MotionPreference {
+    System = 'system',
+    Reduce = 'reduce',
+    Full = 'full'
+}
+
 export interface BaseApplicationSetting {
     [key: ApplicationSettingKey]: ApplicationSettingValue;
 }
@@ -46,6 +52,7 @@ export interface ApplicationSettings extends BaseApplicationSetting {
     chartColors: string;
     swipeBack: boolean;
     animate: boolean;
+    motionPreference: string;
     // Application Lock
     applicationLock: boolean;
     applicationLockWebAuthn: boolean;
@@ -224,6 +231,7 @@ export const DEFAULT_APPLICATION_SETTINGS: ApplicationSettings = {
     chartColors: '',
     swipeBack: true,
     animate: true,
+    motionPreference: MotionPreference.System,
     // Application Lock
     applicationLock: false,
     applicationLockWebAuthn: false,

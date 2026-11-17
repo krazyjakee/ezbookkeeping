@@ -20,6 +20,7 @@ import { type AxisChartSourceDataItem, ChartValueType } from '@/core/chart.ts';
 
 import { isArray } from '@/lib/common.ts';
 import { BIG_DECIMAL_ZERO, BIG_DECIMAL_POSITIVE_INFINITY, parseBigDecimal } from '@/lib/numeral.ts';
+import { getChartAnimationOptions } from '@/lib/motion.ts';
 
 interface HeatMapData {
     allSeriesNames: string[];
@@ -242,7 +243,7 @@ const chartOptions = computed<object>(() => {
         series: [
             {
                 type: 'heatmap',
-                animation: !props.skeleton,
+                ...getChartAnimationOptions(!props.skeleton),
                 data: heatMapData.value.data,
                 label: {
                     show: props.showValue ?? false,

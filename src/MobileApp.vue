@@ -26,6 +26,7 @@ import { ThemeType } from '@/core/theme.ts';
 import { isFunction } from '@/lib/common.ts';
 import { isProduction } from '@/lib/version.ts';
 import { getTheme, isEnableSwipeBack, isEnableAnimate } from '@/lib/settings.ts';
+import { isReducedMotion, useReducedMotion } from '@/lib/motion.ts';
 import { initMapProvider } from '@/lib/map/index.ts';
 import { isUserLogined, isUserUnlocked } from '@/lib/userstate.ts';
 import { updateMapCacheExpiration, updateTransactionPictureCacheExpiration } from '@/lib/cache.ts';
@@ -42,6 +43,10 @@ const environmentsStore = useEnvironmentsStore();
 const userStore = useUserStore();
 const tokensStore = useTokensStore();
 const exchangeRatesStore = useExchangeRatesStore();
+
+function isEnableFramework7Animate(): boolean {
+    return isEnableAnimate() && !isReducedMotion();
+}
 
 const f7params = ref<Framework7Parameters>({
     name: 'ezbookkeeping2',
@@ -70,28 +75,28 @@ const f7params = ref<Framework7Parameters>({
         scope: './',
     },
     actions: {
-        animate: isEnableAnimate(),
+        animate: isEnableFramework7Animate(),
         backdrop: true,
         closeOnEscape: true
     },
     dialog: {
         // @ts-expect-error there is an "animate" field in dialog parameters, but it is not declared in the type definition file
-        animate: isEnableAnimate(),
+        animate: isEnableFramework7Animate(),
         backdrop: true
     },
     popover: {
-        animate: isEnableAnimate(),
+        animate: isEnableFramework7Animate(),
         backdrop: true,
         closeOnEscape: true
     },
     popup: {
-        animate: isEnableAnimate(),
+        animate: isEnableFramework7Animate(),
         backdrop: true,
         closeOnEscape: true,
         swipeToClose: true
     },
     sheet: {
-        animate: isEnableAnimate(),
+        animate: isEnableFramework7Animate(),
         backdrop: true,
         closeOnEscape: true
     },
@@ -99,7 +104,7 @@ const f7params = ref<Framework7Parameters>({
         routableModals: false
     },
     view: {
-        animate: isEnableAnimate(),
+        animate: isEnableFramework7Animate(),
         browserHistory: !isiOSHomeScreenMode(),
         browserHistoryInitialMatch: true,
         browserHistoryAnimate: false,
@@ -117,6 +122,9 @@ const hasBackdrop = ref<boolean | undefined>(undefined);
 const currentNotificationContent = computed<string | null>(() => rootStore.currentNotification);
 
 function setThemeColorMeta(darkMode: boolean | undefined): void {
+    // keep the root theme attribute (used by the shared design tokens and set before first paint in mobile.html) in sync with framework7
+    document.documentElement.setAttribute('data-ebk-theme', darkMode ? ThemeType.Dark : ThemeType.Light);
+
     if (hasPushPopupBackdrop.value) {
         document.querySelector('meta[name=theme-color]')?.setAttribute('content', '#000');
         return;
@@ -126,13 +134,13 @@ function setThemeColorMeta(darkMode: boolean | undefined): void {
         if (hasBackdrop.value) {
             document.querySelector('meta[name=theme-color]')?.setAttribute('content', '#0b0b0b');
         } else {
-            document.querySelector('meta[name=theme-color]')?.setAttribute('content', '#121212');
+            document.querySelector('meta[name=theme-color]')?.setAttribute('content', '#0b0a09');
         }
     } else {
         if (hasBackdrop.value) {
             document.querySelector('meta[name=theme-color]')?.setAttribute('content', '#949495');
         } else {
-            document.querySelector('meta[name=theme-color]')?.setAttribute('content', '#f6f6f8');
+            document.querySelector('meta[name=theme-color]')?.setAttribute('content', '#f7f4ef');
         }
     }
 }
@@ -178,6 +186,31 @@ onMounted(() => {
         f7.on('darkModeChange', (darkMode) => {
             environmentsStore.framework7DarkMode = darkMode;
             setThemeColorMeta(darkMode);
+        });
+
+        // reduced motion can change at runtime (in-app setting or system preference), new pages and modals follow it,
+        // and transitions of modals which are already created are collapsed by the reduced motion css rules
+        watch(useReducedMotion(), () => {
+            const animate = isEnableFramework7Animate();
+            const appParams = f7.params as unknown as Record<string, { animate?: boolean } | undefined>;
+
+            for (const paramsKey of ['actions', 'dialog', 'popover', 'popup', 'sheet', 'view']) {
+                const params = appParams[paramsKey];
+
+                if (params) {
+                    params.animate = animate;
+                }
+            }
+
+            const mainView = f7.views.main;
+
+            if (mainView) {
+                mainView.params.animate = animate;
+
+                if (mainView.router) {
+                    mainView.router.params.animate = animate;
+                }
+            }
         });
     });
 

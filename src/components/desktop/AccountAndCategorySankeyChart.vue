@@ -28,6 +28,7 @@ import { ThemeType } from '@/core/theme.ts';
 import { isString, isNumber } from '@/lib/common.ts';
 import { BIG_DECIMAL_ZERO } from '@/lib/numeral.ts';
 import { getExpenseAndIncomeAmountColor } from '@/lib/ui/common.ts';
+import { getChartAnimationOptions } from '@/lib/motion.ts';
 
 enum SankeyChartDepth {
     PrimaryIncomeCategory = 0,
@@ -387,7 +388,7 @@ const chartOptions = computed<object>(() => {
                 },
                 data: sankeyData.value.nodes,
                 links: sankeyData.value.links,
-                animation: !props.skeleton
+                ...getChartAnimationOptions(!props.skeleton)
             }
         ]
     };

@@ -20,6 +20,7 @@ import { ThemeType } from '@/core/theme.ts';
 
 import { getObjectOwnFieldCount } from '@/lib/common.ts';
 import { BIG_DECIMAL_ZERO, parseBigDecimal } from '@/lib/numeral.ts';
+import { getChartAnimationOptions } from '@/lib/motion.ts';
 
 type PieChartStyleType = 'pie' | 'donut' | 'nightingaleRose';
 
@@ -192,7 +193,7 @@ const chartOptions = computed<object>(() => {
                         return dataItem ? dataItem.displayName : '';
                     }
                 },
-                animation: !props.skeleton
+                ...getChartAnimationOptions(!props.skeleton)
             }
         ],
         media: [

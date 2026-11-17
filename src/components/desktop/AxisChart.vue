@@ -28,6 +28,7 @@ import { isArray, isNumber } from '@/lib/common.ts';
 import { BIG_DECIMAL_ZERO, BIG_DECIMAL_NEGATIVE_INFINITY, BIG_DECIMAL_POSITIVE_INFINITY, parseBigDecimal } from '@/lib/numeral.ts';
 import { getDisplayColor } from '@/lib/color.ts';
 import { sortStatisticsItems } from '@/lib/statistics.ts';
+import { getChartAnimationOptions } from '@/lib/motion.ts';
 
 export type AxisChartDisplayType = 'line' | 'area' | 'column' | 'bubble';
 
@@ -199,7 +200,7 @@ const axisChartData = computed<AxisChartData>(() => {
             type: 'line',
             smooth: props.smoothCurve,
             showSymbol: !props.hideLineSymbols,
-            animation: props.noAnimation ? false : !props.skeleton,
+            ...getChartAnimationOptions(!props.noAnimation && !props.skeleton),
             data: allAmounts.map(amount => amount.toDoubleNumber())
         };
 
