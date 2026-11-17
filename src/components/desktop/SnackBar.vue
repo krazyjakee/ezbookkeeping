@@ -1,7 +1,11 @@
 <template>
-    <v-snackbar :color="color" :variant="variant" :location="location"
+    <v-snackbar :class="{ 'ebk-snackbar': true, 'ebk-snackbar--error': isError }"
+                :color="color" :variant="variant" :location="location"
                 :timeout="notAutoHide ? -1 : undefined" v-model="showState">
-        {{ messageContent }}
+        <div class="ebk-snackbar-message">
+            <v-icon class="ebk-snackbar-icon" size="18" :icon="mdiAlertCircleOutline" v-if="isError && !color" />
+            <span>{{ messageContent }}</span>
+        </div>
 
         <template #actions>
             <v-btn variant="text" :color="color ?? 'primary'" @click="showState = false">{{ tt('Close') }}</v-btn>
@@ -19,6 +23,10 @@ import type { ErrorResponse } from '@/core/api.ts';
 import { isObject, isString } from '@/lib/common.ts';
 import type { SnackBarVariant } from '@/lib/ui/desktop.ts';
 
+import {
+    mdiAlertCircleOutline
+} from '@mdi/js';
+
 defineProps<{
     notAutoHide?: boolean;
     color?: string;
@@ -34,9 +42,11 @@ const { tt, te } = useI18n();
 
 const showState= ref<boolean>(false);
 const messageContent = ref<string>('');
+const isError = ref<boolean>(false);
 
 function showMessage(message: string, options?: Record<string, unknown>): void {
     showState.value = true;
+    isError.value = false;
 
     if (options) {
         messageContent.value = tt(message, options);
@@ -47,6 +57,7 @@ function showMessage(message: string, options?: Record<string, unknown>): void {
 
 function showError(error: string | { message: string } | { error: ErrorResponse }): void {
     showState.value = true;
+    isError.value = true;
 
     if (isObject(error) && 'message' in error && error.message) {
         messageContent.value = te(error.message);

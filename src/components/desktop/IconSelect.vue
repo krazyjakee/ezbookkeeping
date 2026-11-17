@@ -63,9 +63,8 @@
                         </div>
                     </div>
 
-                    <div class="icon-item text-body-large py-2 ms-2" v-if="allCustomIconRows.length < 1">
-                        {{ tt('No available custom icons') }}
-                    </div>
+                    <state-panel class="ma-2" compact :title="tt('No available custom icons')"
+                                 v-if="allCustomIconRows.length < 1" />
                 </div>
             </div>
         </template>
@@ -74,6 +73,8 @@
 
 <script setup lang="ts">
 import { ref, computed, useTemplateRef, nextTick } from 'vue';
+
+import StatePanel from '@/components/common/StatePanel.vue';
 
 import { useI18n } from '@/locales/helpers.ts';
 import { useUserCustomIconsStore } from '@/stores/userCustomIcon.ts';

@@ -1,23 +1,35 @@
 /** Replacing the default style of @vuepic/vue-datepicker **/
-.dp--theme-light {
-    --dp-primary-color: #c67e48;
+.dp--theme-light,
+.dp--theme-dark {
+    --dp-primary-color: var(--ebk-color-primary);
+    --dp-primary-text-color: #fff;
     --dp-background-color: inherit;
-    --dp-border-color: #aaa;
-    --dp-menu-border-color: #aaa;
+    --dp-secondary-color: var(--ebk-color-text-secondary);
+    --dp-hover-color: var(--ebk-color-selected-background);
+    --dp-hover-text-color: var(--ebk-color-text-primary);
+    --dp-icon-color: var(--ebk-color-text-secondary);
+    --dp-border-color: var(--ebk-color-hairline);
+    --dp-menu-border-color: var(--ebk-color-hairline);
+    --dp-border-color-hover: var(--ebk-color-copper-line);
+    --dp-border-color-focus: var(--ebk-color-primary);
+    --dp-highlight-color: var(--ebk-color-selected-background);
+    --dp-range-between-dates-background-color: var(--ebk-color-selected-background);
+    --dp-range-between-dates-text-color: var(--ebk-color-text-primary);
+    --dp-border-radius: var(--ebk-radius-control);
+    --dp-cell-border-radius: var(--ebk-radius-control);
 
     .dp--overlay {
-        --dp-background-color: #e1e1e2;
+        --dp-background-color: var(--ebk-color-surface-raised);
     }
 }
 
-.dp--theme-dark {
-    --dp-primary-color: #c67e48;
-    --dp-background-color: inherit;
-    --dp-border-color: #555;
-    --dp-menu-border-color: #555;
+/** Copper Instrument Panel: tabular numerals and a stronger selected cell **/
+.dp--main {
+    font-variant-numeric: var(--ebk-font-numeric);
 
-    .dp--overlay {
-        --dp-background-color: #1f1f1f;
+    .dp--cell-inner.dp--active-date,
+    .dp--overlay-cell-active {
+        font-weight: 600;
     }
 }
 

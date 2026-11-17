@@ -1,0 +1,292 @@
+/**
+ * Shared controls in the "Copper Instrument Panel" language (#27, docs/design/components.md).
+ *
+ * Framework7 components are restyled through their own CSS variables first, and through a few
+ * structural rules where no variable exists. Colors come from the shared tokens
+ * (src/styles/common/_tokens.scss). `:root.ios.dark` is listed so these values win over
+ * Framework7's own `.ios.dark` declarations.
+ */
+:root.ios,
+:root.ios.dark {
+    /* Buttons */
+    --f7-button-border-radius: var(--ebk-radius-control);
+
+    /* Inputs: sunken outline fields, copper focus, error color for invalid fields */
+    --f7-input-outline-border-color: rgba(var(--ebk-color-text-primary-rgb), 0.28);
+    --f7-input-outline-border-radius: var(--ebk-radius-control);
+    --f7-input-focused-border-color: var(--ebk-color-primary);
+    --f7-input-invalid-border-color: var(--ebk-color-error);
+    --f7-input-outline-invalid-border-color: var(--ebk-color-error);
+    --f7-input-invalid-text-color: var(--ebk-color-error);
+    --f7-input-error-text-color: var(--ebk-color-error);
+    --f7-input-error-font-weight: 500;
+    --f7-input-info-text-color: var(--ebk-color-text-secondary);
+    --f7-input-placeholder-color: rgba(var(--ebk-color-text-secondary-rgb), 0.85);
+    --f7-label-focused-text-color: var(--ebk-color-primary-text);
+    --f7-label-invalid-text-color: var(--ebk-color-error);
+
+    /* Lists: hairline rows, copper tinted pressed state */
+    --f7-list-item-border-color: var(--ebk-color-hairline);
+    --f7-list-link-pressed-bg-color: var(--ebk-color-selected-background);
+
+    /* Chips */
+    --f7-chip-border-radius: var(--ebk-radius-pill);
+    --f7-chip-outline-border-color: var(--ebk-color-hairline);
+
+    /* Segmented controls (tabs): sunken track, raised active segment with a copper base line */
+    --f7-segmented-strong-bg-color: var(--ebk-color-surface-sunken);
+    --f7-segmented-strong-button-active-bg-color: var(--ebk-color-surface-raised);
+    --f7-segmented-strong-button-active-text-color: var(--ebk-color-primary-text);
+    --f7-segmented-strong-button-active-box-shadow: inset 0 -2px 0 var(--ebk-color-primary), var(--ebk-shadow-sm);
+
+    /* Dialogs: raised panel, copper text buttons that pass AA */
+    --f7-dialog-bg-color: var(--ebk-color-surface-raised);
+    --f7-dialog-bg-color-rgb: var(--ebk-color-surface-raised-rgb);
+    --f7-dialog-border-radius: var(--ebk-radius-xl);
+    --f7-dialog-text-color: var(--ebk-color-text-primary);
+    --f7-dialog-title-text-color: var(--ebk-color-text-primary);
+    --f7-dialog-button-text-color: var(--ebk-color-primary-text);
+    --f7-dialog-button-strong-text-color: var(--ebk-color-primary-text);
+    --f7-dialog-button-pressed-bg-color: var(--ebk-color-selected-background);
+    --f7-dialog-button-strong-pressed-bg-color: var(--ebk-color-selected-background);
+    --f7-dialog-input-bg-color: var(--ebk-color-surface-sunken);
+    --f7-dialog-input-border-color: rgba(var(--ebk-color-text-primary-rgb), 0.28);
+    --f7-dialog-input-border-radius: var(--ebk-radius-control);
+
+    /* Sheets, popovers, action sheets and toasts: opaque panels */
+    --f7-sheet-bg-color: var(--ebk-color-surface);
+    --f7-sheet-border-color: var(--ebk-color-hairline);
+    --f7-sheet-border-radius: var(--ebk-radius-xl);
+    --f7-popover-border-radius: var(--ebk-radius-lg);
+    --f7-actions-bg-color: var(--ebk-color-surface-raised);
+    --f7-actions-button-text-color: var(--ebk-color-primary-text);
+    --f7-actions-label-text-color: var(--ebk-color-text-secondary);
+    --f7-actions-button-pressed-bg-color: var(--ebk-color-selected-background);
+    --f7-actions-button-border-color: var(--ebk-color-hairline);
+    --f7-toast-bg-color: var(--ebk-color-surface-raised);
+    --f7-toast-text-color: var(--ebk-color-text-primary);
+    --f7-toast-border-radius: var(--ebk-radius-lg);
+    --f7-notification-bg-color: var(--ebk-color-surface-raised);
+    --f7-notification-border-radius: var(--ebk-radius-lg);
+    --f7-notification-title-color: var(--ebk-color-text-secondary);
+    --f7-notification-text-color: var(--ebk-color-text-primary);
+
+    /* Progress */
+    --f7-progressbar-progress-color: var(--ebk-color-primary);
+    --f7-progressbar-bg-color: rgba(var(--ebk-copper-500-rgb), 0.18);
+    --f7-preloader-color: var(--ebk-color-text-secondary);
+}
+
+/* Buttons: copper glow on hover (pointer devices) and keyboard focus for filled buttons, press feedback */
+.button {
+    transition-property: transform, opacity;
+    transition-duration: var(--ebk-motion-duration-xs);
+    transition-timing-function: var(--ebk-motion-ease-standard);
+}
+
+.button.button-fill:not(.disabled):focus-visible {
+    box-shadow: var(--ebk-glow);
+}
+
+@media (hover: hover) {
+    .button.button-fill:not(.disabled):hover {
+        box-shadow: var(--ebk-glow);
+    }
+}
+
+.button:not(.disabled, .tab-link, .segmented .button, .numpad-button):active {
+    transform: scale(0.98);
+}
+
+.button.button-tonal:not(.disabled) {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 22%, transparent);
+}
+
+.button.disabled.button-outline {
+    border-style: dashed;
+}
+
+/* Outline inputs sit in a sunken well */
+.item-input-outline .item-input-wrap,
+.input-outline {
+    background-color: var(--ebk-color-surface-sunken);
+    border-radius: var(--f7-input-outline-border-radius);
+}
+
+.item-input-focused.item-input-outline .item-input-wrap,
+.input-outline.input-focused {
+    box-shadow: 0 0 12px rgba(var(--ebk-copper-500-rgb), 0.22);
+}
+
+.item-input-invalid.item-input-outline .item-input-wrap,
+.input-outline.input-invalid {
+    box-shadow: none;
+}
+
+/* List inputs: the hairline under a focused input turns into a copper line */
+.list .item-input.item-input-focused > .item-inner::after,
+.list li.item-input-focused > .item-content > .item-inner::after {
+    background-color: var(--ebk-color-primary);
+}
+
+.list .item-input.item-input-invalid > .item-inner::after {
+    background-color: var(--ebk-color-error);
+}
+
+.item-input-error-message,
+.input-error-message {
+    overflow-wrap: anywhere;
+    white-space: normal;
+}
+
+/* Selected list item: copper leading edge (mirrored in RTL), not only a check mark */
+.list li.list-item-selected > .item-content,
+.list li.list-item-selected > .item-link > .item-content {
+    background-color: var(--ebk-color-selected-background);
+    box-shadow: inset 2px 0 0 var(--ebk-color-primary);
+}
+
+html[dir="rtl"] .list li.list-item-selected > .item-content,
+html[dir="rtl"] .list li.list-item-selected > .item-link > .item-content {
+    box-shadow: inset -2px 0 0 var(--ebk-color-primary);
+}
+
+.list .item-after,
+.list .item-footer {
+    font-variant-numeric: var(--ebk-font-numeric);
+}
+
+/* Chips */
+.chip:not(.chip-placeholder) {
+    font-variant-numeric: var(--ebk-font-numeric);
+}
+
+.chip.chip-outline {
+    border-color: var(--ebk-color-hairline);
+}
+
+/* Dialogs: raised panel with a header strip and copper corner brackets (inside the edge, the dialog clips its overflow) */
+.dialog {
+    border: 1px solid var(--ebk-color-hairline);
+    box-shadow: var(--ebk-shadow-lg);
+
+    &::before,
+    &::after {
+        content: '';
+        position: absolute;
+        z-index: 1;
+        width: calc(var(--f7-dialog-border-radius) + var(--ebk-bracket-size));
+        height: calc(var(--f7-dialog-border-radius) + var(--ebk-bracket-size));
+        border: 0 solid var(--ebk-color-copper-line);
+        pointer-events: none;
+    }
+
+    &::before {
+        inset-block-start: 0;
+        inset-inline-start: 0;
+        border-block-start-width: 1px;
+        border-inline-start-width: 1px;
+        border-start-start-radius: calc(var(--f7-dialog-border-radius) - 1px);
+    }
+
+    &::after {
+        inset-block-end: 0;
+        inset-inline-end: 0;
+        border-block-end-width: 1px;
+        border-inline-end-width: 1px;
+        border-end-end-radius: calc(var(--f7-dialog-border-radius) - 1px);
+    }
+
+    .dialog-title {
+        padding-block-end: var(--ebk-space-2);
+        border-block-end: 1px solid var(--ebk-color-hairline);
+        overflow-wrap: anywhere;
+    }
+
+    .dialog-title + .dialog-text {
+        margin-block-start: var(--ebk-space-3);
+    }
+
+    .dialog-text {
+        overflow-wrap: anywhere;
+    }
+
+    .dialog-button.color-red,
+    .dialog-button.dialog-button-destructive {
+        color: var(--ebk-color-error);
+    }
+}
+
+/* Popovers and action sheets: raised surface with a hairline */
+.ios .popover-inner {
+    border: 1px solid var(--ebk-color-hairline);
+    background: var(--ebk-color-surface-raised);
+    box-shadow: var(--ebk-shadow-md);
+}
+
+.ios .actions-group {
+    border: 1px solid var(--ebk-color-hairline);
+}
+
+/* Sheets: hairline top edge and a header strip for their toolbar */
+.sheet-modal:not(.numpad-sheet) {
+    border-block-start: 1px solid var(--ebk-color-hairline);
+
+    > .toolbar:first-child,
+    > .sheet-modal-inner > .toolbar:first-child {
+        border-block-end: 1px solid var(--ebk-color-hairline);
+    }
+}
+
+/* Toasts and notifications: raised panel with a copper leading edge */
+.toast {
+    border: 1px solid var(--ebk-color-hairline);
+    border-inline-start: 3px solid var(--ebk-color-primary);
+    box-shadow: var(--ebk-shadow-lg);
+    font-variant-numeric: var(--ebk-font-numeric);
+
+    .toast-text {
+        overflow-wrap: anywhere;
+    }
+}
+
+.notification {
+    border: 1px solid var(--ebk-color-hairline);
+    border-inline-start: 3px solid var(--ebk-color-primary);
+    box-shadow: var(--ebk-shadow-lg);
+}
+
+/* Skeletons: a calm hairline-tinted bone instead of a dark block */
+.skeleton-text,
+.skeleton-text * {
+    --skeleton-color: rgba(var(--ebk-color-text-primary-rgb), 0.12);
+}
+
+.skeleton-block {
+    --skeleton-color: rgba(var(--ebk-color-text-primary-rgb), 0.08);
+    border-radius: var(--ebk-radius-sm);
+}
+
+/* Reduced motion: no press movement */
+:root.ebk-reduce-motion .button:active {
+    transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :root:not(.ebk-motion-full) .button:active {
+        transform: none;
+    }
+}
+
+@media (forced-colors: active) {
+    .dialog::before,
+    .dialog::after {
+        display: none;
+    }
+
+    .button.button-fill,
+    .item-input-focused.item-input-outline .item-input-wrap,
+    .input-outline.input-focused {
+        box-shadow: none !important;
+    }
+}

@@ -476,7 +476,8 @@ watch(() => props.flipNegative, (newValue) => {
 }
 
 .numpad-values {
-    border-bottom: 1px solid var(--f7-page-bg-color);
+    border-bottom: 1px solid var(--ebk-color-hairline);
+    background-color: var(--ebk-color-surface-sunken);
 }
 
 .numpad-value {
@@ -487,6 +488,7 @@ watch(() => props.flipNegative, (newValue) => {
     height: var(--ebk-numpad-value-height);
     align-items: center;
     box-sizing: border-box;
+    font-variant-numeric: var(--ebk-font-numeric);
     user-select: none;
 }
 
@@ -516,8 +518,8 @@ watch(() => props.flipNegative, (newValue) => {
     position: relative;
     text-align: center;
     border-radius: 0;
-    border-right: 1px solid var(--f7-page-bg-color);
-    border-bottom: 1px solid var(--f7-page-bg-color);
+    border-right: 1px solid var(--ebk-color-hairline);
+    border-bottom: 1px solid var(--ebk-color-hairline);
     height: 60px;
     flex-direction: column;
     justify-content: center;
@@ -534,15 +536,23 @@ watch(() => props.flipNegative, (newValue) => {
 
 .numpad-button-num:active,
 .numpad-button-function:active {
-    background-color: var(--f7-button-pressed-bg-color, rgba(var(--f7-theme-color-rgb), 0.15));
+    background-color: var(--ebk-color-selected-background);
 }
 
 .numpad-button-function, .numpad-button-confirm {
     width: 20%;
 }
 
+.numpad-button-function {
+    background-color: rgba(var(--ebk-color-surface-sunken-rgb), 0.7);
+}
+
 .numpad-button-num.active-state, .numpad-button-function.active-state {
-    background-color: rgba(var(--f7-color-black-rgb), .15);
+    background-color: var(--ebk-color-selected-background);
+}
+
+.numpad-button-confirm {
+    font-weight: 600;
 }
 
 .numpad-button-text {
@@ -553,11 +563,8 @@ watch(() => props.flipNegative, (newValue) => {
 }
 
 .numpad-button-text-normal {
-    color: var(--f7-color-black);
-}
-
-.dark .numpad-button-text-normal {
-    color: var(--f7-color-white);
+    color: var(--ebk-color-text-primary);
+    font-variant-numeric: var(--ebk-font-numeric);
 }
 
 .numpad-button-text-confirm {

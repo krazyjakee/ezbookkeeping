@@ -1,13 +1,17 @@
 <template>
-    <v-dialog persistent min-width="320" max-width="500" width="auto" v-model="showState">
-        <v-card class="dialog-layout-card">
-            <v-toolbar :color="finalColor">
-                <v-toolbar-title>{{ titleContent }}</v-toolbar-title>
-            </v-toolbar>
+    <v-dialog persistent min-width="320" max-width="500" width="auto"
+              :content-props="{ 'aria-labelledby': titleId }" v-model="showState" @after-enter="focusSafestAction">
+        <v-card class="dialog-layout-card ebk-confirm-dialog" :class="{ 'ebk-confirm-dialog--destructive': isDestructive }">
+            <div class="ebk-dialog-title-strip">
+                <v-icon class="ebk-dialog-title-icon" size="20" :color="finalColor"
+                        :icon="isDestructive ? mdiAlertOutline : mdiHelpCircleOutline" />
+                <span class="text-title-medium text-wrap" :id="titleId">{{ titleContent }}</span>
+            </div>
+            <v-divider />
             <v-card-text class="text-body-large pa-4" v-if="textContent">{{ textContent }}</v-card-text>
-            <v-card-actions class="px-4 pb-4">
+            <v-card-actions class="ebk-dialog-actions px-4 pb-4">
                 <v-spacer></v-spacer>
-                <v-btn color="gray" @click="cancel">{{ tt('Cancel') }}</v-btn>
+                <v-btn ref="cancelButton" color="secondary" variant="tonal" @click="cancel">{{ tt('Cancel') }}</v-btn>
                 <v-btn :color="finalColor" @click="confirm">{{ tt('OK') }}</v-btn>
             </v-card-actions>
         </v-card>
@@ -15,11 +19,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, computed, watch, useId, useTemplateRef } from 'vue';
+import type { ComponentPublicInstance } from 'vue';
 
 import { useI18n } from '@/locales/helpers.ts';
 
 import { isString, isObject } from '@/lib/common.ts';
+
+import {
+    mdiAlertOutline,
+    mdiHelpCircleOutline
+} from '@mdi/js';
 
 const props = defineProps<{
     show?: boolean;
@@ -38,6 +48,10 @@ const showState = ref<boolean>(false);
 const titleContent = ref<string>(props.title || tt('global.app.title'));
 const textContent = ref<string>(props.text || '');
 const finalColor = ref<string>(props.color || 'primary');
+const titleId = `ebk-confirm-dialog-title-${useId()}`;
+const cancelButton = useTemplateRef<ComponentPublicInstance>('cancelButton');
+
+const isDestructive = computed<boolean>(() => finalColor.value === 'error');
 
 let resolveFunc: ((value?: unknown) => void) | null = null;
 let rejectFunc: ((reason?: unknown) => void) | null = null;
@@ -92,6 +106,12 @@ function cancel(): void {
 
     showState.value = false;
     emit('update:show', false);
+}
+
+// the safest action (cancel) always gets the initial focus, so pressing enter never confirms by accident
+function focusSafestAction(): void {
+    const element = cancelButton.value?.$el as HTMLElement | undefined;
+    element?.focus();
 }
 
 watch(showState, newValue => {

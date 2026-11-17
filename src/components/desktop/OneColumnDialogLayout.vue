@@ -10,9 +10,12 @@
                 <v-spacer/>
                 <slot name="toolbar" />
                 <v-divider vertical class="ms-2" v-if="cancelButtonTitle" />
-                <div class="d-flex align-items-center mx-3" v-if="cancelButtonTitle">
-                    <v-icon size="22" :aria-label="cancelButtonTitle" :icon="mdiClose" :disabled="disabled" @click="emit('cancel')"></v-icon>
-                    <v-tooltip activator="parent">{{ cancelButtonTitle }}</v-tooltip>
+                <div class="d-flex align-items-center mx-2" v-if="cancelButtonTitle">
+                    <v-btn class="dialog-layout-card-close-button" color="default" variant="text" density="comfortable"
+                           :icon="true" :aria-label="cancelButtonTitle" :disabled="disabled" @click="emit('cancel')">
+                        <v-icon size="22" :icon="mdiClose" />
+                        <v-tooltip activator="parent">{{ cancelButtonTitle }}</v-tooltip>
+                    </v-btn>
                 </div>
             </div>
             <slot name="subtitle" />
