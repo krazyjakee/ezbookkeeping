@@ -31,7 +31,12 @@
 
 .ios .navbar {
     .title {
+        min-width: 0;
+        max-width: 100%;
+        overflow: hidden;
         color: var(--ebk-color-text-primary);
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     /* titles which open a menu (e.g. the transaction list type selector) get a full height hit area */
@@ -54,6 +59,24 @@
         outline: var(--ebk-focus-outline);
         outline-offset: calc(-1 * var(--ebk-focus-ring-width));
         border-radius: var(--ebk-radius-pill);
+    }
+}
+
+/* home page: the ezrbookkeeping wordmark instead of a page title (D5); the class is set by MobileApp.vue */
+.ios .navbar.ebk-navbar-home .title {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ebk-space-2);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+
+    &::before {
+        content: '';
+        flex-shrink: 0;
+        width: 1.375em;
+        height: 1.375em;
+        border-radius: 6px;
+        background: var(--ebk-app-logo, none) center / contain no-repeat;
     }
 }
 
@@ -111,6 +134,8 @@
 
 .ios .toolbar.tabbar.main-tabbar {
     > .toolbar-inner {
+        max-inline-size: 40rem;
+        margin-inline: auto;
         padding: 0 var(--ebk-space-1);
         gap: 0;
     }
@@ -175,21 +200,25 @@
         }
     }
 
-    /* primary action: a copper filled key in the centre of the dock */
+    /* the framework7 v9 sliding glass highlight is replaced by the copper indicator above */
+    .tab-link-highlight {
+        display: none;
+    }
+
+    /* primary action: a copper filled key in the centre of the dock (D9) */
     > .toolbar-inner > #homepage-add-button {
         &::before {
             display: none;
         }
 
-        > i.icon.ebk-tarbar-big-icon {
-            --ebk-shell-add-button-height: calc(var(--f7-tabbar-icon-size) + 14px);
+        > .ebk-tabbar-add-key {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: calc(var(--ebk-shell-add-button-height) * 1.4);
-            height: var(--ebk-shell-add-button-height);
-            line-height: 1;
-            font-size: 0;
+            flex-shrink: 0;
+            width: max(var(--ebk-shell-touch-target), calc(var(--f7-tabbar-icon-size) * 1.9));
+            max-width: 100%;
+            height: max(var(--ebk-shell-touch-target), calc(var(--f7-tabbar-icon-size) + 14px));
             border-radius: var(--ebk-radius-lg);
             color: #fff;
             background-color: var(--ebk-color-primary);
@@ -197,15 +226,16 @@
             transition: transform var(--ebk-motion-duration-xs) var(--ebk-motion-ease-standard),
                 opacity var(--ebk-motion-duration-xs) var(--ebk-motion-ease-standard);
 
-            /* "plus" glyph of the framework7 icon font (the template uses the outlined "plus_square") */
-            &::before {
-                content: 'plus';
-                font-size: calc(var(--f7-tabbar-icon-size) * 0.9);
+            > i.icon {
+                font-size: calc(var(--f7-tabbar-icon-size) * 0.85);
                 font-weight: 600;
+                line-height: 1;
+                color: inherit;
             }
         }
 
-        &:active > i.icon.ebk-tarbar-big-icon {
+        &:active > .ebk-tabbar-add-key,
+        &.active-state > .ebk-tabbar-add-key {
             background-color: var(--ebk-color-primary-pressed);
             transform: scale(0.96);
         }
@@ -213,7 +243,7 @@
         &:focus-visible {
             outline: none;
 
-            > i.icon.ebk-tarbar-big-icon {
+            > .ebk-tabbar-add-key {
                 outline: var(--ebk-focus-outline);
                 outline-offset: var(--ebk-focus-ring-offset);
             }
@@ -266,14 +296,19 @@
     }
 }
 
+/* page contents move down by the banner height (measured in MobileApp.vue) instead of being covered */
+:root.ebk-offline {
+    --f7-page-content-extra-padding-top: var(--ebk-offline-banner-space, 0px);
+}
+
 /* ---------- Reduced motion and forced colors ---------- */
 
-:root.ebk-reduce-motion .toolbar.tabbar.main-tabbar > .toolbar-inner > #homepage-add-button:active > i.icon.ebk-tarbar-big-icon {
+:root.ebk-reduce-motion .toolbar.tabbar.main-tabbar > .toolbar-inner > #homepage-add-button:active > .ebk-tabbar-add-key {
     transform: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-    :root:not(.ebk-motion-full) .toolbar.tabbar.main-tabbar > .toolbar-inner > #homepage-add-button:active > i.icon.ebk-tarbar-big-icon {
+    :root:not(.ebk-motion-full) .toolbar.tabbar.main-tabbar > .toolbar-inner > #homepage-add-button:active > .ebk-tabbar-add-key {
         transform: none;
     }
 }
@@ -288,7 +323,7 @@
         display: none;
     }
 
-    .ios .toolbar.tabbar.main-tabbar > .toolbar-inner > #homepage-add-button > i.icon.ebk-tarbar-big-icon {
+    .ios .toolbar.tabbar.main-tabbar > .toolbar-inner > #homepage-add-button > .ebk-tabbar-add-key {
         forced-color-adjust: none;
         background-color: ButtonText;
         color: ButtonFace;

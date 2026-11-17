@@ -2,7 +2,7 @@
     <f7-app v-bind="f7params">
         <f7-view id="main-view" class="safe-areas" main url="/"></f7-view>
         <Transition name="ebk-fade">
-            <div class="ebk-offline-banner" role="status" aria-live="polite" v-if="isOffline">
+            <div ref="offlineBanner" class="ebk-offline-banner" role="status" aria-live="polite" v-if="isOffline">
                 <i class="icon f7-icons" aria-hidden="true">wifi_slash</i>
                 <span>{{ tt('You are offline. Changes cannot be saved until the connection is restored.') }}</span>
             </div>
@@ -11,9 +11,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, watch, onMounted, onBeforeUnmount, useTemplateRef } from 'vue';
 
-import type { Framework7Parameters, Notification, Actions, Dialog, Popover, Popup, Sheet } from 'framework7/types';
+import type { Framework7Parameters, Notification, Actions, Dialog, Popover, Popup, Router, Sheet } from 'framework7/types';
 import { f7ready } from 'framework7-vue';
 import routes from './router/mobile.ts';
 
@@ -125,6 +125,8 @@ const f7params = ref<Framework7Parameters>({
     }
 });
 
+const offlineBanner = useTemplateRef<HTMLElement>('offlineBanner');
+
 const notification = ref<Notification.Notification | null>(null);
 const isOffline = ref<boolean>(typeof navigator !== 'undefined' && navigator.onLine === false);
 
@@ -158,6 +160,22 @@ function setThemeColorMeta(darkMode: boolean | undefined): void {
 
 function updateOnlineState(): void {
     isOffline.value = navigator.onLine === false;
+}
+
+let offlineBannerResizeObserver: ResizeObserver | null = null;
+
+// the offline banner sits below the navbar, page contents move down by its height instead of being covered by it
+function updateOfflineBannerSpace(): void {
+    const root = document.documentElement;
+    const banner = offlineBanner.value;
+
+    if (isOffline.value && banner) {
+        root.classList.add('ebk-offline');
+        root.style.setProperty('--ebk-offline-banner-space', `${Math.ceil(banner.getBoundingClientRect().height) + 8}px`);
+    } else {
+        root.classList.remove('ebk-offline');
+        root.style.removeProperty('--ebk-offline-banner-space');
+    }
 }
 
 function setupDialogAccessibility(dialog: Dialog.Dialog): void {
@@ -195,6 +213,21 @@ function setupDialogAccessibility(dialog: Dialog.Dialog): void {
     safeButton?.focus({ preventScroll: true });
 }
 
+// the home page navbar shows the wordmark instead of a page title (D5, docs/design/README.md §5.2)
+function markHomePageNavbar(page: Router.Page | undefined): void {
+    const navbarEl = page?.navbarEl || page?.el?.querySelector<HTMLElement>(':scope > .navbar');
+
+    if (!navbarEl || page?.route?.path !== '/' || navbarEl.classList.contains('ebk-navbar-home')) {
+        return;
+    }
+
+    navbarEl.classList.add('ebk-navbar-home');
+    navbarEl.style.setProperty('--ebk-app-logo', `url("${APPLICATION_LOGO_PATH}")`);
+
+    // the logo changes the title width, let framework7 center the title again
+    page?.app?.navbar?.size(navbarEl);
+}
+
 function onBackdropChanged(element: { push?: boolean, opened?: boolean }): void {
     if (element.push) {
         hasPushPopupBackdrop.value = element.opened;
@@ -223,6 +256,12 @@ onMounted(() => {
         f7.on('popupClose', (popup: Popup.Popup) => onBackdropChanged(popup));
         f7.on('sheetOpen', (sheet: Sheet.Sheet) => onBackdropChanged(sheet));
         f7.on('sheetClose', (sheet: Sheet.Sheet) => onBackdropChanged(sheet));
+
+        f7.on('pageInit', (page: Router.Page) => markHomePageNavbar(page));
+        f7.on('pageBeforeIn', (page: Router.Page) => markHomePageNavbar(page));
+
+        const currentPageEl = document.querySelector<HTMLElement & { f7Page?: Router.Page }>('#main-view > .page-current');
+        markHomePageNavbar(currentPageEl?.f7Page);
 
         f7.on('pageBeforeOut', () => {
             if (isModalShowing()) {
@@ -265,6 +304,10 @@ onMounted(() => {
         });
     });
 
+    if (typeof ResizeObserver !== 'undefined') {
+        offlineBannerResizeObserver = new ResizeObserver(() => updateOfflineBannerSpace());
+    }
+
     window.addEventListener('online', updateOnlineState);
     window.addEventListener('offline', updateOnlineState);
     updateOnlineState();
@@ -279,6 +322,25 @@ onMounted(() => {
             e.preventDefault();
         }
     }, true);
+});
+
+watch(offlineBanner, (newElement, oldElement) => {
+    if (oldElement) {
+        offlineBannerResizeObserver?.unobserve(oldElement);
+    }
+
+    if (newElement) {
+        offlineBannerResizeObserver?.observe(newElement);
+    }
+
+    updateOfflineBannerSpace();
+}, { flush: 'post' });
+
+watch(isOffline, () => updateOfflineBannerSpace(), { flush: 'post' });
+
+onBeforeUnmount(() => {
+    offlineBannerResizeObserver?.disconnect();
+    offlineBannerResizeObserver = null;
 });
 
 watch(currentNotificationContent, (newValue) => {

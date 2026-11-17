@@ -7,6 +7,9 @@
  *  |      | context panel | page canvas (grid texture)    |
  *  +------+---------------+-------------------------------+
  *
+ * Geometry follows docs/design/README.md §5.1: an 88px rail (brand block at the top,
+ * icon-above-label items, Settings at the bottom), a sticky 64px header, a 260px
+ * context panel and a content area of at most 120rem with 16px gutters.
  * The rail holds the primary navigation, the context panel holds the page-level
  * navigation slot of MainPageLayout. Below the Vuetify `lg` breakpoint (1145px)
  * the context panel becomes an overlay drawer (class driven, see MainPageLayout.vue).
@@ -15,11 +18,11 @@
 
 :root {
     --ebk-shell-rail-width: 5.5rem;
-    --ebk-shell-header-height: 3.5rem;
-    --ebk-shell-context-width: var(--ebk-sidebar-width);
-    --ebk-shell-overlay-width: min(20rem, calc(100vw - var(--ebk-shell-rail-width)));
+    --ebk-shell-header-height: 4rem;
+    --ebk-shell-context-width: 16.25rem;
+    --ebk-shell-overlay-width: min(var(--ebk-shell-context-width), calc(100vw - var(--ebk-shell-rail-width)));
     --ebk-shell-content-max-width: 120rem;
-    --ebk-shell-gutter: clamp(0.75rem, 1vw, 1.5rem);
+    --ebk-shell-gutter: var(--ebk-space-4);
     --ebk-shell-header-background: rgba(var(--ebk-color-surface-raised-rgb), 0.9);
     --ebk-shell-scrim: rgba(20, 17, 15, 0.52);
 }
@@ -97,13 +100,17 @@
     }
 }
 
-.ebk-shell-rail-logo {
+// brand block: logo above the wordmark, as tall as the header so both hairlines line up
+.ebk-shell-rail-brand {
     position: relative;
     display: flex;
     flex: 0 0 auto;
     height: var(--ebk-shell-header-height);
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 0.25rem;
+    padding-inline: var(--ebk-space-1);
     border-block-end: 1px solid var(--ebk-color-hairline);
 
     // a short copper tick under the logo, like a panel registration mark
@@ -129,7 +136,25 @@
     .main-logo {
         width: 1.75rem;
         height: 1.75rem;
+        flex: 0 0 auto;
     }
+}
+
+.ebk-shell-rail-wordmark {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    color: var(--ebk-color-text-primary);
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 0.875rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ebk-shell-rail-brand:hover .ebk-shell-rail-wordmark {
+    color: var(--ebk-color-primary-text);
 }
 
 .ebk-shell-rail-items {
@@ -348,9 +373,10 @@
     overflow: hidden;
     margin: 0;
     color: var(--ebk-color-text-primary);
-    font-size: 1.0625rem;
+    font-size: 1.5rem;
     font-weight: 600;
-    line-height: 1.5rem;
+    letter-spacing: -0.01em;
+    line-height: 2rem;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
@@ -668,7 +694,7 @@
 @media (forced-colors: active) {
     .ebk-shell-rail-item-indicator,
     .layout-navbar::after,
-    .ebk-shell-rail-logo::after,
+    .ebk-shell-rail-brand::after,
     .layout-vertical-nav .nav-link > a::after {
         display: none;
     }

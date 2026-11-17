@@ -9,8 +9,9 @@
         <button type="button" class="ebk-shell-skip-link" @click="skipToContent">{{ tt('Skip to content') }}</button>
 
         <nav class="ebk-shell-rail" :aria-label="tt('Main Navigation')" @keydown="onRailKeydown">
-            <router-link to="/" class="ebk-shell-rail-logo app-logo" :aria-label="tt('global.app.title')">
+            <router-link to="/" class="ebk-shell-rail-brand app-logo" :aria-label="tt('global.app.title')">
                 <img alt="" class="main-logo" :src="APPLICATION_LOGO_PATH" />
+                <span class="ebk-shell-rail-wordmark" aria-hidden="true">{{ tt('global.app.title') }}</span>
             </router-link>
 
             <ul class="ebk-shell-rail-items" v-if="!hasTopToolbar">
@@ -68,7 +69,7 @@
                                     </li>
                                 </ol>
                             </nav>
-                            <h1 ref="pageTitleElement" class="ebk-shell-page-title" @mouseenter="updateTitleTruncation">
+                            <h1 ref="pageTitleElement" class="ebk-shell-page-title" @mouseenter="updateTitleTruncation" @focusin="updateTitleTruncation">
                                 {{ currentPageTitle }}
                                 <v-tooltip activator="parent" location="bottom start" :disabled="!isTitleTruncated">{{ currentPageTitle }}</v-tooltip>
                             </h1>
@@ -95,16 +96,16 @@
                                   v-if="showAddTransactionButtonInDesktopNavbar && !hasTopToolbar"></span>
 
                             <v-btn class="ebk-shell-action-button" color="default" variant="text" density="comfortable"
-                                   :aria-label="tt('Use on Mobile Device')" :icon="true"
-                                   @click="showMobileQrCode = true">
-                                <v-icon :icon="mdiCellphone" size="20" />
-                                <v-tooltip activator="parent">{{ tt('Use on Mobile Device') }}</v-tooltip>
-                            </v-btn>
-                            <v-btn class="ebk-shell-action-button" color="default" variant="text" density="comfortable"
                                    :aria-label="`${tt('Theme')}: ${currentThemeName}`" :icon="true"
                                    @click="switchToNextTheme">
                                 <v-icon :icon="(currentTheme === 'light' ? mdiWeatherSunny : (currentTheme === 'dark' ? mdiWeatherNight : mdiThemeLightDark))" size="20" />
                                 <v-tooltip activator="parent">{{ `${tt('Theme')}: ${currentThemeName}` }}</v-tooltip>
+                            </v-btn>
+                            <v-btn class="ebk-shell-action-button" color="default" variant="text" density="comfortable"
+                                   :aria-label="tt('Use on Mobile Device')" :icon="true"
+                                   @click="showMobileQrCode = true">
+                                <v-icon :icon="mdiCellphone" size="20" />
+                                <v-tooltip activator="parent">{{ tt('Use on Mobile Device') }}</v-tooltip>
                             </v-btn>
                             <v-btn class="ebk-shell-user-button ms-1" variant="text" :icon="true"
                                    :aria-label="currentNickName">
@@ -303,6 +304,7 @@ const isTitleTruncated = ref<boolean>(false);
 
 let focusBeforeContextNavOpened: HTMLElement | null = null;
 let contextNavObserver: MutationObserver | null = null;
+let pageTitleResizeObserver: ResizeObserver | null = null;
 
 const hasContextNav = computed<boolean>(() => !props.noNavbar);
 const hasTopToolbar = computed<boolean>(() => !!slots['top-toolbar']);
@@ -691,6 +693,14 @@ watch(currentPageTitle, () => {
 onMounted(() => {
     enhanceContextNavItems();
 
+    // the title tooltip is only enabled while the page title is truncated (long titles, narrow windows, large text)
+    if (pageTitleElement.value && typeof ResizeObserver !== 'undefined') {
+        pageTitleResizeObserver = new ResizeObserver(() => updateTitleTruncation());
+        pageTitleResizeObserver.observe(pageTitleElement.value);
+    }
+
+    nextTick(updateTitleTruncation);
+
     if (contextNavItems.value && typeof MutationObserver !== 'undefined') {
         contextNavObserver = new MutationObserver(() => enhanceContextNavItems());
         contextNavObserver.observe(contextNavItems.value, {
@@ -705,6 +715,8 @@ onMounted(() => {
 onBeforeUnmount(() => {
     contextNavObserver?.disconnect();
     contextNavObserver = null;
+    pageTitleResizeObserver?.disconnect();
+    pageTitleResizeObserver = null;
 });
 </script>
 
