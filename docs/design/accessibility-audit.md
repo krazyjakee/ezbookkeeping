@@ -46,6 +46,7 @@ The decision is recorded in [README.md](README.md) §3.1 and [tokens.md](tokens.
 | Emulations | `prefers-reduced-motion: reduce`; in-app Settings → Preferences → Motion = Reduce (`motionPreference: 'reduce'`); `forced-colors: active` (light and dark); forced `dir="rtl"`; offline (`context.setOffline` plus the `offline` event) |
 | Languages | en, de, ru, ta, bn, applied as the user language through the token refresh and profile responses. RTL layout was checked with forced `dir="rtl"` because the build ships no RTL language |
 | Input | scripted keyboard: Tab, Shift+Tab, Enter, Space, Escape, arrow keys |
+| Cross-browser (#37) | Production build (`fcf232b2` plus the #37 fixes) served by the Go backend. Firefox 159.0 (Gecko) and WebKit 27.2 (Playwright 1.65.1 builds on Linux), with Chromium 156.0.8078.4 for comparison. axe-core 4.14.1, same tags, 26 states: desktop login, overview, transaction list, add dialog, statistics, accounts and preferences; mobile login, home, transaction list, add, statistics and settings; each in light and dark. Firefox mobile states use the mobile viewport and touch without `isMobile`. The three engines gave identical results: 10 states clean; `aria-tooltip-name` 284 nodes (J1), `label-content-name-mismatch` 22 (J2), `color-contrast` 5 (J3 chevron glyphs); no page errors. The [rollout smoke suite](rollout-validation.md#smoke-tests) passed 17/17 in each engine. This covers "Not covered" item 6 for the Gecko and WebKit engines; Safari and Firefox on real devices still need a manual run |
 
 ## Results summary
 

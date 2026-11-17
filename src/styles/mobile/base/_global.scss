@@ -1,3 +1,43 @@
+// The subset of the Vuetify reset that the redesigned mobile styles rely on: border-box sizing, inherited fonts and
+// pseudo-element (icon) alignment. Until #37 the mobile app only got these rules by accident, from the Vuetify styles that a
+// shared component pulled into mobile.html. They sit in a cascade layer, as Vuetify's reset did, so every unlayered
+// Framework7 or app rule still wins over them.
+@layer ebk-mobile-reset {
+    html {
+        box-sizing: border-box;
+    }
+
+    *,
+    ::before,
+    ::after {
+        box-sizing: inherit;
+        background-repeat: no-repeat;
+    }
+
+    ::before,
+    ::after {
+        text-decoration: inherit;
+        vertical-align: inherit;
+    }
+
+    button,
+    input,
+    optgroup,
+    select,
+    textarea {
+        font: inherit;
+    }
+
+    button,
+    [type=button],
+    [type=reset],
+    [type=submit],
+    [role=button] {
+        cursor: pointer;
+        color: inherit;
+    }
+}
+
 body {
     -ms-user-select: none;
     -webkit-user-select: none;
