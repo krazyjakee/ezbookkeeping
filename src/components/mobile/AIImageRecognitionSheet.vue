@@ -34,6 +34,7 @@
                     </div>
                 </div>
             </div>
+            <span class="ebk-visually-hidden" role="status" aria-live="polite">{{ recognizing ? tt('Recognizing') : '' }}</span>
             <div class="ai-image-recognition-state" v-if="recognitionFailed && !recognizing && !loading">
                 <state-panel type="error" compact :title="tt('Unable to recognize image')">
                     <template #actions>
@@ -96,17 +97,30 @@ const imageFile = ref<File | null>(null);
 const imageSrc = ref<string | undefined>(undefined);
 const recognitionFailed = ref<boolean>(false);
 
+// increased whenever a new image is loaded or the sheet is closed, so that a slower earlier image load cannot overwrite the current state
+let imageLoadSequence: number = 0;
+
 function loadImage(image: Blob): void {
+    const currentImageLoadSequence = ++imageLoadSequence;
+
     loading.value = true;
     recognitionFailed.value = false;
     imageFile.value = null;
     imageSrc.value = undefined;
 
     compressJpgImageByQuality(image, ImageUploadQualityType.HD720P).then(blob => {
+        if (currentImageLoadSequence !== imageLoadSequence) {
+            return;
+        }
+
         imageFile.value = KnownFileType.JPG.createFileFromBlob(blob, "image");
         imageSrc.value = URL.createObjectURL(blob);
         loading.value = false;
     }).catch(error => {
+        if (currentImageLoadSequence !== imageLoadSequence) {
+            return;
+        }
+
         imageFile.value = null;
         imageSrc.value = undefined;
         loading.value = false;
@@ -147,22 +161,28 @@ function confirm(): void {
     }
 
     const currentImageFile = imageFile.value;
-    cancelRecognizingUuid.value = generateRandomUUID();
+    const currentRecognizingUuid = generateRandomUUID();
+    cancelRecognizingUuid.value = currentRecognizingUuid;
     recognizing.value = true;
     recognitionFailed.value = false;
     showCancelableLoading('Recognizing', 'AI can make mistakes. Check important info.', 'Cancel Recognition', cancelRecognize);
 
     transactionsStore.recognizeReceiptImage({
-        imageFile: imageFile.value,
-        cancelableUuid: cancelRecognizingUuid.value
+        imageFile: currentImageFile,
+        cancelableUuid: currentRecognizingUuid
     }).then(response => {
+        // ignore the result of a recognition which has been canceled or whose sheet has been closed
+        if (cancelRecognizingUuid.value !== currentRecognizingUuid) {
+            return;
+        }
+
         recognizing.value = false;
         cancelRecognizingUuid.value = undefined;
         closeAllDialog();
         emit('update:show', false);
         emit('recognition:change', { response: response, imageFile: currentImageFile });
     }).catch(error => {
-        if (error.canceled) {
+        if (error.canceled || cancelRecognizingUuid.value !== currentRecognizingUuid) {
             return;
         }
 
@@ -195,6 +215,13 @@ function cancel(): void {
 }
 
 function close(): void {
+    imageLoadSequence++;
+
+    if (cancelRecognizingUuid.value) {
+        transactionsStore.cancelRecognizeReceiptImage(cancelRecognizingUuid.value);
+        closeAllDialog();
+    }
+
     emit('update:show', false);
     recognitionFailed.value = false;
     loading.value = false;
@@ -205,12 +232,11 @@ function close(): void {
 }
 
 function onSheetOpen(): void {
+    // the image state has already been reset when the sheet was last closed, and must be kept here because
+    // the caller may have started loading an image (e.g. a shared image) right before opening the sheet
     recognitionFailed.value = false;
-    loading.value = false;
     recognizing.value = false;
     cancelRecognizingUuid.value = undefined;
-    imageFile.value = null;
-    imageSrc.value = undefined;
 }
 
 function onSheetClosed(): void {

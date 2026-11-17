@@ -4,7 +4,8 @@
             <f7-nav-title :title="tt('global.app.title')"></f7-nav-title>
         </f7-navbar>
 
-        <overview-dashboard :layout="layout" :loading="loading" @navigate="onNavigate" />
+        <overview-dashboard :layout="layout" :loading="loading" :load-failed="loadFailed"
+                            @navigate="onNavigate" @retry="retry" />
 
         <f7-toolbar tabbar icons bottom class="main-tabbar">
             <f7-link class="link" href="/transaction/list" :aria-label="tt('Details')">
@@ -133,6 +134,7 @@ const overviewStore = useOverviewStore();
 const aiImageRecognitionSheet = useTemplateRef<AIImageRecognitionSheetType>('aiImageRecognitionSheet');
 
 const loading = ref<boolean>(true);
+const loadFailed = ref<boolean>(false);
 const showTransactionTemplatePopover = ref<boolean>(false);
 const showAIReceiptImageRecognitionSheet = ref<boolean>(false);
 
@@ -177,8 +179,10 @@ function init(): void {
             }
 
             loading.value = false;
+            loadFailed.value = false;
         }).catch(error => {
             loading.value = false;
+            loadFailed.value = !error.isUpToDate;
 
             if (!error.processed) {
                 showToast(error.message || error);
@@ -198,17 +202,24 @@ function reload(done?: () => void): void {
 
     Promise.all(promises).then(() => {
         done?.();
+        loadFailed.value = false;
 
         if (force) {
             showToast('Data has been updated');
         }
     }).catch(error => {
         done?.();
+        loadFailed.value = !error.isUpToDate;
 
         if (!error.processed) {
             showToast(error.message || error);
         }
     });
+}
+
+function retry(): void {
+    // the failed load may also have missed the accounts / categories / templates, so run the full initialization again
+    init();
 }
 
 function reloadOverviewData(force: boolean): Promise<unknown>[] {

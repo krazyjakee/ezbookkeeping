@@ -173,7 +173,16 @@
         </div>
 
         <div class="transaction-list-state" :class="{ 'margin-vertical': pageType === TransactionListPageType.Calendar.type || showSearchbar, 'margin-vertical-half': pageType !== TransactionListPageType.Calendar.type && !showSearchbar }"
-             v-if="!loading && noTransaction">
+             v-if="!loading && loadError">
+            <state-panel type="error" :title="tt('Unable to retrieve transaction list')">
+                <template #actions>
+                    <f7-button tonal :text="tt('Retry')" @click="reload()"></f7-button>
+                </template>
+            </state-panel>
+        </div>
+
+        <div class="transaction-list-state" :class="{ 'margin-vertical': pageType === TransactionListPageType.Calendar.type || showSearchbar, 'margin-vertical-half': pageType !== TransactionListPageType.Calendar.type && !showSearchbar }"
+             v-else-if="!loading && noTransaction">
             <state-panel type="empty" :title="tt('No results')" :text="query.keyword" v-if="query.keyword" />
             <state-panel type="empty" :title="tt('No transaction data')" v-else>
                 <template #actions v-if="canAddTransaction && pageType !== TransactionListPageType.Gallery.type">
@@ -361,7 +370,7 @@
             </f7-accordion-item>
         </f7-block>
 
-        <f7-block class="text-align-center" :class="{ 'disabled': loadingMore }" v-show="!loading && hasMoreTransaction"
+        <f7-block class="text-align-center" :class="{ 'disabled': loadingMore }" v-show="!loading && !loadError && hasMoreTransaction"
                   v-if="pageType === TransactionListPageType.List.type || pageType === TransactionListPageType.Gallery.type">
             <f7-link href="#" @click="loadMore(false)">{{ tt('Load More') }}</f7-link>
         </f7-block>
@@ -750,7 +759,7 @@ const {
     formatNumberToLocalizedNumeralsWithoutDigitGrouping
 } = useI18n();
 
-const { showAlert, showToast, routeBackOnError } = useI18nUIComponents();
+const { showAlert, showToast } = useI18nUIComponents();
 
 const {
     pageType,
@@ -816,7 +825,7 @@ const transactionCategoriesStore = useTransactionCategoriesStore();
 const transactionTagsStore = useTransactionTagsStore();
 const transactionsStore = useTransactionsStore();
 
-const loadingError = ref<unknown | null>(null);
+const loadError = ref<boolean>(false);
 const loadingMore = ref<boolean>(false);
 const transactionToDelete = ref<Transaction | null>(null);
 const transactionInvisibleYearMonths = ref<Record<TextualYearMonth, boolean>>({});
@@ -830,7 +839,7 @@ const textDirection = computed<TextDirection>(() => getCurrentLanguageTextDirect
 const isDarkMode = computed<boolean>(() => environmentsStore.framework7DarkMode || false);
 
 const transactions = computed<TransactionMonthList[]>(() => {
-    if (loading.value) {
+    if (loading.value || loadError.value) {
         return [];
     }
 
@@ -1110,17 +1119,16 @@ function reload(done?: () => void): void {
         }
 
         loading.value = false;
+        loadError.value = false;
         setTransactionMonthListHeights(true);
     }).catch(error => {
-        if (error.processed || done) {
-            loading.value = false;
-        }
-
+        loading.value = false;
         done?.();
 
         if (!error.processed) {
+            // a failed pull to refresh keeps the transactions already shown, other failed loads show the error state in the list area
             if (!done) {
-                loadingError.value = error;
+                loadError.value = true;
             }
 
             showToast(error.message || error);
@@ -1580,8 +1588,6 @@ function onPageAfterIn(): void {
     if (transactionsStore.transactionListStateInvalid && !loading.value) {
         reload();
     }
-
-    routeBackOnError(props.f7router, loadingError);
 }
 
 function onResize(): void {

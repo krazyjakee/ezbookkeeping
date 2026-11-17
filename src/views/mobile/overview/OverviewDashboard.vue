@@ -1,5 +1,13 @@
 <template>
     <div class="mobile-overview-dashboard">
+        <state-panel class="mobile-overview-dashboard-error" type="error" compact
+                     :title="tt('Unable to retrieve transaction overview')"
+                     v-if="loadFailed && !loading">
+            <template #actions>
+                <f7-button tonal small :text="tt('Retry')" @click="emit('retry')"></f7-button>
+            </template>
+        </state-panel>
+
         <div class="mobile-overview-dashboard-item ebk-animate-reveal" :style="getStaggerStyle(index)"
              :key="widget.id" v-for="(widget, index) in layout.widgets">
             <overview-widget :widget="widget" :loading="loading" @navigate="onNavigate" />
@@ -22,10 +30,12 @@ import { getStaggerStyle } from '@/lib/motion.ts';
 defineProps<{
     layout: MobileOverviewLayout;
     loading: boolean;
+    loadFailed?: boolean;
 }>();
 
 const emit = defineEmits<{
     (e: 'navigate', type: MobileOverviewWidgetNavigationType, path?: string): void;
+    (e: 'retry'): void;
 }>();
 
 const { tt } = useI18n();

@@ -55,7 +55,7 @@
                         <span class="ai-recognition-overlay-title">{{ tt('Release to load image') }}</span>
                     </div>
 
-                    <div class="ai-recognition-status" role="status" aria-live="polite" v-if="recognizing">
+                    <div class="ai-recognition-status" v-if="recognizing">
                         <v-progress-linear indeterminate color="primary" height="3" />
                         <div class="ai-recognition-status-body">
                             <v-icon :icon="mdiMagicStaff" size="20" />
@@ -74,6 +74,7 @@
                             </template>
                         </state-panel>
                     </div>
+                    <span class="ebk-visually-hidden" role="status" aria-live="polite">{{ recognizing ? tt('Recognizing') : '' }}</span>
                 </div>
             </template>
 
@@ -133,17 +134,30 @@ const imageSrc = ref<string | undefined>(undefined);
 const isDragOver = ref<boolean>(false);
 const recognizeFailed = ref<boolean>(false);
 
+// increased whenever a new image is loaded or the dialog is reset, so that a slower earlier image load cannot overwrite the current state
+let imageLoadSequence: number = 0;
+
 function loadImage(file: File): void {
+    const currentImageLoadSequence = ++imageLoadSequence;
+
     loading.value = true;
     recognizeFailed.value = false;
     imageFile.value = null;
     imageSrc.value = undefined;
 
     compressJpgImageByQuality(file, ImageUploadQualityType.HD720P).then(blob => {
+        if (currentImageLoadSequence !== imageLoadSequence) {
+            return;
+        }
+
         imageFile.value = KnownFileType.JPG.createFileFromBlob(blob, "image");
         imageSrc.value = URL.createObjectURL(blob);
         loading.value = false;
     }).catch(error => {
+        if (currentImageLoadSequence !== imageLoadSequence) {
+            return;
+        }
+
         imageFile.value = null;
         imageSrc.value = undefined;
         loading.value = false;
@@ -153,6 +167,7 @@ function loadImage(file: File): void {
 }
 
 function open(): Promise<AIImageRecognitionResult> {
+    imageLoadSequence++;
     showState.value = true;
     loading.value = false;
     recognizing.value = false;
@@ -199,20 +214,26 @@ function recognize(): void {
     }
 
     const currentImageFile = imageFile.value;
-    cancelRecognizingUuid.value = generateRandomUUID();
+    const currentRecognizingUuid = generateRandomUUID();
+    cancelRecognizingUuid.value = currentRecognizingUuid;
     recognizing.value = true;
     recognizeFailed.value = false;
 
     transactionsStore.recognizeReceiptImage({
-        imageFile: imageFile.value,
-        cancelableUuid: cancelRecognizingUuid.value
+        imageFile: currentImageFile,
+        cancelableUuid: currentRecognizingUuid
     }).then(response => {
+        // ignore the result of a recognition which has been canceled or superseded
+        if (cancelRecognizingUuid.value !== currentRecognizingUuid) {
+            return;
+        }
+
         resolveFunc?.({ response: response, imageFile: currentImageFile });
         showState.value = false;
         recognizing.value = false;
         cancelRecognizingUuid.value = undefined;
     }).catch(error => {
-        if (error.canceled) {
+        if (error.canceled || cancelRecognizingUuid.value !== currentRecognizingUuid) {
             return;
         }
 
@@ -239,6 +260,12 @@ function cancelRecognize(): void {
 }
 
 function cancel(): void {
+    imageLoadSequence++;
+
+    if (cancelRecognizingUuid.value) {
+        transactionsStore.cancelRecognizeReceiptImage(cancelRecognizingUuid.value);
+    }
+
     rejectFunc?.();
     showState.value = false;
     loading.value = false;
