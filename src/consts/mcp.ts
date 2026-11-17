@@ -160,6 +160,42 @@ export const ALL_MCP_TOOLS: NameAndDisplayName[] = [
     {
         name: 'delete_transaction_template',
         displayName:'Delete Transaction Template'
+    },
+    {
+        name: 'upload_transaction_attachment',
+        displayName:'Upload Transaction Attachment'
+    },
+    {
+        name: 'list_transaction_attachments',
+        displayName:'List Transaction Attachments'
+    },
+    {
+        name: 'get_transaction_attachment',
+        displayName:'Get Transaction Attachment'
+    },
+    {
+        name: 'download_transaction_attachment',
+        displayName:'Download Transaction Attachment'
+    },
+    {
+        name: 'detach_transaction_attachment',
+        displayName:'Detach Transaction Attachment'
+    },
+    {
+        name: 'delete_transaction_attachment',
+        displayName:'Delete Transaction Attachment'
+    },
+    {
+        name: 'query_account_balances_as_of',
+        displayName:'Query Account Balances As Of Date'
+    },
+    {
+        name: 'query_transaction_totals',
+        displayName:'Query Transaction Totals'
+    },
+    {
+        name: 'get_account_reconciliation_statement',
+        displayName:'Get Account Reconciliation Statement'
     }
 ];
 
@@ -181,5 +217,11 @@ export const DEFAULT_ENABLED_MCP_TOOL_NAMES: string[] = [
     'list_transaction_tags',
     'get_transaction',
     'list_transaction_templates',
-    'get_transaction_template'
+    'get_transaction_template',
+    'list_transaction_attachments',
+    'get_transaction_attachment',
+    'download_transaction_attachment',
+    'query_account_balances_as_of',
+    'query_transaction_totals',
+    'get_account_reconciliation_statement'
 ]

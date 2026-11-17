@@ -49,10 +49,10 @@ The following conventions apply to all tools. Call `get_server_capabilities` to 
 * **Dry run**: write tools that support `dry_run` perform exactly the same validation as the actual write (including description length, edit scope and name resolution) but save nothing. Results contain `dry_run: true` and statuses such as `would_be_created` or `would_be_updated`; committed results contain the saved IDs and the persisted values re-read from the database.
 * **Skip existing**: setup tools (`create_account`, `create_transaction_category`, `batch_create_transaction_categories`, `create_transaction_tags`, `create_transaction_tag_group`, `create_transaction_template`) support `skip_existing`. When enabled, an existing item with the same name (under the same parent / type / group) is reused and reported with status `existing`, so rerunning a setup does not create duplicates. It defaults to `true` for the batch tools (`batch_create_transaction_categories`, `create_transaction_tags`) and `create_transaction_tag_group`, and `false` otherwise.
 * **Batch atomicity**: batch tools validate all items first. If any item is invalid, nothing is saved and every item reports its own result. When committing, results report the actual saved state of every item (`created`, `existing`, `failed`, ...), so a partially failed batch can be inspected and safely rerun with `skip_existing`.
-* **Structured errors**: user-correctable errors are returned as a tool result with `isError: true` and the JSON body `{"success": false, "error": {"code", "message", "field", "limit", "actual", "value", "candidates"}}`. Error codes are `invalid_arguments`, `required`, `invalid_value`, `too_long`, `too_many`, `out_of_range`, `not_found`, `ambiguous_name`, `not_supported` and `not_allowed`. For example, an overlong description fails with `{"code": "too_long", "field": "comment", "limit": 1024, "actual": 1100}` during dry run as well.
+* **Structured errors**: user-correctable errors are returned as a tool result with `isError: true` and the JSON body `{"success": false, "error": {"code", "message", "field", "limit", "actual", "value", "candidates"}}`. Error codes are `invalid_arguments`, `required`, `invalid_value`, `too_long`, `too_many`, `too_large`, `out_of_range`, `not_found`, `ambiguous_name`, `not_supported` and `not_allowed`. For example, an overlong description fails with `{"code": "too_long", "field": "comment", "limit": 1024, "actual": 1100}` during dry run as well.
 * **Destructive operations**: delete tools only accept IDs and require `confirm: true`. Deletions are permanent and cannot be restored via MCP. They have the same restrictions as the web interface (e.g. an account or category in use cannot be deleted).
 * **Liability balances**: for liability accounts (credit card and debt), `balance` is the signed accounting balance (negative means money owed) and `outstanding_balance` is the balance shown in the web interface (positive means money owed). For example, after a £120 personally funded expense recorded against a director's loan debt account, `balance` is `-120.00` and `outstanding_balance` is `120.00`.
-* **Tool annotations**: every tool declares `readOnlyHint`, `destructiveHint`, `idempotentHint` and `openWorldHint`. Query tools are read-only; create tools are non-destructive; update, hide, reorder and delete tools are destructive.
+* **Tool annotations**: every tool declares `readOnlyHint`, `destructiveHint`, `idempotentHint` and `openWorldHint`. Query, list, get and download tools are read-only; create, add and upload tools are non-destructive; update, hide, reorder, detach and delete tools are destructive.
 * **Token permissions**: tokens generated with "Enable All MCP Tools" can use all tools, including the tools added in later versions. Tokens generated with a selected tool list can only use the selected tools.
 
 ### Get server capabilities
@@ -71,7 +71,7 @@ None
 | --- | --- | --- |
 | `server` | `object` | Application name, version, commit hash and supported MCP protocol version |
 | `limits` | `object` | Maximum lengths of transaction description, account / category / tag / tag group / template names and descriptions, maximum tags and attachments per transaction, transaction amount range, maximum items of one batch call |
-| `attachments` | `object` | Whether attachments are enabled, maximum file size in bytes, maximum count per transaction, supported file types (extension and content type), and whether uploading via MCP is supported (currently `false`) |
+| `attachments` | `object` | Whether attachments are enabled, maximum file size in bytes (`max_file_size_bytes`, the upload cap), maximum count per transaction, supported file types (extension and content type), whether uploading via MCP is supported (`upload_via_mcp`, `true` when attachments are enabled), the upload encoding, the maximum base64 length of an upload (`max_upload_base64_length`), and how content is validated and which metadata is stored |
 | `scheduled_transactions` | `object` | Whether scheduled transactions are enabled on this server |
 | `current_user` | `object` | Default currency, transaction edit scope (the range of transaction time which can be created, modified or deleted) and whether last reconciled time is used |
 | `features` | `object` | Textual description of dry run, skip existing, name resolution, structured errors, destructive operations, batch atomicity, liability balances and query order semantics |
@@ -102,6 +102,7 @@ None
 | `tags` | `string[]` | Optional | Names of tags associated with the transaction (maximum 10 tags allowed in total) |
 | `comment` | `string` | Optional | Transaction description (see `limits.transaction_description_max_length` of `get_server_capabilities`) |
 | `geo_location` | `object` | Optional | Geographic location (`latitude`, `longitude`) |
+| `attachment_ids` | `string[]` | Optional | IDs of uploaded but unattached attachments (returned by `upload_transaction_attachment`) to attach to the new transaction |
 | `dry_run` | `boolean` | Optional | If `true`, the transaction will not be saved, only validated |
 
 **Response Parameters**
@@ -216,9 +217,10 @@ Returns the full transaction (`MCPTransactionDetail`): ID, type, time and UTC of
 | `comment` | `string` | Optional | New description |
 | `geo_location` | `object` | Optional | New geographic location (`latitude`, `longitude`) |
 | `clear_geo_location` | `boolean` | Optional | Remove the geographic location |
+| `add_attachment_ids` | `string[]` | Optional | IDs of uploaded but unattached attachments to attach to the transaction (existing attachments are kept) |
 | `dry_run` | `boolean` | Optional | If `true`, only validate the changes |
 
-Only provided fields are changed. Both the original and the new transaction must be within the user's transaction edit scope. Attachments are not changed.
+Only provided fields are changed. Both the original and the new transaction must be within the user's transaction edit scope. Existing attachments are never removed by this tool, use `detach_transaction_attachment` or `delete_transaction_attachment` instead.
 
 **Response Parameters**
 
@@ -246,6 +248,36 @@ The transaction (both sides for transfers) and its attachments are deleted perma
 | `success` | `boolean` | Required | Indicates whether this operation is successful |
 | `deleted_transaction_id` | `string` | Required | ID of the deleted transaction |
 | `permanent` | `boolean` | Required | Always `true` |
+
+### Transaction attachments
+
+Receipt pictures and PDF documents can be uploaded, attached, inspected, downloaded, detached and deleted through MCP when transaction attachments are enabled on the server (`enable_transaction_picture`). All attachment tools fail with `not_supported` otherwise.
+
+| MCP Tool Name | Request Parameters | Description |
+| --- | --- | --- |
+| `upload_transaction_attachment` | `content_base64`, `file_extension` or `content_type`, `transaction_id`, `dry_run` | Upload a file whose content is passed as base64 in `content_base64`. Optionally attach it to an existing transaction, otherwise it is kept unattached. Returns the attachment ID, transaction association, size, MIME type, the SHA-256 checksum of the uploaded content and of the stored file read back (`verified: true` when they match) |
+| `list_transaction_attachments` | `transaction_id`, `limit` | List the attachments of a transaction, or the unattached attachments (newest first) when `transaction_id` is not set |
+| `get_transaction_attachment` | `attachment_id` | Inspect an attachment without downloading it (ID, transaction association, size, MIME type, SHA-256 checksum, whether the stored file is available) |
+| `download_transaction_attachment` | `attachment_id` | Download an attachment. The content is returned as an MCP embedded resource (`blob` in base64 with `mimeType`, URI `ezbookkeeping://transaction-attachments/<id>.<extension>`), followed by an embedded `application/json` resource with its metadata and checksum |
+| `detach_transaction_attachment` | `attachment_id`, `transaction_id` | Remove the reference from the transaction but keep the file as an unattached attachment, which can be attached to another transaction or deleted later |
+| `delete_transaction_attachment` | `attachment_id`, `confirm` | Delete an attached or unattached attachment permanently (the same as removing an attachment in the web interface) |
+
+* **Upload cap**: the decoded content must not exceed `attachments.max_file_size_bytes` of `get_server_capabilities` (the `max_transaction_picture_size` setting, 10 MiB by default), so the base64 text must not exceed `attachments.max_upload_base64_length`. Oversized content fails with `too_large` (with `limit` and `actual` in bytes) before it is decoded. Downloads are bounded by the same limit.
+* **Content, not file names**: only the base64 encoded content in `content_base64` is uploaded. A file name or a path on the client machine is never read or treated as an upload, and fails as invalid base64.
+* **Validation**: the file type is taken from `file_extension` (e.g. `jpg`, `png`, `gif`, `webp`, `pdf`) or `content_type` (e.g. `image/jpeg`, `application/pdf`); if both are set, they must match. The content must match the file type (the same magic bytes check as the web upload for PDF documents, and the detected type for images), otherwise the upload fails with `invalid_value`. A dry run performs the same checks without saving.
+* **Metadata**: ezBookkeeping stores the attachment ID, the transaction association and the file type. The original file name is not stored, and the SHA-256 checksum is computed from the stored bytes whenever an attachment is listed, inspected or downloaded, so clients can verify that the bytes were persisted.
+* **Limits and permissions**: a transaction can have at most `attachments.max_count_per_transaction` attachments. Attaching, detaching and deleting attachments of a transaction require the transaction to be within the user's transaction edit scope and not in a hidden account, as in the web interface.
+* **Staged workflow**: upload the receipt with `upload_transaction_attachment` (without `transaction_id`), then pass the returned ID in `attachment_ids` of `add_transaction`, or in `add_attachment_ids` of `update_transaction`. If a step fails, the uploaded attachment stays unattached; find it with `list_transaction_attachments` (without `transaction_id`) and retry, or delete it with `delete_transaction_attachment`. When `upload_transaction_attachment` is called with `transaction_id` but attaching fails, the response contains `attach_error` and the saved (unattached) attachment ID.
+
+### Reporting and reconciliation
+
+| MCP Tool Name | Request Parameters | Description |
+| --- | --- | --- |
+| `query_account_balances_as_of` | `as_of`, `account_ids`, `include_hidden` | Balances of accounts as of a point in time (RFC 3339), including opening balances and balance modifications. Each account has its ID, category, currency, `signed_balance`, `balance` (displayed) and `outstanding_balance` (liability accounts), and the current signed balance for comparison. Also returns totals (assets, liabilities, net) by currency. Parent accounts are represented by their sub-accounts |
+| `query_transaction_totals` | `start_time`, `end_time`, `group_by` (`account`, `category`, `primary_category`, `tag` or `currency`), `account_ids`, `category_ids`, `tag_ids`, `keyword` | Activity totals over a date range from the same statistics as the web interface: `income`, `expense`, `transfer_in`, `transfer_out` and `net` per group and currency, with group IDs, plus overall `totals_by_currency`. Amounts are in the currency of each transaction's account (not converted). When grouping by tag, a transaction with several tags is counted in each of its tags, and transactions without tags are reported as `(no tags)` |
+| `get_account_reconciliation_statement` | `account_id` or `account_name`, `start_time`, `end_time`, `max_items` | The reconciliation statement of an account (the same data as in the web interface): opening and closing balances (signed and displayed), total inflows and outflows, and every transaction (`MCPTransactionDetail` with IDs and attachment references) with its direction, signed amount, counterpart account of transfers and the running balance before and after it, ordered by time ascending. At most `max_items` (default 200, maximum 1000) lines are returned; `truncated` indicates more lines exist |
+
+For example, a director's loan reimbursement can be followed by calling `get_account_reconciliation_statement` for the director's loan debt account: the personally funded expense appears as an `outflow` and the reimbursement transfer from the company bank account as an `inflow` with `counterpart_account_id` and `transfer_id`, and the closing outstanding balance returns to zero.
 
 ### Accounts
 

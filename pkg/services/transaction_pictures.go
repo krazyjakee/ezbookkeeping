@@ -255,6 +255,39 @@ func (s *TransactionPictureService) RemoveUnusedTransactionPicture(c core.Contex
 	})
 }
 
+// DetachPictureFromTransaction detaches the transaction picture from the specified transaction of specified user,
+// the picture becomes unused again (as it was just uploaded) and its file is kept, so it can be attached to another transaction or removed later
+func (s *TransactionPictureService) DetachPictureFromTransaction(c core.Context, uid int64, transactionId int64, pictureId int64) error {
+	if uid <= 0 {
+		return errs.ErrUserIdInvalid
+	}
+
+	if transactionId <= 0 {
+		return errs.ErrTransactionIdInvalid
+	}
+
+	if pictureId <= 0 {
+		return errs.ErrTransactionPictureIdInvalid
+	}
+
+	updateModel := &models.TransactionPictureInfo{
+		TransactionId:   models.TransactionPictureNewPictureTransactionId,
+		UpdatedUnixTime: time.Now().Unix(),
+	}
+
+	return s.UserDataDB(uid).DoTransaction(c, func(sess datastore.DatabaseSession) error {
+		updatedRows, err := sess.ID(pictureId).Cols("transaction_id", "updated_unix_time").Where("uid=? AND deleted=? AND transaction_id=?", uid, false, transactionId).Update(updateModel)
+
+		if err != nil {
+			return err
+		} else if updatedRows < 1 {
+			return errs.ErrTransactionPictureNotFound
+		}
+
+		return nil
+	})
+}
+
 // GetPictureInfoMapByList returns a transaction picture info list map by a list
 func (s *TransactionPictureService) GetPictureInfoMapByList(pictureInfos []*models.TransactionPictureInfo) map[int64]*models.TransactionPictureInfo {
 	pictureInfoMap := make(map[int64]*models.TransactionPictureInfo)

@@ -34,6 +34,7 @@ type MCPAddTransactionRequest struct {
 	TagIds                 []string                         `json:"tag_ids,omitempty" jsonschema_description:"List of tag IDs associated with the transaction (optional, combined with tags, maximum 10 tags allowed)"`
 	Comment                string                           `json:"comment,omitempty" jsonschema_description:"Transaction description (maximum length is reported by get_server_capabilities)"`
 	GeoLocation            *MCPTransactionDetailGeoLocation `json:"geo_location,omitempty" jsonschema_description:"Geographic location of the transaction (optional)"`
+	AttachmentIds          []string                         `json:"attachment_ids,omitempty" jsonschema_description:"IDs of uploaded but unattached attachments (returned by upload_transaction_attachment) to attach to the new transaction (optional, maximum count is reported by get_server_capabilities)"`
 	DryRun                 bool                             `json:"dry_run,omitempty" jsonschema_description:"If true, the transaction will not be saved, only validated with the same rules as a real write (optional)"`
 }
 
@@ -66,7 +67,7 @@ func (h *mcpAddTransactionToolHandler) Name() string {
 
 // Description returns the description of the MCP tool
 func (h *mcpAddTransactionToolHandler) Description() string {
-	return "Add a new transaction in ezBookkeeping. Accounts, category and tags can be specified by ID (preferred) or by name; ambiguous or unknown names are rejected with candidates. Use dry_run to validate without saving. Returns the saved transaction ID and the resulting account balances."
+	return "Add a new transaction in ezBookkeeping. Accounts, category and tags can be specified by ID (preferred) or by name; ambiguous or unknown names are rejected with candidates. Receipts uploaded by upload_transaction_attachment can be attached via attachment_ids. Use dry_run to validate without saving. Returns the saved transaction ID (with its attachments) and the resulting account balances."
 }
 
 // DataOperationType returns how the MCP tool operates on business records
@@ -168,6 +169,12 @@ func (h *mcpAddTransactionToolHandler) Handle(c *core.WebContext, callToolReq *M
 		}
 	}
 
+	pictureIds, err := mcpAttachmentCheckNewAttachments(c, uid, "attachment_ids", addTransactionRequest.AttachmentIds, 0, currentConfig, services)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
 	transaction, err := h.createNewTransactionModel(c, uid, addTransactionRequest, transactionCategory.CategoryId, sourceAccount.AccountId, destinationAccountId, c.ClientIP())
 
 	if err != nil {
@@ -185,7 +192,7 @@ func (h *mcpAddTransactionToolHandler) Handle(c *core.WebContext, callToolReq *M
 	}
 
 	if !addTransactionRequest.DryRun {
-		err = services.GetTransactionService().CreateTransaction(c, transaction, tagIds, nil)
+		err = services.GetTransactionService().CreateTransaction(c, transaction, tagIds, pictureIds)
 
 		if err != nil {
 			log.Errorf(c, "[add_transaction_tool_handler.Handle] failed to create transaction \"id:%d\" for user \"uid:%d\", because %s", transaction.TransactionId, uid, err.Error())
@@ -268,6 +275,7 @@ func (h *mcpAddTransactionToolHandler) Handle(c *core.WebContext, callToolReq *M
 
 		detail := mcpTxnBuildDetail(transaction, detailData, nil, false)
 		detail.Id = ""
+		detail.AttachmentCount = len(pictureIds)
 
 		return h.createNewMCPAddTransactionResponse(transaction, newAccounts, detail, true)
 	}
@@ -299,6 +307,10 @@ func (h *mcpAddTransactionToolHandler) validateRequest(addTransactionRequest *MC
 
 	if count := len(addTransactionRequest.Tags) + len(addTransactionRequest.TagIds); count > models.MaximumTagsCountOfTransaction {
 		return NewMCPTooManyItemsError("tags", models.MaximumTagsCountOfTransaction, count)
+	}
+
+	if count := len(addTransactionRequest.AttachmentIds); count > models.MaximumPicturesCountOfTransaction {
+		return NewMCPTooManyItemsError("attachment_ids", models.MaximumPicturesCountOfTransaction, count)
 	}
 
 	if err := checkMCPStringLength("comment", addTransactionRequest.Comment, false, mcpTransactionCommentMaxLength); err != nil {

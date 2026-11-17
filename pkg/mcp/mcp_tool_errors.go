@@ -11,6 +11,7 @@ const (
 	MCPToolErrorCodeInvalidValue     = "invalid_value"
 	MCPToolErrorCodeTooLong          = "too_long"
 	MCPToolErrorCodeTooMany          = "too_many"
+	MCPToolErrorCodeTooLarge         = "too_large"
 	MCPToolErrorCodeOutOfRange       = "out_of_range"
 	MCPToolErrorCodeNotFound         = "not_found"
 	MCPToolErrorCodeAmbiguousName    = "ambiguous_name"
@@ -94,6 +95,14 @@ func NewMCPTooManyItemsError(field string, limit int, actual int) *MCPToolError 
 	actualValue := int64(actual)
 	err.Limit = &limitValue
 	err.Actual = &actualValue
+	return err
+}
+
+// NewMCPTooLargeError returns a new MCP tool error which indicates the size (in bytes) of the field content exceeds the maximum size
+func NewMCPTooLargeError(field string, limit int64, actual int64) *MCPToolError {
+	err := NewMCPToolError(MCPToolErrorCodeTooLarge, field, fmt.Sprintf("\"%s\" is too large, the maximum size is %d bytes but got %d bytes", field, limit, actual))
+	err.Limit = &limit
+	err.Actual = &actual
 	return err
 }
 

@@ -31,6 +31,7 @@ type MCPUpdateTransactionRequest struct {
 	Comment                *string                          `json:"comment,omitempty" jsonschema_description:"New transaction description (optional, set to empty string to clear, maximum length is reported by get_server_capabilities)"`
 	GeoLocation            *MCPTransactionDetailGeoLocation `json:"geo_location,omitempty" jsonschema_description:"New geographic location (optional)"`
 	ClearGeoLocation       bool                             `json:"clear_geo_location,omitempty" jsonschema_description:"If true, remove the geographic location from the transaction (optional, cannot be used with geo_location)"`
+	AddAttachmentIds       []string                         `json:"add_attachment_ids,omitempty" jsonschema_description:"IDs of uploaded but unattached attachments (returned by upload_transaction_attachment) to attach to the transaction (optional, existing attachments are kept; use detach_transaction_attachment or delete_transaction_attachment to remove attachments)"`
 	DryRun                 bool                             `json:"dry_run,omitempty" jsonschema_description:"If true, the transaction will not be saved, only validated with the same rules as a real write (optional)"`
 }
 
@@ -70,7 +71,7 @@ func (h *mcpUpdateTransactionToolHandler) Name() string {
 
 // Description returns the description of the MCP tool
 func (h *mcpUpdateTransactionToolHandler) Description() string {
-	return "Update an existing transaction in ezBookkeeping. Only the specified fields are changed (amount, accounts, category, time and timezone, description, tags, location). The user's transaction edit scope is applied to both the original and the new transaction time. Attachments are not changed. Use dry_run to validate without saving."
+	return "Update an existing transaction in ezBookkeeping. Only the specified fields are changed (amount, accounts, category, time and timezone, description, tags, location). The user's transaction edit scope is applied to both the original and the new transaction time. Uploaded attachments can be added via add_attachment_ids, existing attachments are never removed by this tool. Use dry_run to validate without saving."
 }
 
 // DataOperationType returns how the MCP tool operates on business records
@@ -253,6 +254,27 @@ func (h *mcpUpdateTransactionToolHandler) Handle(c *core.WebContext, callToolReq
 		newTagIds = transactionTagIds
 	}
 
+	var addPictureIds []int64
+
+	if len(request.AddAttachmentIds) > 0 {
+		if err := mcpAttachmentCheckEnabled(currentConfig); err != nil {
+			return nil, nil, err
+		}
+
+		existingPictureInfos, err := services.GetTransactionPictureService().GetPictureInfosByTransactionId(c, uid, transaction.TransactionId)
+
+		if err != nil {
+			log.Errorf(c, "[update_transaction_tool_handler.Handle] failed to get attachments of transaction \"id:%d\" for user \"uid:%d\", because %s", transaction.TransactionId, uid, err.Error())
+			return nil, nil, errs.Or(err, errs.ErrOperationFailed)
+		}
+
+		addPictureIds, err = mcpAttachmentCheckNewAttachments(c, uid, "add_attachment_ids", request.AddAttachmentIds, len(existingPictureInfos), currentConfig, services)
+
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
 	newTransaction, err := mcpTxnBuildUpdatedTransaction(transaction, request, newTransactionType, categoryId, sourceAccount, destinationAccount)
 
 	if err != nil {
@@ -260,6 +282,10 @@ func (h *mcpUpdateTransactionToolHandler) Handle(c *core.WebContext, callToolReq
 	}
 
 	changedFields := mcpTxnGetChangedFields(transaction, newTransaction, transactionTagIds, newTagIds)
+
+	if len(addPictureIds) > 0 {
+		changedFields = append(changedFields, "attachments")
+	}
 
 	if len(changedFields) == 0 {
 		return h.createResponse(c, uid, user, transaction, currentConfig, services, MCPWriteStatusUnchanged, changedFields, false, nil)
@@ -325,7 +351,7 @@ func (h *mcpUpdateTransactionToolHandler) Handle(c *core.WebContext, callToolReq
 	}
 
 	changeToTransfer := newTransaction.Type == models.TRANSACTION_DB_TYPE_TRANSFER_OUT && transaction.Type != models.TRANSACTION_DB_TYPE_TRANSFER_OUT
-	err = services.GetTransactionService().ModifyTransaction(c, newTransaction, changeToTransfer, len(transactionTagIds), addTransactionTagIds, removeTransactionTagIds, nil, nil)
+	err = services.GetTransactionService().ModifyTransaction(c, newTransaction, changeToTransfer, len(transactionTagIds), addTransactionTagIds, removeTransactionTagIds, addPictureIds, nil)
 
 	if err != nil {
 		if err == errs.ErrNothingWillBeUpdated {
@@ -399,6 +425,10 @@ func mcpTxnValidateUpdateRequest(request *MCPUpdateTransactionRequest) error {
 
 	if count := len(request.TagIds) + len(request.TagNames); count > models.MaximumTagsCountOfTransaction {
 		return NewMCPTooManyItemsError("tags", models.MaximumTagsCountOfTransaction, count)
+	}
+
+	if count := len(request.AddAttachmentIds); count > models.MaximumPicturesCountOfTransaction {
+		return NewMCPTooManyItemsError("add_attachment_ids", models.MaximumPicturesCountOfTransaction, count)
 	}
 
 	if request.ClearGeoLocation && request.GeoLocation != nil {

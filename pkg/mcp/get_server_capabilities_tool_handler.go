@@ -58,7 +58,11 @@ type MCPServerCapabilitiesAttachments struct {
 	MaxFileSizeBytes       uint32                                 `json:"max_file_size_bytes" jsonschema_description:"Maximum size (in bytes) of one attachment file"`
 	MaxCountPerTransaction int                                    `json:"max_count_per_transaction" jsonschema_description:"Maximum count of attachments of one transaction"`
 	SupportedTypes         []*MCPServerCapabilitiesAttachmentType `json:"supported_types" jsonschema_description:"Supported attachment file types"`
-	UploadViaMCP           bool                                   `json:"upload_via_mcp" jsonschema_description:"Whether attachments can be uploaded via MCP tools (not supported yet, attachments must be uploaded via the web interface or HTTP API)"`
+	UploadViaMCP           bool                                   `json:"upload_via_mcp" jsonschema_description:"Whether attachments can be uploaded via the upload_transaction_attachment tool (true when attachments are enabled)"`
+	UploadEncoding         string                                 `json:"upload_encoding" jsonschema_description:"Encoding of the file content in upload_transaction_attachment"`
+	MaxUploadBase64Length  int64                                  `json:"max_upload_base64_length" jsonschema_description:"Maximum length of the base64 encoded content in upload_transaction_attachment (derived from max_file_size_bytes)"`
+	ContentValidation      string                                 `json:"content_validation" jsonschema_description:"How uploaded content is validated"`
+	Metadata               string                                 `json:"metadata" jsonschema_description:"Which attachment metadata is stored and returned"`
 }
 
 // MCPServerCapabilitiesAttachmentType represents a supported attachment file type
@@ -175,6 +179,9 @@ func (h *mcpGetServerCapabilitiesToolHandler) createNewMCPGetServerCapabilitiesR
 			MaxCountPerTransaction: models.MaximumPicturesCountOfTransaction,
 			SupportedTypes:         make([]*MCPServerCapabilitiesAttachmentType, 0, len(mcpCapabilitiesAttachmentExtensionCandidates)),
 			UploadViaMCP:           false,
+			UploadEncoding:         "base64 (RFC 4648 standard alphabet) in content_base64, a \"data:<mime>;base64,\" prefix is allowed. File names or local paths are never treated as uploads.",
+			ContentValidation:      "The file type is taken from file_extension or content_type, and the content must match it (magic bytes for PDF documents and detected type for images), otherwise the upload is rejected.",
+			Metadata:               "Attachment ID, transaction association, stored file extension / MIME type, byte size and a SHA-256 checksum computed from the stored file when read. The original file name is not stored.",
 		},
 		ScheduledTransactions: &MCPServerCapabilitiesScheduled{},
 		Features: &MCPServerCapabilitiesFeatures{
@@ -182,7 +189,7 @@ func (h *mcpGetServerCapabilitiesToolHandler) createNewMCPGetServerCapabilitiesR
 			SkipExisting:          "Setup tools with skip_existing=true reuse an existing item with the same name (under the same parent / type / group) and report status \"existing\" with its ID instead of creating a duplicate, so reruns are safe.",
 			NameResolution:        "Tools accept stable IDs (preferred) or names. Exact name matches are preferred, then case-insensitive matches. If a name matches more than one item, an \"ambiguous_name\" error listing the candidates is returned instead of choosing one.",
 			StructuredErrors:      "User-correctable errors are returned as tool results with isError=true and a JSON body {success:false, error:{code, message, field, limit, actual, value, candidates}}.",
-			DestructiveOperations: "Delete tools only accept IDs and require confirm=true. Deletions are permanent, there is no restore via MCP.",
+			DestructiveOperations: "Delete tools only accept IDs and require confirm=true. Deletions are permanent, there is no restore via MCP. detach_transaction_attachment only removes the reference from the transaction and keeps the file, delete_transaction_attachment deletes it.",
 			BatchAtomicity:        "Batch tools validate all items first; if any item is invalid nothing is saved. Committed results report the actual saved state (IDs and statuses) of every item.",
 			LiabilityBalances:     "For liability accounts (credit card, debt), balance is the signed accounting balance (negative means money owed) and outstanding_balance is the displayed balance in the web interface (positive means money owed).",
 			TransactionQueryOrder: "query_transactions returns transactions ordered by transaction time descending.",
@@ -209,6 +216,8 @@ func (h *mcpGetServerCapabilitiesToolHandler) createNewMCPGetServerCapabilitiesR
 	if currentConfig != nil {
 		response.Attachments.Enabled = currentConfig.EnableTransactionPictures
 		response.Attachments.MaxFileSizeBytes = currentConfig.MaxTransactionPictureFileSize
+		response.Attachments.UploadViaMCP = currentConfig.EnableTransactionPictures
+		response.Attachments.MaxUploadBase64Length = mcpAttachmentGetMaxBase64Length(int64(currentConfig.MaxTransactionPictureFileSize))
 		response.ScheduledTransactions.Enabled = currentConfig.EnableScheduledTransaction
 	}
 
