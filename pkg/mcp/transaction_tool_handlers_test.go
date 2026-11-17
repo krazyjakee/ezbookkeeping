@@ -1,7 +1,6 @@
 package mcp
 
 import (
-	"errors"
 	"reflect"
 	"strconv"
 	"strings"
@@ -12,17 +11,6 @@ import (
 	"github.com/mayswind/ezbookkeeping/pkg/models"
 	"github.com/mayswind/ezbookkeeping/pkg/utils"
 )
-
-func mcpTxnTestGetToolError(t *testing.T, err error) *MCPToolError {
-	t.Helper()
-	var toolErr *MCPToolError
-
-	if !errors.As(err, &toolErr) {
-		t.Fatalf("expected MCPToolError, but got %v", err)
-	}
-
-	return toolErr
-}
 
 func mcpTxnTestNewAddRequest() *MCPAddTransactionRequest {
 	return &MCPAddTransactionRequest{
@@ -41,7 +29,7 @@ func TestMCPTxnAddTransactionValidateRequest_CommentLength(t *testing.T) {
 	assert.Nil(t, MCPAddTransactionToolHandler.validateRequest(request))
 
 	request.Comment = strings.Repeat("a", mcpTransactionCommentMaxLength+1)
-	toolErr := mcpTxnTestGetToolError(t, MCPAddTransactionToolHandler.validateRequest(request))
+	toolErr := mcpTestGetToolError(t, MCPAddTransactionToolHandler.validateRequest(request))
 	assert.Equal(t, MCPToolErrorCodeTooLong, toolErr.Code)
 	assert.Equal(t, "comment", toolErr.Field)
 	assert.Equal(t, int64(mcpTransactionCommentMaxLength), *toolErr.Limit)
@@ -55,35 +43,35 @@ func TestMCPTxnAddTransactionValidateRequest_CommentMaxLengthMatchesModel(t *tes
 func TestMCPTxnAddTransactionValidateRequest_InvalidFields(t *testing.T) {
 	request := mcpTxnTestNewAddRequest()
 	request.Type = "unknown"
-	assert.Equal(t, "type", mcpTxnTestGetToolError(t, MCPAddTransactionToolHandler.validateRequest(request)).Field)
+	assert.Equal(t, "type", mcpTestGetToolError(t, MCPAddTransactionToolHandler.validateRequest(request)).Field)
 
 	request = mcpTxnTestNewAddRequest()
 	request.Type = transactionTypeTransfer
-	assert.Equal(t, MCPToolErrorCodeRequired, mcpTxnTestGetToolError(t, MCPAddTransactionToolHandler.validateRequest(request)).Code)
+	assert.Equal(t, MCPToolErrorCodeRequired, mcpTestGetToolError(t, MCPAddTransactionToolHandler.validateRequest(request)).Code)
 
 	request.DestinationAccountName = "Bank"
-	toolErr := mcpTxnTestGetToolError(t, MCPAddTransactionToolHandler.validateRequest(request))
+	toolErr := mcpTestGetToolError(t, MCPAddTransactionToolHandler.validateRequest(request))
 	assert.Equal(t, "destination_amount", toolErr.Field)
 
 	request = mcpTxnTestNewAddRequest()
 	request.DestinationAmount = "1"
-	assert.Equal(t, "destination_amount", mcpTxnTestGetToolError(t, MCPAddTransactionToolHandler.validateRequest(request)).Field)
+	assert.Equal(t, "destination_amount", mcpTestGetToolError(t, MCPAddTransactionToolHandler.validateRequest(request)).Field)
 
 	request = mcpTxnTestNewAddRequest()
 	request.Time = "2024-01-02 03:04:05"
-	assert.Equal(t, "time", mcpTxnTestGetToolError(t, MCPAddTransactionToolHandler.validateRequest(request)).Field)
+	assert.Equal(t, "time", mcpTestGetToolError(t, MCPAddTransactionToolHandler.validateRequest(request)).Field)
 
 	request = mcpTxnTestNewAddRequest()
 	request.Amount = "12.345"
-	assert.Equal(t, "amount", mcpTxnTestGetToolError(t, MCPAddTransactionToolHandler.validateRequest(request)).Field)
+	assert.Equal(t, "amount", mcpTestGetToolError(t, MCPAddTransactionToolHandler.validateRequest(request)).Field)
 
 	request = mcpTxnTestNewAddRequest()
 	request.GeoLocation = &MCPTransactionDetailGeoLocation{Latitude: 91, Longitude: 0}
-	assert.Equal(t, "geo_location.latitude", mcpTxnTestGetToolError(t, MCPAddTransactionToolHandler.validateRequest(request)).Field)
+	assert.Equal(t, "geo_location.latitude", mcpTestGetToolError(t, MCPAddTransactionToolHandler.validateRequest(request)).Field)
 
 	request = mcpTxnTestNewAddRequest()
 	request.Tags = make([]string, models.MaximumTagsCountOfTransaction+1)
-	toolErr = mcpTxnTestGetToolError(t, MCPAddTransactionToolHandler.validateRequest(request))
+	toolErr = mcpTestGetToolError(t, MCPAddTransactionToolHandler.validateRequest(request))
 	assert.Equal(t, MCPToolErrorCodeTooMany, toolErr.Code)
 	assert.Equal(t, int64(models.MaximumTagsCountOfTransaction), *toolErr.Limit)
 }
@@ -105,7 +93,7 @@ func TestMCPTxnResolveTagIds(t *testing.T) {
 	assert.Equal(t, []int64{4, 3}, tagIds)
 
 	_, err = mcpTxnResolveTagIds(allTags, "tag_ids", nil, "tags", []string{"Business"})
-	toolErr := mcpTxnTestGetToolError(t, err)
+	toolErr := mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeAmbiguousName, toolErr.Code)
 	assert.Equal(t, "tags", toolErr.Field)
 	assert.Equal(t, 2, len(toolErr.Candidates))
@@ -113,18 +101,18 @@ func TestMCPTxnResolveTagIds(t *testing.T) {
 	assert.Equal(t, "2", toolErr.Candidates[1].Id)
 
 	_, err = mcpTxnResolveTagIds(allTags, "tag_ids", nil, "tags", []string{"Unknown"})
-	assert.Equal(t, MCPToolErrorCodeNotFound, mcpTxnTestGetToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeNotFound, mcpTestGetToolError(t, err).Code)
 
 	_, err = mcpTxnResolveTagIds(allTags, "tag_ids", nil, "tags", []string{"Archived"})
-	assert.Equal(t, MCPToolErrorCodeNotFound, mcpTxnTestGetToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeNotFound, mcpTestGetToolError(t, err).Code)
 
 	_, err = mcpTxnResolveTagIds(allTags, "tag_ids", []string{"99"}, "tags", nil)
-	toolErr = mcpTxnTestGetToolError(t, err)
+	toolErr = mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeNotFound, toolErr.Code)
 	assert.Equal(t, "tag_ids", toolErr.Field)
 
 	_, err = mcpTxnResolveTagIds(allTags, "tag_ids", []string{"abc"}, "tags", nil)
-	assert.Equal(t, MCPToolErrorCodeInvalidValue, mcpTxnTestGetToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeInvalidValue, mcpTestGetToolError(t, err).Code)
 }
 
 func TestMCPTxnResolveTagIds_TooMany(t *testing.T) {
@@ -137,7 +125,7 @@ func TestMCPTxnResolveTagIds_TooMany(t *testing.T) {
 	}
 
 	_, err := mcpTxnResolveTagIds(allTags, "tag_ids", tagIds, "tags", nil)
-	assert.Equal(t, MCPToolErrorCodeTooMany, mcpTxnTestGetToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeTooMany, mcpTestGetToolError(t, err).Code)
 }
 
 func TestMCPTxnResolveAccount(t *testing.T) {
@@ -158,21 +146,21 @@ func TestMCPTxnResolveAccount(t *testing.T) {
 	assert.Equal(t, int64(4), account.AccountId)
 
 	_, err = mcpTxnResolveAccount(allAccounts, "account_id", "", "account_name", "Current")
-	toolErr := mcpTxnTestGetToolError(t, err)
+	toolErr := mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeAmbiguousName, toolErr.Code)
 	assert.Equal(t, 2, len(toolErr.Candidates))
 
 	_, err = mcpTxnResolveAccount(allAccounts, "account_id", "2", "account_name", "")
-	assert.Equal(t, MCPToolErrorCodeInvalidValue, mcpTxnTestGetToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeInvalidValue, mcpTestGetToolError(t, err).Code)
 
 	_, err = mcpTxnResolveAccount(allAccounts, "account_id", "", "account_name", "Bank")
-	assert.Equal(t, MCPToolErrorCodeNotFound, mcpTxnTestGetToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeNotFound, mcpTestGetToolError(t, err).Code)
 
 	_, err = mcpTxnResolveAccount(allAccounts, "account_id", "", "account_name", "Old")
-	assert.Equal(t, MCPToolErrorCodeNotFound, mcpTxnTestGetToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeNotFound, mcpTestGetToolError(t, err).Code)
 
 	_, err = mcpTxnResolveAccount(allAccounts, "account_id", "", "account_name", "")
-	assert.Equal(t, MCPToolErrorCodeRequired, mcpTxnTestGetToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeRequired, mcpTestGetToolError(t, err).Code)
 }
 
 func TestMCPTxnResolveCategory(t *testing.T) {
@@ -190,7 +178,7 @@ func TestMCPTxnResolveCategory(t *testing.T) {
 	assert.Equal(t, int64(6), category.CategoryId)
 
 	_, err = mcpTxnResolveCategory(allCategories, models.CATEGORY_TYPE_EXPENSE, "category_id", "", "category_name", "Software")
-	toolErr := mcpTxnTestGetToolError(t, err)
+	toolErr := mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeAmbiguousName, toolErr.Code)
 	assert.Equal(t, 2, len(toolErr.Candidates))
 	assert.Contains(t, toolErr.Candidates[0].Description, "Business")
@@ -201,13 +189,13 @@ func TestMCPTxnResolveCategory(t *testing.T) {
 	assert.Equal(t, int64(4), category.CategoryId)
 
 	_, err = mcpTxnResolveCategory(allCategories, models.CATEGORY_TYPE_EXPENSE, "category_id", "1", "category_name", "")
-	assert.Equal(t, MCPToolErrorCodeInvalidValue, mcpTxnTestGetToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeInvalidValue, mcpTestGetToolError(t, err).Code)
 
 	_, err = mcpTxnResolveCategory(allCategories, models.CATEGORY_TYPE_EXPENSE, "category_id", "6", "category_name", "")
-	assert.Equal(t, MCPToolErrorCodeInvalidValue, mcpTxnTestGetToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeInvalidValue, mcpTestGetToolError(t, err).Code)
 
 	_, err = mcpTxnResolveCategory(allCategories, models.CATEGORY_TYPE_TRANSFER, "category_id", "", "category_name", "Salary")
-	assert.Equal(t, MCPToolErrorCodeNotFound, mcpTxnTestGetToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeNotFound, mcpTestGetToolError(t, err).Code)
 }
 
 func TestMCPTxnParseAmountFilter(t *testing.T) {
@@ -229,7 +217,7 @@ func TestMCPTxnParseAmountFilter(t *testing.T) {
 
 	for _, value := range []string{"gt", "gt:abc", "gt:1:2", "bt:1", "bt:20:10", "xx:1", "gt:1.234"} {
 		_, err := mcpTxnParseAmountFilter("amount_filter", value)
-		toolErr := mcpTxnTestGetToolError(t, err)
+		toolErr := mcpTestGetToolError(t, err)
 		assert.Equal(t, "amount_filter", toolErr.Field, value)
 	}
 }
@@ -251,10 +239,10 @@ func TestMCPTxnGetTagFilters(t *testing.T) {
 	assert.Equal(t, models.TRANSACTION_TAG_FILTER_HAS_ALL, filters[0].Type)
 
 	_, err = mcpTxnGetTagFilters(allTags, []string{"1"}, nil, "invalid", false)
-	assert.Equal(t, "tag_filter_mode", mcpTxnTestGetToolError(t, err).Field)
+	assert.Equal(t, "tag_filter_mode", mcpTestGetToolError(t, err).Field)
 
 	_, err = mcpTxnGetTagFilters(allTags, []string{"1"}, nil, "", true)
-	assert.Equal(t, "no_tags", mcpTxnTestGetToolError(t, err).Field)
+	assert.Equal(t, "no_tags", mcpTestGetToolError(t, err).Field)
 }
 
 func TestMCPTxnBuildDetail_Transfer(t *testing.T) {
@@ -360,13 +348,13 @@ func TestMCPTxnValidateAccounts(t *testing.T) {
 	assert.Nil(t, mcpTxnValidateAccounts(transfer, gbp1, gbp2))
 
 	transfer.RelatedAccountAmount = 200
-	assert.Equal(t, "destination_amount", mcpTxnTestGetToolError(t, mcpTxnValidateAccounts(transfer, gbp1, gbp2)).Field)
+	assert.Equal(t, "destination_amount", mcpTestGetToolError(t, mcpTxnValidateAccounts(transfer, gbp1, gbp2)).Field)
 	assert.Nil(t, mcpTxnValidateAccounts(transfer, gbp1, usd))
-	assert.Equal(t, "destination_account_id", mcpTxnTestGetToolError(t, mcpTxnValidateAccounts(transfer, gbp1, gbp1)).Field)
-	assert.Equal(t, MCPToolErrorCodeNotAllowed, mcpTxnTestGetToolError(t, mcpTxnValidateAccounts(transfer, gbp1, hidden)).Code)
+	assert.Equal(t, "destination_account_id", mcpTestGetToolError(t, mcpTxnValidateAccounts(transfer, gbp1, gbp1)).Field)
+	assert.Equal(t, MCPToolErrorCodeNotAllowed, mcpTestGetToolError(t, mcpTxnValidateAccounts(transfer, gbp1, hidden)).Code)
 
 	expense := &models.Transaction{Type: models.TRANSACTION_DB_TYPE_EXPENSE, AccountId: 4, Amount: 100}
-	assert.Equal(t, MCPToolErrorCodeNotAllowed, mcpTxnTestGetToolError(t, mcpTxnValidateAccounts(expense, hidden, nil)).Code)
+	assert.Equal(t, MCPToolErrorCodeNotAllowed, mcpTestGetToolError(t, mcpTxnValidateAccounts(expense, hidden, nil)).Code)
 }
 
 func TestMCPTxnGetUpdatedTransactionType(t *testing.T) {
@@ -375,13 +363,13 @@ func TestMCPTxnGetUpdatedTransactionType(t *testing.T) {
 	assert.Equal(t, models.TRANSACTION_DB_TYPE_TRANSFER_OUT, newType)
 
 	_, err = mcpTxnGetUpdatedTransactionType(models.TRANSACTION_DB_TYPE_EXPENSE, transactionTypeModifyBalance)
-	assert.Equal(t, MCPToolErrorCodeNotSupported, mcpTxnTestGetToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeNotSupported, mcpTestGetToolError(t, err).Code)
 
 	_, err = mcpTxnGetUpdatedTransactionType(models.TRANSACTION_DB_TYPE_MODIFY_BALANCE, transactionTypeIncome)
-	assert.Equal(t, MCPToolErrorCodeNotSupported, mcpTxnTestGetToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeNotSupported, mcpTestGetToolError(t, err).Code)
 
 	_, err = mcpTxnGetUpdatedTransactionType(models.TRANSACTION_DB_TYPE_EXPENSE, "invalid")
-	assert.Equal(t, "type", mcpTxnTestGetToolError(t, err).Field)
+	assert.Equal(t, "type", mcpTestGetToolError(t, err).Field)
 }
 
 func TestMCPTxnBuildUpdatedTransaction(t *testing.T) {
@@ -438,7 +426,7 @@ func TestMCPTxnBuildUpdatedTransaction(t *testing.T) {
 	expense := &models.Transaction{TransactionId: 2, Type: models.TRANSACTION_DB_TYPE_EXPENSE, AccountId: 1, Amount: 100, CategoryId: 3}
 	usd := &models.Account{AccountId: 3, Currency: "USD"}
 	_, err = mcpTxnBuildUpdatedTransaction(expense, &MCPUpdateTransactionRequest{}, models.TRANSACTION_DB_TYPE_TRANSFER_OUT, 4, gbp1, usd)
-	assert.Equal(t, "destination_amount", mcpTxnTestGetToolError(t, err).Field)
+	assert.Equal(t, "destination_amount", mcpTestGetToolError(t, err).Field)
 
 	newTransaction, err = mcpTxnBuildUpdatedTransaction(expense, &MCPUpdateTransactionRequest{}, models.TRANSACTION_DB_TYPE_TRANSFER_OUT, 4, gbp1, gbp2)
 	assert.Nil(t, err)
@@ -447,12 +435,12 @@ func TestMCPTxnBuildUpdatedTransaction(t *testing.T) {
 
 func TestMCPTxnValidateUpdateRequest(t *testing.T) {
 	comment := strings.Repeat("a", mcpTransactionCommentMaxLength+1)
-	toolErr := mcpTxnTestGetToolError(t, mcpTxnValidateUpdateRequest(&MCPUpdateTransactionRequest{Comment: &comment, DryRun: true}))
+	toolErr := mcpTestGetToolError(t, mcpTxnValidateUpdateRequest(&MCPUpdateTransactionRequest{Comment: &comment, DryRun: true}))
 	assert.Equal(t, MCPToolErrorCodeTooLong, toolErr.Code)
 	assert.Equal(t, "comment", toolErr.Field)
 
-	assert.Equal(t, "clear_tags", mcpTxnTestGetToolError(t, mcpTxnValidateUpdateRequest(&MCPUpdateTransactionRequest{ClearTags: true, TagNames: []string{"a"}})).Field)
-	assert.Equal(t, "clear_geo_location", mcpTxnTestGetToolError(t, mcpTxnValidateUpdateRequest(&MCPUpdateTransactionRequest{ClearGeoLocation: true, GeoLocation: &MCPTransactionDetailGeoLocation{}})).Field)
+	assert.Equal(t, "clear_tags", mcpTestGetToolError(t, mcpTxnValidateUpdateRequest(&MCPUpdateTransactionRequest{ClearTags: true, TagNames: []string{"a"}})).Field)
+	assert.Equal(t, "clear_geo_location", mcpTestGetToolError(t, mcpTxnValidateUpdateRequest(&MCPUpdateTransactionRequest{ClearGeoLocation: true, GeoLocation: &MCPTransactionDetailGeoLocation{}})).Field)
 	assert.Nil(t, mcpTxnValidateUpdateRequest(&MCPUpdateTransactionRequest{}))
 }
 

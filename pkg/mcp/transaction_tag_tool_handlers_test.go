@@ -1,7 +1,6 @@
 package mcp
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -25,12 +24,6 @@ func getTransactionTagTestTags() []*models.TransactionTag {
 		{TagId: 2003, Name: "Alice", TagGroupId: 1002, DisplayOrder: 1},
 		{TagId: 2004, Name: "Archived", TagGroupId: 0, DisplayOrder: 2, Hidden: true},
 	}
-}
-
-func getTransactionTagTestToolError(t *testing.T, err error) *MCPToolError {
-	var toolErr *MCPToolError
-	assert.True(t, errors.As(err, &toolErr))
-	return toolErr
 }
 
 func TestTransactionTagPlanCreation_SkipExisting(t *testing.T) {
@@ -89,7 +82,7 @@ func TestTransactionTagPlanCreation_NoSkipExisting(t *testing.T) {
 
 	assert.Equal(t, 2, failedCount)
 
-	toolErr := getTransactionTagTestToolError(t, plans[0].err)
+	toolErr := mcpTestGetToolError(t, plans[0].err)
 	assert.Equal(t, MCPToolErrorCodeNotAllowed, toolErr.Code)
 	assert.Equal(t, "tags[0].name", toolErr.Field)
 	assert.Equal(t, 1, len(toolErr.Candidates))
@@ -97,7 +90,7 @@ func TestTransactionTagPlanCreation_NoSkipExisting(t *testing.T) {
 
 	assert.Nil(t, plans[1].err)
 
-	toolErr = getTransactionTagTestToolError(t, plans[2].err)
+	toolErr = mcpTestGetToolError(t, plans[2].err)
 	assert.Equal(t, MCPToolErrorCodeInvalidValue, toolErr.Code)
 }
 
@@ -121,21 +114,21 @@ func TestTransactionTagPlanCreation_ValidationErrors(t *testing.T) {
 	plans, failedCount := planMCPTransactionTagsCreation(items, getTransactionTagTestTags(), getTransactionTagTestTagGroups(), true)
 
 	assert.Equal(t, 6, failedCount)
-	assert.Equal(t, MCPToolErrorCodeRequired, getTransactionTagTestToolError(t, plans[0].err).Code)
+	assert.Equal(t, MCPToolErrorCodeRequired, mcpTestGetToolError(t, plans[0].err).Code)
 
-	toolErr := getTransactionTagTestToolError(t, plans[1].err)
+	toolErr := mcpTestGetToolError(t, plans[1].err)
 	assert.Equal(t, MCPToolErrorCodeTooLong, toolErr.Code)
 	assert.Equal(t, int64(mcpTagNameMaxLength), *toolErr.Limit)
 	assert.Equal(t, int64(mcpTagNameMaxLength+1), *toolErr.Actual)
 
-	toolErr = getTransactionTagTestToolError(t, plans[2].err)
+	toolErr = mcpTestGetToolError(t, plans[2].err)
 	assert.Equal(t, MCPToolErrorCodeAmbiguousName, toolErr.Code)
 	assert.Equal(t, 2, len(toolErr.Candidates))
 
-	assert.Equal(t, MCPToolErrorCodeNotFound, getTransactionTagTestToolError(t, plans[3].err).Code)
+	assert.Equal(t, MCPToolErrorCodeNotFound, mcpTestGetToolError(t, plans[3].err).Code)
 	assert.Nil(t, plans[4].err)
-	assert.Equal(t, MCPToolErrorCodeInvalidValue, getTransactionTagTestToolError(t, plans[5].err).Code)
-	assert.Equal(t, MCPToolErrorCodeRequired, getTransactionTagTestToolError(t, plans[6].err).Code)
+	assert.Equal(t, MCPToolErrorCodeInvalidValue, mcpTestGetToolError(t, plans[5].err).Code)
+	assert.Equal(t, MCPToolErrorCodeRequired, mcpTestGetToolError(t, plans[6].err).Code)
 
 	handler := &mcpCreateTransactionTagsToolHandler{}
 	response := handler.createResponse(plans, nil, getMCPTransactionTagGroupsMap(getTransactionTagTestTagGroups()), false, false)
@@ -164,10 +157,10 @@ func TestTransactionTagResolveTagGroupId(t *testing.T) {
 	assert.Equal(t, int64(1001), tagGroupId)
 
 	_, _, err = resolveMCPTransactionTagGroupId(tagGroups, "tag_group_id", "0", "tag_group_name", "Projects")
-	assert.Equal(t, MCPToolErrorCodeInvalidValue, getTransactionTagTestToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeInvalidValue, mcpTestGetToolError(t, err).Code)
 
 	_, _, err = resolveMCPTransactionTagGroupId(tagGroups, "tag_group_id", "abc", "tag_group_name", "")
-	assert.Equal(t, MCPToolErrorCodeInvalidValue, getTransactionTagTestToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeInvalidValue, mcpTestGetToolError(t, err).Code)
 }
 
 func TestTransactionTagFindTagGroupForReuse(t *testing.T) {
@@ -182,7 +175,7 @@ func TestTransactionTagFindTagGroupForReuse(t *testing.T) {
 	assert.Nil(t, tagGroup)
 
 	_, err = findMCPTransactionTagGroupForReuse(tagGroups, "Duplicated")
-	toolErr := getTransactionTagTestToolError(t, err)
+	toolErr := mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeAmbiguousName, toolErr.Code)
 	assert.Equal(t, 2, len(toolErr.Candidates))
 }
@@ -201,13 +194,13 @@ func TestTransactionTagReorderedDisplayOrders(t *testing.T) {
 	assert.Equal(t, []int32{1, 5, 7}, displayOrders)
 
 	_, _, err = getMCPTransactionTagReorderedDisplayOrders("tag_ids", []string{"1", "1"}, currentDisplayOrders, "tag")
-	assert.Equal(t, MCPToolErrorCodeInvalidValue, getTransactionTagTestToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeInvalidValue, mcpTestGetToolError(t, err).Code)
 
 	_, _, err = getMCPTransactionTagReorderedDisplayOrders("tag_ids", []string{"9"}, currentDisplayOrders, "tag")
-	assert.Equal(t, MCPToolErrorCodeNotFound, getTransactionTagTestToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeNotFound, mcpTestGetToolError(t, err).Code)
 
 	_, _, err = getMCPTransactionTagReorderedDisplayOrders("tag_ids", []string{}, currentDisplayOrders, "tag")
-	assert.Equal(t, MCPToolErrorCodeRequired, getTransactionTagTestToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeRequired, mcpTestGetToolError(t, err).Code)
 }
 
 func TestTransactionTagReorderedDisplayOrders_DuplicatedCurrentOrders(t *testing.T) {

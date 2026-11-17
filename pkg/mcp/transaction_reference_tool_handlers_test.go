@@ -30,17 +30,17 @@ func TestMCPReferenceParse(t *testing.T) {
 
 func TestMCPReferenceParse_InvalidReferences(t *testing.T) {
 	_, err := mcpReferenceParse("references", []*MCPTransactionReference{{Type: "vendor", Value: "ACME"}})
-	toolErr := getMCPWriteGuardTestToolError(t, err)
+	toolErr := mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeInvalidValue, toolErr.Code)
 	assert.Equal(t, "references[0].type", toolErr.Field)
 
 	_, err = mcpReferenceParse("references", []*MCPTransactionReference{{Type: "supplier", Value: "  "}})
-	toolErr = getMCPWriteGuardTestToolError(t, err)
+	toolErr = mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeRequired, toolErr.Code)
 	assert.Equal(t, "references[0].value", toolErr.Field)
 
 	_, err = mcpReferenceParse("references", []*MCPTransactionReference{{Type: "supplier", Value: "ok"}, {Type: "supplier", Value: strings.Repeat("中", models.TransactionReferenceValueMaxLength+1)}})
-	toolErr = getMCPWriteGuardTestToolError(t, err)
+	toolErr = mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeTooLong, toolErr.Code)
 	assert.Equal(t, "references[1].value", toolErr.Field)
 	assert.Equal(t, int64(models.TransactionReferenceValueMaxLength), *toolErr.Limit)
@@ -52,10 +52,10 @@ func TestMCPReferenceParse_InvalidReferences(t *testing.T) {
 	}
 
 	_, err = mcpReferenceParse("references", tooManyReferences)
-	assert.Equal(t, MCPToolErrorCodeTooMany, getMCPWriteGuardTestToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeTooMany, mcpTestGetToolError(t, err).Code)
 
 	_, err = mcpReferenceParse("references", []*MCPTransactionReference{nil})
-	assert.Equal(t, MCPToolErrorCodeRequired, getMCPWriteGuardTestToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeRequired, mcpTestGetToolError(t, err).Code)
 }
 
 func TestMCPReferenceListEquals(t *testing.T) {

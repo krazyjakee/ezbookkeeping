@@ -187,17 +187,17 @@ func TestMCPImportFindDuplicateCandidates_TransferDestinationMustMatch(t *testin
 
 func TestMCPImportValidateRequest(t *testing.T) {
 	_, err := mcpImportValidateRequest(&MCPImportTransactionsRequest{})
-	assert.Equal(t, MCPToolErrorCodeRequired, getMCPWriteGuardTestToolError(t, err).Code)
+	assert.Equal(t, MCPToolErrorCodeRequired, mcpTestGetToolError(t, err).Code)
 
 	rows := make([]*MCPImportTransactionsRow, mcpImportMaxRows+1)
 	_, err = mcpImportValidateRequest(&MCPImportTransactionsRequest{Rows: rows})
-	toolErr := getMCPWriteGuardTestToolError(t, err)
+	toolErr := mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeTooMany, toolErr.Code)
 	assert.Equal(t, int64(mcpImportMaxRows), *toolErr.Limit)
 
 	rows = []*MCPImportTransactionsRow{{}, {}}
 	_, err = mcpImportValidateRequest(&MCPImportTransactionsRequest{Rows: rows, AllowDuplicatesRows: []int{3}})
-	assert.Equal(t, "allow_duplicates_rows", getMCPWriteGuardTestToolError(t, err).Field)
+	assert.Equal(t, "allow_duplicates_rows", mcpTestGetToolError(t, err).Field)
 
 	allowDuplicateRows, err := mcpImportValidateRequest(&MCPImportTransactionsRequest{Rows: rows, AllowDuplicatesRows: []int{2}})
 	assert.Nil(t, err)
@@ -263,7 +263,7 @@ func TestMCPImportParseChecksums(t *testing.T) {
 	assert.Equal(t, []string{mcpImportTestChecksum}, checksums)
 
 	_, err = mcpImportParseChecksums("attachment_sha256", []string{mcpImportTestChecksum[:62]})
-	assert.Equal(t, "attachment_sha256", getMCPWriteGuardTestToolError(t, err).Field)
+	assert.Equal(t, "attachment_sha256", mcpTestGetToolError(t, err).Field)
 }
 
 func TestMCPImportBuildUpdateRequest_OnlyNonEmptyFields(t *testing.T) {

@@ -486,10 +486,7 @@ func mcpTxnGetTagFilters(allTags []*models.TransactionTag, tagIds []string, tagN
 		return nil, NewMCPInvalidFieldError("tag_filter_mode", mode, "\"tag_filter_mode\" must be one of has_any, has_all, not_has_any, not_has_all")
 	}
 
-	resolver := newMCPEntityResolver[*models.TransactionTag]("tag",
-		func(tag *models.TransactionTag) int64 { return tag.TagId },
-		func(tag *models.TransactionTag) string { return tag.Name },
-		nil)
+	resolver := newMCPTransactionTagResolver(nil)
 
 	resolvedTagIds := make([]int64, 0, len(tagIds)+len(tagNames))
 

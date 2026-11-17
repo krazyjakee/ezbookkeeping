@@ -1,7 +1,6 @@
 package mcp
 
 import (
-	"errors"
 	"strings"
 	"testing"
 	"time"
@@ -48,13 +47,7 @@ func transactionTemplateTestScheduledTemplate(frequencyType models.TransactionSc
 func transactionTemplateTestAssertToolError(t *testing.T, err error, expectedCode string, expectedField string) *MCPToolError {
 	t.Helper()
 
-	var toolErr *MCPToolError
-
-	if !errors.As(err, &toolErr) {
-		t.Fatalf("expected MCPToolError, got %v", err)
-		return nil
-	}
-
+	toolErr := mcpTestGetToolError(t, err)
 	assert.Equal(t, expectedCode, toolErr.Code)
 
 	if expectedField != "" {

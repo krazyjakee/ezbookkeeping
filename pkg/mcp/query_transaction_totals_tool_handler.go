@@ -2,6 +2,7 @@ package mcp
 
 import (
 	"reflect"
+	"time"
 
 	"github.com/mayswind/ezbookkeeping/pkg/core"
 	"github.com/mayswind/ezbookkeeping/pkg/errs"
@@ -175,21 +176,11 @@ func (h *mcpQueryTransactionTotalsToolHandler) Handle(c *core.WebContext, callTo
 	}
 
 	accountMap := services.GetAccountService().GetAccountMapByList(allAccounts)
-	fetchTotalAmounts := func(tagFilters []*models.TransactionTagFilter, noTags bool) ([]*models.TransactionTotalAmount, error) {
-		totalAmounts, err := services.GetTransactionService().GetAccountsAndCategoriesTotalInflowAndOutflow(c, uid, startUnixTime, endUnixTime, tagFilters, noTags, request.Keyword, core.MATCH_MODE_DEFAULT, timezone, false)
-
-		if err != nil {
-			log.Errorf(c, "[query_transaction_totals_tool_handler.Handle] failed to get transaction totals for user \"uid:%d\", because %s", uid, err.Error())
-			return nil, errs.Or(err, errs.ErrOperationFailed)
-		}
-
-		return totalAmounts, nil
-	}
-
-	allTotalAmounts, err := fetchTotalAmounts(baseTagFilters, false)
+	allTotalAmounts, err := services.GetTransactionService().GetAccountsAndCategoriesTotalInflowAndOutflow(c, uid, startUnixTime, endUnixTime, baseTagFilters, false, request.Keyword, core.MATCH_MODE_DEFAULT, timezone, false)
 
 	if err != nil {
-		return nil, nil, err
+		log.Errorf(c, "[query_transaction_totals_tool_handler.Handle] failed to get transaction totals for user \"uid:%d\", because %s", uid, err.Error())
+		return nil, nil, errs.Or(err, errs.ErrOperationFailed)
 	}
 
 	totalsAggregator := newMCPTransactionTotalsAggregator()
@@ -222,44 +213,21 @@ func (h *mcpQueryTransactionTotalsToolHandler) Handle(c *core.WebContext, callTo
 			}
 		}
 
-		for _, tagId := range groupTagIds {
-			tagTotalAmounts, err := fetchTotalAmounts([]*models.TransactionTagFilter{
-				{
-					TagIds: []int64{tagId},
-					Type:   models.TRANSACTION_TAG_FILTER_HAS_ANY,
-				},
-			}, false)
+		transactions, err := mcpTotalsLoadTransactions(c, uid, startUnixTime, endUnixTime, timezone, baseTagFilters, request.Keyword, services)
 
-			if err != nil {
-				return nil, nil, err
-			}
-
-			tagName := ""
-
-			if tag, exists := tagMap[tagId]; exists && tag != nil {
-				tagName = tag.Name
-			}
-
-			for _, row := range tagTotalAmounts {
-				if mcpTotalsRowMatches(row, accountFilter, categoryFilter, categoryMap) {
-					groupAggregator.Add(utils.Int64ToString(tagId), tagName, mcpTotalsGetCurrency(row, accountMap), row.Type, row.Amount)
-				}
-			}
+		if err != nil {
+			log.Errorf(c, "[query_transaction_totals_tool_handler.Handle] failed to get transactions for user \"uid:%d\", because %s", uid, err.Error())
+			return nil, nil, errs.Or(err, errs.ErrOperationFailed)
 		}
 
-		if len(tagIds) < 1 {
-			noTagsTotalAmounts, err := fetchTotalAmounts(nil, true)
+		transactionTagIds, err := mcpTotalsLoadTransactionTagIds(c, uid, transactions, services)
 
-			if err != nil {
-				return nil, nil, err
-			}
-
-			for _, row := range noTagsTotalAmounts {
-				if mcpTotalsRowMatches(row, accountFilter, categoryFilter, categoryMap) {
-					groupAggregator.Add("", mcpTotalsNoTagsGroupName, mcpTotalsGetCurrency(row, accountMap), row.Type, row.Amount)
-				}
-			}
+		if err != nil {
+			log.Errorf(c, "[query_transaction_totals_tool_handler.Handle] failed to get transaction tag ids for user \"uid:%d\", because %s", uid, err.Error())
+			return nil, nil, errs.Or(err, errs.ErrOperationFailed)
 		}
+
+		mcpTotalsAggregateByTag(groupAggregator, transactions, transactionTagIds, groupTagIds, tagMap, len(tagIds) < 1, accountFilter, categoryFilter, categoryMap, accountMap)
 
 		response.Note = response.Note + " A transaction with several tags is counted in every one of its tag groups, so the sum of the groups can exceed totals_by_currency."
 	}
@@ -276,4 +244,80 @@ func (h *mcpQueryTransactionTotalsToolHandler) Handle(c *core.WebContext, callTo
 	response.TotalsByCurrency = totalsAggregator.Items()
 
 	return newMCPJSONTextResult(response)
+}
+
+// mcpTotalsTransactionsPageCount is the page count of loading transactions when grouping the totals by tag (same as the transaction statistics service)
+const mcpTotalsTransactionsPageCount = 1000
+
+// mcpTotalsTransactionTagIdsBatchSize is the maximum count of transaction ids of one query when loading the tag ids of transactions
+const mcpTotalsTransactionTagIdsBatchSize = 500
+
+// mcpTotalsLoadTransactions returns all income, expense and transfer transactions whose local date time is in the time range
+// and which match the tag filters and the keyword, with the same time range rules as the transaction statistics service
+func mcpTotalsLoadTransactions(c *core.WebContext, uid int64, startUnixTime int64, endUnixTime int64, timezone *time.Location, tagFilters []*models.TransactionTagFilter, keyword string, services MCPAvailableServices) ([]*models.Transaction, error) {
+	timeRange := mcpTotalsGetTransactionTimeRange(startUnixTime, endUnixTime, timezone)
+	maxTransactionTime := timeRange.maxTransactionTime
+	result := make([]*models.Transaction, 0)
+
+	for {
+		transactions, err := services.GetTransactionService().GetTransactionsByMaxTime(c, uid, maxTransactionTime, timeRange.minTransactionTime, 0, nil, nil, tagFilters, false, "", keyword, core.MATCH_MODE_DEFAULT, false, 1, mcpTotalsTransactionsPageCount, false, false)
+
+		if err != nil {
+			return nil, err
+		}
+
+		for i := 0; i < len(transactions); i++ {
+			if timeRange.contains(transactions[i]) {
+				result = append(result, transactions[i])
+			}
+		}
+
+		if len(transactions) < mcpTotalsTransactionsPageCount {
+			break
+		}
+
+		maxTransactionTime = transactions[len(transactions)-1].TransactionTime - 1
+
+		if maxTransactionTime <= 0 || (timeRange.minTransactionTime > 0 && maxTransactionTime < timeRange.minTransactionTime) {
+			break
+		}
+	}
+
+	return result, nil
+}
+
+// mcpTotalsLoadTransactionTagIds returns the tag ids of the transactions (and of the related transactions of transfers, which hold the tags of both sides) grouped by transaction id
+func mcpTotalsLoadTransactionTagIds(c *core.WebContext, uid int64, transactions []*models.Transaction, services MCPAvailableServices) (map[int64][]int64, error) {
+	transactionIds := make([]int64, 0, len(transactions))
+
+	for i := 0; i < len(transactions); i++ {
+		transactionIds = append(transactionIds, transactions[i].TransactionId)
+
+		if transactions[i].RelatedId > 0 {
+			transactionIds = append(transactionIds, transactions[i].RelatedId)
+		}
+	}
+
+	transactionIds = utils.ToUniqueInt64Slice(transactionIds)
+	allTransactionTagIds := make(map[int64][]int64)
+
+	for i := 0; i < len(transactionIds); i += mcpTotalsTransactionTagIdsBatchSize {
+		end := i + mcpTotalsTransactionTagIdsBatchSize
+
+		if end > len(transactionIds) {
+			end = len(transactionIds)
+		}
+
+		transactionTagIds, err := services.GetTransactionTagService().GetAllTagIdsOfTransactions(c, uid, transactionIds[i:end])
+
+		if err != nil {
+			return nil, err
+		}
+
+		for transactionId, tagIds := range transactionTagIds {
+			allTransactionTagIds[transactionId] = append(allTransactionTagIds[transactionId], tagIds...)
+		}
+	}
+
+	return allTransactionTagIds, nil
 }
