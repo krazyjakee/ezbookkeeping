@@ -440,7 +440,6 @@ func (s *AccountService) ModifyAccounts(c core.Context, mainAccount *models.Acco
 	userDataDb := s.UserDataDB(mainAccount.Uid)
 
 	return userDataDb.DoTransaction(c, func(sess datastore.DatabaseSession) error {
-		// update accounts
 		for i := 0; i < len(updateAccounts); i++ {
 			account := updateAccounts[i]
 			updateColumns := []string{"name", "display_order", "category", "icon", "icon_type", "color", "comment", "extend", "hidden", "updated_unix_time"}
@@ -458,7 +457,6 @@ func (s *AccountService) ModifyAccounts(c core.Context, mainAccount *models.Acco
 			}
 		}
 
-		// add new sub accounts
 		for i := 0; i < len(addSubAccounts); i++ {
 			account := addSubAccounts[i]
 			_, err := sess.Insert(account)
@@ -468,7 +466,6 @@ func (s *AccountService) ModifyAccounts(c core.Context, mainAccount *models.Acco
 			}
 		}
 
-		// add init transaction for new sub accounts
 		for i := 0; i < len(addInitTransactions); i++ {
 			transaction := addInitTransactions[i]
 
@@ -524,7 +521,6 @@ func (s *AccountService) ModifyAccounts(c core.Context, mainAccount *models.Acco
 			}
 		}
 
-		// remove sub accounts
 		if len(removeSubAccountIds) > 0 {
 			subAccountsCount, err := sess.Where("uid=? AND deleted=? AND parent_account_id=?", mainAccount.Uid, false, mainAccount.AccountId).Count(&models.Account{})
 
@@ -954,9 +950,7 @@ func (s *AccountService) GetAccountOrSubAccountIds(c core.Context, accountIds st
 				accountIdsMap[subAccount.ParentAccountId] = 1
 			}
 
-			if _, exists := accountIdsMap[subAccount.AccountId]; exists {
-				delete(accountIdsMap, subAccount.AccountId)
-			}
+			delete(accountIdsMap, subAccount.AccountId)
 
 			allAccountIds = append(allAccountIds, subAccount.AccountId)
 		}
