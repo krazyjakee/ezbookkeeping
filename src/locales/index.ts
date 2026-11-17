@@ -8,6 +8,13 @@ export const DEFAULT_LANGUAGE_CONTENT: LanguageMessages = en;
 
 // To add new languages, please refer to https://ezbookkeeping.mayswind.net/translating
 export const ALL_LANGUAGES: Record<string, LanguageInfo> = {
+    'bn': {
+        name: 'Bengali',
+        displayName: 'বাংলা',
+        alternativeLanguageTag: 'bn-BD',
+        textDirection: TextDirection.LTR,
+        loadContent: () => import('./bn.json').then(module => module.default)
+    },
     'de': {
         name: 'German',
         displayName: 'Deutsch',
