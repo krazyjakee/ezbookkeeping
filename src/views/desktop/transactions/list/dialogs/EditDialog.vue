@@ -68,24 +68,6 @@
 
             <template #content-left-column>
                 <div class="px-4">
-                    <v-tabs class="v-tabs-pill" direction="vertical" :class="{ 'readonly': type === TransactionEditPageType.Transaction && mode !== TransactionEditPageMode.Add && mode !== TransactionEditPageMode.Edit }"
-                            :disabled="loading || submitting || recognizing" v-model="transaction.type">
-                        <v-tab :value="TransactionType.Expense" :disabled="type === TransactionEditPageType.Transaction && mode !== TransactionEditPageMode.Add && mode !== TransactionEditPageMode.Edit && transaction.type !== TransactionType.Expense" v-if="transaction.type !== TransactionType.ModifyBalance">
-                            <span>{{ tt('Expense') }}</span>
-                        </v-tab>
-                        <v-tab :value="TransactionType.Income" :disabled="type === TransactionEditPageType.Transaction && mode !== TransactionEditPageMode.Add && mode !== TransactionEditPageMode.Edit && transaction.type !== TransactionType.Income" v-if="transaction.type !== TransactionType.ModifyBalance">
-                            <span>{{ tt('Income') }}</span>
-                        </v-tab>
-                        <v-tab :value="TransactionType.Transfer" :disabled="type === TransactionEditPageType.Transaction && mode !== TransactionEditPageMode.Add && mode !== TransactionEditPageMode.Edit && transaction.type !== TransactionType.Transfer" v-if="transaction.type !== TransactionType.ModifyBalance">
-                            <span>{{ tt('Transfer') }}</span>
-                        </v-tab>
-                        <v-tab :value="TransactionType.ModifyBalance" v-if="type === TransactionEditPageType.Transaction && transaction.type === TransactionType.ModifyBalance">
-                            <span>{{ tt('Modify Balance') }}</span>
-                        </v-tab>
-                    </v-tabs>
-                </div>
-                <v-divider class="my-2"/>
-                <div class="px-4">
                     <v-tabs direction="vertical" :disabled="loading || submitting || recognizing" v-model="activeTab">
                         <v-tab value="basicInfo">
                             <span>{{ tt('Basic Information') }}</span>
@@ -101,6 +83,24 @@
             </template>
 
             <template #content-right-column>
+                <div class="transaction-edit-main d-flex flex-column flex-grow-1">
+                <div class="transaction-edit-type-bar">
+                    <v-tabs class="v-tabs-pill transaction-edit-type-tabs" density="compact" :aria-label="tt('Transaction Type')" :class="{ 'readonly': type === TransactionEditPageType.Transaction && mode !== TransactionEditPageMode.Add && mode !== TransactionEditPageMode.Edit }"
+                            :disabled="loading || submitting || recognizing" v-model="transaction.type">
+                        <v-tab :value="TransactionType.Expense" :disabled="type === TransactionEditPageType.Transaction && mode !== TransactionEditPageMode.Add && mode !== TransactionEditPageMode.Edit && transaction.type !== TransactionType.Expense" v-if="transaction.type !== TransactionType.ModifyBalance">
+                            <span>{{ tt('Expense') }}</span>
+                        </v-tab>
+                        <v-tab :value="TransactionType.Income" :disabled="type === TransactionEditPageType.Transaction && mode !== TransactionEditPageMode.Add && mode !== TransactionEditPageMode.Edit && transaction.type !== TransactionType.Income" v-if="transaction.type !== TransactionType.ModifyBalance">
+                            <span>{{ tt('Income') }}</span>
+                        </v-tab>
+                        <v-tab :value="TransactionType.Transfer" :disabled="type === TransactionEditPageType.Transaction && mode !== TransactionEditPageMode.Add && mode !== TransactionEditPageMode.Edit && transaction.type !== TransactionType.Transfer" v-if="transaction.type !== TransactionType.ModifyBalance">
+                            <span>{{ tt('Transfer') }}</span>
+                        </v-tab>
+                        <v-tab :value="TransactionType.ModifyBalance" v-if="type === TransactionEditPageType.Transaction && transaction.type === TransactionType.ModifyBalance">
+                            <span>{{ tt('Modify Balance') }}</span>
+                        </v-tab>
+                    </v-tabs>
+                </div>
                 <v-window class="d-flex flex-grow-1 disable-tab-transition w-100-window-container"
                           v-model="activeTab">
                     <v-window-item value="basicInfo">
@@ -117,7 +117,7 @@
                                         v-model="transaction.name"
                                     />
                                 </v-col>
-                                <v-col cols="12" :md="transaction.type === TransactionType.Transfer ? 6 : 12">
+                                <v-col class="transaction-edit-amount-col" cols="12" :md="transaction.type === TransactionType.Transfer ? 6 : 12">
                                     <amount-input class="transaction-edit-amount font-weight-bold"
                                                   :color="sourceAmountColor"
                                                   :currency="sourceAccountCurrency"
@@ -131,7 +131,7 @@
                                                   :enable-formula="mode !== TransactionEditPageMode.View"
                                                   v-model="transaction.sourceAmount"/>
                                 </v-col>
-                                <v-col cols="12" :md="6" v-if="transaction.type === TransactionType.Transfer">
+                                <v-col class="transaction-edit-amount-col" cols="12" :md="6" v-if="transaction.type === TransactionType.Transfer">
                                     <amount-input class="transaction-edit-amount font-weight-bold" color="primary"
                                                   :currency="destinationAccountCurrency"
                                                   :show-currency="true"
@@ -144,7 +144,110 @@
                                                   :enable-formula="mode !== TransactionEditPageMode.View"
                                                   v-model="transaction.destinationAmount"/>
                                 </v-col>
-                                <v-col cols="12" md="12" v-if="transaction.type === TransactionType.Expense">
+                                <v-col cols="12" md="6" v-if="type === TransactionEditPageType.Transaction">
+                                    <date-time-select
+                                        :readonly="mode === TransactionEditPageMode.View"
+                                        :disabled="loading || submitting || recognizing || (mode === TransactionEditPageMode.Edit && transaction.type === TransactionType.ModifyBalance)"
+                                        :label="tt('Transaction Time')"
+                                        :timezone-utc-offset="transaction.utcOffset"
+                                        :model-value="transaction.time"
+                                        @update:model-value="updateTransactionTime"
+                                        @error="onShowDateTimeError" />
+                                </v-col>
+                                <v-col cols="12" md="6" v-if="type === TransactionEditPageType.Template && transaction instanceof TransactionTemplate && transaction.templateType === TemplateType.Schedule.type">
+                                    <schedule-frequency-select
+                                        :readonly="mode === TransactionEditPageMode.View"
+                                        :disabled="loading || submitting || recognizing"
+                                        :label="tt('Scheduled Transaction Frequency')"
+                                        v-model:type="transaction.scheduledFrequencyType"
+                                        v-model="transaction.scheduledFrequency" />
+                                </v-col>
+                                <v-col cols="12" md="6" v-if="type === TransactionEditPageType.Transaction || (type === TransactionEditPageType.Template && transaction instanceof TransactionTemplate && transaction.templateType === TemplateType.Schedule.type)">
+                                    <v-autocomplete
+                                        class="transaction-edit-timezone"
+                                        item-title="displayNameWithUtcOffset"
+                                        item-value="name"
+                                        auto-select-first
+                                        persistent-placeholder
+                                        :readonly="mode === TransactionEditPageMode.View"
+                                        :disabled="loading || submitting || recognizing || (mode === TransactionEditPageMode.Edit && transaction.type === TransactionType.ModifyBalance)"
+                                        :label="tt('Transaction Timezone')"
+                                        :placeholder="!transaction.timeZone && transaction.timeZone !== '' ? `(${transactionDisplayTimezone}) ${type === TransactionEditPageType.Transaction ? transactionTimezoneTimeDifference : ''}` : tt('Timezone')"
+                                        :items="allTimezones"
+                                        :no-data-text="tt('No results')"
+                                        :model-value="transaction.timeZone"
+                                        @update:model-value="updateTransactionTimezone"
+                                    />
+                                </v-col>
+                                <v-col cols="12" md="6" v-if="type === TransactionEditPageType.Template && transaction instanceof TransactionTemplate && transaction.templateType === TemplateType.Schedule.type">
+                                    <date-select
+                                        :readonly="mode === TransactionEditPageMode.View"
+                                        :disabled="loading || submitting || recognizing"
+                                        :clearable="true"
+                                        :label="tt('Start Date')"
+                                        :no-data-text="tt('No limit')"
+                                        v-model="transaction.scheduledStartDate" />
+                                </v-col>
+                                <v-col cols="12" md="6" v-if="type === TransactionEditPageType.Template && transaction instanceof TransactionTemplate && transaction.templateType === TemplateType.Schedule.type">
+                                    <date-select
+                                        :readonly="mode === TransactionEditPageMode.View"
+                                        :disabled="loading || submitting || recognizing"
+                                        :clearable="true"
+                                        :label="tt('End Date')"
+                                        :no-data-text="tt('No limit')"
+                                        v-model="transaction.scheduledEndDate" />
+                                </v-col>
+                                <v-col cols="12" md="6">
+                                    <v-tooltip :disabled="!!allVisibleAccounts.length" :text="allVisibleAccounts.length ? '' : tt('No available account')">
+                                        <template v-slot:activator="{ props }">
+                                            <div v-bind="props" class="d-block">
+                                                <two-column-select primary-key-field="id" primary-value-field="category"
+                                                                   primary-title-field="name" primary-footer-field="displayBalance"
+                                                                   primary-icon-field="icon" primary-icon-type-field="iconType" primary-icon-type="account"
+                                                                   primary-sub-items-field="accounts"
+                                                                   :primary-title-i18n="true"
+                                                                   secondary-key-field="id" secondary-value-field="id"
+                                                                   secondary-title-field="name" secondary-footer-field="displayBalance"
+                                                                   secondary-icon-field="icon" secondary-icon-type-field="iconType" secondary-icon-type="account" secondary-color-field="color"
+                                                                   :readonly="mode === TransactionEditPageMode.View"
+                                                                   :disabled="loading || submitting || recognizing || !allVisibleAccounts.length || (mode === TransactionEditPageMode.Edit && transaction.type === TransactionType.ModifyBalance)"
+                                                                   :enable-filter="true" :filter-placeholder="tt('Find account')" :filter-no-items-text="tt('No available account')"
+                                                                   :custom-selection-primary-text="sourceAccountName"
+                                                                   :label="tt(sourceAccountTitle)"
+                                                                   :placeholder="tt(sourceAccountTitle)"
+                                                                   :items="allVisibleCategorizedAccounts"
+                                                                   v-model="transaction.sourceAccountId">
+                                                </two-column-select>
+                                            </div>
+                                        </template>
+                                    </v-tooltip>
+                                </v-col>
+                                <v-col cols="12" md="6" v-if="transaction.type === TransactionType.Transfer">
+                                    <v-tooltip :disabled="!!allVisibleAccounts.length" :text="allVisibleAccounts.length ? '' : tt('No available account')">
+                                        <template v-slot:activator="{ props }">
+                                            <div v-bind="props" class="d-block">
+                                                <two-column-select primary-key-field="id" primary-value-field="category"
+                                                                   primary-title-field="name" primary-footer-field="displayBalance"
+                                                                   primary-icon-field="icon" primary-icon-type-field="iconType" primary-icon-type="account"
+                                                                   primary-sub-items-field="accounts"
+                                                                   :primary-title-i18n="true"
+                                                                   secondary-key-field="id" secondary-value-field="id"
+                                                                   secondary-title-field="name" secondary-footer-field="displayBalance"
+                                                                   secondary-icon-field="icon" secondary-icon-type-field="iconType" secondary-icon-type="account" secondary-color-field="color"
+                                                                   :readonly="mode === TransactionEditPageMode.View"
+                                                                   :disabled="loading || submitting || recognizing || !allVisibleAccounts.length"
+                                                                   :enable-filter="true" :filter-placeholder="tt('Find account')" :filter-no-items-text="tt('No available account')"
+                                                                   :custom-selection-primary-text="destinationAccountName"
+                                                                   :label="tt('Destination Account')"
+                                                                   :placeholder="tt('Destination Account')"
+                                                                   :items="allVisibleCategorizedAccounts"
+                                                                   v-model="transaction.destinationAccountId">
+                                                </two-column-select>
+                                            </div>
+                                        </template>
+                                    </v-tooltip>
+                                </v-col>
+                                <v-col cols="12" md="6" v-if="transaction.type === TransactionType.Expense">
                                     <v-tooltip :disabled="hasVisibleExpenseCategories" :text="hasVisibleExpenseCategories ? '' : tt('No secondary expense categories are available')">
                                         <template v-slot:activator="{ props }">
                                             <div v-bind="props" class="d-block">
@@ -172,7 +275,7 @@
                                         </template>
                                     </v-tooltip>
                                 </v-col>
-                                <v-col cols="12" md="12" v-if="transaction.type === TransactionType.Income">
+                                <v-col cols="12" md="6" v-if="transaction.type === TransactionType.Income">
                                     <v-tooltip :disabled="hasVisibleIncomeCategories" :text="hasVisibleIncomeCategories ? '' : tt('No secondary income categories are available')">
                                         <template v-slot:activator="{ props }">
                                             <div v-bind="props" class="d-block">
@@ -228,108 +331,28 @@
                                         </template>
                                     </v-tooltip>
                                 </v-col>
-                                <v-col cols="12" :md="transaction.type === TransactionType.Transfer ? 6 : 12">
-                                    <v-tooltip :disabled="!!allVisibleAccounts.length" :text="allVisibleAccounts.length ? '' : tt('No available account')">
-                                        <template v-slot:activator="{ props }">
-                                            <div v-bind="props" class="d-block">
-                                                <two-column-select primary-key-field="id" primary-value-field="category"
-                                                                   primary-title-field="name" primary-footer-field="displayBalance"
-                                                                   primary-icon-field="icon" primary-icon-type-field="iconType" primary-icon-type="account"
-                                                                   primary-sub-items-field="accounts"
-                                                                   :primary-title-i18n="true"
-                                                                   secondary-key-field="id" secondary-value-field="id"
-                                                                   secondary-title-field="name" secondary-footer-field="displayBalance"
-                                                                   secondary-icon-field="icon" secondary-icon-type-field="iconType" secondary-icon-type="account" secondary-color-field="color"
-                                                                   :readonly="mode === TransactionEditPageMode.View"
-                                                                   :disabled="loading || submitting || recognizing || !allVisibleAccounts.length || (mode === TransactionEditPageMode.Edit && transaction.type === TransactionType.ModifyBalance)"
-                                                                   :enable-filter="true" :filter-placeholder="tt('Find account')" :filter-no-items-text="tt('No available account')"
-                                                                   :custom-selection-primary-text="sourceAccountName"
-                                                                   :label="tt(sourceAccountTitle)"
-                                                                   :placeholder="tt(sourceAccountTitle)"
-                                                                   :items="allVisibleCategorizedAccounts"
-                                                                   v-model="transaction.sourceAccountId">
-                                                </two-column-select>
-                                            </div>
-                                        </template>
-                                    </v-tooltip>
-                                </v-col>
-                                <v-col cols="12" md="6" v-if="transaction.type === TransactionType.Transfer">
-                                    <v-tooltip :disabled="!!allVisibleAccounts.length" :text="allVisibleAccounts.length ? '' : tt('No available account')">
-                                        <template v-slot:activator="{ props }">
-                                            <div v-bind="props" class="d-block">
-                                                <two-column-select primary-key-field="id" primary-value-field="category"
-                                                                   primary-title-field="name" primary-footer-field="displayBalance"
-                                                                   primary-icon-field="icon" primary-icon-type-field="iconType" primary-icon-type="account"
-                                                                   primary-sub-items-field="accounts"
-                                                                   :primary-title-i18n="true"
-                                                                   secondary-key-field="id" secondary-value-field="id"
-                                                                   secondary-title-field="name" secondary-footer-field="displayBalance"
-                                                                   secondary-icon-field="icon" secondary-icon-type-field="iconType" secondary-icon-type="account" secondary-color-field="color"
-                                                                   :readonly="mode === TransactionEditPageMode.View"
-                                                                   :disabled="loading || submitting || recognizing || !allVisibleAccounts.length"
-                                                                   :enable-filter="true" :filter-placeholder="tt('Find account')" :filter-no-items-text="tt('No available account')"
-                                                                   :custom-selection-primary-text="destinationAccountName"
-                                                                   :label="tt('Destination Account')"
-                                                                   :placeholder="tt('Destination Account')"
-                                                                   :items="allVisibleCategorizedAccounts"
-                                                                   v-model="transaction.destinationAccountId">
-                                                </two-column-select>
-                                            </div>
-                                        </template>
-                                    </v-tooltip>
-                                </v-col>
-                                <v-col cols="12" md="6" v-if="type === TransactionEditPageType.Transaction">
-                                    <date-time-select
-                                        :readonly="mode === TransactionEditPageMode.View"
-                                        :disabled="loading || submitting || recognizing || (mode === TransactionEditPageMode.Edit && transaction.type === TransactionType.ModifyBalance)"
-                                        :label="tt('Transaction Time')"
-                                        :timezone-utc-offset="transaction.utcOffset"
-                                        :model-value="transaction.time"
-                                        @update:model-value="updateTransactionTime"
-                                        @error="onShowDateTimeError" />
-                                </v-col>
-                                <v-col cols="12" md="6" v-if="type === TransactionEditPageType.Template && transaction instanceof TransactionTemplate && transaction.templateType === TemplateType.Schedule.type">
-                                    <schedule-frequency-select
+                                <v-col cols="12" md="12">
+                                    <v-textarea
+                                        type="text"
+                                        autocomplete="off"
+                                        persistent-placeholder
+                                        rows="3"
                                         :readonly="mode === TransactionEditPageMode.View"
                                         :disabled="loading || submitting || recognizing"
-                                        :label="tt('Scheduled Transaction Frequency')"
-                                        v-model:type="transaction.scheduledFrequencyType"
-                                        v-model="transaction.scheduledFrequency" />
-                                </v-col>
-                                <v-col cols="12" md="6" v-if="type === TransactionEditPageType.Transaction || (type === TransactionEditPageType.Template && transaction instanceof TransactionTemplate && transaction.templateType === TemplateType.Schedule.type)">
-                                    <v-autocomplete
-                                        class="transaction-edit-timezone"
-                                        item-title="displayNameWithUtcOffset"
-                                        item-value="name"
-                                        auto-select-first
-                                        persistent-placeholder
-                                        :readonly="mode === TransactionEditPageMode.View"
-                                        :disabled="loading || submitting || recognizing || (mode === TransactionEditPageMode.Edit && transaction.type === TransactionType.ModifyBalance)"
-                                        :label="tt('Transaction Timezone')"
-                                        :placeholder="!transaction.timeZone && transaction.timeZone !== '' ? `(${transactionDisplayTimezone}) ${type === TransactionEditPageType.Transaction ? transactionTimezoneTimeDifference : ''}` : tt('Timezone')"
-                                        :items="allTimezones"
-                                        :no-data-text="tt('No results')"
-                                        :model-value="transaction.timeZone"
-                                        @update:model-value="updateTransactionTimezone"
+                                        :label="transactionDescriptionTitle"
+                                        :placeholder="tt('Your transaction description (optional)')"
+                                        v-model="transaction.comment"
                                     />
                                 </v-col>
-                                <v-col cols="12" md="6" v-if="type === TransactionEditPageType.Template && transaction instanceof TransactionTemplate && transaction.templateType === TemplateType.Schedule.type">
-                                    <date-select
+                                <v-col cols="12" md="12">
+                                    <transaction-tag-auto-complete
                                         :readonly="mode === TransactionEditPageMode.View"
                                         :disabled="loading || submitting || recognizing"
-                                        :clearable="true"
-                                        :label="tt('Start Date')"
-                                        :no-data-text="tt('No limit')"
-                                        v-model="transaction.scheduledStartDate" />
-                                </v-col>
-                                <v-col cols="12" md="6" v-if="type === TransactionEditPageType.Template && transaction instanceof TransactionTemplate && transaction.templateType === TemplateType.Schedule.type">
-                                    <date-select
-                                        :readonly="mode === TransactionEditPageMode.View"
-                                        :disabled="loading || submitting || recognizing"
-                                        :clearable="true"
-                                        :label="tt('End Date')"
-                                        :no-data-text="tt('No limit')"
-                                        v-model="transaction.scheduledEndDate" />
+                                        :show-label="true"
+                                        :allow-add-new-tag="true"
+                                        v-model="transaction.tagIds"
+                                        @tag:saving="onSavingTag"
+                                    />
                                 </v-col>
                                 <v-col cols="12" md="12" v-if="type === TransactionEditPageType.Transaction">
                                     <v-select
@@ -353,28 +376,30 @@
                                         </template>
                                     </v-select>
                                 </v-col>
-                                <v-col cols="12" md="12">
-                                    <transaction-tag-auto-complete
-                                        :readonly="mode === TransactionEditPageMode.View"
-                                        :disabled="loading || submitting || recognizing"
-                                        :show-label="true"
-                                        :allow-add-new-tag="true"
-                                        v-model="transaction.tagIds"
-                                        @tag:saving="onSavingTag"
-                                    />
-                                </v-col>
-                                <v-col cols="12" md="12">
-                                    <v-textarea
-                                        type="text"
-                                        autocomplete="off"
-                                        persistent-placeholder
-                                        rows="3"
-                                        :readonly="mode === TransactionEditPageMode.View"
-                                        :disabled="loading || submitting || recognizing"
-                                        :label="transactionDescriptionTitle"
-                                        :placeholder="tt('Your transaction description (optional)')"
-                                        v-model="transaction.comment"
-                                    />
+                                <v-col cols="12" v-if="type === TransactionEditPageType.Transaction && isTransactionPicturesEnabled() && (mode === TransactionEditPageMode.Add || mode === TransactionEditPageMode.Edit || (transaction.pictures && transaction.pictures.length > 0))">
+                                    <div class="transaction-edit-attach">
+                                        <button type="button" class="transaction-edit-attach-dropzone"
+                                                :class="{ 'transaction-edit-attach-dropzone--over': attachDragOver }"
+                                                :disabled="!canAddTransactionPicture || loading || submitting || recognizing || uploadingPicture"
+                                                :aria-busy="uploadingPicture ? 'true' : 'false'"
+                                                v-if="mode === TransactionEditPageMode.Add || mode === TransactionEditPageMode.Edit"
+                                                @click="showOpenPictureDialog"
+                                                @dragenter.prevent="onAttachDragOver"
+                                                @dragover.prevent="onAttachDragOver"
+                                                @dragleave="attachDragOver = false"
+                                                @drop.prevent="onAttachDrop">
+                                            <v-progress-circular indeterminate size="20" width="2" v-if="uploadingPicture" />
+                                            <v-icon :icon="mdiPaperclip" size="20" v-else />
+                                            <span class="transaction-edit-attach-text">{{ tt('Attach receipt — PDF or image') }}</span>
+                                        </button>
+                                        <v-btn class="transaction-edit-attach-count" color="default" variant="text" :prepend-icon="mdiImageMultipleOutline"
+                                               :disabled="loading || submitting || recognizing"
+                                               v-if="transaction.pictures && transaction.pictures.length > 0"
+                                               @click="activeTab = 'pictures'">
+                                            <span>{{ tt('Pictures') }}</span>
+                                            <span class="ms-1 ebk-numeric">({{ formatNumberToLocalizedNumerals(transaction.pictures.length) }})</span>
+                                        </v-btn>
+                                    </div>
                                 </v-col>
                             </v-row>
                         </v-form>
@@ -395,106 +420,132 @@
                         </map-view>
                     </v-window-item>
                     <v-window-item value="pictures">
-                        <v-row class="transaction-pictures align-content-start ma-0 pt-3" :class="{ 'readonly': submitting || uploadingPicture || removingPictureId }">
-                            <v-col :key="picIdx" cols="6" md="3" v-for="(pictureInfo, picIdx) in transaction.pictures">
-                                <v-avatar rounded="lg" variant="tonal" size="160"
-                                          class="cursor-pointer transaction-picture"
-                                          color="rgba(0,0,0,0)" @click="viewOrRemovePicture(pictureInfo)">
-                                    <div class="d-flex flex-column align-center justify-center w-100 h-100 bg-light-primary transaction-picture-document"
-                                         v-if="isPdfFileUrl(getTransactionPictureUrl(pictureInfo))">
-                                        <v-icon size="64" :icon="mdiFilePdfBox"/>
-                                        <span class="text-body-medium mt-1">{{ tt('PDF Document') }}</span>
-                                    </div>
-                                    <v-img :src="getTransactionPictureUrl(pictureInfo)" v-else>
-                                        <template #placeholder>
-                                            <div class="d-flex align-center justify-center bg-light-primary">
-                                                <v-progress-circular color="grey-500" indeterminate size="48"></v-progress-circular>
-                                            </div>
-                                        </template>
-                                        <template #error>
-                                            <div class="d-flex align-center justify-center bg-light-primary">
-                                                <span class="text-body-large">{{ tt('Failed to load image, please check whether the config "domain" and "root_url" are set correctly.') }}</span>
-                                            </div>
-                                        </template>
-                                    </v-img>
-                                    <div class="picture-control-icon" :class="{ 'show-control-icon': pictureInfo.pictureId === removingPictureId }">
-                                        <v-icon size="64" :icon="mdiTrashCanOutline" :aria-label="tt('Remove Picture')" v-if="(mode === TransactionEditPageMode.Add || mode === TransactionEditPageMode.Edit) && pictureInfo.pictureId !== removingPictureId"/>
-                                        <v-progress-circular color="grey-500" indeterminate size="48" v-if="(mode === TransactionEditPageMode.Add || mode === TransactionEditPageMode.Edit) && pictureInfo.pictureId === removingPictureId"></v-progress-circular>
-                                        <v-icon size="64" :icon="mdiFullscreen" :aria-label="tt('View')" v-if="mode !== TransactionEditPageMode.Add && mode !== TransactionEditPageMode.Edit"/>
-                                        <v-btn class="transaction-picture-download-button" density="comfortable" variant="text" color="white"
-                                               :icon="mdiDownload" :aria-label="tt('Download')" :title="tt('Download')"
-                                               @click.stop="downloadPicture(pictureInfo)"
-                                               v-if="mode !== TransactionEditPageMode.Add && mode !== TransactionEditPageMode.Edit && isPdfFileUrl(getTransactionPictureUrl(pictureInfo))"/>
-                                    </div>
-                                </v-avatar>
-                            </v-col>
-                            <v-col cols="6" md="3" v-if="canAddTransactionPicture">
-                                <v-avatar rounded="lg" variant="tonal" size="160"
-                                          class="transaction-picture transaction-picture-add"
-                                          :class="{ 'enabled': !submitting, 'cursor-pointer': !submitting }"
-                                          color="rgba(0,0,0,0)" @click="showOpenPictureDialog">
-                                    <v-tooltip activator="parent" v-if="!submitting">{{ tt('Add Picture or PDF Document') }}</v-tooltip>
-                                    <v-icon class="transaction-picture-add-icon" size="56" :aria-label="tt('Add Picture or PDF Document')" :icon="mdiImagePlusOutline" v-if="!uploadingPicture"/>
-                                    <v-progress-circular color="grey-500" indeterminate size="48" v-if="uploadingPicture"></v-progress-circular>
-                                </v-avatar>
-                            </v-col>
-                        </v-row>
+                        <div class="transaction-pictures" :class="{ 'readonly': submitting || uploadingPicture || removingPictureId }">
+                            <div class="transaction-pictures-grid">
+                                <div class="transaction-picture-tile" :key="pictureInfo.pictureId || picIdx" v-for="(pictureInfo, picIdx) in transaction.pictures">
+                                    <button type="button" class="transaction-picture-tile-preview"
+                                            :aria-label="(mode === TransactionEditPageMode.Add || mode === TransactionEditPageMode.Edit) ? tt('Remove Picture') : tt('View')"
+                                            :aria-busy="pictureInfo.pictureId === removingPictureId ? 'true' : 'false'"
+                                            @click="viewOrRemovePicture(pictureInfo)">
+                                        <span class="transaction-picture-tile-document"
+                                              v-if="isPdfFileUrl(getTransactionPictureUrl(pictureInfo))">
+                                            <v-icon size="48" :icon="mdiFilePdfBox"/>
+                                            <span>{{ tt('PDF Document') }}</span>
+                                        </span>
+                                        <v-img class="transaction-picture-tile-image" cover :src="getTransactionPictureUrl(pictureInfo)" v-else>
+                                            <template #placeholder>
+                                                <div class="transaction-picture-tile-placeholder">
+                                                    <v-progress-circular indeterminate size="32"></v-progress-circular>
+                                                </div>
+                                            </template>
+                                            <template #error>
+                                                <div class="transaction-picture-tile-placeholder transaction-picture-tile-placeholder--error">
+                                                    <v-icon size="28" :icon="mdiImageBrokenVariant" />
+                                                    <span>{{ tt('Failed to load image, please check whether the config "domain" and "root_url" are set correctly.') }}</span>
+                                                </div>
+                                            </template>
+                                        </v-img>
+                                        <span class="transaction-picture-tile-overlay" :class="{ 'transaction-picture-tile-overlay--visible': pictureInfo.pictureId === removingPictureId }" aria-hidden="true">
+                                            <span class="transaction-picture-tile-action" v-if="(mode === TransactionEditPageMode.Add || mode === TransactionEditPageMode.Edit) && pictureInfo.pictureId !== removingPictureId">
+                                                <v-icon size="22" :icon="mdiTrashCanOutline"/>
+                                                <span>{{ tt('Remove Picture') }}</span>
+                                            </span>
+                                            <v-progress-circular indeterminate size="32" v-if="(mode === TransactionEditPageMode.Add || mode === TransactionEditPageMode.Edit) && pictureInfo.pictureId === removingPictureId"></v-progress-circular>
+                                            <span class="transaction-picture-tile-action" v-if="mode !== TransactionEditPageMode.Add && mode !== TransactionEditPageMode.Edit">
+                                                <v-icon size="22" :icon="mdiFullscreen"/>
+                                                <span>{{ tt('View') }}</span>
+                                            </span>
+                                        </span>
+                                    </button>
+                                    <v-btn class="transaction-picture-download-button" density="comfortable" variant="flat" color="surface"
+                                           :icon="mdiDownload" :aria-label="tt('Download')" :title="tt('Download')"
+                                           @click.stop="downloadPicture(pictureInfo)"
+                                           v-if="mode !== TransactionEditPageMode.Add && mode !== TransactionEditPageMode.Edit && isPdfFileUrl(getTransactionPictureUrl(pictureInfo))"/>
+                                </div>
+                                <button type="button" class="transaction-picture-tile transaction-picture-add"
+                                        :class="{ 'transaction-picture-add--over': attachDragOver }"
+                                        :disabled="submitting || uploadingPicture"
+                                        :aria-busy="uploadingPicture ? 'true' : 'false'"
+                                        v-if="canAddTransactionPicture"
+                                        @click="showOpenPictureDialog"
+                                        @dragenter.prevent="onAttachDragOver"
+                                        @dragover.prevent="onAttachDragOver"
+                                        @dragleave="attachDragOver = false"
+                                        @drop.prevent="onAttachDrop">
+                                    <v-progress-circular indeterminate size="32" v-if="uploadingPicture"></v-progress-circular>
+                                    <v-icon class="transaction-picture-add-icon" size="32" :icon="mdiImagePlusOutline" v-else/>
+                                    <span>{{ tt('Add Picture or PDF Document') }}</span>
+                                </button>
+                            </div>
+                        </div>
                     </v-window-item>
                 </v-window>
+                </div>
             </template>
 
             <template #footer>
-                <v-btn color="error" variant="tonal" :disabled="loading || submitting || recognizing"
-                       v-if="mode === TransactionEditPageMode.View && originalTransactionEditable" @click="remove">
-                    {{ tt('Delete') }}
-                    <v-progress-circular indeterminate size="22" class="ms-2" v-if="submitting"></v-progress-circular>
-                </v-btn>
-                <v-spacer/>
-                <v-tooltip :disabled="!inputIsEmpty" :text="inputEmptyProblemMessage ? tt(inputEmptyProblemMessage) : ''">
-                    <template v-slot:activator="{ props }">
-                        <div v-bind="props" class="d-inline-block">
-                            <v-btn-group density="comfortable" v-if="mode === TransactionEditPageMode.Add || mode === TransactionEditPageMode.Edit">
-                                <v-btn color="primary" :disabled="inputIsEmpty || loading || submitting || recognizing" @click="save(AfterSaveAction.GoBack)">
-                                    {{ tt(saveButtonTitle) }}
-                                    <v-progress-circular indeterminate size="22" class="ms-2" v-if="submitting"></v-progress-circular>
-                                </v-btn>
-                                <v-btn color="primary" density="compact"
-                                       :aria-label="tt('More')" :disabled="inputIsEmpty || loading || submitting || recognizing" :icon="true"
-                                       v-if="type === TransactionEditPageType.Transaction && mode === TransactionEditPageMode.Add">
-                                    <v-icon :icon="mdiMenuDown" size="24" />
-                                    <v-menu activator="parent">
-                                        <v-list>
-                                            <v-list-item :title="tt(TransactionQuickAddButtonActionType.SaveAndAddNewTransaction.name)"
-                                                         @click="save(AfterSaveAction.StayWithNewTransaction)"></v-list-item>
-                                            <v-list-item :title="tt(TransactionQuickAddButtonActionType.SaveAndKeepCurrentData.name)"
-                                                         @click="save(AfterSaveAction.StayWithCurrentTransaction)"></v-list-item>
-                                        </v-list>
-                                    </v-menu>
-                                </v-btn>
-                            </v-btn-group>
-                        </div>
-                    </template>
-                </v-tooltip>
-                <v-btn-group variant="tonal" density="comfortable"
-                             v-if="mode === TransactionEditPageMode.View && transaction.type !== TransactionType.ModifyBalance">
-                    <v-btn :disabled="loading || submitting || recognizing"
-                           @click="duplicate(false, false)">{{ tt('Duplicate') }}</v-btn>
-                    <v-btn density="compact" :aria-label="tt('More')" :disabled="loading || submitting || recognizing" :icon="true">
-                        <v-icon :icon="mdiMenuDown" size="24" />
-                        <v-menu activator="parent">
-                            <v-list>
-                                <v-list-item :title="tt('Duplicate (With Time)')"
-                                             @click="duplicate(true, false)"></v-list-item>
-                                <v-list-item :title="tt('Duplicate (With Geographic Location)')"
-                                             @click="duplicate(false, true)"
-                                             v-if="transaction.geoLocation"></v-list-item>
-                                <v-list-item :title="tt('Duplicate (With Time and Geographic Location)')"
-                                             @click="duplicate(true, true)"
-                                             v-if="transaction.geoLocation"></v-list-item>
-                            </v-list>
-                        </v-menu>
+                <div class="transaction-edit-footer">
+                    <v-btn color="error" variant="tonal" :disabled="loading || submitting || recognizing"
+                           v-if="mode === TransactionEditPageMode.View && originalTransactionEditable" @click="remove">
+                        {{ tt('Delete') }}
+                        <v-progress-circular indeterminate size="22" class="ms-2" v-if="submitting"></v-progress-circular>
                     </v-btn>
-                </v-btn-group>
+                    <div class="transaction-edit-footer-status" role="status" aria-live="polite">
+                        <template v-if="footerStatus">
+                            <span class="transaction-edit-footer-status-dot" :class="`transaction-edit-footer-status-dot--${footerStatus.kind}`" aria-hidden="true"></span>
+                            <span>{{ footerStatus.text }}</span>
+                        </template>
+                    </div>
+                    <v-btn color="default" variant="outlined"
+                           :disabled="loading || submitting || recognizing"
+                           v-if="mode === TransactionEditPageMode.Add || mode === TransactionEditPageMode.Edit"
+                           @click="cancel">{{ tt('Cancel') }}</v-btn>
+                    <v-tooltip :disabled="!inputIsEmpty" :text="inputEmptyProblemMessage ? tt(inputEmptyProblemMessage) : ''">
+                        <template v-slot:activator="{ props }">
+                            <div v-bind="props" class="d-inline-block">
+                                <v-btn-group class="transaction-edit-save-group" density="comfortable" v-if="mode === TransactionEditPageMode.Add || mode === TransactionEditPageMode.Edit">
+                                    <v-btn color="primary" :disabled="inputIsEmpty || loading || submitting || recognizing" @click="save(AfterSaveAction.GoBack)">
+                                        {{ tt(saveButtonTitle) }}
+                                        <v-progress-circular indeterminate size="22" class="ms-2" v-if="submitting"></v-progress-circular>
+                                    </v-btn>
+                                    <v-btn color="primary" density="compact"
+                                           :aria-label="tt('More')" :disabled="inputIsEmpty || loading || submitting || recognizing" :icon="true"
+                                           v-if="type === TransactionEditPageType.Transaction && mode === TransactionEditPageMode.Add">
+                                        <v-icon :icon="mdiMenuDown" size="24" />
+                                        <v-menu activator="parent">
+                                            <v-list>
+                                                <v-list-item :title="tt(TransactionQuickAddButtonActionType.SaveAndAddNewTransaction.name)"
+                                                             @click="save(AfterSaveAction.StayWithNewTransaction)"></v-list-item>
+                                                <v-list-item :title="tt(TransactionQuickAddButtonActionType.SaveAndKeepCurrentData.name)"
+                                                             @click="save(AfterSaveAction.StayWithCurrentTransaction)"></v-list-item>
+                                            </v-list>
+                                        </v-menu>
+                                    </v-btn>
+                                </v-btn-group>
+                            </div>
+                        </template>
+                    </v-tooltip>
+                    <v-btn-group variant="tonal" density="comfortable"
+                                 v-if="mode === TransactionEditPageMode.View && transaction.type !== TransactionType.ModifyBalance">
+                        <v-btn :disabled="loading || submitting || recognizing"
+                               @click="duplicate(false, false)">{{ tt('Duplicate') }}</v-btn>
+                        <v-btn density="compact" :aria-label="tt('More')" :disabled="loading || submitting || recognizing" :icon="true">
+                            <v-icon :icon="mdiMenuDown" size="24" />
+                            <v-menu activator="parent">
+                                <v-list>
+                                    <v-list-item :title="tt('Duplicate (With Time)')"
+                                                 @click="duplicate(true, false)"></v-list-item>
+                                    <v-list-item :title="tt('Duplicate (With Geographic Location)')"
+                                                 @click="duplicate(false, true)"
+                                                 v-if="transaction.geoLocation"></v-list-item>
+                                    <v-list-item :title="tt('Duplicate (With Time and Geographic Location)')"
+                                                 @click="duplicate(true, true)"
+                                                 v-if="transaction.geoLocation"></v-list-item>
+                                </v-list>
+                            </v-menu>
+                        </v-btn>
+                    </v-btn-group>
+                </div>
             </template>
         </two-column-dialog-layout>
     </v-dialog>
@@ -601,7 +652,10 @@ import {
     mdiTrashCanOutline,
     mdiFullscreen,
     mdiFilePdfBox,
-    mdiDownload
+    mdiDownload,
+    mdiPaperclip,
+    mdiImageMultipleOutline,
+    mdiImageBrokenVariant
 } from '@mdi/js';
 
 export interface TransactionEditOptions extends SetTransactionOptions {
@@ -629,7 +683,7 @@ const props = defineProps<{
     show?: boolean;
 }>();
 
-const { tt, formatCoordinate } = useI18n();
+const { tt, formatCoordinate, formatNumberToLocalizedNumerals } = useI18n();
 
 const {
     mode,
@@ -711,6 +765,7 @@ const noTransactionDraft = ref<boolean>(false);
 const geoMenuState = ref<boolean>(false);
 const removingPictureId = ref<string>('');
 const pastedText = ref<string>('');
+const attachDragOver = ref<boolean>(false);
 
 const initOptions = ref<TransactionEditOptions | undefined>(undefined);
 
@@ -724,6 +779,39 @@ const sourceAmountColor = computed<string | undefined>(() => {
     }
 
     return undefined;
+});
+
+interface TransactionEditFooterStatus {
+    kind: 'progress' | 'warning' | 'modified';
+    text: string;
+}
+
+const footerStatus = computed<TransactionEditFooterStatus | null>(() => {
+    if (loading.value || (mode.value !== TransactionEditPageMode.Add && mode.value !== TransactionEditPageMode.Edit)) {
+        return null;
+    }
+
+    if (uploadingPicture.value) {
+        return { kind: 'progress', text: tt('Uploading...') };
+    }
+
+    if (recognizing.value) {
+        return { kind: 'progress', text: tt('Recognizing') };
+    }
+
+    if (submitting.value && !removingPictureId.value) {
+        return { kind: 'progress', text: tt('Saving...') };
+    }
+
+    if (inputIsEmpty.value && inputEmptyProblemMessage.value) {
+        return { kind: 'warning', text: tt(inputEmptyProblemMessage.value) };
+    }
+
+    if (isTransactionModified.value) {
+        return { kind: 'modified', text: tt('Unsaved changes') };
+    }
+
+    return null;
 });
 
 const canAddNewCategory = computed<boolean>(() => mode.value === TransactionEditPageMode.Add || mode.value === TransactionEditPageMode.Edit);
@@ -967,7 +1055,7 @@ function save(afterAction: AfterSaveAction): void {
                 submitting.value = false;
 
                 if (error.error && (error.error.errorCode === KnownErrorCode.TransactionCannotCreateInThisTime || error.error.errorCode === KnownErrorCode.TransactionCannotModifyInThisTime)) {
-                    confirmDialog.value?.open('You have set this time range to prevent editing transactions. Would you like to change the editable transaction range to All?').then(() => {
+                    confirmDialog.value?.open('You have set this time range to prevent editing transactions. Would you like to change the editable transaction range to All?', { color: 'primary' }).then(() => {
                         submitting.value = true;
 
                         userStore.updateUserTransactionEditScope({
@@ -991,7 +1079,7 @@ function save(afterAction: AfterSaveAction): void {
         };
 
         if (transaction.value.sourceAmount === 0) {
-            confirmDialog.value?.open('Are you sure you want to save this transaction with a zero amount?').then(() => {
+            confirmDialog.value?.open('Are you sure you want to save this transaction with a zero amount?', { color: 'primary' }).then(() => {
                 doSubmit();
             });
         } else {
@@ -1113,7 +1201,7 @@ function remove(): void {
         return;
     }
 
-    confirmDialog.value?.open('Are you sure you want to delete this transaction?').then(() => {
+    confirmDialog.value?.open('Are you sure you want to delete this transaction?', { color: 'error' }).then(() => {
         submitting.value = true;
 
         transactionsStore.deleteTransaction({
@@ -1156,7 +1244,7 @@ function cancel(): void {
 
     if (settingsStore.appSettings.autoSaveTransactionDraft === 'confirmation') {
         if (transactionsStore.isTransactionDraftModified(transaction.value, initOptions.value?.amount, initOptions.value?.categoryId, initOptions.value?.accountId, initOptions.value?.tagIds, firstVisibleAccountId.value)) {
-            confirmDialog.value?.open('Do you want to save this transaction draft?').then(() => {
+            confirmDialog.value?.open('Do you want to save this transaction draft?', { color: 'primary' }).then(() => {
                 transactionsStore.saveTransactionDraft(transaction.value, initOptions.value?.amount, initOptions.value?.categoryId, initOptions.value?.accountId, initOptions.value?.tagIds, firstVisibleAccountId.value);
                 doClose();
             }).catch(() => {
@@ -1271,7 +1359,7 @@ function viewOrRemovePicture(pictureInfo: TransactionPictureInfoBasicResponse): 
         return;
     }
 
-    confirmDialog.value?.open('Are you sure you want to remove this transaction picture?').then(() => {
+    confirmDialog.value?.open('Are you sure you want to remove this transaction picture?', { color: 'error' }).then(() => {
         removingPictureId.value = pictureInfo.pictureId;
         submitting.value = true;
 
@@ -1339,7 +1427,7 @@ function addNewCategory(categoryType: CategoryType, primaryCategory: unknown, ca
             setTransactionCategoryId(categoryType, newCategory.id);
         } else {
             // transactions can only use secondary categories, so offer to add a secondary category under the new primary category
-            confirmDialog.value?.open('Transactions require a secondary category. Do you want to add a secondary category under this primary category now?').then(() => {
+            confirmDialog.value?.open('Transactions require a secondary category. Do you want to add a secondary category under this primary category now?', { color: 'primary' }).then(() => {
                 addNewCategory(categoryType, newCategory);
             });
         }
@@ -1371,6 +1459,54 @@ function onUploadPicture(event: Event): void {
     uploadPicture(pictureFile);
 }
 
+function isSupportedPictureFile(file: File): boolean {
+    const fileName = file.name ? file.name.toLowerCase() : '';
+    const extensions = SUPPORTED_TRANSACTION_PICTURE_EXTENSIONS.split(',');
+
+    for (const extension of extensions) {
+        const ext = extension.trim().toLowerCase();
+
+        if (ext && fileName.endsWith(ext)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function onAttachDragOver(event: DragEvent): void {
+    if (!canAddTransactionPicture.value || submitting.value || uploadingPicture.value) {
+        return;
+    }
+
+    if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = 'copy';
+    }
+
+    attachDragOver.value = true;
+}
+
+function onAttachDrop(event: DragEvent): void {
+    attachDragOver.value = false;
+
+    if (!canAddTransactionPicture.value || submitting.value || uploadingPicture.value) {
+        return;
+    }
+
+    const file = event.dataTransfer?.files?.[0];
+
+    if (!file) {
+        return;
+    }
+
+    if (!isSupportedPictureFile(file)) {
+        desktopPageStore.addErrorToast('Unsupported file type');
+        return;
+    }
+
+    uploadPicture(file);
+}
+
 function onShowDateTimeError(error: string): void {
     desktopPageStore.addErrorToast(error);
 }
@@ -1389,10 +1525,42 @@ defineExpose({
 </script>
 
 <style>
+/* Type segmented control (guidelines §6.2) */
+.transaction-edit-type-bar {
+    padding-block: var(--ebk-space-4) 0;
+}
+
+.transaction-edit-type-tabs.v-tabs {
+    display: inline-flex;
+    max-width: 100%;
+    padding: 3px;
+    border: 1px solid var(--ebk-color-hairline);
+    border-radius: var(--ebk-radius-control);
+    background-color: var(--ebk-color-surface-sunken);
+    height: auto;
+
+    .v-tab.v-btn {
+        min-width: 6.5rem;
+        height: 34px;
+        border-radius: calc(var(--ebk-radius-control) - 2px);
+    }
+}
+
+/* Large amount field: the most prominent element of the editor (guidelines §4.4) */
 .transaction-edit-amount .v-field__prepend-inner,
 .transaction-edit-amount .v-field__append-inner,
 .transaction-edit-amount .v-field__field > input {
-    font-size: 1.25rem;
+    font-size: 1.75rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.transaction-edit-amount .v-field__field > input {
+    min-height: 64px;
+}
+
+.transaction-edit-amount .v-field__append-inner .v-icon {
+    font-size: 1.5rem;
 }
 
 .transaction-edit-timezone.v-input input::placeholder {
@@ -1400,6 +1568,90 @@ defineExpose({
     opacity: unset;
 }
 
+/* Attach receipt drop zone */
+.transaction-edit-attach {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ebk-space-2);
+}
+
+.transaction-edit-attach-dropzone {
+    display: flex;
+    flex: 1 1 18rem;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ebk-space-2);
+    min-height: 56px;
+    padding: var(--ebk-space-3) var(--ebk-space-4);
+    border: 1px dashed rgba(var(--ebk-color-hairline-rgb), calc(var(--ebk-color-hairline-opacity, 0.14) * 3));
+    border-radius: var(--ebk-radius-control);
+    background-color: rgba(var(--ebk-color-surface-sunken-rgb), 0.6);
+    color: var(--ebk-color-text-secondary);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: border-color var(--ebk-motion-duration-xs) var(--ebk-motion-ease-standard),
+                background-color var(--ebk-motion-duration-xs) var(--ebk-motion-ease-standard);
+
+    &:hover:not(:disabled),
+    &.transaction-edit-attach-dropzone--over {
+        border-color: var(--ebk-color-primary);
+        background-color: var(--ebk-color-selected-background);
+        color: var(--ebk-color-primary-text);
+    }
+
+    &:disabled {
+        cursor: default;
+        opacity: 0.6;
+    }
+}
+
+.transaction-edit-attach-text {
+    overflow-wrap: anywhere;
+}
+
+/* Footer: status, Cancel, Save */
+.transaction-edit-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ebk-space-3);
+    width: 100%;
+}
+
+.transaction-edit-footer-status {
+    display: flex;
+    flex: 1 1 12rem;
+    align-items: center;
+    gap: var(--ebk-space-2);
+    min-width: 0;
+    color: var(--ebk-color-text-secondary);
+    font-size: 0.8125rem;
+    overflow-wrap: anywhere;
+}
+
+.transaction-edit-footer-status-dot {
+    flex: 0 0 auto;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--ebk-color-copper-line);
+
+    &.transaction-edit-footer-status-dot--progress {
+        background-color: var(--ebk-color-primary);
+    }
+
+    &.transaction-edit-footer-status-dot--warning {
+        background-color: var(--ebk-color-warning);
+    }
+
+    &.transaction-edit-footer-status-dot--modified {
+        border: 1px solid var(--ebk-color-primary);
+        background-color: transparent;
+    }
+}
+
+/* Map */
 .transaction-edit-map-view {
     height: 289px;
 }
@@ -1428,50 +1680,141 @@ defineExpose({
     }
 }
 
-.transaction-picture .picture-control-icon {
-    display: none;
-    position: absolute;
-    width: 100% !important;
-    height: 100% !important;
-    background-color: rgba(0, 0, 0, 0.4);
+/* Pictures and PDF attachments */
+.transaction-pictures {
+    width: 100%;
+    padding-block: var(--ebk-space-4);
 }
 
-.transaction-picture .picture-control-icon > i.v-icon {
-    background-color: transparent;
-    color: rgba(255, 255, 255, 0.8);
+.transaction-pictures-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: var(--ebk-space-3);
 }
 
-.transaction-picture:hover .picture-control-icon,
-.transaction-picture .picture-control-icon.show-control-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    vertical-align: middle;
+.transaction-picture-tile {
+    position: relative;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border: 1px solid var(--ebk-color-hairline);
+    border-radius: var(--ebk-radius-panel);
+    background-color: var(--ebk-color-surface-sunken);
 }
 
-.transaction-picture .picture-control-icon > .transaction-picture-download-button {
-    position: absolute;
-    top: 4px;
-    right: 4px;
-}
+.transaction-picture-tile-preview {
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
 
-.transaction-picture:hover .transaction-picture-placeholder {
-    display: none;
-}
-
-.transaction-picture-add {
-    border: 2px dashed rgba(var(--v-theme-grey-500));
-
-    .transaction-picture-add-icon {
-        color: rgba(var(--v-theme-grey-500));
+    &:focus-visible {
+        outline: var(--ebk-focus-outline);
+        outline-offset: -2px;
     }
 }
 
-.transaction-picture-add.enabled:hover {
-    border: 2px dashed rgba(var(--v-theme-grey-700));
+.transaction-picture-tile-image {
+    width: 100%;
+    height: 100%;
+}
 
-    .transaction-picture-add-icon {
-        color: rgba(var(--v-theme-grey-700));
+.transaction-picture-tile-document,
+.transaction-picture-tile-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ebk-space-1);
+    width: 100%;
+    height: 100%;
+    padding: var(--ebk-space-2);
+    color: var(--ebk-color-text-secondary);
+    font-size: 0.8125rem;
+    text-align: center;
+}
+
+.transaction-picture-tile-document > .v-icon {
+    color: var(--ebk-color-primary-text);
+}
+
+.transaction-picture-tile-placeholder--error {
+    overflow-wrap: anywhere;
+}
+
+.transaction-picture-tile-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    opacity: 0;
+    transition: opacity var(--ebk-motion-duration-sm) var(--ebk-motion-ease-standard);
+    pointer-events: none;
+}
+
+.transaction-picture-tile-preview:hover .transaction-picture-tile-overlay,
+.transaction-picture-tile-preview:focus-visible .transaction-picture-tile-overlay,
+.transaction-picture-tile-overlay.transaction-picture-tile-overlay--visible {
+    opacity: 1;
+}
+
+.transaction-picture-tile-action {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--ebk-space-1);
+    font-size: 0.8125rem;
+    font-weight: 500;
+}
+
+.transaction-picture-download-button {
+    position: absolute !important;
+    inset-block-start: var(--ebk-space-2);
+    inset-inline-end: var(--ebk-space-2);
+}
+
+.transaction-picture-add {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ebk-space-2);
+    padding: var(--ebk-space-3);
+    border-style: dashed;
+    border-color: rgba(var(--ebk-color-hairline-rgb), calc(var(--ebk-color-hairline-opacity, 0.14) * 3));
+    background-color: rgba(var(--ebk-color-surface-sunken-rgb), 0.6);
+    color: var(--ebk-color-text-secondary);
+    font-size: 0.8125rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color var(--ebk-motion-duration-xs) var(--ebk-motion-ease-standard);
+
+    &:hover:not(:disabled),
+    &.transaction-picture-add--over {
+        border-color: var(--ebk-color-primary);
+        background-color: var(--ebk-color-selected-background);
+        color: var(--ebk-color-primary-text);
+    }
+
+    &:disabled {
+        cursor: default;
+    }
+}
+
+@media (forced-colors: active) {
+    .transaction-edit-attach-dropzone,
+    .transaction-picture-tile {
+        border-color: CanvasText;
+    }
+
+    .transaction-edit-footer-status-dot {
+        forced-color-adjust: none;
     }
 }
 </style>

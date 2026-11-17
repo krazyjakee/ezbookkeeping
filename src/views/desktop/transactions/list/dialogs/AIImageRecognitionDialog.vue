@@ -16,27 +16,64 @@
             </template>
 
             <template #content>
-                <div class="w-100 h-100 border position-relative"
+                <div class="ai-recognition-stage"
+                     :class="{ 'ai-recognition-stage--over': isDragOver, 'ai-recognition-stage--has-image': !!imageSrc }"
+                     :aria-busy="loading || recognizing ? 'true' : 'false'"
                      @dragenter.prevent="onDragEnter"
                      @dragover.prevent
                      @dragleave.prevent="onDragLeave"
                      @drop.prevent="onDrop">
-                    <div class="d-flex w-100 h-100 justify-center align-center justify-content-center text-center px-4"
-                         :class="{ 'dropzone': true, 'dropzone-dark': isDarkMode, 'dropzone-blurry-bg': loading || isDragOver || recognizing, 'dropzone-dragover': isDragOver }">
-                        <div class="d-inline-flex flex-column" v-if="!loading && !imageFile && !isDragOver">
-                            <span class="text-title-medium font-weight-bold pa-2">{{ tt('You can drag and drop, paste or click to select a receipt or transaction image') }}</span>
-                            <span class="text-body-large pa-2">{{ tt('Uploaded image and personal data will be sent to the large language model, please be aware of potential privacy risks.') }}</span>
-                        </div>
-                        <span class="text-title-medium font-weight-bold pa-2" v-else-if="!loading && isDragOver">{{ tt('Release to load image') }}</span>
-                        <span class="text-title-medium font-weight-bold pa-2" v-else-if="loading">{{ tt('Loading image...') }}</span>
-                        <span class="text-title-medium font-weight-bold pa-2" v-else-if="recognizing">{{ tt('AI can make mistakes. Check important info.') }}</span>
+                    <button type="button" class="ai-recognition-image-button"
+                            :aria-label="tt('You can drag and drop, paste or click to select a receipt or transaction image')"
+                            :disabled="loading || recognizing"
+                            v-if="imageSrc"
+                            @click="showOpenImageDialog">
+                        <v-img class="ai-recognition-image" :src="imageSrc">
+                            <template #placeholder>
+                                <div class="ai-recognition-image-placeholder"></div>
+                            </template>
+                        </v-img>
+                    </button>
+
+                    <button type="button" class="ai-recognition-empty"
+                            :disabled="loading || recognizing"
+                            v-else-if="!loading"
+                            @click="showOpenImageDialog">
+                        <span class="ai-recognition-empty-icon" aria-hidden="true">
+                            <v-icon :icon="mdiImagePlusOutline" size="28" />
+                        </span>
+                        <span class="ai-recognition-empty-title">{{ isDragOver ? tt('Release to load image') : tt('You can drag and drop, paste or click to select a receipt or transaction image') }}</span>
+                        <span class="ai-recognition-empty-text">{{ tt('Uploaded image and personal data will be sent to the large language model, please be aware of potential privacy risks.') }}</span>
+                    </button>
+
+                    <div class="ai-recognition-overlay" role="status" v-if="loading">
+                        <v-progress-circular indeterminate size="32" />
+                        <span class="ai-recognition-overlay-title">{{ tt('Loading image...') }}</span>
                     </div>
-                    <v-img :class="{ 'cursor-pointer': !loading && !recognizing && !isDragOver, 'h-100': true }"
-                           :src="imageSrc" @click="showOpenImageDialog">
-                        <template #placeholder>
-                            <div :class="{ 'w-100 h-100': true, 'bg-grey-200': !isDarkMode, 'bg-grey-50': isDarkMode }"></div>
-                        </template>
-                    </v-img>
+
+                    <div class="ai-recognition-overlay" role="status" v-else-if="isDragOver && imageSrc">
+                        <span class="ai-recognition-overlay-title">{{ tt('Release to load image') }}</span>
+                    </div>
+
+                    <div class="ai-recognition-status" role="status" aria-live="polite" v-if="recognizing">
+                        <v-progress-linear indeterminate color="primary" height="3" />
+                        <div class="ai-recognition-status-body">
+                            <v-icon :icon="mdiMagicStaff" size="20" />
+                            <div class="ai-recognition-status-text">
+                                <span class="ai-recognition-status-title">{{ tt('Recognizing') }}</span>
+                                <span class="ai-recognition-status-hint">{{ tt('AI can make mistakes. Check important info.') }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="ai-recognition-failure" v-else-if="recognizeFailed && !loading">
+                        <state-panel type="error" compact :title="tt('Unable to recognize image')">
+                            <template #actions>
+                                <v-btn color="default" variant="outlined" density="comfortable" :prepend-icon="mdiRefresh"
+                                       :disabled="!imageFile" @click="recognize">{{ tt('Retry') }}</v-btn>
+                            </template>
+                        </state-panel>
+                    </div>
                 </div>
             </template>
 
@@ -47,8 +84,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, useTemplateRef } from 'vue';
-import { useTheme } from 'vuetify';
+import StatePanel from '@/components/common/StatePanel.vue';
+
+import { ref, useTemplateRef } from 'vue';
 
 import { useI18n } from '@/locales/helpers.ts';
 
@@ -57,7 +95,6 @@ import { useDesktopPageStore } from '@/stores/desktopPage.ts';
 
 import { ImageUploadQualityType } from '@/core/image.ts';
 import { KnownFileType } from '@/core/file.ts';
-import { ThemeType } from '@/core/theme.ts';
 import { SUPPORTED_IMAGE_EXTENSIONS } from '@/consts/file.ts';
 
 import type { RecognizedTransactionResponse } from '@/models/large_language_model.ts';
@@ -71,7 +108,11 @@ import { generateRandomUUID } from '@/lib/misc.ts';
 import { compressJpgImageByQuality } from '@/lib/ui/common.ts';
 import logger from '@/lib/logger.ts';
 
-const theme = useTheme();
+import {
+    mdiImagePlusOutline,
+    mdiMagicStaff,
+    mdiRefresh
+} from '@mdi/js';
 
 const { tt } = useI18n();
 
@@ -90,11 +131,11 @@ const cancelRecognizingUuid = ref<string | undefined>(undefined);
 const imageFile = ref<File | null>(null);
 const imageSrc = ref<string | undefined>(undefined);
 const isDragOver = ref<boolean>(false);
-
-const isDarkMode = computed<boolean>(() => theme.global.name.value === ThemeType.Dark);
+const recognizeFailed = ref<boolean>(false);
 
 function loadImage(file: File): void {
     loading.value = true;
+    recognizeFailed.value = false;
     imageFile.value = null;
     imageSrc.value = undefined;
 
@@ -115,6 +156,7 @@ function open(): Promise<AIImageRecognitionResult> {
     showState.value = true;
     loading.value = false;
     recognizing.value = false;
+    recognizeFailed.value = false;
     cancelRecognizingUuid.value = undefined;
     imageFile.value = null;
     imageSrc.value = undefined;
@@ -159,6 +201,7 @@ function recognize(): void {
     const currentImageFile = imageFile.value;
     cancelRecognizingUuid.value = generateRandomUUID();
     recognizing.value = true;
+    recognizeFailed.value = false;
 
     transactionsStore.recognizeReceiptImage({
         imageFile: imageFile.value,
@@ -174,6 +217,7 @@ function recognize(): void {
         }
 
         recognizing.value = false;
+        recognizeFailed.value = true;
         cancelRecognizingUuid.value = undefined;
 
         if (!error.processed) {
@@ -199,6 +243,7 @@ function cancel(): void {
     showState.value = false;
     loading.value = false;
     recognizing.value = false;
+    recognizeFailed.value = false;
     cancelRecognizingUuid.value = undefined;
     imageFile.value = null;
     imageSrc.value = undefined;
@@ -253,3 +298,162 @@ defineExpose({
     open
 });
 </script>
+
+<style>
+.ai-recognition-stage {
+    position: relative;
+    display: flex;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: var(--ebk-color-surface-sunken);
+}
+
+.ai-recognition-stage--over {
+    box-shadow: inset 0 0 0 2px var(--ebk-color-primary);
+}
+
+.ai-recognition-image-button {
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+
+    &:disabled {
+        cursor: default;
+    }
+
+    &:focus-visible {
+        outline: var(--ebk-focus-outline);
+        outline-offset: -4px;
+    }
+}
+
+.ai-recognition-image {
+    width: 100%;
+    height: 100%;
+}
+
+.ai-recognition-image-placeholder {
+    width: 100%;
+    height: 100%;
+    background-color: var(--ebk-color-surface-sunken);
+}
+
+.ai-recognition-empty {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ebk-space-3);
+    margin: var(--ebk-space-4);
+    padding: var(--ebk-space-6);
+    border: 1px dashed rgba(var(--ebk-color-hairline-rgb), calc(var(--ebk-color-hairline-opacity) * 3));
+    border-radius: var(--ebk-radius-panel);
+    background: transparent;
+    color: var(--ebk-color-text-secondary);
+    text-align: center;
+    cursor: pointer;
+    transition: border-color var(--ebk-motion-duration-xs) var(--ebk-motion-ease-standard);
+
+    &:hover:not(:disabled),
+    .ai-recognition-stage--over > & {
+        border-color: var(--ebk-color-primary);
+        background-color: var(--ebk-color-selected-background);
+    }
+}
+
+.ai-recognition-empty-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    border: 1px solid var(--ebk-color-copper-line);
+    border-radius: var(--ebk-radius-pill);
+    color: var(--ebk-color-primary-text);
+}
+
+.ai-recognition-empty-title {
+    max-width: 32rem;
+    color: var(--ebk-color-text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.ai-recognition-empty-text {
+    max-width: 32rem;
+    font-size: 0.875rem;
+    overflow-wrap: anywhere;
+}
+
+.ai-recognition-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ebk-space-3);
+    background-color: rgba(var(--ebk-color-surface-rgb), 0.82);
+    color: var(--ebk-color-text-primary);
+}
+
+.ai-recognition-overlay-title {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.ai-recognition-status,
+.ai-recognition-failure {
+    position: absolute;
+    inset-inline: var(--ebk-space-4);
+    inset-block-end: var(--ebk-space-4);
+    overflow: hidden;
+    border: 1px solid var(--ebk-color-hairline);
+    border-radius: var(--ebk-radius-panel);
+    background-color: var(--ebk-color-surface-raised);
+    box-shadow: var(--ebk-shadow-md);
+}
+
+.ai-recognition-failure {
+    border: 0;
+
+    > .ebk-state-panel {
+        background-color: var(--ebk-color-surface-raised);
+    }
+}
+
+.ai-recognition-status-body {
+    display: flex;
+    align-items: center;
+    gap: var(--ebk-space-3);
+    padding: var(--ebk-space-3) var(--ebk-space-4);
+
+    > .v-icon {
+        color: var(--ebk-color-primary-text);
+    }
+}
+
+.ai-recognition-status-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.ai-recognition-status-title {
+    color: var(--ebk-color-text-primary);
+    font-weight: 600;
+}
+
+.ai-recognition-status-hint {
+    color: var(--ebk-color-text-secondary);
+    font-size: 0.8125rem;
+    overflow-wrap: anywhere;
+}
+</style>

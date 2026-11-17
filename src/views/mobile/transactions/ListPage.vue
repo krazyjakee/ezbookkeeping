@@ -172,10 +172,15 @@
             </f7-block>
         </div>
 
-        <f7-list strong inset dividers :class="{ 'margin-vertical': pageType === TransactionListPageType.Calendar.type || showSearchbar, 'margin-vertical-half': pageType !== TransactionListPageType.Calendar.type && !showSearchbar }"
-                 v-if="!loading && noTransaction">
-            <f7-list-item :title="tt('No transaction data')"></f7-list-item>
-        </f7-list>
+        <div class="transaction-list-state" :class="{ 'margin-vertical': pageType === TransactionListPageType.Calendar.type || showSearchbar, 'margin-vertical-half': pageType !== TransactionListPageType.Calendar.type && !showSearchbar }"
+             v-if="!loading && noTransaction">
+            <state-panel type="empty" :title="tt('No results')" :text="query.keyword" v-if="query.keyword" />
+            <state-panel type="empty" :title="tt('No transaction data')" v-else>
+                <template #actions v-if="canAddTransaction && pageType !== TransactionListPageType.Gallery.type">
+                    <f7-button tonal :text="tt('Add')" @click="add"></f7-button>
+                </template>
+            </state-panel>
+        </div>
 
         <f7-block class="combination-list-wrapper"
                   :class="{ 'margin-vertical': index > 0 || pageType === TransactionListPageType.Calendar.type || showSearchbar, 'margin-vertical-half': index === 0 && pageType !== TransactionListPageType.Calendar.type && !showSearchbar, 'no-accordion-toggle': pageType !== TransactionListPageType.List.type && pageType !== TransactionListPageType.Gallery.type }"
@@ -190,19 +195,23 @@
                         <f7-list strong inset dividers media-list
                                  class="transaction-amount-list combination-list-header"
                                  :class="transactionMonthList.opened ? 'combination-list-opened' : 'combination-list-closed'">
-                            <f7-list-item>
+                            <f7-list-item class="ebk-panel-header-strip transaction-month-header">
                                 <template #title>
-                                    <small>
-                                        <span>{{ getDisplayLongYearMonth(transactionMonthList) }}</span>
-                                    </small>
-                                    <small class="transaction-amount-statistics" v-if="showTotalAmountInTransactionListPage && hasMonthTotalAmount(transactionMonthList)">
-                                        <span class="text-income">
-                                            {{ getDisplayMonthTotalAmount(transactionMonthList, '+')?.income }}
-                                        </span>
-                                        <span class="text-expense">
-                                            {{ getDisplayMonthTotalAmount(transactionMonthList, '-')?.expense }}
-                                        </span>
-                                    </small>
+                                    <div class="transaction-month-summary">
+                                        <small class="transaction-month-name">
+                                            <span>{{ getDisplayLongYearMonth(transactionMonthList) }}</span>
+                                        </small>
+                                        <small class="transaction-amount-statistics" v-if="showTotalAmountInTransactionListPage && hasMonthTotalAmount(transactionMonthList)">
+                                            <span class="transaction-amount-statistics-item">
+                                                <span class="transaction-amount-statistics-label ebk-technical-heading">{{ monthTotalIncomeLabel }}</span>
+                                                <signed-amount type="income" :text="getDisplayMonthTotalAmount(transactionMonthList, '')?.income ?? ''" />
+                                            </span>
+                                            <span class="transaction-amount-statistics-item">
+                                                <span class="transaction-amount-statistics-label ebk-technical-heading">{{ monthTotalExpenseLabel }}</span>
+                                                <signed-amount type="expense" :text="getDisplayMonthTotalAmount(transactionMonthList, '')?.expense ?? ''" />
+                                            </span>
+                                        </small>
+                                    </div>
                                     <f7-icon class="combination-list-chevron-icon" :f7="transactionMonthList.opened ? 'chevron_up' : 'chevron_down'"></f7-icon>
                                 </template>
                             </f7-list-item>
@@ -263,9 +272,11 @@
                                                 </div>
                                             </div>
                                             <div class="item-after">
-                                                <div class="transaction-amount" v-if="transaction.sourceAccount"
-                                                     :class="{ 'text-expense': transaction.type === TransactionType.Expense, 'text-income': transaction.type === TransactionType.Income }">
-                                                    <span>{{ getDisplayAmount(transaction) }}</span>
+                                                <div class="transaction-amount" v-if="transaction.sourceAccount">
+                                                    <signed-amount show-type-label
+                                                                   :type="getSignedAmountType(transaction)"
+                                                                   :hide-sign="transaction.hideAmount"
+                                                                   :text="getDisplayAmount(transaction)" />
                                                 </div>
                                             </div>
                                         </div>
@@ -654,6 +665,9 @@
 </template>
 
 <script setup lang="ts">
+import SignedAmount from '@/components/common/SignedAmount.vue';
+import StatePanel from '@/components/common/StatePanel.vue';
+
 import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue';
 import type { Router } from 'framework7/types';
 
@@ -687,7 +701,7 @@ import {
     DateRange
 } from '@/core/datetime.ts';
 import { AmountFilterType } from '@/core/numeral.ts';
-import { TransactionType } from '@/core/transaction.ts';
+import { TransactionType, TransactionAmountType } from '@/core/transaction.ts';
 import type { TransactionCategory } from '@/models/transaction_category.ts';
 import { type Transaction, TransactionTagFilter } from '@/models/transaction.ts';
 
@@ -748,6 +762,7 @@ const {
     fiscalYearStart,
     selectedAccountDefaultCurrency,
     showTotalAmountInTransactionListPage,
+    totalAmountTypeInTransactionListPage,
     showTagInTransactionListPage,
     showPictureIndicatorInTransactionListPage,
     allDateRanges,
@@ -881,6 +896,21 @@ const noTransaction = computed<boolean>(() => {
 });
 
 const hasMoreTransaction = computed<boolean>(() => transactionsStore.hasMoreTransaction);
+
+const monthTotalIncomeLabel = computed<string>(() => totalAmountTypeInTransactionListPage.value === TransactionAmountType.IncomeAndExpense ? tt('Income') : tt('Total Inflows'));
+const monthTotalExpenseLabel = computed<string>(() => totalAmountTypeInTransactionListPage.value === TransactionAmountType.IncomeAndExpense ? tt('Expense') : tt('Total Outflows'));
+
+function getSignedAmountType(transaction: Transaction): 'income' | 'expense' | 'transfer' | 'none' {
+    if (transaction.type === TransactionType.Income) {
+        return 'income';
+    } else if (transaction.type === TransactionType.Expense) {
+        return 'expense';
+    } else if (transaction.type === TransactionType.Transfer) {
+        return 'transfer';
+    }
+
+    return 'none';
+}
 
 function getTransactionMonthTitleDomId(yearMonth: TextualYearMonth): string {
     return 'transaction_month_title_' + yearMonth;
@@ -1589,14 +1619,101 @@ init();
     padding-inline-end: 8px;
 }
 
-.list.transaction-amount-list .transaction-amount-statistics {
-    overflow: hidden;
-    text-overflow: ellipsis;
+/* Month header: a panel header strip (start tick) with the period summary (guideline D1) */
+.list.transaction-amount-list li.ebk-panel-header-strip.transaction-month-header {
+    display: block;
+    min-height: 0;
+    padding-inline: 0;
+    border-block-end: 0;
+    color: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    letter-spacing: normal !important;
+    text-transform: none;
 }
 
-.list.transaction-amount-list .transaction-amount-statistics > span {
-    margin-inline-start: 8px;
+.list.transaction-amount-list li.transaction-month-header .item-title {
+    align-items: center;
+    gap: var(--ebk-space-2);
+}
+
+.list.transaction-amount-list .transaction-month-summary {
+    display: flex;
+    min-width: 0;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: var(--ebk-space-3);
+    row-gap: 2px;
+}
+
+.list.transaction-amount-list .transaction-month-name {
+    color: var(--ebk-color-text-primary);
+    font-weight: 600;
+}
+
+.list.transaction-amount-list .transaction-amount-statistics {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    column-gap: var(--ebk-space-3);
+    row-gap: 2px;
     font-weight: normal;
+}
+
+.list.transaction-amount-list .transaction-amount-statistics-item {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--ebk-space-1);
+    white-space: nowrap;
+}
+
+.list.transaction-amount-list .transaction-amount-statistics-label {
+    color: var(--ebk-color-text-secondary);
+    font-size: 0.6875rem;
+}
+
+.list.transaction-amount-list .transaction-amount-statistics .ebk-signed-amount {
+    font-weight: 600;
+}
+
+.transaction-list-state {
+    margin-inline: var(--f7-list-inset-side-margin, 12px);
+}
+
+/* Transaction rows: at least 52px, category icon in a 32px tile, signed amount with its type label */
+.list.transaction-info-list li.transaction-info > .item-link > .item-content,
+.list.transaction-info-list li.transaction-info > .swipeout-content > .item-link > .item-content {
+    min-height: 52px;
+}
+
+.list.transaction-info-list li.transaction-info .transaction-icon {
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--ebk-color-hairline);
+    border-radius: var(--ebk-radius-control);
+    background-color: var(--ebk-color-surface-sunken);
+}
+
+.list.transaction-info-list li.transaction-info .transaction-icon .icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+}
+
+.list.transaction-info-list li.transaction-info .transaction-amount .ebk-signed-amount {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-end;
+    font-weight: 600;
+    text-align: end;
+}
+
+.list.transaction-info-list li.transaction-info .transaction-amount .ebk-signed-amount-type {
+    font-size: 0.6875rem;
+    font-weight: 400;
+    line-height: 1.2;
 }
 
 .list.transaction-info-list li.transaction-info .item-media + .item-inner {
