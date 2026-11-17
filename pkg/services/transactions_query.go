@@ -89,7 +89,15 @@ func (s *TransactionService) GetAllTransactionsInOneAccountWithAccountBalanceByM
 	var allTransactions []*models.Transaction
 
 	for maxTransactionTime > 0 {
-		transactions, err := s.GetTransactionsByMaxTime(c, uid, maxTransactionTime, 0, 0, nil, []int64{accountId}, nil, false, "", "", core.MATCH_MODE_DEFAULT, false, 1, pageCount, false, true)
+		var transactions []*models.Transaction
+		var err error
+
+		// transactions before the requested range only contribute to the opening balance and are never returned
+		if maxTransactionTime < minTransactionTime {
+			transactions, err = s.getTransactionBalanceFieldsByMaxTime(c, uid, maxTransactionTime, []int64{accountId}, pageCount, true)
+		} else {
+			transactions, err = s.GetTransactionsByMaxTime(c, uid, maxTransactionTime, 0, 0, nil, []int64{accountId}, nil, false, "", "", core.MATCH_MODE_DEFAULT, false, 1, pageCount, false, true)
+		}
 
 		if err != nil {
 			return nil, nil, nil, nil, nil, err
@@ -179,7 +187,7 @@ func (s *TransactionService) GetAllAccountsDailyOpeningAndClosingBalance(c core.
 	var allTransactions []*models.Transaction
 
 	for maxTransactionTime > 0 {
-		transactions, err := s.GetTransactionsByMaxTime(c, uid, maxTransactionTime, 0, 0, nil, nil, nil, false, "", "", core.MATCH_MODE_DEFAULT, false, 1, pageCountForLoadTransactionAmounts, false, false)
+		transactions, err := s.getTransactionBalanceFieldsByMaxTime(c, uid, maxTransactionTime, nil, pageCountForLoadTransactionAmounts, false)
 
 		if err != nil {
 			return nil, err
@@ -420,6 +428,23 @@ func (s *TransactionService) getTransactionsByMaxTimeWithOffset(c core.Context, 
 	sess = s.appendFilterPicturesConditionToQuery(sess, uid, mustHavePictures)
 
 	err = sess.Limit(limit, offset).OrderBy("transaction_time desc").Find(&transactions)
+
+	return transactions, err
+}
+
+// getTransactionBalanceFieldsByMaxTime returns the same transactions as GetTransactionsByMaxTime filtered only by account ids, but loads only the columns needed to accumulate account balances
+func (s *TransactionService) getTransactionBalanceFieldsByMaxTime(c core.Context, uid int64, maxTransactionTime int64, accountIds []int64, count int32, noDuplicated bool) ([]*models.Transaction, error) {
+	if uid <= 0 {
+		return nil, errs.ErrUserIdInvalid
+	}
+
+	if count < 1 {
+		return nil, errs.ErrPageCountInvalid
+	}
+
+	var transactions []*models.Transaction
+	condition, conditionParams := s.buildTransactionQueryCondition(uid, maxTransactionTime, 0, 0, nil, accountIds, "", "", core.MATCH_MODE_DEFAULT, noDuplicated)
+	err := s.UserDataDB(uid).NewSession(c).Cols("transaction_id", "type", "account_id", "transaction_time", "amount", "related_account_amount").Where(condition, conditionParams...).Limit(int(count), 0).OrderBy("transaction_time desc").Find(&transactions)
 
 	return transactions, err
 }
