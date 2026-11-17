@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 
@@ -49,10 +50,31 @@ func newTestConfig(t *testing.T, dir string, name string) *settings.Config {
 func initializeTestInstance(t *testing.T, config *settings.Config) {
 	settings.SetCurrentConfig(config)
 	require.NoError(t, datastore.InitializeDataStore(config))
+	closeTestDatabasesOnCleanup(t)
 
 	for _, table := range datastore.GetAllTables() {
 		require.NoError(t, table.Store().SyncStructs(table.NewBean()))
 	}
+}
+
+// closeTestDatabasesOnCleanup closes the database engines created for the test, otherwise the SQLite files
+// stay open and the temporary directory cannot be removed on Windows
+func closeTestDatabasesOnCleanup(t *testing.T) {
+	stores := []*datastore.DataStore{datastore.Container.UserStore, datastore.Container.TokenStore, datastore.Container.UserDataStore}
+
+	t.Cleanup(func() {
+		for _, store := range stores {
+			if store == nil {
+				continue
+			}
+
+			for i := 0; i < store.Count(); i++ {
+				if accessor, ok := store.Get(i).(datastore.RawDatabaseAccessor); ok {
+					_ = accessor.MasterEngine().Close()
+				}
+			}
+		}
+	})
 }
 
 func int64Pointer(value int64) *int64 {
@@ -193,7 +215,9 @@ func TestBackupAndRestore_EndToEnd(t *testing.T) {
 
 	fileInfo, err := os.Stat(result.FilePath)
 	require.NoError(t, err)
-	assert.Equal(t, os.FileMode(0600), fileInfo.Mode().Perm())
+	if runtime.GOOS != "windows" {
+		assert.Equal(t, os.FileMode(0600), fileInfo.Mode().Perm())
+	}
 
 	status, err := ReadBackupStatus(sourceConfig.BackupPath)
 	require.NoError(t, err)

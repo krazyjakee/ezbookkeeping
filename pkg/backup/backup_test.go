@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 
@@ -360,7 +361,9 @@ func TestBackupStatus_Update(t *testing.T) {
 
 	fileInfo, err := os.Stat(filepath.Join(dir, backupStatusFileName))
 	require.NoError(t, err)
-	assert.Equal(t, os.FileMode(0600), fileInfo.Mode().Perm())
+	if runtime.GOOS != "windows" {
+		assert.Equal(t, os.FileMode(0600), fileInfo.Mode().Perm())
+	}
 }
 
 func TestReadArchive_DetectsMissingManifest(t *testing.T) {
