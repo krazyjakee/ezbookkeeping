@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue';
+import { ref, shallowRef, computed } from 'vue';
 import { defineStore } from 'pinia';
 
 import { useSettingsStore } from './setting.ts';
@@ -212,9 +212,9 @@ export const useStatisticsStore = defineStore('statistics', () => {
         sortingType: ChartSortingType.Default.type
     });
 
-    const transactionCategoryStatisticsData = ref<TransactionStatisticResponse | null>(null);
-    const transactionCategoryTrendsData = ref<TransactionStatisticTrendsResponseItem[]>([]);
-    const transactionAssetTrendsData = ref<TransactionStatisticAssetTrendsResponseItem[]>([]);
+    const transactionCategoryStatisticsData = shallowRef<TransactionStatisticResponse | null>(null);
+    const transactionCategoryTrendsData = shallowRef<TransactionStatisticTrendsResponseItem[]>([]);
+    const transactionAssetTrendsData = shallowRef<TransactionStatisticAssetTrendsResponseItem[]>([]);
     const transactionStatisticsStateInvalid = ref<boolean>(true);
 
     const categoricalAnalysisChartDataCategory = computed<string>(() => {
