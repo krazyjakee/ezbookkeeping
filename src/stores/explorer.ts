@@ -35,10 +35,10 @@ import {
 import {
     type InsightsExplorerNewDisplayOrderRequest,
     type InsightsExplorerInfoResponse,
-    type InsightsExplorerMatchContext,
     InsightsExplorer,
     InsightsExplorerBasicInfo
 } from '@/models/explorer.ts';
+import { type InsightsExplorerMatchContext } from '@/models/explorer_condition.ts';
 import {
     type CodingAssistantResponse,
     CodingAssistantType
