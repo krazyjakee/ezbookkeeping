@@ -17,7 +17,9 @@
         @paste="onPaste"
         @click:clear="onClear"
     >
-        <v-menu activator="parent" content-class="date-time-select-menu" :open-on-click="false" :close-on-content-click="false" v-model="menuOpen">
+        <!-- the field is only the anchor of the picker (the calendar icon opens it), so it does not get menu button semantics (#36) -->
+        <v-menu activator="parent" content-class="date-time-select-menu" :open-on-click="false" :close-on-content-click="false"
+                :activator-props="{ 'aria-haspopup': undefined, 'aria-expanded': undefined, 'aria-controls': undefined, 'aria-owns': undefined }" v-model="menuOpen">
             <v-sheet>
                 <date-time-picker :is-dark-mode="isDarkMode"
                                   :enable-time-picker="false"

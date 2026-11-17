@@ -1,6 +1,7 @@
 <template>
     <v-dialog persistent min-width="320" max-width="500" width="auto"
-              :content-props="{ 'aria-labelledby': titleId }" v-model="showState" @after-enter="focusSafestAction">
+              :content-props="{ 'aria-labelledby': titleId }" :aria-labelledby="titleId"
+              v-model="showState" @after-enter="focusSafestAction" @after-leave="restoreFocus" @keydown.esc.stop="cancel">
         <v-card class="dialog-layout-card ebk-confirm-dialog" :class="{ 'ebk-confirm-dialog--destructive': isDestructive }">
             <div class="ebk-dialog-title-strip">
                 <v-icon class="ebk-dialog-title-icon" size="20" :color="finalColor"
@@ -54,9 +55,11 @@ const cancelButton = useTemplateRef<ComponentPublicInstance>('cancelButton');
 const isDestructive = computed<boolean>(() => finalColor.value === 'error');
 
 let resolveFunc: ((value?: unknown) => void) | null = null;
+let previouslyFocusedElement: HTMLElement | null = null;
 let rejectFunc: ((reason?: unknown) => void) | null = null;
 
 function open(titleOrText: string, textOrOptions?: string | Record<string, unknown>, options?: Record<string, unknown>): Promise<unknown> {
+    previouslyFocusedElement = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null;
     showState.value = true;
 
     if (!textOrOptions || isObject(textOrOptions)) { // only one parameter or second parameter is options
@@ -114,6 +117,16 @@ function cancel(): void {
 function focusSafestAction(): void {
     const element = cancelButton.value?.$el as HTMLElement | undefined;
     element?.focus();
+}
+
+// the dialog is opened from code (no activator), so return the focus to the control that opened it (#36)
+function restoreFocus(): void {
+    const element = previouslyFocusedElement;
+    previouslyFocusedElement = null;
+
+    if (element && element.isConnected && (!document.activeElement || document.activeElement === document.body)) {
+        element.focus({ preventScroll: true });
+    }
 }
 
 watch(showState, newValue => {

@@ -65,7 +65,11 @@ $ebk-latin-script-languages: en, de, es, fr, it, nl, pl, pt, ro, sk, sl, tr, vi;
 
     --ebk-color-primary: var(--ebk-copper-500);
     --ebk-color-primary-hover: var(--ebk-copper-600);
-    --ebk-color-primary-pressed: var(--ebk-copper-700);
+    --ebk-color-primary-pressed: var(--ebk-copper-600);
+    // text and icons on copper fills (primary button, mobile add key, selected segmented control) in both themes:
+    // 5.9:1 on copper 500 and 5.0:1 on copper 600, white would only reach 3.2:1 (#36)
+    --ebk-color-on-primary: #140f0d;
+    --ebk-color-on-primary-rgb: 20, 15, 13;
     // legacy RGB triplet of the primary color
     --ebk-primary-color: 198, 126, 72;
 
@@ -162,6 +166,8 @@ $ebk-latin-script-languages: en, de, es, fr, it, nl, pl, pt, ro, sk, sl, tr, vi;
     --ebk-color-copper-line-opacity: 0.45;
     --ebk-color-selected-opacity: 0.1;
     --ebk-color-primary-text: var(--ebk-copper-700);
+    // error text that passes AA on light surfaces (#ff3b30 reaches only 3.5:1 on white)
+    --ebk-color-error-text: #c4161c;
     --ebk-focus-ring-color: var(--ebk-copper-600);
 
     --ebk-shadow-color: 68, 48, 34;
@@ -185,6 +191,7 @@ $ebk-latin-script-languages: en, de, es, fr, it, nl, pl, pt, ro, sk, sl, tr, vi;
     --ebk-color-copper-line-opacity: 0.55;
     --ebk-color-selected-opacity: 0.16;
     --ebk-color-primary-text: var(--ebk-copper-500);
+    --ebk-color-error-text: var(--ebk-color-error);
     --ebk-focus-ring-color: var(--ebk-copper-500);
 
     --ebk-shadow-color: 0, 0, 0;
@@ -262,6 +269,8 @@ body :is([class*="amount"], [class*="balance"]) {
 
 .ebk-panel-header-strip {
     display: flex;
+    /* long translations, large text and narrow viewports wrap the actions onto a new row (README §7) */
+    flex-wrap: wrap;
     align-items: center;
     gap: var(--ebk-space-2);
     min-height: var(--ebk-header-strip-height);

@@ -34,7 +34,7 @@
     --ebk-color-copper-line: rgba(var(--ebk-copper-500-rgb), 0.45);
     --ebk-color-selected-background: rgba(var(--ebk-copper-500-rgb), 0.1);
     --ebk-color-primary-text: var(--ebk-copper-700);
-    --ebk-color-on-primary: #1b1411;
+    --ebk-color-on-primary: #140f0d;
 
     --ebk-color-success: #4cd964;
     --ebk-color-info: #2196f3;
@@ -89,7 +89,7 @@
     --vp-c-brand-3: var(--ebk-copper-500);
     --vp-c-brand-soft: rgba(var(--ebk-copper-500-rgb), 0.12);
 
-    --vp-home-hero-name-color: var(--ebk-copper-500);
+    --vp-home-hero-name-color: var(--ebk-color-primary-text);
     --vp-home-hero-name-background: transparent;
 
     --vp-button-brand-border: transparent;
@@ -175,6 +175,8 @@
     --vp-c-brand-soft: rgba(var(--ebk-copper-500-rgb), 0.16);
 
     --vp-code-bg: rgba(236, 226, 217, 0.08);
+    /* inline code sits on a lighter well (table rows, tips): copper 300 keeps it well above 4.5:1 (#36) */
+    --vp-code-color: var(--ebk-copper-300);
     --vp-code-copy-code-bg: var(--ebk-color-surface-raised);
     --vp-code-copy-code-hover-bg: var(--ebk-color-surface-raised);
     --vp-code-line-highlight-color: rgba(var(--ebk-copper-500-rgb), 0.16);
@@ -816,6 +818,14 @@ body {
         outline-color: Highlight;
     }
 }
+
+/* Code highlighting (#36): a few github-light / github-dark token colors reach only 3-4:1 on the sunken code well,
+   these get the nearest shade that passes WCAG AA (4.5:1). The inline --shiki-* values are overridden with !important. */
+html:not(.dark) .vp-doc [class*='language-'] span[style*='--shiki-light:#D73A49'] { --shiki-light: #c23442 !important; }
+html:not(.dark) .vp-doc [class*='language-'] span[style*='--shiki-light:#E36209'] { --shiki-light: #af4b07 !important; }
+html:not(.dark) .vp-doc [class*='language-'] span[style*='--shiki-light:#22863A'] { --shiki-light: #1f7934 !important; }
+html:not(.dark) .vp-doc [class*='language-'] span[style*='--shiki-light:#6A737D'] { --shiki-light: #626a73 !important; }
+html.dark .vp-doc [class*='language-'] span[style*='--shiki-dark:#6A737D'] { --shiki-dark: #7f878f !important; }
 
 @media print {
     body {

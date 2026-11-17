@@ -41,7 +41,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Timezone') }}</span>
                             <v-spacer/>
-                            <v-autocomplete
+                            <v-autocomplete :aria-label="tt('Timezone')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayNameWithUtcOffset"
@@ -60,7 +60,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Show Account Balance') }}</span>
                             <v-spacer/>
-                            <v-switch class="ms-4" v-model="showAccountBalance"/>
+                            <v-switch :aria-label="tt('Show Account Balance')" class="ms-4" v-model="showAccountBalance"/>
                         </div>
 
                         <div class="setting-item">
@@ -84,7 +84,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Auto-update Exchange Rates Data') }}</span>
                             <v-spacer/>
-                            <v-switch class="ms-4" v-model="isAutoUpdateExchangeRatesData"/>
+                            <v-switch :aria-label="tt('Auto-update Exchange Rates Data')" class="ms-4" v-model="isAutoUpdateExchangeRatesData"/>
                         </div>
                     </v-card-text>
                 </v-form>
@@ -101,7 +101,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Show Add Transaction Button') }}</span>
                             <v-spacer/>
-                            <v-switch class="ms-4" v-model="showAddTransactionButtonInDesktopNavbar"/>
+                            <v-switch :aria-label="tt('Show Add Transaction Button')" class="ms-4" v-model="showAddTransactionButtonInDesktopNavbar"/>
                         </div>
                     </v-card-text>
                 </v-form>
@@ -127,13 +127,13 @@
                         <div class="setting-item">
                             <span>{{ tt('Show Amount') }}</span>
                             <v-spacer/>
-                            <v-switch class="ms-4" v-model="showAmountInHomePage"/>
+                            <v-switch :aria-label="tt('Show Amount')" class="ms-4" v-model="showAmountInHomePage"/>
                         </div>
 
                         <div class="setting-item">
                             <span>{{ tt('Timezone Used for Statistics') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Timezone Used for Statistics')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -199,7 +199,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Transactions Per Page') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Transactions Per Page')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="name"
@@ -215,13 +215,13 @@
                         <div class="setting-item">
                             <span>{{ tt('Show Monthly Total Amount') }}</span>
                             <v-spacer/>
-                            <v-switch class="ms-4" v-model="showTotalAmountInTransactionListPage"/>
+                            <v-switch :aria-label="tt('Show Monthly Total Amount')" class="ms-4" v-model="showTotalAmountInTransactionListPage"/>
                         </div>
 
                         <div class="setting-item">
                             <span>{{ tt('Total Amount Calculation Method') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Total Amount Calculation Method')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="name"
@@ -240,19 +240,19 @@
                         <div class="setting-item">
                             <span>{{ tt('Show Transaction Tags') }}</span>
                             <v-spacer/>
-                            <v-switch class="ms-4" v-model="showTagInTransactionListPage"/>
+                            <v-switch :aria-label="tt('Show Transaction Tags')" class="ms-4" v-model="showTagInTransactionListPage"/>
                         </div>
 
                         <div class="setting-item">
                             <span>{{ tt('Show Transaction Picture Indicator') }}</span>
                             <v-spacer/>
-                            <v-switch class="ms-4" v-model="showPictureIndicatorInTransactionListPage"/>
+                            <v-switch :aria-label="tt('Show Transaction Picture Indicator')" class="ms-4" v-model="showPictureIndicatorInTransactionListPage"/>
                         </div>
 
                         <div class="setting-item">
                             <span>{{ tt('Default Keyword Search Matching Mode') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Default Keyword Search Matching Mode')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -279,7 +279,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Automatically Save Draft') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Automatically Save Draft')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="name"
@@ -295,13 +295,13 @@
                         <div class="setting-item">
                             <span>{{ tt('Automatically Add Geolocation') }}</span>
                             <v-spacer/>
-                            <v-switch class="ms-4" v-model="isAutoGetCurrentGeoLocation"/>
+                            <v-switch :aria-label="tt('Automatically Add Geolocation')" class="ms-4" v-model="isAutoGetCurrentGeoLocation"/>
                         </div>
 
                         <div class="setting-item">
                             <span>{{ tt('Transaction Picture Upload Quality') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Transaction Picture Upload Quality')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -328,7 +328,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Always Require Confirmation of Clipboard Content Before Submission') }}</span>
                             <v-spacer/>
-                            <v-switch class="ms-4" v-model="isAlwaysRequireConfirmationOfClipboardContentBeforeSubmission"/>
+                            <v-switch :aria-label="tt('Always Require Confirmation of Clipboard Content Before Submission')" class="ms-4" v-model="isAlwaysRequireConfirmationOfClipboardContentBeforeSubmission"/>
                         </div>
                     </v-card-text>
                 </v-form>
@@ -345,7 +345,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Auto Upload AI Recognition Image as Transaction Picture') }}</span>
                             <v-spacer/>
-                            <v-switch class="ms-4" v-model="isAutoUploadTransactionPictureForAIRecognition"/>
+                            <v-switch :aria-label="tt('Auto Upload AI Recognition Image as Transaction Picture')" class="ms-4" v-model="isAutoUploadTransactionPictureForAIRecognition"/>
                         </div>
                     </v-card-text>
                 </v-form>
@@ -362,7 +362,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Remember Last Selected File Type') }}</span>
                             <v-spacer/>
-                            <v-switch class="ms-4" v-model="rememberLastSelectedFileTypeInImportTransactionDialog"/>
+                            <v-switch :aria-label="tt('Remember Last Selected File Type')" class="ms-4" v-model="rememberLastSelectedFileTypeInImportTransactionDialog"/>
                         </div>
                     </v-card-text>
                 </v-form>
@@ -379,7 +379,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Default Date Range') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Default Date Range')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -396,7 +396,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Show Transaction Tags') }}</span>
                             <v-spacer/>
-                            <v-switch class="ms-4" v-model="showTagInInsightsExplorerPage"/>
+                            <v-switch :aria-label="tt('Show Transaction Tags')" class="ms-4" v-model="showTagInInsightsExplorerPage"/>
                         </div>
                     </v-card-text>
                 </v-form>
@@ -426,19 +426,19 @@
                         <div class="setting-item">
                             <span>{{ tt('Hide Categories Without Accounts') }}</span>
                             <v-spacer/>
-                            <v-switch class="ms-4" v-model="hideCategoriesWithoutAccounts"/>
+                            <v-switch :aria-label="tt('Hide Categories Without Accounts')" class="ms-4" v-model="hideCategoriesWithoutAccounts"/>
                         </div>
 
                         <div class="setting-item">
                             <span>{{ tt('Collapse Sub-accounts by Default') }}</span>
                             <v-spacer/>
-                            <v-switch class="ms-4" v-model="collapseSubAccountsByDefault"/>
+                            <v-switch :aria-label="tt('Collapse Sub-accounts by Default')" class="ms-4" v-model="collapseSubAccountsByDefault"/>
                         </div>
 
                         <div class="setting-item">
                             <span>{{ tt('Default Date Range for Reconciliation Statement Button') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Default Date Range for Reconciliation Statement Button')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -466,7 +466,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Sort by') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Sort by')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"

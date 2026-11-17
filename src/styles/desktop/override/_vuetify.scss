@@ -1,6 +1,19 @@
 @use '../../common/tokens' as ebk;
 
 /** Replacing the default style of Vuetify components */
+
+// copper text passes AA (docs/design/README.md §3.1, #36): on light surfaces copper 500 reaches only 3.2:1,
+// so Vuetify's text-primary uses copper 700 in the light theme. Progress indicators keep brand copper.
+.v-theme--light .text-primary:not(.v-progress-linear, .v-progress-circular),
+.v-theme--light.text-primary:not(.v-progress-linear, .v-progress-circular) {
+    color: var(--ebk-color-primary-text) !important;
+}
+
+// error text (field messages, error buttons and labels) uses the AA error text color in the light theme (3.5:1 otherwise)
+.v-theme--light .text-error:not(.v-progress-linear, .v-progress-circular),
+.v-theme--light .v-input--error:not(.v-input--disabled) .v-input__details .v-messages {
+    color: var(--ebk-color-error-text) !important;
+}
 [class*="--variant-outlined"].text-default {
     border-color: rgba(var(--v-border-color), 0.22);
 }
@@ -21,7 +34,7 @@
 
         .v-tab--selected {
             background: rgb(var(--v-theme-primary));
-            color: rgb(var(--v-theme-on-primary));
+            color: rgb(var(--v-theme-on-primary)) !important;
         }
 
         .v-tab:not(.v-tab--selected):not(.v-btn--disabled):hover {

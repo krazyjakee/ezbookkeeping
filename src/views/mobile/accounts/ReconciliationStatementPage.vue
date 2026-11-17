@@ -6,7 +6,7 @@
                 <span style="color: var(--f7-text-color)" v-if="!finishQuery">{{ tt('Reconciliation Statement') }}</span>
                 <f7-link popover-open=".display-mode-popover-menu" :class="{ 'disabled': loading || updatingLastReconciledTime }" v-if="finishQuery">
                     <span style="color: var(--f7-text-color)">{{ tt('Reconciliation Statement') }}</span>
-                    <f7-icon class="page-title-bar-icon" style="opacity: 0.5"
+                    <f7-icon class="page-title-bar-icon"
                              color="gray" f7="chevron_down_circle_fill"></f7-icon>
                 </f7-link>
             </f7-nav-title>

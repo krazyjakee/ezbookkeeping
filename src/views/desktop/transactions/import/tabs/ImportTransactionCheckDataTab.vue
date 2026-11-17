@@ -2545,7 +2545,7 @@ defineExpose({
 }
 
 .import-check-issues-total {
-    color: rgb(var(--v-theme-error));
+    color: var(--ebk-color-error-text);
 }
 
 .import-check-issues-list {

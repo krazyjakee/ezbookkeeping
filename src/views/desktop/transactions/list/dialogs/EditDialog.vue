@@ -50,10 +50,10 @@
                                          v-if="!transaction.hideAmount" @click="transaction.hideAmount = true"></v-list-item>
                         </v-list>
                         <v-list v-if="activeTab === 'map'">
-                            <v-list-item key="setGeoLocationByClickMap" value="setGeoLocationByClickMap"
+                            <v-list-item @click="setGeoLocationByClickMap = !setGeoLocationByClickMap; geoMenuState = false" key="setGeoLocationByClickMap" value="setGeoLocationByClickMap"
                                          :prepend-icon="mdiMapMarkerOutline"
                                          :disabled="!transaction.geoLocation" v-if="isSupportGetGeoLocationByClick()">
-                                <v-list-item-title class="cursor-pointer" @click="setGeoLocationByClickMap = !setGeoLocationByClickMap; geoMenuState = false">
+                                <v-list-item-title class="cursor-pointer">
                                     <div class="d-flex align-center">
                                         <span>{{ tt('Click on Map to Set Geographic Location') }}</span>
                                         <v-spacer/>

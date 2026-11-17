@@ -8,7 +8,11 @@
         </overview-widget-header>
         <v-progress-linear class="overview-widget__busy-bar" color="primary" height="2" indeterminate
                            :aria-label="tt('Loading...')" v-if="loading && !showSkeletonOnly" />
-        <div class="overview-widget__body" :class="bodyClass">
+        <!-- chart widgets: the canvas is exposed as one image named by the panel title and described by the footer summary (D7, #36) -->
+        <div class="overview-widget__body" :class="bodyClass"
+             :role="isChartImage ? 'img' : undefined"
+             :aria-labelledby="isChartImage ? titleId : undefined"
+             :aria-describedby="isChartImage && $slots['footer'] ? footerId : undefined">
             <div class="overview-widget__state" v-if="showError">
                 <state-panel type="error" compact :title="tt('An error occurred')">
                     <template #actions>
@@ -21,7 +25,7 @@
             </div>
             <slot v-else />
         </div>
-        <div class="overview-widget__footer" v-if="$slots['footer'] && !showError && !showEmpty">
+        <div class="overview-widget__footer" :id="footerId" v-if="$slots['footer'] && !showError && !showEmpty">
             <slot name="footer" />
         </div>
     </section>
@@ -51,14 +55,17 @@ const props = defineProps<{
     emptyText?: string;
     bracketed?: boolean;
     bodyClass?: string | Record<string, boolean> | string[];
+    chart?: boolean;
 }>();
 
 const { tt } = useI18n();
 
 const titleId = `overview-widget-${useId()}`;
+const footerId = `${titleId}-footer`;
 const { loadFailed, retry } = useOverviewWidgetState();
 
 const showError = computed<boolean>(() => !props.loading && !!props.empty && loadFailed.value);
 const showEmpty = computed<boolean>(() => !props.loading && !!props.empty && !loadFailed.value);
 const showSkeletonOnly = computed<boolean>(() => !!props.empty);
+const isChartImage = computed<boolean>(() => !!props.chart && !props.empty);
 </script>

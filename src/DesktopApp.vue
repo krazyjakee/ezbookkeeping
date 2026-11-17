@@ -139,7 +139,102 @@ const toastQueue = computed<SnackbarMessage[]>({
 
 const currentNotificationContent = computed<string | null>(() => rootStore.currentNotification);
 
+// Vuetify puts role="dialog" on the overlay root, give every dialog an accessible name from its title (#36, WCAG 4.1.2)
+const DIALOG_TITLE_SELECTOR = '.dialog-layout-card-title-text, .ebk-dialog-title-strip .text-title-medium, .v-card-title, .v-toolbar-title, h1, h2, h3';
+let dialogIdSequence = 0;
+
+function labelDialogs(): void {
+    document.querySelectorAll<HTMLElement>('.v-overlay.v-dialog[role="dialog"]:not([aria-label])').forEach(dialog => {
+        const content = dialog.querySelector<HTMLElement>(':scope > .v-overlay__content');
+        let titleId = content?.getAttribute('aria-labelledby') || '';
+
+        if (!titleId || !document.getElementById(titleId)) {
+            const title = content?.querySelector<HTMLElement>(DIALOG_TITLE_SELECTOR);
+
+            if (!title || !title.textContent?.trim()) {
+                return;
+            }
+
+            if (!title.id) {
+                title.id = `ebk-dialog-title-${++dialogIdSequence}`;
+            }
+
+            titleId = title.id;
+        }
+
+        if (dialog.getAttribute('aria-labelledby') !== titleId) {
+            dialog.setAttribute('aria-labelledby', titleId);
+        }
+    });
+}
+
+// dialogs opened from code (no activator) cannot return the focus by themselves: remember the last focused control
+// outside any overlay and restore it when the last dialog closes and the focus was lost (#36, WCAG 2.4.3)
+let lastFocusedOutsideOverlay: HTMLElement | null = null;
+let dialogWasOpen = false;
+let focusRestorePending = false;
+
+function restoreFocusAfterDialogs(): void {
+    const dialogOpen = !!document.querySelector('.v-overlay--active.v-dialog');
+
+    if (dialogWasOpen && !dialogOpen) {
+        focusRestorePending = true;
+    } else if (dialogOpen) {
+        focusRestorePending = false;
+    }
+
+    dialogWasOpen = dialogOpen;
+
+    if (!focusRestorePending) {
+        return;
+    }
+
+    const activeElement = document.activeElement as HTMLElement | null;
+    // the focus is lost when it is on the body or still inside a closing (no longer active) overlay
+    const focusLost = !activeElement || activeElement === document.body || !!activeElement.closest('.v-overlay:not(.v-overlay--active)');
+
+    if (!focusLost) {
+        if (!activeElement?.closest('.v-overlay')) {
+            focusRestorePending = false;
+        }
+
+        return;
+    }
+
+    const target = lastFocusedOutsideOverlay;
+
+    if (target && target.isConnected && target.offsetParent !== null) {
+        target.focus({ preventScroll: true });
+    }
+
+    if (activeElement === document.body || !activeElement) {
+        focusRestorePending = false;
+    }
+}
+
 onMounted(() => {
+    document.addEventListener('focusin', (e: FocusEvent) => {
+        const target = e.target as HTMLElement | null;
+
+        if (target && target !== document.body && !target.closest('.v-overlay')) {
+            lastFocusedOutsideOverlay = target;
+        }
+    }, true);
+
+    labelDialogs();
+    let labelDialogsScheduled = false;
+
+    new MutationObserver(() => {
+        if (!labelDialogsScheduled) {
+            labelDialogsScheduled = true;
+            requestAnimationFrame(() => {
+                labelDialogsScheduled = false;
+                labelDialogs();
+                restoreFocusAfterDialogs();
+            });
+        }
+    }).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
+
     document.addEventListener('DOMContentLoaded', () => {
         const languageInfo = getCurrentLanguageInfo();
         initMapProvider(languageInfo?.alternativeLanguageTag);

@@ -264,8 +264,8 @@
     }
 
     .login-page-primary-action > .list-button {
-        background: var(--f7-theme-color);
-        color: #fff;
+        background: var(--ebk-color-primary);
+        color: var(--ebk-color-on-primary);
     }
 
     .login-page-primary-action > .list-button:focus-visible {

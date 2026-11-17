@@ -1,5 +1,5 @@
 <template>
-    <overview-widget-panel class="overview-widget--chart"
+    <overview-widget-panel chart class="overview-widget--chart"
                            :title="displayTitle"
                            :meta="displayMonthCount"
                            :loading="loading" :empty="!monthlyIncomeAndExpenseData.length"

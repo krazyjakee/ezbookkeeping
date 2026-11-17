@@ -2,7 +2,7 @@
 .dp--theme-light,
 .dp--theme-dark {
     --dp-primary-color: var(--ebk-color-primary);
-    --dp-primary-text-color: #fff;
+    --dp-primary-text-color: var(--ebk-color-on-primary);
     --dp-text-color: rgba(var(--v-theme-on-background), var(--v-high-emphasis-opacity));
     --dp-secondary-color: var(--ebk-color-text-secondary);
     --dp-background-color: transparent;

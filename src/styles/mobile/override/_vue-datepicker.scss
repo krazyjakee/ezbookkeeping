@@ -2,7 +2,7 @@
 .dp--theme-light,
 .dp--theme-dark {
     --dp-primary-color: var(--ebk-color-primary);
-    --dp-primary-text-color: #fff;
+    --dp-primary-text-color: var(--ebk-color-on-primary);
     --dp-background-color: inherit;
     --dp-secondary-color: var(--ebk-color-text-secondary);
     --dp-hover-color: var(--ebk-color-selected-background);

@@ -349,9 +349,9 @@ const vuetify = createVuetify({
                     // mapped from the shared design tokens (src/styles/common/_tokens.scss, docs/design/tokens.md)
                     'primary': '#c67e48',
                     'primary-darken-1': '#b67443',
-                    'on-primary': '#ffffff',
-                    'secondary': '#8c8c8c',
-                    'secondary-darken-1': '#595754',
+                    'on-primary': '#140f0d',
+                    'secondary': '#6b605a',
+                    'secondary-darken-1': '#4f4641',
                     'on-secondary': '#ffffff',
                     'success': '#4cd964',
                     'success-darken-1': '#40b654',
@@ -425,7 +425,7 @@ const vuetify = createVuetify({
                     // mapped from the shared design tokens (src/styles/common/_tokens.scss, docs/design/tokens.md)
                     'primary': '#c67e48',
                     'primary-darken-1': '#b67443',
-                    'on-primary': '#ffffff',
+                    'on-primary': '#140f0d',
                     'secondary': '#9d9b99',
                     'secondary-darken-1': '#3e3d3c',
                     'on-secondary': '#fff',
@@ -550,6 +550,9 @@ const vuetifyI18nTextKeyMap: Record<string, string> = {
     'loading': 'Loading...',
     'noDataText': 'No data',
     'input.clear': 'Clear',
+    // accessible names of clickable field icons (e.g. the calendar icon of DateTimeSelect), unmapped keys were announced as "input.appendAction" (#36)
+    'input.appendAction': 'Open',
+    'input.prependAction': 'Open',
     'pagination.ariaLabel.root': 'Pagination Navigation',
     'pagination.ariaLabel.next': 'Next Page',
     'pagination.ariaLabel.previous': 'Previous Page',

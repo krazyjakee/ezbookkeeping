@@ -220,7 +220,7 @@
             max-width: 100%;
             height: max(var(--ebk-shell-touch-target), calc(var(--f7-tabbar-icon-size) + 14px));
             border-radius: var(--ebk-radius-lg);
-            color: #fff;
+            color: var(--ebk-color-on-primary);
             background-color: var(--ebk-color-primary);
             box-shadow: var(--ebk-glow), var(--ebk-shadow-sm);
             transition: transform var(--ebk-motion-duration-xs) var(--ebk-motion-ease-standard),

@@ -246,20 +246,19 @@
                                             eager location="bottom" max-height="500"
                                             @update:model-value="scrollTimeMenuToSelectedItem">
                                         <template #activator="{ props }">
-                                            <div class="d-flex align-center cursor-pointer"
+                                            <button type="button" class="ebk-table-header-menu-activator d-flex align-center cursor-pointer"
                                                  :class="{ 'readonly': loading, 'text-primary': query.dateType !== DateRange.ThisMonth.type }" v-bind="props">
                                                 <span>{{ tt('Time') }}</span>
                                                 <v-icon :icon="mdiMenuDown" />
-                                            </div>
+                                            </button>
                                         </template>
                                         <v-list :selected="[query.dateType]">
-                                            <v-list-item class="text-body-medium" density="compact"
+                                            <v-list-item @click="changeDateFilter(dateRange.type)" class="text-body-medium" density="compact"
                                                          :key="dateRange.type" :value="dateRange.type"
                                                          :class="{ 'list-item-selected': query.dateType === dateRange.type }"
                                                          :append-icon="(query.dateType === dateRange.type ? mdiCheck : undefined)"
                                                          v-for="dateRange in allDateRanges">
-                                                <v-list-item-title class="cursor-pointer"
-                                                                   @click="changeDateFilter(dateRange.type)">
+                                                <v-list-item-title class="cursor-pointer">
                                                     <div class="d-flex align-center">
                                                         <span class="text-body-medium ms-3">{{ dateRange.displayName }}</span>
                                                     </div>
@@ -282,30 +281,28 @@
                                             v-model="categoryMenuState"
                                             @update:model-value="scrollCategoryMenuToSelectedItem">
                                         <template #activator="{ props }">
-                                            <div class="d-flex align-center"
+                                            <button type="button" class="ebk-table-header-menu-activator d-flex align-center" :disabled="query.type === 1"
                                                 :class="{ 'readonly': loading, 'cursor-pointer': query.type !== 1, 'text-primary': query.categoryIds }" v-bind="props">
                                                 <span>{{ queryCategoryName }}</span>
                                                 <v-icon :icon="mdiMenuDown" v-show="query.type !== 1" />
-                                            </div>
+                                            </button>
                                         </template>
                                         <v-list :selected="[queryAllSelectedFilterCategoryIds]">
-                                            <v-list-item key="" value="" class="text-body-medium" density="compact"
+                                            <v-list-item @click="changeCategoryFilter('')" key="" value="" class="text-body-medium" density="compact"
                                                          :class="{ 'list-item-selected': !query.categoryIds }"
                                                          :append-icon="(!query.categoryIds ? mdiCheck : undefined)">
-                                                <v-list-item-title class="cursor-pointer"
-                                                                   @click="changeCategoryFilter('')">
+                                                <v-list-item-title class="cursor-pointer">
                                                     <div class="d-flex align-center">
                                                         <v-icon :icon="mdiViewGridOutline" />
                                                         <span class="text-body-medium ms-3">{{ tt('All') }}</span>
                                                     </div>
                                                 </v-list-item-title>
                                             </v-list-item>
-                                            <v-list-item key="multiple" value="multiple" class="text-body-medium" density="compact"
+                                            <v-list-item @click="showFilterCategoryDialog = true" key="multiple" value="multiple" class="text-body-medium" density="compact"
                                                          :class="{ 'list-item-selected': query.categoryIds && queryAllFilterCategoryIdsCount > 1 }"
                                                          :append-icon="(query.categoryIds && queryAllFilterCategoryIdsCount > 1 ? mdiCheck : undefined)"
                                                          v-if="allAvailableCategoriesCount > 0">
-                                                <v-list-item-title class="cursor-pointer"
-                                                                   @click="showFilterCategoryDialog = true">
+                                                <v-list-item-title class="cursor-pointer">
                                                     <div class="d-flex align-center">
                                                         <v-icon :icon="mdiVectorArrangeBelow" />
                                                         <span class="text-body-medium ms-3">{{ tt('Multiple Categories') }}</span>
@@ -339,12 +336,11 @@
                                                     </template>
 
                                                     <v-divider />
-                                                    <v-list-item class="text-body-medium" density="compact"
+                                                    <v-list-item @click="changeCategoryFilter(category.id)" class="text-body-medium" density="compact"
                                                                  :class="{ 'item-in-multiple-selection': queryAllFilterCategoryIdsCount > 1 && queryAllFilterCategoryIds[category.id] }"
                                                                  :value="category.id"
                                                                  :append-icon="(query.categoryIds === category.id ? mdiCheck : undefined)">
-                                                        <v-list-item-title class="cursor-pointer"
-                                                                           @click="changeCategoryFilter(category.id)">
+                                                        <v-list-item-title class="cursor-pointer">
                                                             <div class="d-flex align-center">
                                                                 <v-icon :icon="mdiViewGridOutline" />
                                                                 <span class="text-body-medium ms-3">{{ tt('All') }}</span>
@@ -355,13 +351,12 @@
                                                     <template :key="subCategory.id"
                                                               v-for="subCategory in category.subCategories">
                                                         <v-divider v-if="!subCategory.hidden || queryAllFilterCategoryIds[subCategory.id]" />
-                                                        <v-list-item class="text-body-medium" density="compact"
+                                                        <v-list-item @click="changeCategoryFilter(subCategory.id)" class="text-body-medium" density="compact"
                                                                      :value="subCategory.id"
                                                                      :class="{ 'list-item-selected': query.categoryIds === subCategory.id, 'item-in-multiple-selection': queryAllFilterCategoryIdsCount > 1 && queryAllFilterCategoryIds[subCategory.id] }"
                                                                      :append-icon="(query.categoryIds === subCategory.id ? mdiCheck : undefined)"
                                                                      v-if="!subCategory.hidden || queryAllFilterCategoryIds[subCategory.id]">
-                                                            <v-list-item-title class="cursor-pointer"
-                                                                               @click="changeCategoryFilter(subCategory.id)">
+                                                            <v-list-item-title class="cursor-pointer">
                                                                 <div class="d-flex align-center">
                                                                     <ItemIcon :icon-type="getCategoryIconType(subCategory.iconType)" size="24px" :icon-id="subCategory.icon" :color="subCategory.color"></ItemIcon>
                                                                     <span class="text-body-medium ms-2">{{ subCategory.name }}</span>
@@ -379,30 +374,28 @@
                                             eager location="bottom" max-height="500"
                                             @update:model-value="scrollAccountMenuToSelectedItem">
                                         <template #activator="{ props }">
-                                            <div class="d-flex align-center cursor-pointer"
+                                            <button type="button" class="ebk-table-header-menu-activator d-flex align-center cursor-pointer"
                                                  :class="{ 'readonly': loading, 'text-primary': query.accountIds }" v-bind="props">
                                                 <span>{{ queryAccountName }}</span>
                                                 <v-icon :icon="mdiMenuDown" />
-                                            </div>
+                                            </button>
                                         </template>
                                         <v-list :selected="[queryAllSelectedFilterAccountIds]">
-                                            <v-list-item key="" value="" class="text-body-medium" density="compact"
+                                            <v-list-item @click="changeAccountFilter('')" key="" value="" class="text-body-medium" density="compact"
                                                          :class="{ 'list-item-selected': !query.accountIds }"
                                                          :append-icon="(!query.accountIds ? mdiCheck : undefined)">
-                                                <v-list-item-title class="cursor-pointer"
-                                                                   @click="changeAccountFilter('')">
+                                                <v-list-item-title class="cursor-pointer">
                                                     <div class="d-flex align-center">
                                                         <v-icon :icon="mdiViewGridOutline" />
                                                         <span class="text-body-medium ms-3">{{ tt('All') }}</span>
                                                     </div>
                                                 </v-list-item-title>
                                             </v-list-item>
-                                            <v-list-item key="multiple" value="multiple" class="text-body-medium" density="compact"
+                                            <v-list-item @click="showFilterAccountDialog = true" key="multiple" value="multiple" class="text-body-medium" density="compact"
                                                          :class="{ 'list-item-selected': query.accountIds && queryAllFilterAccountIdsCount > 1 }"
                                                          :append-icon="(query.accountIds && queryAllFilterAccountIdsCount > 1 ? mdiCheck : undefined)"
                                                          v-if="allAvailableAccountsCount > 0">
-                                                <v-list-item-title class="cursor-pointer"
-                                                                   @click="showFilterAccountDialog = true">
+                                                <v-list-item-title class="cursor-pointer">
                                                     <div class="d-flex align-center">
                                                         <v-icon :icon="mdiVectorArrangeBelow" />
                                                         <span class="text-body-medium ms-3">{{ tt('Multiple Accounts') }}</span>
@@ -412,13 +405,12 @@
                                             <template :key="account.id"
                                                       v-for="account in allAccounts">
                                                 <v-divider v-if="(!account.hidden && (!allAccountsMap[account.parentId] || !allAccountsMap[account.parentId]!.hidden)) || queryAllFilterAccountIds[account.id]" />
-                                                <v-list-item class="text-body-medium" density="compact"
+                                                <v-list-item @click="changeAccountFilter(account.id)" class="text-body-medium" density="compact"
                                                              :value="account.id"
                                                              :class="{ 'list-item-selected': query.accountIds === account.id, 'item-in-multiple-selection': queryAllFilterAccountIdsCount > 1 && queryAllFilterAccountIds[account.id] }"
                                                              :append-icon="(query.accountIds === account.id ? mdiCheck : undefined)"
                                                              v-if="(!account.hidden && (!allAccountsMap[account.parentId] || !allAccountsMap[account.parentId]!.hidden)) || queryAllFilterAccountIds[account.id]">
-                                                    <v-list-item-title class="cursor-pointer"
-                                                                       @click="changeAccountFilter(account.id)">
+                                                    <v-list-item-title class="cursor-pointer">
                                                         <div class="d-flex align-center">
                                                             <ItemIcon :icon-type="getAccountIconType(account.iconType)" size="24px" :icon-id="account.icon" :color="account.color"></ItemIcon>
                                                             <span class="text-body-medium ms-2">{{ account.name }}</span>
@@ -434,43 +426,40 @@
                                             eager location="bottom" max-height="500"
                                             @update:model-value="scrollTagMenuToSelectedItem">
                                         <template #activator="{ props }">
-                                            <div class="d-flex align-center cursor-pointer"
+                                            <button type="button" class="ebk-table-header-menu-activator d-flex align-center cursor-pointer"
                                                  :class="{ 'readonly': loading, 'text-primary': query.tagFilter }" v-bind="props">
                                                 <span>{{ queryTagName }}</span>
                                                 <v-icon :icon="mdiMenuDown" />
-                                            </div>
+                                            </button>
                                         </template>
                                         <v-list :selected="[queryAllSelectedFilterTagIds]">
-                                            <v-list-item key="" value="" class="text-body-medium" density="compact"
+                                            <v-list-item @click="changeTagFilter('')" key="" value="" class="text-body-medium" density="compact"
                                                          :class="{ 'list-item-selected': !query.tagFilter }"
                                                          :append-icon="(!query.tagFilter ? mdiCheck : undefined)">
-                                                <v-list-item-title class="cursor-pointer"
-                                                                   @click="changeTagFilter('')">
+                                                <v-list-item-title class="cursor-pointer">
                                                     <div class="d-flex align-center">
                                                         <v-icon :icon="mdiViewGridOutline" />
                                                         <span class="text-body-medium ms-2">{{ tt('All') }}</span>
                                                     </div>
                                                 </v-list-item-title>
                                             </v-list-item>
-                                            <v-list-item class="text-body-medium" density="compact"
+                                            <v-list-item @click="changeTagFilter(TransactionTagFilter.TransactionNoTagFilterValue)" class="text-body-medium" density="compact"
                                                          :key="TransactionTagFilter.TransactionNoTagFilterValue"
                                                          :value="TransactionTagFilter.TransactionNoTagFilterValue"
                                                          :class="{ 'list-item-selected': query.tagFilter === TransactionTagFilter.TransactionNoTagFilterValue }"
                                                          :append-icon="(query.tagFilter === TransactionTagFilter.TransactionNoTagFilterValue ? mdiCheck : undefined)">
-                                                <v-list-item-title class="cursor-pointer"
-                                                                   @click="changeTagFilter(TransactionTagFilter.TransactionNoTagFilterValue)">
+                                                <v-list-item-title class="cursor-pointer">
                                                     <div class="d-flex align-center">
                                                         <v-icon :icon="mdiBorderNoneVariant" />
                                                         <span class="text-body-medium ms-2">{{ tt('Without Tags') }}</span>
                                                     </div>
                                                 </v-list-item-title>
                                             </v-list-item>
-                                            <v-list-item key="multiple" value="multiple" class="text-body-medium" density="compact"
+                                            <v-list-item @click="showFilterTagDialog = true" key="multiple" value="multiple" class="text-body-medium" density="compact"
                                                          :class="{ 'list-item-selected': query.tagFilter && queryAllFilterTagIdsCount > 1 }"
                                                          :append-icon="(query.tagFilter && queryAllFilterTagIdsCount > 1 ? mdiCheck : undefined)"
                                                          v-if="allAvailableTagsCount > 0">
-                                                <v-list-item-title class="cursor-pointer"
-                                                                   @click="showFilterTagDialog = true">
+                                                <v-list-item-title class="cursor-pointer">
                                                     <div class="d-flex align-center">
                                                         <v-icon :icon="mdiVectorArrangeBelow" />
                                                         <span class="text-body-medium ms-2">{{ tt('Multiple Tags') }}</span>
@@ -491,13 +480,12 @@
                                                 <template :key="transactionTag.id"
                                                           v-for="(transactionTag, index) in (allTransactionTagsByGroup[transactionTagGroup.id] ?? [])">
                                                     <v-divider v-if="index > 0 && (!transactionTag.hidden || isDefined(queryAllFilterTagIds[transactionTag.id]))" />
-                                                    <v-list-item class="text-body-medium" density="compact"
+                                                    <v-list-item @click="changeTagFilter(TransactionTagFilter.of(transactionTag.id).toTextualTagFilter())" class="text-body-medium" density="compact"
                                                                  :value="transactionTag.id"
                                                                  :class="{ 'list-item-selected': queryAllFilterTagIdsCount === 1 && isDefined(queryAllFilterTagIds[transactionTag.id]), 'item-in-multiple-selection': queryAllFilterTagIdsCount > 1 && isDefined(queryAllFilterTagIds[transactionTag.id]) }"
                                                                  :append-icon="(queryAllFilterTagIds[transactionTag.id] === true ? mdiCheck : (queryAllFilterTagIds[transactionTag.id] === false ? mdiClose : undefined))"
                                                                  v-if="!transactionTag.hidden || isDefined(queryAllFilterTagIds[transactionTag.id])">
-                                                        <v-list-item-title class="cursor-pointer"
-                                                                           @click="changeTagFilter(TransactionTagFilter.of(transactionTag.id).toTextualTagFilter())">
+                                                        <v-list-item-title class="cursor-pointer">
                                                             <div class="d-flex align-center">
                                                                 <v-icon size="20" :icon="mdiPound"/>
                                                                 <span class="text-body-medium ms-2">{{ transactionTag.name }}</span>
@@ -517,18 +505,17 @@
                                             v-model="amountMenuState"
                                             @update:model-value="scrollAmountMenuToSelectedItem">
                                         <template #activator="{ props }">
-                                            <div class="d-flex align-center cursor-pointer"
+                                            <button type="button" class="ebk-table-header-menu-activator d-flex align-center cursor-pointer"
                                                  :class="{ 'readonly': loading, 'text-primary': query.amountFilter }" v-bind="props">
                                                 <span>{{ tt('Amount') }}</span>
                                                 <v-icon :icon="mdiMenuDown" />
-                                            </div>
+                                            </button>
                                         </template>
                                         <v-list :selected="[query.amountFilter.split(':')[0]]">
-                                            <v-list-item key="" value="" class="text-body-medium" density="compact"
+                                            <v-list-item @click="changeAmountFilter('')" key="" value="" class="text-body-medium" density="compact"
                                                          :class="{ 'list-item-selected': !query.amountFilter }"
                                                          :append-icon="(!query.amountFilter && !currentAmountFilterType ? mdiCheck : undefined)">
-                                                <v-list-item-title class="cursor-pointer"
-                                                                   @click="changeAmountFilter('')">
+                                                <v-list-item-title class="cursor-pointer">
                                                     <div class="d-flex align-center">
                                                         <span class="text-body-medium ms-3">{{ tt('All') }}</span>
                                                     </div>
@@ -536,12 +523,11 @@
                                             </v-list-item>
                                             <template :key="filterType.type"
                                                       v-for="filterType in AmountFilterType.values()">
-                                                <v-list-item class="text-body-medium" density="compact"
+                                                <v-list-item @click="currentAmountFilterType = filterType.type" class="text-body-medium" density="compact"
                                                              :value="filterType.type"
                                                              :class="{ 'list-item-selected': query.amountFilter && query.amountFilter.startsWith(`${filterType.type}:`) }"
                                                              :append-icon="(query.amountFilter && query.amountFilter.startsWith(`${filterType.type}:`) && currentAmountFilterType !== filterType.type ? mdiCheck : undefined)">
-                                                    <v-list-item-title class="cursor-pointer"
-                                                                       @click="currentAmountFilterType = filterType.type">
+                                                    <v-list-item-title class="cursor-pointer">
                                                         <div class="d-flex align-center">
                                                             <span class="text-body-medium ms-3">{{ tt(filterType.name) }}</span>
                                                             <span class="text-body-medium ms-3" v-if="query.amountFilter && query.amountFilter.startsWith(`${filterType.type}:`) && currentAmountFilterType !== filterType.type">{{ queryAmount }}</span>

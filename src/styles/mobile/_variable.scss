@@ -19,7 +19,8 @@
     --f7-notification-title-text-transform: unset;
 
     --ebk-icon-default-color: #000;
-    --ebk-chevron-icon-color: rgba(0, 0, 0, 0.2);
+    /* disclosure chevrons identify expandable controls, so they keep 3:1 against surfaces and wells (WCAG 1.4.11) */
+    --ebk-chevron-icon-color: rgba(0, 0, 0, 0.5);
     --ebk-transaction-tag-chip-bg-color: rgba(0, 0, 0, 0.04);
 
     /* shared tokens (colors, spacing, radius, shadows, motion...) are defined in src/styles/common/_tokens.scss */
@@ -45,6 +46,9 @@
     --f7-block-footer-text-color: var(--ebk-color-text-secondary);
     --f7-list-item-footer-text-color: var(--ebk-color-text-secondary);
     --f7-list-item-after-text-color: var(--ebk-color-text-secondary);
+    --f7-list-item-text-text-color: var(--ebk-color-text-secondary);
+    --f7-list-group-title-text-color: var(--ebk-color-text-secondary);
+    --f7-list-chevron-icon-color: var(--ebk-chevron-icon-color);
     --f7-list-outline-border-color: var(--ebk-color-hairline);
 }
 
@@ -57,7 +61,7 @@
     --f7-glass-shadow-fab: var(--f7-glass-shadow);
 
     --ebk-icon-default-color: #fff;
-    --ebk-chevron-icon-color: rgba(255, 255, 255, 0.3);
+    --ebk-chevron-icon-color: rgba(255, 255, 255, 0.5);
     --ebk-transaction-tag-chip-bg-color: rgba(255, 255, 255, 0.04);
 }
 

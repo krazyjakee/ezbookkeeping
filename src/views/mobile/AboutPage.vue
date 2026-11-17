@@ -4,7 +4,7 @@
             <f7-nav-left :back-link="tt('Back')"></f7-nav-left>
             <f7-nav-title :title="tt('About')"></f7-nav-title>
             <f7-nav-right :class="{ 'navbar-hidden-icon': clientVersionMatchServerVersion && !forceShowRefreshBrowserCacheMenu }">
-                <f7-link icon-f7="" v-if="clientVersionMatchServerVersion && !forceShowRefreshBrowserCacheMenu"/>
+                <f7-link icon-f7="" aria-hidden="true" tabindex="-1" v-if="clientVersionMatchServerVersion && !forceShowRefreshBrowserCacheMenu"/>
                 <f7-link icon-f7="ellipsis" :aria-label="tt('More')" @click="showDiagnosisActionSheet = true"
                          v-else-if="!clientVersionMatchServerVersion || forceShowRefreshBrowserCacheMenu"></f7-link>
             </f7-nav-right>

@@ -95,11 +95,10 @@
                                                v-bind="props">{{ queryDateRangeName }}</v-btn>
                                     </template>
                                     <v-list :selected="[queryDateType]">
-                                        <v-list-item :key="dateRange.type" :value="dateRange.type"
+                                        <v-list-item @click="setDateFilter(dateRange.type)" :key="dateRange.type" :value="dateRange.type"
                                                      :append-icon="(queryDateType === dateRange.type ? mdiCheck : undefined)"
                                                      v-for="dateRange in allDateRanges">
-                                            <v-list-item-title class="cursor-pointer"
-                                                               @click="setDateFilter(dateRange.type)">
+                                            <v-list-item-title class="cursor-pointer">
                                                 <div class="d-flex align-center">
                                                     <span>{{ dateRange.displayName }}</span>
                                                 </div>

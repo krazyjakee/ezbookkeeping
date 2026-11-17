@@ -19,7 +19,7 @@
             .dp--calendar-row {
                 --dp-cell-size: 76px;
                 --dp-primary-color: rgba(var(--v-theme-primary), var(--v-activated-opacity));
-                --dp-primary-text-color: rgb(var(--v-theme-primary));
+                --dp-primary-text-color: var(--ebk-color-primary-text);
 
                 > .dp--calendar-item {
                     overflow: hidden;

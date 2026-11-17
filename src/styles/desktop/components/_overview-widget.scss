@@ -577,7 +577,9 @@
         flex: 1 1 auto !important;
         padding: 0 var(--ebk-space-1) !important;
         border-block-end: 0;
-        overflow: hidden;
+        /* the calendar grid keeps its 7 columns: on very narrow widths it scrolls inside the panel instead of being cut off (#36) */
+        overflow-x: auto;
+        overflow-y: hidden;
     }
 
     .dp--main {

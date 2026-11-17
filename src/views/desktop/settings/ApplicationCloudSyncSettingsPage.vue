@@ -29,10 +29,11 @@
                                         :disabled="loading || enabling || disabling"
                                         v-model="openedPanel">
                         <v-expansion-panel class="border" value="synchronizedSettings">
-                            <v-expansion-panel-title class="expand-panel-title-with-bg py-0">
+                            <!-- the panel is always open and read-only: a static header (not a button), so the More menu button is not nested in another button -->
+                            <div class="v-expansion-panel-title v-expansion-panel-title--active expand-panel-title-with-bg py-0">
                                 <div class="d-flex align-center justify-center w-100">
                                     <div class="w-100">
-                                        <span>{{ tt('Synchronized Settings') }}</span>
+                                        <span role="heading" aria-level="3">{{ tt('Synchronized Settings') }}</span>
                                     </div>
                                     <v-btn density="comfortable" color="default" variant="text" class="ms-2"
                                            :aria-label="tt('More')" :disabled="loading || enabling || disabling" :icon="true">
@@ -55,12 +56,12 @@
                                         </v-menu>
                                     </v-btn>
                                 </div>
-                            </v-expansion-panel-title>
+                            </div>
                             <v-expansion-panel-text>
                                 <v-list rounded density="comfortable" class="pa-0">
                                     <template :key="categorizedItems.categoryName"
                                               v-for="(categorizedItems, categoryIdx) in ALL_APPLICATION_CLOUD_SETTINGS">
-                                        <v-divider v-if="categoryIdx > 0"/>
+                                        <v-divider role="presentation" v-if="categoryIdx > 0"/>
 
                                         <v-list-item>
                                             <template #prepend>
@@ -77,12 +78,13 @@
                                             </template>
                                         </v-list-item>
 
-                                        <v-divider/>
+                                        <v-divider role="presentation"/>
 
+                                        <div role="listitem">
                                         <v-list rounded density="comfortable" class="pa-0 ms-4">
                                             <template :key="settingItem.settingKey"
                                                       v-for="(settingItem, itemIdx) in categorizedItems.items">
-                                                <v-divider v-if="itemIdx > 0"/>
+                                                <v-divider role="presentation" v-if="itemIdx > 0"/>
 
                                                 <v-list-item>
                                                     <template #prepend>
@@ -99,6 +101,7 @@
                                                 </v-list-item>
                                             </template>
                                         </v-list>
+                                        </div>
                                     </template>
                                 </v-list>
                             </v-expansion-panel-text>

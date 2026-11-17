@@ -18,6 +18,7 @@
                      :disabled-dates="disabledDates"
                      :range="isDateRange ? { partialRange: false } : undefined"
                      :preset-dates="presetRanges"
+                     :aria-labels="ariaLabels"
                      v-model="dateTime">
         <template #year="{ value }">
             {{ getDisplayYear(value) }}
@@ -91,8 +92,16 @@ const {
     getCalendarDisplayShortYearFromDateTime,
     getCalendarDisplayShortMonthFromDateTime,
     getCalendarDisplayDayOfMonthFromDateTime,
-    getCalendarAlternateDate
+    getCalendarAlternateDate,
+    formatDateTimeToLongDate
 } = useI18n();
+
+// localized accessible names: the date picker defaults to English labels (#36)
+const ariaLabels = computed(() => ({
+    day: (day: { value: Date }) => formatDateTimeToLongDate(getYearMonthDayDateTime(day.value.getFullYear(), day.value.getMonth() + 1, day.value.getDate())),
+    prevMonth: tt('Previous Period'),
+    nextMonth: tt('Next Period')
+}));
 
 const userStore = useUserStore();
 

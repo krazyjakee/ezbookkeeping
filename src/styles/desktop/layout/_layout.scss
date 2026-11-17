@@ -719,3 +719,34 @@
         margin-inline-start: 0;
     }
 }
+
+/* Reflow at 320 CSS px / 400% zoom (WCAG 1.4.10, #36): the header wraps onto a second row instead of
+   pushing the page sideways */
+@media (max-width: 479.98px) {
+    .layout-navbar {
+        height: auto;
+        min-height: var(--ebk-shell-header-height);
+    }
+
+    .layout-navbar .navbar-content-container {
+        overflow-x: visible;
+    }
+
+    .layout-navbar .navbar-content.h-100 {
+        flex-wrap: wrap;
+        row-gap: var(--ebk-space-1);
+        height: auto !important;
+        min-height: var(--ebk-shell-header-height);
+        padding-block: var(--ebk-space-1);
+    }
+
+    .ebk-shell-title {
+        min-width: 0;
+        flex: 1 1 8rem;
+    }
+
+    .ebk-shell-actions {
+        flex-wrap: wrap;
+        margin-inline-start: auto;
+    }
+}

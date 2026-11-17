@@ -1,30 +1,42 @@
 <template>
     <main-page-layout>
         <template #nav-items>
-            <div class="mb-2">
+            <li class="mb-2">
                 <btn-vertical-group :disabled="loading || updating || isCustomChartAIGenerating || isCurrentDataTableEditable" :buttons="allTabs" v-model="activeTab" />
-            </div>
-            <v-divider class="my-2" />
-            <div class="insights-explorer-list">
-                <li class="nav-link" key="new">
-                    <a class="d-flex align-center cursor-pointer"
-                       :class="{ 'router-link-active router-link-exact-active': !currentExploration.id, 'disabled': loading || updating || isCustomChartAIGenerating || isCurrentDataTableEditable }"
-                       @click="createNewExploration">
-                        <span class="nav-item-title text-truncate">{{ tt('New Exploration') }}</span>
-                    </a>
-                </li>
-                <li class="nav-link" :key="exploration.id" v-for="exploration in allVisibleExplorations">
-                    <a class="d-flex align-center cursor-pointer"
-                       :class="{ 'router-link-active router-link-exact-active': currentExploration.id === exploration.id, 'disabled': loading || updating || isCustomChartAIGenerating || isCurrentDataTableEditable }"
-                       @click="loadExploration(exploration.id)">
-                        <span class="nav-item-title text-truncate">{{ exploration.name || tt('Untitled Exploration') }}</span>
-                    </a>
-                </li>
-                <template v-if="loading && (!allVisibleExplorations || allVisibleExplorations.length < 1)">
-                    <v-skeleton-loader class="skeleton-no-margin mx-3 mt-h1 py-3" type="text"
-                                       :key="itemIdx" :loading="true" v-for="itemIdx in [ 1, 2, 3, 4, 5 ]"></v-skeleton-loader>
-                </template>
-            </div>
+            </li>
+            <li aria-hidden="true">
+                <v-divider class="my-2" />
+            </li>
+            <li>
+                <ul class="insights-explorer-list">
+                    <li class="nav-link" key="new">
+                        <a class="d-flex align-center cursor-pointer" role="button" tabindex="0"
+                           :class="{ 'router-link-active router-link-exact-active': !currentExploration.id, 'disabled': loading || updating || isCustomChartAIGenerating || isCurrentDataTableEditable }"
+                           :aria-current="!currentExploration.id ? 'true' : undefined"
+                           :aria-disabled="loading || updating || isCustomChartAIGenerating || isCurrentDataTableEditable ? 'true' : undefined"
+                           @click="createNewExploration"
+                           @keydown.enter.prevent="!(loading || updating || isCustomChartAIGenerating || isCurrentDataTableEditable) && createNewExploration()"
+                           @keydown.space.prevent="!(loading || updating || isCustomChartAIGenerating || isCurrentDataTableEditable) && createNewExploration()">
+                            <span class="nav-item-title text-truncate">{{ tt('New Exploration') }}</span>
+                        </a>
+                    </li>
+                    <li class="nav-link" :key="exploration.id" v-for="exploration in allVisibleExplorations">
+                        <a class="d-flex align-center cursor-pointer" role="button" tabindex="0"
+                           :class="{ 'router-link-active router-link-exact-active': currentExploration.id === exploration.id, 'disabled': loading || updating || isCustomChartAIGenerating || isCurrentDataTableEditable }"
+                           :aria-current="currentExploration.id === exploration.id ? 'true' : undefined"
+                           :aria-disabled="loading || updating || isCustomChartAIGenerating || isCurrentDataTableEditable ? 'true' : undefined"
+                           @click="loadExploration(exploration.id)"
+                           @keydown.enter.prevent="!(loading || updating || isCustomChartAIGenerating || isCurrentDataTableEditable) && loadExploration(exploration.id)"
+                           @keydown.space.prevent="!(loading || updating || isCustomChartAIGenerating || isCurrentDataTableEditable) && loadExploration(exploration.id)">
+                            <span class="nav-item-title text-truncate">{{ exploration.name || tt('Untitled Exploration') }}</span>
+                        </a>
+                    </li>
+                    <li v-if="loading && (!allVisibleExplorations || allVisibleExplorations.length < 1)">
+                        <v-skeleton-loader class="skeleton-no-margin mx-3 mt-h1 py-3" type="text"
+                                           :key="itemIdx" :loading="true" v-for="itemIdx in [ 1, 2, 3, 4, 5 ]"></v-skeleton-loader>
+                    </li>
+                </ul>
+            </li>
         </template>
 
         <template #content>
@@ -40,11 +52,10 @@
                                        v-bind="props">{{ displayQueryDateRangeName }}</v-btn>
                             </template>
                             <v-list :selected="[currentFilter.dateRangeType]">
-                                <v-list-item :key="dateRange.type" :value="dateRange.type"
+                                <v-list-item @click="setDateFilter(dateRange.type)" :key="dateRange.type" :value="dateRange.type"
                                              :append-icon="(currentFilter.dateRangeType === dateRange.type ? mdiCheck : undefined)"
                                              v-for="dateRange in allDateRanges">
-                                    <v-list-item-title class="cursor-pointer"
-                                                       @click="setDateFilter(dateRange.type)">
+                                    <v-list-item-title class="cursor-pointer">
                                         <div class="d-flex align-center">
                                             <span>{{ dateRange.displayName }}</span>
                                         </div>
@@ -938,6 +949,12 @@ init(props);
 </script>
 
 <style lang="scss">
+.insights-explorer-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
 /* Insights explorer frame: a toolbar panel and a content panel with a header strip, as on the statistics page (guideline 6.3) */
 .explorer-report {
     display: flex;

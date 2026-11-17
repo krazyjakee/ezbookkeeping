@@ -111,16 +111,19 @@
                             </div>
                             <div class="nested-list-item-after" v-if="account.type === AccountType.MultiSubAccounts.type && !sortable">
                                 <span>{{ accountBalanceOrAvailableCredit(account, undefined, showAvailableCreditForCreditCard, showAccountBalance) }}</span>
-                                <span class="account-list-sub-account-toggle" role="button"
+                                <span class="account-list-sub-account-toggle" role="button" tabindex="0"
                                       :class="{ 'disabled': sortable }"
                                       :aria-label="isSubAccountsExpanded(account) ? tt('Collapse Sub-accounts') : tt('Expand Sub-accounts')"
+                                      :aria-expanded="isSubAccountsExpanded(account) ? 'true' : 'false'"
                                       v-if="hasVisibleSubAccount(account)"
-                                      @click.stop.prevent="toggleSubAccounts(account)">
+                                      @click.stop.prevent="toggleSubAccounts(account)"
+                                      @keydown.enter.stop.prevent="toggleSubAccounts(account)"
+                                      @keydown.space.stop.prevent="toggleSubAccounts(account)">
                                     <f7-icon :f7="isSubAccountsExpanded(account) ? 'chevron_up' : 'chevron_down'"></f7-icon>
                                 </span>
                             </div>
                         </div>
-                        <li v-if="account.type === AccountType.MultiSubAccounts.type && isSubAccountsExpanded(account)">
+                        <li role="none" v-if="account.type === AccountType.MultiSubAccounts.type && isSubAccountsExpanded(account)">
                             <ul class="no-padding">
                                 <f7-list-item class="no-sortable nested-list-item-child ebk-m-nested-child"
                                               :class="{ 'actual-first-child': subAccount.id === firstShowingIds.subAccounts[account.id], 'actual-last-child': subAccount.id === lastShowingIds.subAccounts[account.id], 'ebk-m-row-hidden': subAccount.hidden }"
@@ -754,12 +757,16 @@ init();
 .account-list-sub-account-toggle {
     display: flex;
     align-items: center;
+    justify-content: center;
+    /* at least a 24px target (WCAG 2.5.8), it is keyboard focusable since #36 */
+    min-width: 24px;
+    min-height: 24px;
     padding-inline-start: 8px;
 
     > .icon {
         font-size: var(--f7-list-chevron-icon-font-size, 14px);
         font-weight: bold;
-        color: var(--f7-list-chevron-icon-color);
+        color: var(--ebk-chevron-icon-color);
     }
 }
 

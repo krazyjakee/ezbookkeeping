@@ -13,7 +13,7 @@
                              :widget="widget" :loading="loading" :editing="editing"
                              @refresh="refresh" />
             <template v-if="editing">
-                <div class="overview-dashboard-title-drag-area" :aria-label="tt('Move')"
+                <div class="overview-dashboard-title-drag-area" aria-hidden="true"
                      @pointerdown="startPointerAction($event, widget, 'move')"></div>
                 <div class="overview-dashboard-editor-toolbar">
                     <span class="overview-dashboard-drag-indicator" aria-hidden="true"

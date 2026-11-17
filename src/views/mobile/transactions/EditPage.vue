@@ -1724,7 +1724,7 @@ init();
     margin-inline-end: 5px;
     font-size: var(--ebk-category-separate-icon-font-size);
     line-height: 16px;
-    color: var(--f7-color-gray-tint);
+    color: var(--ebk-color-text-secondary);
 }
 
 /* Amount panel (design guidelines §6.2): the largest element of the editor, labelled with currency and type */

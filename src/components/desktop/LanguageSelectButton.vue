@@ -11,10 +11,10 @@
             </v-btn>
         </template>
         <v-list ref="languageMenu">
-            <v-list-item :key="lang.languageTag" :value="lang.languageTag"
+            <v-list-item @click="changeLanguage(lang.languageTag)" :key="lang.languageTag" :value="lang.languageTag"
                          :class="{ 'list-item-selected': isLanguageSelected(lang.languageTag) }"
                          v-for="lang in allLanguages">
-                <v-list-item-title class="cursor-pointer" @click="changeLanguage(lang.languageTag)">
+                <v-list-item-title class="cursor-pointer">
                     <div class="d-flex align-center">
                         <span>{{ lang.nativeDisplayName }}</span>
                         <v-spacer style="min-width: 40px" />

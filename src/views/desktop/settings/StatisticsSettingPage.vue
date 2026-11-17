@@ -10,7 +10,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Default Chart Data Type') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Default Chart Data Type')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -27,7 +27,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Timezone Used for Date Range') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Timezone Used for Date Range')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -43,7 +43,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Default Keyword Search Matching Mode') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Default Keyword Search Matching Mode')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -85,7 +85,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Default Sort Order') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Default Sort Order')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -112,7 +112,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Default Chart Type') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Default Chart Type')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -128,7 +128,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Default Date Range') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Default Date Range')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -156,7 +156,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Default Chart Type') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Default Chart Type')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -172,7 +172,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Default Date Range') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Default Date Range')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -200,7 +200,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Default Chart Type') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Default Chart Type')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -216,7 +216,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Default Date Range') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Default Date Range')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"

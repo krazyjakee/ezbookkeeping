@@ -1,5 +1,5 @@
 <template>
-    <v-text-field type="text" class="amount-input text-field-with-colored-label" autocomplete="off"
+    <v-text-field type="text" class="amount-input text-field-with-colored-label" autocomplete="off" v-bind="$attrs"
                   :class="extraClass" :color="color" :base-color="color"
                   :density="density" :variant="variant" :autofocus="autofocus"
                   :readonly="!!readonly" :disabled="!!disabled"
@@ -22,7 +22,7 @@
             </v-tooltip>
         </template>
     </v-text-field>
-    <v-text-field type="text" class="amount-input amount-input--formula text-field-with-colored-label" autocomplete="off"
+    <v-text-field type="text" class="amount-input amount-input--formula text-field-with-colored-label" autocomplete="off" v-bind="$attrs"
                   :class="extraClass" :color="color" :base-color="color"
                   :density="density" :variant="variant"
                   :readonly="!!readonly" :disabled="!!disabled"
@@ -52,7 +52,7 @@
             </v-tooltip>
         </template>
     </v-text-field>
-    <v-text-field type="password" class="amount-input amount-input--hidden text-field-with-colored-label" autocomplete="off"
+    <v-text-field type="password" class="amount-input amount-input--hidden text-field-with-colored-label" autocomplete="off" v-bind="$attrs"
                   :class="extraClass" :color="color" :base-color="color"
                   :density="density" :variant="variant"
                   :readonly="!!readonly" :disabled="!!disabled"
@@ -113,6 +113,9 @@ interface DesktopAmountInputProps extends CommonNumberInputProps {
     enableFormula?: boolean;
     flipNegative?: boolean;
 }
+
+// the component renders one of three fields, so attributes (id, aria-*) are forwarded explicitly to the rendered field
+defineOptions({ inheritAttrs: false });
 
 const props = defineProps<DesktopAmountInputProps>();
 const emit = defineEmits<CommonNumberInputEmits>();
@@ -398,6 +401,11 @@ watch(currentValue, (newValue) => {
 </script>
 
 <style>
+/* the label carries the user amount color, which only reaches 4.5:1 at full opacity (#36) */
+.text-field-with-colored-label .v-field:not(.v-field--disabled) .v-label.v-field-label {
+    opacity: 1;
+}
+
 .text-field-with-colored-label.has-pretend-text .v-field {
     grid-template-columns: max-content minmax(0, 1fr) min-content min-content;
 }

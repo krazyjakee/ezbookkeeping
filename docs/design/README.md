@@ -52,9 +52,14 @@ These resolve open questions from the concept exploration and are final.
 | Hairline | `rgba(54,47,42,.14)` | `rgba(236,226,217,.12)` |
 | Copper line (active edge, ticks, brackets) | `rgba(198,126,72,.45)` | `rgba(198,126,72,.55)` |
 | Copper | `#C67E48` (copper text on light surfaces uses copper-700 `#97592F`) | `#C67E48` |
-| Semantic | success `#4CD964`, info `#2196F3`, warning `#FF9500`, error `#FF3B30` | same |
+| Text and icons on copper fills | ink `#140F0D` | ink `#140F0D` |
+| Semantic | success `#4CD964`, info `#2196F3`, warning `#FF9500`, error `#FF3B30` (error text uses `#C4161C`) | same (error text `#FF3B30`) |
 
 Copper fills are allowed only for the primary button, the mobile add key, the selected segmented control and progress. Selected rows and navigation items use a copper-tinted background (copper at 10–14%) plus a 2–3px copper leading edge.
+
+**Text on copper fills is dark ink, never white.** White on copper `#C67E48` reaches only 3.2:1 and fails WCAG AA for normal text. Ink `#140F0D` reaches 5.9:1 on copper, 5.0:1 on the copper-600 hover and pressed state, and at least 4.6:1 under the framework hover and press overlays. The fill stays brand copper in both themes. This applies to the Vuetify `on-primary` color, Framework7 filled buttons and the active plain segmented control, the mobile add key, date picker selections and the documentation site buttons (`--ebk-color-on-primary`). Hover and pressed fills use copper-600; they never darken to copper-700, because ink on copper-700 drops below 4.5:1.
+
+**Text colors pass AA in both themes.** Copper text uses `--ebk-color-primary-text` (copper-700 on light surfaces, copper-500 on dark). On mobile, Framework7's theme color is copper-700 in the light theme, so links, text buttons and selection controls follow it. Error text uses `--ebk-color-error-text`. Income and expense amounts keep the hue the user picked, with a text shade per theme that reaches 4.5:1 (see [tokens.md](tokens.md#amount-colors)). Chart series colors and user-chosen category, account and tag colors are graphics, not text. Text next to them uses the text tokens, and the color appears only as a swatch, border or mark.
 
 ### 3.2 Typography
 
@@ -246,6 +251,8 @@ Every data panel defines **loading**, **empty**, **error** and **offline** state
 - **Text size:** long translations (de, ru, ta, bn) and large text (mobile font-size up to xxx-large, 200% desktop zoom) wrap rather than clip.
 - **Forced colors:** decoration is dropped and system colors are used.
 - **Live regions:** snackbars, the offline banner and save results are announced.
+
+The audit for #36 checks these rules against the whole redesign. Its results, the tested matrix and the checks that still need a person are in [accessibility-audit.md](accessibility-audit.md).
 
 ## 8. Route and state inventory
 

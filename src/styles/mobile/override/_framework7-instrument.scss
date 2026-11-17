@@ -17,13 +17,13 @@
     --f7-input-focused-border-color: var(--ebk-color-primary);
     --f7-input-invalid-border-color: var(--ebk-color-error);
     --f7-input-outline-invalid-border-color: var(--ebk-color-error);
-    --f7-input-invalid-text-color: var(--ebk-color-error);
-    --f7-input-error-text-color: var(--ebk-color-error);
+    --f7-input-invalid-text-color: var(--ebk-color-error-text);
+    --f7-input-error-text-color: var(--ebk-color-error-text);
     --f7-input-error-font-weight: 500;
     --f7-input-info-text-color: var(--ebk-color-text-secondary);
     --f7-input-placeholder-color: rgba(var(--ebk-color-text-secondary-rgb), 0.85);
     --f7-label-focused-text-color: var(--ebk-color-primary-text);
-    --f7-label-invalid-text-color: var(--ebk-color-error);
+    --f7-label-invalid-text-color: var(--ebk-color-error-text);
 
     /* Lists: hairline rows, copper tinted pressed state */
     --f7-list-item-border-color: var(--ebk-color-hairline);
@@ -75,6 +75,42 @@
     --f7-progressbar-progress-color: var(--ebk-color-primary);
     --f7-progressbar-bg-color: rgba(var(--ebk-copper-500-rgb), 0.18);
     --f7-preloader-color: var(--ebk-color-text-secondary);
+}
+
+/*
+ * Copper contrast (#36, docs/design/README.md §3.1 and §7).
+ * Framework7 uses its theme color for links, text buttons, list buttons, the floating save key and selection
+ * controls. On light surfaces copper 500 reaches only 3.2:1, so the light theme uses copper 700 (5.5:1) as the
+ * framework theme color. Copper fills (filled buttons, the active segment of a plain segmented control) keep
+ * brand copper 500 with dark ink text in both themes (5.9:1), white would only reach 3.2:1.
+ */
+:root.ios:not(.dark) {
+    --f7-theme-color: var(--ebk-copper-700);
+    --f7-theme-color-rgb: var(--ebk-copper-700-rgb);
+    --f7-theme-color-shade: var(--ebk-copper-900);
+    --f7-theme-color-tint: var(--ebk-copper-600);
+
+    /* tonal buttons: a light copper tint with a copper 900 label (7:1 or more) */
+    --f7-button-tonal-bg-color: rgba(var(--ebk-copper-700-rgb), 0.1);
+    --f7-button-tonal-pressed-bg-color: rgba(var(--ebk-copper-700-rgb), 0.18);
+    --f7-button-tonal-text-color: var(--ebk-copper-900);
+
+    /* red and gray text (destructive list buttons, secondary links) also pass AA on light surfaces */
+    --f7-color-red: var(--ebk-color-error-text);
+    --f7-color-red-rgb: 196, 22, 28;
+    --f7-color-gray: var(--ebk-color-text-secondary);
+    --f7-color-gray-rgb: var(--ebk-color-text-secondary-rgb);
+}
+
+:root.ios:not(.dark) .color-red {
+    --f7-theme-color: var(--ebk-color-error-text);
+    --f7-theme-color-rgb: 196, 22, 28;
+}
+
+:is(.button-fill, .segmented:not(.segmented-strong) .button-active):not([class*="color-"]) {
+    --f7-button-fill-bg-color: var(--ebk-color-primary);
+    --f7-button-fill-pressed-bg-color: var(--ebk-color-primary-pressed);
+    --f7-button-fill-text-color: var(--ebk-color-on-primary);
 }
 
 /* Buttons: copper glow on hover (pointer devices) and keyboard focus for filled buttons, press feedback */
@@ -213,7 +249,7 @@ html[dir="rtl"] .list li.list-item-selected > .item-link > .item-content {
 
     .dialog-button.color-red,
     .dialog-button.dialog-button-destructive {
-        color: var(--ebk-color-error);
+        color: var(--ebk-color-error-text);
     }
 }
 
@@ -288,5 +324,13 @@ html[dir="rtl"] .list li.list-item-selected > .item-link > .item-content {
     .item-input-focused.item-input-outline .item-input-wrap,
     .input-outline.input-focused {
         box-shadow: none !important;
+    }
+
+    /* filled controls lose their background in forced colors, a system-colored border keeps them recognisable (#36) */
+    .button.button-fill,
+    .segmented:not(.segmented-strong) .button-active,
+    .login-page-primary-action > .list-button,
+    .toolbar .ebk-tabbar-add-key {
+        border: 1px solid ButtonText;
     }
 }

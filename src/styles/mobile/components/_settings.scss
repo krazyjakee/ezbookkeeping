@@ -81,7 +81,7 @@
     /* Destructive actions inside settings panels use the error colour and keep a label (never colour alone) */
     .list-button.color-red,
     .list .list-button.ebk-settings-destructive {
-        color: var(--ebk-color-error);
+        color: var(--ebk-color-error-text);
     }
 }
 

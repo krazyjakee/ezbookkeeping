@@ -1,5 +1,5 @@
 <template>
-    <overview-widget-panel class="overview-widget--chart transaction-calendar-heatmap-card"
+    <overview-widget-panel chart class="overview-widget--chart transaction-calendar-heatmap-card"
                            :title="title || tt('Transaction Calendar Heatmap')"
                            :meta="`${tt(transactionTypeName)} · ${tt('format.misc.nMonths', { n: months })}`"
                            :loading="loading" :empty="!hasData"

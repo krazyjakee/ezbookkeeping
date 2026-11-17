@@ -12,7 +12,7 @@
             <f7-nav-title>
                 <f7-link popover-open=".chart-data-type-popover-menu" :class="{ 'disabled': loading }">
                     <span style="color: var(--f7-text-color)">{{ displayPageTypeName }}</span>
-                    <f7-icon class="page-title-bar-icon" color="gray" style="opacity: 0.5" f7="chevron_down_circle_fill"></f7-icon>
+                    <f7-icon class="page-title-bar-icon" color="gray" f7="chevron_down_circle_fill"></f7-icon>
                 </f7-link>
             </f7-nav-title>
             <f7-nav-right :class="{ 'navbar-compact-icons': true, 'disabled': loading }">
@@ -1742,7 +1742,7 @@ init();
 }
 
 .list.transaction-info-list li.transaction-info .transaction-day {
-    opacity: 0.6;
+    color: var(--ebk-color-text-secondary);
     font-size: var(--ebk-transaction-day-font-size);
     font-weight: bold;
     text-align: left;
@@ -1753,7 +1753,7 @@ html[dir="rtl"] .list.transaction-info-list li.transaction-info .transaction-day
 }
 
 .list.transaction-info-list li.transaction-info .transaction-day-of-week {
-    opacity: 0.6;
+    color: var(--ebk-color-text-secondary);
     font-size: var(--ebk-transaction-day-of-week-font-size);
 }
 

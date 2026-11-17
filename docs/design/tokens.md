@@ -25,7 +25,8 @@ Theme-dependent tokens are declared on every theme scope. This matters because a
 | --- | --- | --- | --- |
 | `--ebk-copper-50/100/300/500/600/700/900` | ramp | same | Copper ramp. Tints are for selected backgrounds |
 | `--ebk-color-primary` | `#C67E48` | same | Brand / primary (unchanged) |
-| `--ebk-color-primary-hover` / `-pressed` | copper 600 / 700 | same | Hover and pressed states of primary actions |
+| `--ebk-color-primary-hover` / `-pressed` | copper 600 / copper 600 | same | Hover and pressed fills of primary actions. They never go darker than copper 600, so the ink text keeps 4.5:1 |
+| `--ebk-color-on-primary` (+ `-rgb`) | `#140F0D` | same | Text and icons on copper fills: 5.9:1 on copper 500, 5.0:1 on copper 600. White reaches only 3.2:1 and is not used on copper (#36) |
 | `--ebk-color-primary-text` | copper 700 | copper 500 | Copper text that must pass AA |
 | `--ebk-color-canvas` | `#F7F4EF` | `#0B0A09` | Page background |
 | `--ebk-color-surface` | `#FFFFFF` | `#161412` | Panels, cards, dialogs, sheets |
@@ -36,9 +37,22 @@ Theme-dependent tokens are declared on every theme scope. This matters because a
 | `--ebk-color-hairline` | `rgba(54,47,42,.14)` | `rgba(236,226,217,.12)` | Panel and divider borders |
 | `--ebk-color-copper-line` | `rgba(198,126,72,.45)` | `rgba(198,126,72,.55)` | Active edge, corner brackets |
 | `--ebk-color-selected-background` | copper at 10% | copper at 16% | Selected rows and items |
-| `--ebk-color-success/info/warning/error` | `#4CD964` / `#2196F3` / `#FF9500` / `#FF3B30` | same | Semantic status colors (unchanged) |
+| `--ebk-color-success/info/warning/error` | `#4CD964` / `#2196F3` / `#FF9500` / `#FF3B30` | same | Semantic status colors (unchanged) for icons, edges and fills |
+| `--ebk-color-error-text` | `#C4161C` | `#FF3B30` | Error text: field messages, destructive text buttons, danger section labels (`#FF3B30` reaches only 3.5:1 on white) |
 
-The theme never remaps the financial colors. The income and expense amount colors (`src/styles/*/amount-color.scss`, user preference), the category, account and tag colors chosen by users, and the chart color schemes (`src/consts/color.ts`) are all rendered as they are.
+### Amount colors
+
+The income and expense amount colors are a user preference (`src/styles/*/amount-color.scss`, guideline D2). The theme keeps the hue the user picked and uses a text shade per theme that reaches 4.5:1 on every surface, sunken well and selected tint of that theme (#36):
+
+| Preset | Light text shade | Dark text shade | Original value |
+| --- | --- | --- | --- |
+| Green | `#00766B` | `#29A79B` | `#009688` (3.7:1 on white) |
+| Red | `#BF3939` | `#E17979` | `#D43F3F` (3.9:1 on sunken, 4.0:1 on the dark surface) |
+| Yellow | `#7F6606` | `#E2B60A` | `#E2B60A` (1.9:1 on white) |
+| Blue | `#346AB0` | `#6E99D0` | `#3873BF` (3.8:1 on the dark surface) |
+| Black or white | `#413935` | `#FAF0ED` | unchanged |
+
+Charts keep the original preset values (`src/core/color.ts`), because chart marks are graphics that need 3:1, not text. The category, account and tag colors chosen by users and the chart color schemes (`src/consts/color.ts`) are rendered as they are. Text never uses them: labels and values next to a colored mark use the text tokens, and the color appears as a swatch, border or mark.
 
 ### Focus, glow and elevation
 
@@ -104,6 +118,9 @@ Existing names keep working. They are now defined in the shared tokens.
 | `surface` / `on-surface` | surface / text primary | surface / text primary |
 | `surface-raised`, `surface-sunken` (+ `on-*`) | raised / sunken | raised / sunken |
 | `primary`, `primary-darken-1` | `#c67e48`, copper 600 | same |
+| `on-primary` | ink `#140f0d` | same |
+| `secondary` / `secondary-darken-1` | `#6b605a` / `#4f4641` (secondary text and tonal Cancel buttons pass AA) | `#9d9b99` / `#3e3d3c` |
+| `text-primary`, `text-error` helper classes | copper 700 and error text in the light theme (`src/styles/desktop/override/_vuetify.scss`) | unchanged |
 | `success`, `info`, `warning`, `error` | unchanged | unchanged |
 | `border-color` / `border-opacity` | hairline RGB / `.14` | hairline RGB / `.12` |
 | `table-header-background` | surface sunken | surface sunken |
@@ -123,7 +140,12 @@ The `bg-surface-raised`, `bg-surface-sunken`, `text-surface-raised` and similar 
 | `--f7-text-color` | text primary |
 | `--f7-block-title-text-color`, `--f7-block-footer-text-color`, `--f7-list-item-footer-text-color`, `--f7-list-item-after-text-color` | text secondary |
 | `--f7-list-outline-border-color` | hairline |
-| `--f7-theme-color` | `#c67e48`, from the `colors.primary` app parameter in `src/MobileApp.vue` |
+| `--f7-theme-color` | `#c67e48`, from the `colors.primary` app parameter in `src/MobileApp.vue`. In the light theme it is copper 700, so links, text buttons, the floating save key and selection controls pass AA (`_framework7-instrument.scss`) |
+| `--f7-button-fill-bg-color` / `-text-color` | copper 500 with ink text, on filled buttons and the active segment of a plain segmented control without a `color-*` class |
+| `--f7-color-red`, `.color-red`, `--f7-color-gray` (light theme) | error text and text secondary |
+| `--f7-list-item-text-text-color`, `--f7-list-group-title-text-color` | text secondary |
+| `--f7-list-chevron-icon-color` | `--ebk-chevron-icon-color`: black or white at 50%, at least 3:1 on surfaces and wells |
+| `--f7-button-tonal-bg-color` / `-text-color` (light) | copper 700 at 10% / copper 900 |
 
 ## No theme flash
 

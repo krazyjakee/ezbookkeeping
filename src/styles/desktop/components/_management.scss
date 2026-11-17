@@ -436,7 +436,7 @@
     border-color: color-mix(in srgb, var(--ebk-color-error) 45%, transparent) !important;
 
     > .ebk-panel-header-strip {
-        color: rgb(var(--v-theme-error));
+        color: var(--ebk-color-error-text);
 
         &::before {
             border-color: color-mix(in srgb, var(--ebk-color-error) 60%, transparent);
@@ -530,7 +530,7 @@
 }
 
 .ebk-mgmt-danger .ebk-mgmt-header-label {
-    color: rgb(var(--v-theme-error));
+    color: var(--ebk-color-error-text);
 }
 
 /* Dialog and form pattern (§4.4, D3): technical field labels, paired fields and a footer with an optional status at

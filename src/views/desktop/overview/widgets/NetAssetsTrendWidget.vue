@@ -1,5 +1,5 @@
 <template>
-    <overview-widget-panel class="overview-widget--chart net-assets-trend-card"
+    <overview-widget-panel chart class="overview-widget--chart net-assets-trend-card"
                            :title="title || tt('Net Assets Trends')"
                            :meta="tt('format.misc.nMonths', { n: months })"
                            :loading="loading" :empty="!hasData"

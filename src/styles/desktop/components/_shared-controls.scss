@@ -64,3 +64,18 @@
 .amount-input .v-text-field__suffix {
     font-variant-numeric: var(--ebk-font-numeric);
 }
+
+/* Table header filter menus: native buttons, so they are reachable and operable by keyboard (#36) */
+.ebk-table-header-menu-activator {
+    padding: 0;
+    border: 0;
+    border-radius: var(--ebk-radius-sm);
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+
+    &:disabled {
+        cursor: default;
+    }
+}
