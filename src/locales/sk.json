@@ -120,6 +120,8 @@
             "720p": "720p (cca {size} KiB)"
         },
         "misc": {
+            "nextOccurrence": "Ďalšia: {date}",
+            "occurrencesLeft": "zostáva {count}",
             "nHour": "{n} hodina",
             "nHours": "{n} hod.",
             "nDay": "{n} deň",

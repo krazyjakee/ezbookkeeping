@@ -120,6 +120,8 @@
             "720p": "720p (approx. {size} KiB)"
         },
         "misc": {
+            "nextOccurrence": "Επόμενη: {date}",
+            "occurrencesLeft": "απομένουν {count}",
             "nHour": "{n} ώρα",
             "nHours": "{n} ώρες",
             "nDay": "{n} ημέρα",
@@ -157,7 +159,7 @@
             "previewCount": "Πλήθος προεπισκόπησης: {count}",
             "selectedCount": "Επιλέχθηκαν {count} από {totalCount}",
             "queryIndex": "Ερώτημα #{index}",
-            "batchTransactionCount": "{count} transactions",
+            "batchTransactionCount": "{count} συναλλαγές",
             "confirmBatchAddTransactions": "Are you sure you want to add {count} transactions?",
             "youHaveUpdatedTransactions": "Ενημερώσατε {count} συναλλαγές",
             "youHaveDeletedTransactions": "Διαγράψατε {count} συναλλαγές",
@@ -178,7 +180,7 @@
             "deleteTransactionsTip": "ΔΕΝ μπορείτε να αναιρέσετε αυτήν την ενέργεια. Θα διαγραφούν {count} συναλλαγές. Εισαγάγετε τον τρέχοντα κωδικό πρόσβασής σας για επιβεβαίωση.",
             "clearTransactionsTagsTip": "ΔΕΝ μπορείτε να αναιρέσετε αυτήν την ενέργεια. Θα αφαιρεθούν όλες οι ετικέτες από {count} συναλλαγές.",
             "ruleIndex": "Rule #{index}",
-            "ruleCount": "{count} rules",
+            "ruleCount": "{count} κανόνες",
             "accountActivationAndResendValidationEmailTip": "Ο σύνδεσμος ενεργοποίησης λογαριασμού στάλθηκε στη διεύθυνση email σας: {email}. Αν δεν λάβετε το email, συμπληρώστε ξανά τον κωδικό πρόσβασης και κάντε κλικ στο παρακάτω κουμπί για επανάληψη αποστολής του email επαλήθευσης.",
             "resendValidationEmailTip": "Αν δεν λάβετε το email, συμπληρώστε ξανά τον κωδικό πρόσβασης και κάντε κλικ στο παρακάτω κουμπί για επανάληψη αποστολής του email επαλήθευσης στο: {email}",
             "oauth2bindTip": "Συνδέεστε στον χρήστη {userName} μέσω {providerName}. Εισαγάγετε τον κωδικό πρόσβασης ezrbookkeeping για επαλήθευση."

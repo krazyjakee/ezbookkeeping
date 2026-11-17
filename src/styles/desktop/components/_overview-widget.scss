@@ -328,6 +328,63 @@
         padding: var(--ebk-space-2) var(--ebk-space-2) 0;
         overflow: hidden;
     }
+
+    // Data table alternative of a chart (D7): replaces the chart inside the same panel, scrolls on its own
+    .overview-widget__data {
+        display: block;
+        gap: 0;
+        padding: 0;
+        overflow: auto;
+
+        &:focus-visible {
+            outline: var(--ebk-focus-outline);
+            outline-offset: -2px;
+        }
+    }
+
+    .overview-widget__data-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.8125rem;
+        line-height: 1.35;
+
+        th,
+        td {
+            padding: var(--ebk-space-1) var(--ebk-space-3);
+            border-block-end: 1px solid var(--ebk-color-hairline);
+            text-align: start;
+            vertical-align: top;
+            white-space: nowrap;
+        }
+
+        thead th {
+            position: sticky;
+            z-index: 1;
+            inset-block-start: 0;
+            background-color: var(--ebk-color-surface-sunken);
+            color: var(--ebk-color-text-secondary);
+            font-size: var(--ebk-font-technical-size);
+            font-weight: var(--ebk-font-technical-weight);
+            letter-spacing: var(--ebk-font-technical-letter-spacing);
+        }
+
+        tbody th {
+            color: var(--ebk-color-text-primary);
+            font-weight: 400;
+        }
+
+        td {
+            font-variant-numeric: tabular-nums;
+        }
+
+        .overview-widget__data-numeric {
+            text-align: end;
+        }
+
+        .ebk-signed-amount-value {
+            font-weight: 600;
+        }
+    }
 }
 
 @container overview-widget (min-width: 360px) {

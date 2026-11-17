@@ -3,6 +3,7 @@
                            :title="title || tt('Net Assets Trends')"
                            :meta="tt('format.misc.nMonths', { n: months })"
                            :loading="loading" :empty="!hasData"
+                           :data-table="dataTable"
                            body-class="overview-widget__chart-body">
         <trends-chart hide-x-axis-line hide-y-axis-labels hide-horizontal-grid-lines hide-line-symbols no-animation
                       chart-mode="daily" :type="TrendChartType.Area.type"
@@ -31,6 +32,7 @@
 <script setup lang="ts">
 import OverviewWidgetPanel from './OverviewWidgetPanel.vue';
 import type { TrendsBarChartClickEvent } from '@/components/base/TrendsChartBase.ts';
+import type { ChartDataTable, ChartDataTableRow } from '@/components/base/ChartDataTableBase.ts';
 
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
@@ -50,7 +52,7 @@ import { ChartSortingType, ChartDataAggregationType, ChartDateAggregationType, T
 import type { TransactionAssetTrendsAnalysisDataItem, TransactionAssetTrendsAnalysisDataAmount } from '@/models/transaction.ts';
 
 import { BIG_DECIMAL_ZERO, parseBigDecimal } from '@/lib/numeral.ts';
-import { getUnixTimeBeforeUnixTime } from '@/lib/datetime.ts';
+import { getUnixTimeBeforeUnixTime, getYearMonthFirstUnixTime, parseDateTimeFromUnixTime } from '@/lib/datetime.ts';
 import { DISPLAY_HIDDEN_AMOUNT } from '@/consts/numeral.ts';
 
 const props = defineProps<{
@@ -64,7 +66,7 @@ const props = defineProps<{
 
 const router = useRouter();
 
-const { tt, formatAmountToLocalizedNumeralsWithCurrency } = useI18n();
+const { tt, formatAmountToLocalizedNumeralsWithCurrency, formatDateTimeToGregorianLikeLongYearMonth } = useI18n();
 
 const settingsStore = useSettingsStore();
 const userStore = useUserStore();
@@ -146,6 +148,57 @@ const hasData = computed<boolean>(() => overviewStore.transactionAssetTrendsData
 const displayLatestNetAssets = computed<string>(() => {
     const latest = items.value[0]?.value ?? BIG_DECIMAL_ZERO;
     return formatAmountToLocalizedNumeralsWithCurrency(showAmountInHomePage.value ? latest : DISPLAY_HIDDEN_AMOUNT, defaultCurrency.value);
+});
+
+// data table with the month-end net assets drawn by the chart (last value of each month, design guidelines D7)
+const dataTable = computed<ChartDataTable | null>(() => {
+    const amounts = items.value[0]?.items ?? [];
+
+    if (!hasData.value || !amounts.length) {
+        return null;
+    }
+
+    const firstMonth = parseDateTimeFromUnixTime(startTime.value);
+    const firstYearMonth = firstMonth.getGregorianCalendarYear() * 12 + firstMonth.getGregorianCalendarMonth();
+    const rows: ChartDataTableRow[] = [];
+    const monthEndAmounts: Record<string, TransactionAssetTrendsAnalysisDataAmount> = {};
+    const monthKeys: string[] = [];
+
+    for (const amount of amounts) {
+        if (amount.year * 12 + amount.month < firstYearMonth) {
+            continue;
+        }
+
+        const monthKey = `${amount.year}-${amount.month}`;
+
+        if (!monthEndAmounts[monthKey]) {
+            monthKeys.push(monthKey);
+        }
+
+        monthEndAmounts[monthKey] = amount;
+    }
+
+    for (const monthKey of monthKeys) {
+        const amount = monthEndAmounts[monthKey] as TransactionAssetTrendsAnalysisDataAmount;
+        const monthStartTime = getYearMonthFirstUnixTime({ year: amount.year, month1base: amount.month });
+
+        rows.push({
+            key: `month-${monthKey}`,
+            name: formatDateTimeToGregorianLikeLongYearMonth(parseDateTimeFromUnixTime(monthStartTime)),
+            cells: [{
+                text: formatAmountToLocalizedNumeralsWithCurrency(showAmountInHomePage.value ? amount.value : DISPLAY_HIDDEN_AMOUNT, defaultCurrency.value),
+                type: 'none'
+            }]
+        });
+    }
+
+    return {
+        columns: [
+            { key: 'date', name: tt('Date'), numeric: false },
+            { key: 'netAssets', name: tt('Net assets'), numeric: true }
+        ],
+        rows: rows
+    };
 });
 
 function clickMonth(e: TrendsBarChartClickEvent): void {

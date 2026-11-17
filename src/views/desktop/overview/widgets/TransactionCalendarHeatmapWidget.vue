@@ -3,6 +3,7 @@
                            :title="title || tt('Transaction Calendar Heatmap')"
                            :meta="`${tt(transactionTypeName)} · ${tt('format.misc.nMonths', { n: months })}`"
                            :loading="loading" :empty="!hasData"
+                           :data-table="dataTable"
                            body-class="overview-widget__chart-body transaction-calendar-heatmap-body">
         <date-range-calendar-heat-map-chart :start-time="startTime" :end-time="endTime"
                                             :items="items" :value-type="ChartValueType.Amount"
@@ -25,6 +26,7 @@
 <script setup lang="ts">
 import OverviewWidgetPanel from './OverviewWidgetPanel.vue';
 import SignedAmount from '@/components/common/SignedAmount.vue';
+import type { ChartDataTable } from '@/components/base/ChartDataTableBase.ts';
 
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
@@ -67,7 +69,7 @@ const props = defineProps<{
 
 const router = useRouter();
 
-const { tt, formatAmountToLocalizedNumeralsWithCurrency } = useI18n();
+const { tt, formatAmountToLocalizedNumeralsWithCurrency, formatDateTimeToLongDate } = useI18n();
 
 const settingsStore = useSettingsStore();
 const userStore = useUserStore();
@@ -130,6 +132,35 @@ const displayTotal = computed<string>(() => {
     }
 
     return formatAmountToLocalizedNumeralsWithCurrency(showAmountInHomePage.value ? total.abs() : DISPLAY_HIDDEN_AMOUNT, defaultCurrency.value);
+});
+
+// data table with the exact amount of every day that has one in the heatmap (design guidelines D7)
+const dataTable = computed<ChartDataTable | null>(() => {
+    if (!items.value.length) {
+        return null;
+    }
+
+    const type = props.transactionType === TransactionType.Income ? 'income' : 'expense';
+
+    return {
+        columns: [
+            { key: 'date', name: tt('Date'), numeric: false },
+            { key: 'amount', name: tt(transactionTypeName.value), numeric: true }
+        ],
+        rows: items.value.map(item => {
+            const dateTime = parseDateTimeFromKnownDateTimeFormat(item.id, KnownDateTimeFormat.DefaultDate);
+
+            return {
+                key: item.id,
+                name: dateTime ? formatDateTimeToLongDate(dateTime) : item.id,
+                cells: [{
+                    text: formatAmountToLocalizedNumeralsWithCurrency(showAmountInHomePage.value ? item.value.abs() : DISPLAY_HIDDEN_AMOUNT, defaultCurrency.value),
+                    type: type,
+                    hideSign: !showAmountInHomePage.value
+                }]
+            };
+        })
+    };
 });
 
 function clickDate(date: string): void {

@@ -3,6 +3,7 @@
                            :title="displayTitle"
                            :meta="displayMonthCount"
                            :loading="loading" :empty="!monthlyIncomeAndExpenseData.length"
+                           :data-table="dataTable"
                            body-class="overview-widget__chart-body">
         <monthly-income-and-expense-chart :data="monthlyIncomeAndExpenseData" :is-dark-mode="isDarkMode"
                                           :loading="loading" :disabled="loading" :enable-click-item="true"
@@ -31,6 +32,7 @@
 import OverviewWidgetPanel from './OverviewWidgetPanel.vue';
 import SignedAmount from '@/components/common/SignedAmount.vue';
 import { type MonthlyIncomeAndExpenseCardClickEvent } from '@/components/desktop/MonthlyIncomeAndExpenseChart.vue';
+import type { ChartDataTable, ChartDataTableColumn } from '@/components/base/ChartDataTableBase.ts';
 
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
@@ -152,6 +154,42 @@ const latestMonth = computed<LatestMonthSummary | null>(() => {
         name: formatDateTimeToGregorianLikeLongYearMonth(parseDateTimeFromUnixTime(latest.monthStartTime)),
         income: getSummaryAmount(latest.incomeAmount, latest.incompleteIncomeAmount),
         expense: getSummaryAmount(latest.expenseAmount, latest.incompleteExpenseAmount)
+    };
+});
+
+// data table with the exact monthly values drawn by the chart (design guidelines D7)
+const dataTable = computed<ChartDataTable | null>(() => {
+    if (!monthlyIncomeAndExpenseData.value.length) {
+        return null;
+    }
+
+    const columns: ChartDataTableColumn[] = [
+        { key: 'date', name: tt('Date'), numeric: false }
+    ];
+
+    if (showIncome.value) {
+        columns.push({ key: 'income', name: tt('Income'), numeric: true });
+    }
+
+    if (showExpense.value) {
+        columns.push({ key: 'expense', name: tt('Expense'), numeric: true });
+    }
+
+    return {
+        columns: columns,
+        rows: monthlyIncomeAndExpenseData.value.map(item => {
+            const income = getSummaryAmount(item.incomeAmount, item.incompleteIncomeAmount);
+            const expense = getSummaryAmount(item.expenseAmount, item.incompleteExpenseAmount);
+
+            return {
+                key: `month-${item.monthStartTime}`,
+                name: formatDateTimeToGregorianLikeLongYearMonth(parseDateTimeFromUnixTime(item.monthStartTime)),
+                cells: [
+                    ...(showIncome.value ? [{ text: income.text, type: 'income' as const, hideSign: income.hideSign }] : []),
+                    ...(showExpense.value ? [{ text: expense.text, type: 'expense' as const, hideSign: expense.hideSign }] : [])
+                ]
+            };
+        })
     };
 });
 

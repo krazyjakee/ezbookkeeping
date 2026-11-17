@@ -60,11 +60,11 @@ Keyboard (final): every focus stop has a visible indicator on desktop login, the
 
 Findings by severity (axe impact scale):
 
-| Severity | Fixed | Justified or tracked |
+| Severity | Fixed | Justified |
 | --- | --- | --- |
 | Serious | 16 | 0 |
-| Moderate | 20 | 1 tracked (T1) |
-| Minor | 3 | 7 justified (J1–J7), 1 tracked (T2) |
+| Moderate | 21 (including T1) | 0 |
+| Minor | 4 (including T2) | 7 (J1–J7) |
 
 ## Findings
 
@@ -119,7 +119,7 @@ WCAG references are WCAG 2.2 success criteria. File paths are relative to the re
 | N11 | Desktop date and time fields | Calendar icon announced as the raw key "input.appendAction"; field exposed as a menu button with `aria-owns` pointing at an unrendered menu | 4.1.2, 3.1.2 | Moderate | Fixed: Vuetify keys mapped (`Open`), menu semantics removed from the anchor field. `src/desktop-main.ts`, `src/components/desktop/DateTimeSelect.vue` |
 | N12 | Desktop calendars and date pickers | Day cells and month navigation labelled in English for every language; cells with amounts did not include them in the name | 3.1.2, 2.5.3 | Moderate | Fixed: localized long date plus the daily income and expense; Previous/Next Period. `src/components/common/TransactionCalendar.vue`, `src/components/common/DateTimePicker.vue`. Residual axe flag: J2 |
 | N13 | Mobile toasts ("Settings saved", errors) and notifications | Framework7 toasts have no live region, so save results were not announced | 4.1.3 | Serious | Fixed: the text is mirrored into a polite status region. `src/MobileApp.vue`. Verified: desktop snackbars are `role="status"`, the mobile offline banner is `role="status"`, and the mobile live region carries "Settings saved" |
-| N14 | Desktop overview chart widgets (income & expense trend, net assets trend, calendar heatmap) | Canvas without a name or description | 1.1.1 | Moderate | Fixed: the chart body is an image named by the panel title and described by the footer summary. `src/views/desktop/overview/widgets/OverviewWidgetPanel.vue` and the three widgets. A full data table on the overview is tracked as T1 |
+| N14 | Desktop overview chart widgets (income & expense trend, net assets trend, calendar heatmap) | Canvas without a name or description | 1.1.1 | Moderate | Fixed: the chart body is an image named by the panel title and described by the footer summary. `src/views/desktop/overview/widgets/OverviewWidgetPanel.vue` and the three widgets. The data table alternative is T1 |
 | N15 | Docs export and import guide (en, zh_Hans) | 14 linked screenshots with empty `alt`, so the links had no name | 1.1.1, 2.4.4 | Serious | Fixed: alt text from the section heading. `website/docs/export_and_import/index.md`, `website/docs/zh_Hans/export_and_import/index.md` |
 
 ### Zoom, reflow, text size and localization
@@ -143,7 +143,7 @@ WCAG references are WCAG 2.2 success criteria. File paths are relative to the re
 | Forced colors (light and dark) | Pass: canvas grid, corner brackets and start ticks are dropped; desktop primary buttons get a system border; mobile filled controls fixed in A12; focus ring uses `Highlight` |
 | Docs | Reduced motion: no animation over 120 ms. Forced colors: grid dropped. The skip link is the first Tab stop, and every Tab stop has a visible ring |
 
-### Justified and tracked items
+### Justified items and follow-up fixes
 
 | ID | Page / surface | Item | WCAG | Severity | Status |
 | --- | --- | --- | --- | --- | --- |
@@ -154,8 +154,8 @@ WCAG references are WCAG 2.2 success criteria. File paths are relative to the re
 | J5 | Docs, every page | axe `nested-interactive`: VitePress collapsible sidebar groups (`role="button"`) contain the group link | 4.1.2 | Minor | Justified (third party, VitePress 2.0.0-alpha.15 default theme) |
 | J6 | Desktop add/edit transaction dialog | Escape does not close the dialog while it is `persistent` (loading, saving or unsaved changes). This protects data; Cancel and the close button are in the tab order, and focus is trapped and restored | 2.1.1 | Minor | Justified (existing behavior) |
 | J7 | Mobile shell | The Framework7 tab bar comes before the navbar and content in the tab order | 2.4.3 | Minor | Justified: Framework7 structure, consistent on every page |
-| T1 | Desktop overview chart widgets | D7 asks for a data table or ranked list with exact values beside every chart. The overview trend and heatmap widgets give the panel name, the latest values and a link to Statistics, which has the full table and summary | 1.1.1 | Moderate | Tracked: adding tables to overview widgets is feature work beyond this audit |
-| T2 | de, ru, ta | `format.misc.batchTransactionCount` is still English ("{count} transactions") in de.json, ru.json and ta.json | 3.1.2 | Minor | Tracked for translators (locale content is out of scope here) |
+| T1 | Desktop overview chart widgets (income & expense trend, net assets trend, calendar heatmap) | D7 asks for a data table or ranked list with exact values beside every chart. The widgets only gave the panel name, the latest values and a link to Statistics | 1.1.1 | Moderate | Fixed: a "Data Table" disclosure button in the header strip (`aria-expanded`, `aria-controls`, collapsed by default) swaps the chart for a table of the exact values in the same panel, so the dashboard layout does not change. The table is built from the chart's own data: one row per month (income and expense as signed amounts per D1, or the month-end net assets with their natural sign) or one row per day with an amount (heatmap). The region is named "panel title / Data Table" and is focusable for keyboard scrolling. `src/components/base/ChartDataTableBase.ts` (shared types and disclosure state), `src/views/desktop/overview/widgets/OverviewWidgetPanel.vue`, `IncomeExpenseTrendWidget.vue`, `NetAssetsTrendWidget.vue`, `TransactionCalendarHeatmapWidget.vue`, `src/styles/desktop/components/_overview-widget.scss`. Verified in en, de and ru, light and dark: Enter and Space toggle, Tab moves into the table, no new axe violations. The mobile overview has no chart widgets (its ranking is already a list) |
+| T2 | de, ru, ta and other languages | `format.misc.batchTransactionCount` ("{count} transactions", the transaction list header strip) was still English in 16 languages; other count strings shown on core pages were English too: `nMonth` / `nMonths` (overview widget meta), `charactersRemaining` / `charactersOverLimit` (transaction description counter), `occurrencesLeft` and `nextOccurrence` (scheduled transactions, missing outside en and bn), `ruleCount`, and `nDay(s)` / `nHour(s)` in fr, hi, ko, nl, th, vi | 3.1.2 | Minor | Fixed: translated in every `src/locales/*.json` (the French "{count} transactions" is already correct). Following the existing convention (no plural rules), Slavic languages use a "Label: {count}" form or an abbreviation, as pl, sk and uk already did, e.g. ru "Транзакций: {count}", "{n} мес.". "Data Table", the label of the T1 button, was also translated in fr, it, kn, nl, th and vi. Verified: de "44 Transaktionen", ru "Транзакций: 44" |
 
 Observation: the desktop app has no global offline banner. Its data panels show an offline state, and the mobile app shows the banner (`role="status"`). README §5.2 only requires the banner on mobile.
 
@@ -191,4 +191,4 @@ These could not be done in this environment (headless Chromium on Linux, no assi
 6. **Other engines.** Run the axe scan in Firefox (Gecko) and Safari (WebKit). Only Chromium was used.
 7. **A real RTL language.** No RTL locale ships, so `dir="rtl"` was forced. Re-test when an RTL translation is added.
 8. **Docs rebuild.** Rebuild the documentation site (`website`, `npm run docs:build`) and rerun `scan-docs.mjs` without CSS injection. This confirms the theme and alt text fixes in the published output.
-9. **Cognitive and content review.** A person should review plain-language error messages and translation quality, especially for T2.
+9. **Cognitive and content review.** A person should review plain-language error messages and translation quality, especially the count strings translated for T2.
