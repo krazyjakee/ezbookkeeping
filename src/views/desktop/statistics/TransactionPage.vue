@@ -1127,12 +1127,15 @@ const reportSummarySentences = computed<string[]>(() => {
             return { label: period, value: total };
         });
 
+        // daily balances are labelled with single dates ("on November 17, 2026"), other aggregations with periods ("in Nov 2026")
+        const labelKind = isBalance && assetTrendsDateAggregationType.value === ChartDateAggregationType.Day.type ? 'date' : 'period';
+
         if (isBalance && points.length > 1) {
             const latestPoint = points[points.length - 1]!;
-            sentences.push(getSeriesSummary(seriesName, [latestPoint], formatValue));
+            sentences.push(getSeriesSummary(seriesName, [latestPoint], formatValue, labelKind));
         }
 
-        sentences.push(getSeriesSummary(seriesName, points, formatValue));
+        sentences.push(getSeriesSummary(seriesName, points, formatValue, labelKind));
 
         if (series.length > 1) {
             if (analysisType.value === StatisticsAnalysisType.TrendAnalysis) {

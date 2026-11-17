@@ -3,7 +3,7 @@
         <one-column-dialog-layout :title="dialogTitle || defaultTitle" :cancel-button-title="tt('Cancel')"
                                   @cancel="cancel">
             <template #content>
-                <div class="mt-2">
+                <div class="mt-2 ebk-dialog-form">
                     <v-text-field autocomplete="off"
                                   persistent-placeholder
                                   :autofocus="true"
@@ -15,8 +15,10 @@
             </template>
 
             <template #footer>
-                <v-spacer />
-                <v-btn color="primary" :disabled="!newName || oldName === newName" @click="save">{{ tt('Save') }}</v-btn>
+                <div class="ebk-dialog-footer">
+                    <v-btn color="default" variant="outlined" @click="cancel">{{ tt('Cancel') }}</v-btn>
+                    <v-btn color="primary" variant="flat" :disabled="!newName || oldName === newName" @click="save">{{ tt('Save') }}</v-btn>
+                </div>
             </template>
         </one-column-dialog-layout>
     </v-dialog>

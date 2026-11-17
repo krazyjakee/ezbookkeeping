@@ -41,7 +41,7 @@
                 <v-btn class="ms-2 me-1" density="comfortable" variant="flat" color="primary"
                        :disabled="loading || loadingPreset || submitting || (!isImportDataFromTextbox && !isAIImageImport && !importFile) || (isImportDataFromTextbox && !importData) || (!isImportDataFromTextbox && !isAIImageImport && allSupportedEncodings && fileEncoding === 'auto' && !autoDetectedFileEncoding) || (!isImportDataFromTextbox && isAIImageImport && importImageFiles.length === 0)"
                        @click="parseData"
-                       v-if="currentStep === 'defineColumn' || currentStep === 'executeCustomScript' || (currentStep === 'recognizeImages' && !submitting) || currentStep === 'uploadFile'">
+                       v-if="currentStep === 'defineColumn' || currentStep === 'executeCustomScript' || (currentStep === 'recognizeImages' && !submitting)">
                     {{ tt('Next') }}
                     <v-progress-circular indeterminate size="22" class="ms-2" v-if="submitting"></v-progress-circular>
                 </v-btn>
@@ -167,7 +167,7 @@
                           :class="{ 'import-transaction-dialog-window': currentStep === 'defineColumn' || currentStep === 'checkData' }"
                           v-model="currentStep">
                     <v-window-item value="uploadFile">
-                        <div class="pa-4">
+                        <v-form class="pa-4 ebk-dialog-form" @submit.prevent>
                             <v-row>
                                 <v-col cols="12" md="12">
                                     <two-column-select primary-key-field="displayCategoryName"
@@ -231,7 +231,7 @@
                                 </v-col>
 
                                 <v-col cols="12" md="12" v-if="isAIImageImport">
-                                    <div class="text-body-large mb-2">{{ tt('Image Files') }}</div>
+                                    <div class="ebk-dialog-form-label">{{ tt('Image Files') }}</div>
                                     <div class="import-transaction-images d-flex gap-2 overflow-x-auto">
                                         <div :key="picIdx" v-for="(imageItem, picIdx) in importImageFiles">
                                             <v-avatar rounded="lg" variant="tonal" size="120"
@@ -255,7 +255,7 @@
                                     </div>
                                 </v-col>
                             </v-row>
-                        </div>
+                        </v-form>
                     </v-window-item>
                     <v-window-item value="defineColumn">
                         <import-transaction-define-column-tab
@@ -331,14 +331,24 @@
                 </v-window>
             </template>
 
-            <template #footer v-if="currentStep === 'uploadFile' && (needAITextRecognition || needAIImageRecognition)">
-                <div class="w-100 text-body-large text-truncate">
-                    <span v-if="needAITextRecognition">
-                        {{ tt('Uploaded text and personal data will be sent to the large language model, please be aware of potential privacy risks.') }}
-                    </span>
-                    <span v-if="needAIImageRecognition">
-                        {{ tt('Uploaded image and personal data will be sent to the large language model, please be aware of potential privacy risks.') }}
-                    </span>
+            <template #footer v-if="currentStep === 'uploadFile'">
+                <div class="ebk-dialog-footer">
+                    <div class="ebk-dialog-footer-status" role="status" aria-live="polite">
+                        <template v-if="needAITextRecognition || needAIImageRecognition">
+                            <span class="ebk-dialog-footer-status-dot ebk-dialog-footer-status-dot--warning" aria-hidden="true"></span>
+                            <span v-if="needAITextRecognition">{{ tt('Uploaded text and personal data will be sent to the large language model, please be aware of potential privacy risks.') }}</span>
+                            <span v-if="needAIImageRecognition">{{ tt('Uploaded image and personal data will be sent to the large language model, please be aware of potential privacy risks.') }}</span>
+                        </template>
+                    </div>
+                    <v-btn color="default" variant="outlined"
+                           :disabled="loading || loadingPreset || submitting"
+                           @click="close(false)">{{ tt('Cancel') }}</v-btn>
+                    <v-btn color="primary" variant="flat"
+                           :disabled="loading || loadingPreset || submitting || (!isImportDataFromTextbox && !isAIImageImport && !importFile) || (isImportDataFromTextbox && !importData) || (!isImportDataFromTextbox && !isAIImageImport && allSupportedEncodings && fileEncoding === 'auto' && !autoDetectedFileEncoding) || (!isImportDataFromTextbox && isAIImageImport && importImageFiles.length === 0)"
+                           @click="parseData">
+                        {{ tt('Next') }}
+                        <v-progress-circular indeterminate size="22" class="ms-2" v-if="submitting"></v-progress-circular>
+                    </v-btn>
                 </div>
             </template>
         </one-column-dialog-layout>

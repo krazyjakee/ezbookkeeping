@@ -481,7 +481,7 @@ const {
 
 const { getRankedItemsSummary, getSeriesSummary, getIncomeExpenseSummary } = useChartTextSummary();
 
-const { showPrompt, showToast, routeBackOnError } = useI18nUIComponents();
+const { showPrompt, showToast } = useI18nUIComponents();
 
 const {
     loading,
@@ -665,7 +665,7 @@ const summarySentences = computed<string[]>(() => {
         if (items.length === 1 && items[0] && items[0].items.length) {
             sentences.push(getSeriesSummary(translateNameInTrendsChart.value ? tt(items[0].name) : items[0].name,
                 [items[0].items[items[0].items.length - 1]!].map(dataItem => ({ label: formatDateTimeToLongDate(getYearMonthDayDateTime(dataItem.year, dataItem.month, dataItem.day)), value: dataItem.value })),
-                formatValue));
+                formatValue, 'date'));
         }
     }
 
@@ -1119,7 +1119,7 @@ function onPageAfterIn(): void {
         reload();
     }
 
-    routeBackOnError(props.f7router, loadingError);
+    // a failed load stays on this page and shows the error state panel with a retry action (guideline 4.6)
 }
 
 init();

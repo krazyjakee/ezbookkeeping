@@ -1,5 +1,5 @@
 <template>
-    <f7-list class="skeleton-text margin-top-half" media-list v-if="loading">
+    <f7-list class="skeleton-text margin-top-half account-balance-trends-bar-chart" media-list :style="chartThemeStyle" v-if="loading">
         <f7-list-item class="account-balance-trends-list-item" title="Date Range" after="0.00 USD"
                       :key="itemIdx" v-for="itemIdx in [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ]">
             <template #media>
@@ -19,7 +19,7 @@
         <f7-list-item :title="tt('No transaction data')"></f7-list-item>
     </f7-list>
 
-    <f7-list class="margin-top-half" media-list virtual-list :virtual-list-params="{ items: allVirtualListItems, renderExternal, height: 'auto' }"
+    <f7-list class="margin-top-half account-balance-trends-bar-chart" media-list virtual-list :style="chartThemeStyle" :virtual-list-params="{ items: allVirtualListItems, renderExternal, height: 'auto' }"
              :key="`account-balance-trends-${dateAggregationType}-${timezoneUsedForDateRange}`"
              v-else-if="!loading && allVirtualListItems && allVirtualListItems.length > 0">
         <ul>
@@ -32,7 +32,7 @@
                           v-for="item in virtualDataItems.items"
             >
                 <template #media>
-                    <f7-icon f7="calendar"></f7-icon>
+                    <f7-icon class="account-balance-trends-icon" f7="calendar"></f7-icon>
                 </template>
                 <template #inner>
                     <div class="display-flex padding-top-half">
@@ -56,7 +56,10 @@ import {
     useAccountBalanceTrendsChartBase
 } from '@/components/base/AccountBalanceTrendsChartBase.ts'
 
+import { getChartThemePalette } from '@/components/base/ChartThemeBase.ts';
+
 import { useSettingsStore } from '@/stores/setting.ts';
+import { useEnvironmentsStore } from '@/stores/environment.ts';
 
 import { itemAndIndex } from '@/core/base.ts';
 import type { BigDecimal } from '@/core/numeral.ts';
@@ -85,6 +88,7 @@ const { tt, formatAmountToLocalizedNumeralsWithCurrency } = useI18n();
 const { allDataItems } = useAccountBalanceTrendsChartBase(props);
 
 const settingsStore = useSettingsStore();
+const environmentsStore = useEnvironmentsStore();
 
 const virtualDataItems = ref<MobileAccountBalanceTrendsChartVirtualListData>({
     items: [],
@@ -92,6 +96,17 @@ const virtualDataItems = ref<MobileAccountBalanceTrendsChartVirtualListData>({
 });
 
 const chartColors = computed<ColorValue[]>(() => settingsStore.chartColorList);
+
+// the same panel palette as the desktop ECharts charts (track at hairline strength, text colours)
+const chartThemeStyle = computed<Record<string, string>>(() => {
+    const palette = getChartThemePalette(environmentsStore.framework7DarkMode);
+
+    return {
+        '--ebk-chart-track-color': palette.hairline,
+        '--ebk-chart-text-primary': palette.textPrimary,
+        '--ebk-chart-text-secondary': palette.textSecondary
+    };
+});
 
 const allVirtualListItems = computed<MobileAccountBalanceTrendsChartItem[]>(() => {
     const ret: MobileAccountBalanceTrendsChartItem[] = [];
@@ -138,3 +153,24 @@ function renderExternal(vl: unknown, vlData: MobileAccountBalanceTrendsChartVirt
     virtualDataItems.value = vlData;
 }
 </script>
+
+<style>
+.account-balance-trends-bar-chart {
+    --f7-list-item-title-text-color: var(--ebk-chart-text-primary);
+    --f7-list-item-after-text-color: var(--ebk-chart-text-primary);
+
+    .item-after {
+        font-variant-numeric: tabular-nums;
+    }
+
+    .statistics-percent-line .progressbar {
+        --f7-progressbar-bg-color: var(--ebk-chart-track-color);
+        --f7-progressbar-border-radius: 999px;
+        height: 6px;
+    }
+}
+
+.account-balance-trends-icon.f7-icons {
+    color: var(--ebk-chart-text-secondary);
+}
+</style>

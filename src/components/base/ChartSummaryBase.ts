@@ -18,6 +18,11 @@ export interface ChartSummarySeriesPoint {
     readonly value: BigDecimal;
 }
 
+/**
+ * How the point labels read in a sentence: a period ("in Nov 2026") or a single date ("on November 17, 2026")
+ */
+export type ChartSummaryLabelKind = 'period' | 'date';
+
 export interface ChartRankedSummaryOptions {
     readonly totalName: string;
     readonly formatValue: (value: BigDecimal) => string;
@@ -81,8 +86,9 @@ export function useChartTextSummary() {
 
     /**
      * e.g. "Payroll peaked at £4,200.00 in Nov, 2026; the lowest value was £0.00 in Jan, 2026."
+     * Pass labelKind 'date' when the labels are single dates, e.g. "Net assets was £1,250.00 on November 17, 2026."
      */
-    function getSeriesSummary(seriesName: string, points: ChartSummarySeriesPoint[], formatValue: (value: BigDecimal) => string): string {
+    function getSeriesSummary(seriesName: string, points: ChartSummarySeriesPoint[], formatValue: (value: BigDecimal) => string, labelKind: ChartSummaryLabelKind = 'period'): string {
         if (!points || !points.length) {
             return '';
         }
@@ -104,16 +110,37 @@ export function useChartTextSummary() {
             return '';
         }
 
-        if (points.length === 1) {
+        if (points.length === 1 && labelKind === 'date') {
+            return translateSentence('{name} was {amount} on {date}.', {
+                name: seriesName,
+                amount: formatValue(highest.value),
+                date: highest.label
+            });
+        } else if (points.length === 1) {
             return translateSentence('{name} was {amount} in {period}.', {
                 name: seriesName,
                 amount: formatValue(highest.value),
                 period: highest.label
             });
+        } else if (highest.value.equals(lowest.value) && labelKind === 'date') {
+            return translateSentence('{name} was {amount} on every date.', {
+                name: seriesName,
+                amount: formatValue(highest.value)
+            });
         } else if (highest.value.equals(lowest.value)) {
             return translateSentence('{name} was {amount} in every period.', {
                 name: seriesName,
                 amount: formatValue(highest.value)
+            });
+        }
+
+        if (labelKind === 'date') {
+            return translateSentence('{name} peaked at {amount} on {date}; the lowest value was {lowestAmount} on {lowestDate}.', {
+                name: seriesName,
+                amount: formatValue(highest.value),
+                date: highest.label,
+                lowestAmount: formatValue(lowest.value),
+                lowestDate: lowest.label
             });
         }
 

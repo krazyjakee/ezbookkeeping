@@ -18,12 +18,14 @@ import { useTheme } from 'vuetify';
 import type { ECElementEvent } from 'echarts/core';
 import type { CallbackDataParams } from 'echarts/types/dist/shared';
 
+import { useI18n } from '@/locales/helpers.ts';
 import { type CommonPieChartDataItem, type CommonPieChartProps, usePieChartBase } from '@/components/base/PieChartBase.ts'
 
 import { itemAndIndex } from '@/core/base.ts';
 import type { BigDecimal } from '@/core/numeral.ts';
 import type { ColorStyleValue } from '@/core/color.ts';
 import { ThemeType } from '@/core/theme.ts';
+import { TextDirection } from '@/core/text.ts';
 
 import { getObjectOwnFieldCount } from '@/lib/common.ts';
 import { BIG_DECIMAL_ZERO, parseBigDecimal } from '@/lib/numeral.ts';
@@ -59,10 +61,13 @@ const emit = defineEmits<{
 }>();
 
 const theme = useTheme();
+const { getCurrentLanguageTextDirection } = useI18n();
 
 const { selectedIndex, validItems, allItemsMap } = usePieChartBase(props);
 
 const selectedLegends = ref<Record<string, boolean>>({});
+
+const isRtl = computed<boolean>(() => getCurrentLanguageTextDirection() === TextDirection.RTL);
 
 const validItemsMap = computed<Record<string, CommonPieChartDataItem>>(() => {
     const map: Record<string, CommonPieChartDataItem> = {};
@@ -281,7 +286,8 @@ const chartOptions = computed<object>(() => {
                 option: {
                     legend: {
                         orient: 'vertical',
-                        left: 'left'
+                        // the legend sits at the start side, so it mirrors in RTL (guideline §7)
+                        ...(isRtl.value ? { right: 'right', align: 'right' } : { left: 'left' })
                     },
                     series: [
                         {
@@ -341,18 +347,19 @@ function onLegendSelectChanged(e: { selected: Record<string, boolean> }): void {
     width: 100%;
 }
 
+/*
+ * The donut is drawn at the center of the canvas in both directions, so its label is centered with physical
+ * properties: an inline-start offset plus a direction-dependent translate breaks when the html dir and the
+ * computed direction of the chart disagree.
+ */
 .pie-chart-center {
     position: absolute;
     inset-block-start: calc(50% + 25px);
-    inset-inline-start: 50%;
+    left: 50%;
     transform: translate(-50%, -50%);
     max-width: 30%;
     text-align: center;
     pointer-events: none;
-}
-
-[dir="rtl"] .pie-chart-center {
-    transform: translate(50%, -50%);
 }
 
 .pie-chart-center-title {

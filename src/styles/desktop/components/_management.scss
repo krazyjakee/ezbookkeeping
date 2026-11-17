@@ -1,3 +1,5 @@
+@use '../../common/tokens' as ebk;
+
 /* Management lists and data transfer (#33, design guidelines §6.4)
  * accounts, categories, tags, exchange rates, custom icons, import presets, data management and import/export
  */
@@ -529,4 +531,80 @@
 
 .ebk-mgmt-danger .ebk-mgmt-header-label {
     color: rgb(var(--v-theme-error));
+}
+
+/* Dialog and form pattern (§4.4, D3): technical field labels, paired fields and a footer with an optional status at
+ * the start, then Cancel (outlined) and the one copper save action. The bracketed dialog frame comes from the dialog
+ * layouts (`.dialog-layout-card`).
+ */
+.ebk-dialog-form {
+    .v-field-label--floating,
+    .ebk-dialog-form-label {
+        font-size: var(--ebk-font-technical-size);
+        font-weight: var(--ebk-font-technical-weight);
+        letter-spacing: var(--ebk-font-technical-letter-spacing) !important;
+    }
+
+    .ebk-dialog-form-label {
+        display: block;
+        margin-block-end: var(--ebk-space-2);
+        color: var(--ebk-color-text-secondary);
+    }
+}
+
+@each $lang in ebk.$ebk-latin-script-languages {
+    .ebk-dialog-form:lang(#{$lang}) {
+        .v-field-label--floating,
+        .ebk-dialog-form-label {
+            text-transform: uppercase;
+        }
+    }
+}
+
+.ebk-dialog-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--ebk-space-3);
+    width: 100%;
+}
+
+.ebk-dialog-footer-status {
+    display: flex;
+    flex: 1 1 12rem;
+    align-items: center;
+    gap: var(--ebk-space-2);
+    min-width: 0;
+    color: var(--ebk-color-text-secondary);
+    font-size: 0.8125rem;
+    overflow-wrap: anywhere;
+}
+
+.ebk-dialog-footer-status-dot {
+    flex: 0 0 auto;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--ebk-color-copper-line);
+
+    &.ebk-dialog-footer-status-dot--progress {
+        background-color: var(--ebk-color-primary);
+    }
+
+    &.ebk-dialog-footer-status-dot--warning {
+        background-color: var(--ebk-color-warning);
+    }
+
+    &.ebk-dialog-footer-status-dot--modified {
+        border: 1px solid var(--ebk-color-primary);
+        background-color: transparent;
+    }
+}
+
+@media (forced-colors: active) {
+    .ebk-dialog-footer-status-dot {
+        forced-color-adjust: none;
+        background-color: CanvasText;
+    }
 }

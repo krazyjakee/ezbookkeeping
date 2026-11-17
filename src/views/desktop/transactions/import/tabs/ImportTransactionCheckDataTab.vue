@@ -44,6 +44,7 @@
             :row-props="getImportTransactionRowProps"
             v-model:items-per-page="countPerPage"
             v-model:page="currentPage"
+            v-model:sort-by="tableSortBy"
             @click="focusTableScrollContainerWhenNonEditing"
         >
             <template #header.data-table-select>
@@ -457,6 +458,7 @@ import BatchApplyRulesDialog from '../dialogs/BatchApplyRulesDialog.vue';
 import BatchCreateDialog, { type BatchCreateDialogDataType } from '../dialogs/BatchCreateDialog.vue';
 
 import { ref, computed, useTemplateRef, watch, nextTick } from 'vue';
+import { useLocale } from 'vuetify';
 
 import { useI18n } from '@/locales/helpers.ts';
 import { useTransactionTagSelectionBase } from '@/components/base/TransactionTagSelectionBase.ts';
@@ -609,6 +611,8 @@ const filters = ref<ImportTransactionCheckDataFilter>({
 
 const currentPage = ref<number>(1);
 const countPerPage = ref<number>(10);
+const tableSortBy = ref<{ key: string, order?: boolean | 'asc' | 'desc' }[]>([]);
+const vuetifyLocale = useLocale();
 const highlightedTransactionIndex = ref<number>(-1);
 const showCustomDateRangeDialog = ref<boolean>(false);
 const showCustomAmountFilterDialog = ref<boolean>(false);
@@ -1038,24 +1042,67 @@ const currentPageTransactions = computed<ImportTransaction[]>(() => {
         return ret;
     }
 
-    const previousCount = Math.max(0, (currentPage.value - 1) * countPerPage.value);
-    let count = 0;
-
-    for (const importTransaction of props.importTransactions) {
-        if (ret.length >= countPerPage.value) {
-            break;
-        }
-
-        if (isTransactionDisplayed(importTransaction)) {
-            if (count >= previousCount) {
-                ret.push(importTransaction);
-            }
-
-            count++;
-        }
+    if (countPerPage.value <= 0) { // all rows on one page
+        return displayedTransactionsInTableOrder.value;
     }
 
-    return ret;
+    const previousCount = Math.max(0, (currentPage.value - 1) * countPerPage.value);
+
+    // the rows of the current page in the order the table shows them (after the user filters and sorting)
+    return displayedTransactionsInTableOrder.value.slice(previousCount, previousCount + countPerPage.value);
+});
+
+// the transactions shown by the table, in the table order: the custom filter, then the user sorting
+// (the comparison mirrors the default sorting of the Vuetify data table, no column defines a custom sort)
+const displayedTransactionsInTableOrder = computed<ImportTransaction[]>(() => {
+    if (!props.importTransactions || props.importTransactions.length < 1) {
+        return [];
+    }
+
+    const displayed = props.importTransactions.filter(transaction => isTransactionDisplayed(transaction));
+    const sortBy = tableSortBy.value.filter(item => item.order !== false);
+
+    if (!sortBy.length) {
+        return displayed;
+    }
+
+    const collator = new Intl.Collator(vuetifyLocale.current.value, { sensitivity: 'accent', usage: 'sort' });
+    const isEmptyValue = (value: string | undefined | null) => value === null || value === undefined || value.trim() === '';
+    const toSortValue = (transaction: ImportTransaction, key: string): string | undefined | null => {
+        const value = (transaction as unknown as Record<string, unknown>)[key];
+        return value !== null && value !== undefined ? String(value).toLocaleLowerCase() : value as undefined | null;
+    };
+
+    return displayed.slice().sort((a, b) => {
+        for (const item of sortBy) {
+            let sortA = toSortValue(a, item.key);
+            let sortB = toSortValue(b, item.key);
+
+            if (item.order === 'desc') {
+                [sortA, sortB] = [sortB, sortA];
+            }
+
+            if (sortA === sortB) {
+                continue;
+            }
+
+            if (isEmptyValue(sortA) && isEmptyValue(sortB)) {
+                return 0;
+            } else if (isEmptyValue(sortA)) {
+                return -1;
+            } else if (isEmptyValue(sortB)) {
+                return 1;
+            }
+
+            if (!isNaN(sortA as unknown as number) && !isNaN(sortB as unknown as number)) {
+                return Number(sortA) - Number(sortB);
+            }
+
+            return collator.compare(sortA as string, sortB as string);
+        }
+
+        return 0;
+    });
 });
 
 const selectedImportTransactionCount = computed<number>(() => {
@@ -2388,30 +2435,34 @@ function jumpToIssue(type: ImportTransactionValidationIssueType): void {
     }
 
     const isAffected = (transaction: ImportTransaction) => !transaction.valid && hasValidationIssue(transaction, type);
+    const displayedTransactions = displayedTransactionsInTableOrder.value;
+    const highlightedDisplayIndex = displayedTransactions.findIndex(transaction => transaction.index === highlightedTransactionIndex.value);
     let anyAffectedHidden = false;
     let firstDisplayed: { transaction: ImportTransaction, displayIndex: number } | null = null;
     let nextDisplayed: { transaction: ImportTransaction, displayIndex: number } | null = null;
-    let displayIndex = 0;
 
-    for (const importTransaction of props.importTransactions) {
-        const displayed = isTransactionDisplayed(importTransaction);
-
-        if (isAffected(importTransaction)) {
-            if (!displayed) {
-                anyAffectedHidden = true;
-            } else {
-                if (!firstDisplayed) {
-                    firstDisplayed = { transaction: importTransaction, displayIndex };
-                }
-
-                if (!nextDisplayed && importTransaction.index > highlightedTransactionIndex.value) {
-                    nextDisplayed = { transaction: importTransaction, displayIndex };
-                }
-            }
+    // walk the rows in the order the table shows them, so the jump follows the user sorting and filters
+    for (const [importTransaction, displayIndex] of itemAndIndex(displayedTransactions)) {
+        if (!isAffected(importTransaction)) {
+            continue;
         }
 
-        if (displayed) {
-            displayIndex++;
+        if (!firstDisplayed) {
+            firstDisplayed = { transaction: importTransaction, displayIndex };
+        }
+
+        if (!nextDisplayed && displayIndex > highlightedDisplayIndex) {
+            nextDisplayed = { transaction: importTransaction, displayIndex };
+            break;
+        }
+    }
+
+    if (!firstDisplayed) {
+        for (const importTransaction of props.importTransactions) {
+            if (isAffected(importTransaction) && !isTransactionDisplayed(importTransaction)) {
+                anyAffectedHidden = true;
+                break;
+            }
         }
     }
 
@@ -2435,7 +2486,7 @@ function jumpToIssue(type: ImportTransactionValidationIssueType): void {
     }
 
     highlightedTransactionIndex.value = target.transaction.index;
-    currentPage.value = Math.floor(target.displayIndex / countPerPage.value) + 1;
+    currentPage.value = countPerPage.value > 0 ? Math.floor(target.displayIndex / countPerPage.value) + 1 : 1;
 
     nextTick(() => {
         const row = document.querySelector(`.import-transaction-table tr[data-import-index="${target.transaction.index}"]`);

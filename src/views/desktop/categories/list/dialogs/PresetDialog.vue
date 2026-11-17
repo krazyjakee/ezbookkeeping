@@ -42,11 +42,13 @@
             </template>
 
             <template #footer>
-                <v-spacer/>
-                <v-btn :disabled="submitting || loadingLanguage" @click="save">
-                    {{ tt('Save') }}
-                    <v-progress-circular indeterminate size="22" class="ms-2" v-if="submitting"></v-progress-circular>
-                </v-btn>
+                <div class="ebk-dialog-footer">
+                    <v-btn color="default" variant="outlined" :disabled="submitting" @click="showState = false">{{ tt('Cancel') }}</v-btn>
+                    <v-btn color="primary" variant="flat" :disabled="submitting || loadingLanguage" @click="save">
+                        {{ tt('Save') }}
+                        <v-progress-circular indeterminate size="22" class="ms-2" v-if="submitting"></v-progress-circular>
+                    </v-btn>
+                </div>
             </template>
         </one-column-dialog-layout>
     </v-dialog>
