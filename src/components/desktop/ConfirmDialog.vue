@@ -82,6 +82,8 @@ function open(titleOrText: string, textOrOptions?: string | Record<string, unkno
         finalColor.value = (textOrOptions['color'] as string) || 'primary';
     } else if (options && isString(options['color'])) {
         finalColor.value = (options['color'] as string) || 'primary';
+    } else {
+        finalColor.value = props.color || 'primary';
     }
 
     return new Promise((resolve, reject) => {
