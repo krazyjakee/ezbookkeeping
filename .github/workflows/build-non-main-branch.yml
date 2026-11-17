@@ -6,6 +6,10 @@ on:
     branches-ignore:
       - main
 
+# Image name used for local tagging only; this workflow never pushes.
+env:
+  DOCKER_IMAGE_NAME: ${{ vars.DOCKER_IMAGE_NAME || 'krazyjakee/ezbookkeeping' }}
+
 jobs:
   setup:
     runs-on: ubuntu-latest
@@ -29,7 +33,7 @@ jobs:
         uses: docker/metadata-action@v6
         with:
           images: |
-            ${{ vars.DOCKER_IMAGE_NAME }}
+            ${{ env.DOCKER_IMAGE_NAME }}
           tags: |
             type=raw,value=dev-${{ github.run_id }}
 
@@ -74,7 +78,7 @@ jobs:
           platform: linux/amd64
           platform-name: linux-amd64
           docker-push: false
-          docker-image-name: ${{ vars.DOCKER_IMAGE_NAME }}
+          docker-image-name: ${{ env.DOCKER_IMAGE_NAME }}
           docker-bake-meta-file-path: ${{ needs.setup.outputs.ezbookkeeping-docker-bake-meta-file-path }}
           docker-bake-meta-artifact-name: ${{ needs.setup.outputs.ezbookkeeping-docker-bake-meta-artifact-name }}
           docker-bake-digests-file-path: ${{ needs.setup.outputs.ezbookkeeping-docker-digests-file-path }}
@@ -108,7 +112,7 @@ jobs:
           platform: ${{ matrix.platform }}
           platform-name: ${{ matrix.platform-name }}
           docker-push: false
-          docker-image-name: ${{ vars.DOCKER_IMAGE_NAME }}
+          docker-image-name: ${{ env.DOCKER_IMAGE_NAME }}
           docker-bake-meta-file-path: ${{ needs.setup.outputs.ezbookkeeping-docker-bake-meta-file-path }}
           docker-bake-meta-artifact-name: ${{ needs.setup.outputs.ezbookkeeping-docker-bake-meta-artifact-name }}
           docker-bake-digests-file-path: ${{ needs.setup.outputs.ezbookkeeping-docker-digests-file-path }}
