@@ -1,0 +1,215 @@
+/* Management lists and data transfer on mobile (#33, design guidelines §6.4) */
+
+/* Group titles become technical labels with the figure at the end */
+.ebk-m-mgmt-list .list-group-title {
+    display: flex;
+    align-items: center;
+    gap: var(--ebk-space-2);
+    min-height: var(--ebk-header-strip-height);
+}
+
+.ebk-m-group-title {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ebk-space-2);
+    min-width: 0;
+}
+
+.ebk-m-group-title-label {
+    overflow: hidden;
+    color: var(--ebk-color-text-secondary);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ebk-m-group-title-value {
+    flex: 0 0 auto;
+    color: var(--ebk-color-text-primary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    font-variant-numeric: var(--ebk-font-numeric);
+}
+
+/* Section titles above panels (EXPORT DATA, DANGER ZONE, ...) */
+.ebk-m-section-title.block-title {
+    position: relative;
+    padding-inline-start: calc(var(--f7-block-title-padding-horizontal, 16px) + 2px);
+    color: var(--ebk-color-text-secondary);
+
+    &::before {
+        content: "";
+        position: absolute;
+        inset-block-start: 1px;
+        inset-inline-start: calc(var(--f7-block-title-padding-horizontal, 16px) - 8px);
+        width: 6px;
+        height: 6px;
+        border-block-start: 2px solid var(--ebk-color-copper-line);
+        border-inline-start: 2px solid var(--ebk-color-copper-line);
+        pointer-events: none;
+    }
+}
+
+.ebk-m-section-title--danger.block-title {
+    color: var(--f7-color-red);
+
+    &::before {
+        border-color: color-mix(in srgb, var(--f7-color-red) 60%, transparent);
+    }
+}
+
+.ebk-m-danger-list.list.inset ul {
+    box-shadow: inset 3px 0 0 var(--f7-color-red);
+}
+
+[dir='rtl'] .ebk-m-danger-list.list.inset ul {
+    box-shadow: inset -3px 0 0 var(--f7-color-red);
+}
+
+/* Hidden items: dimmed plus a "Hidden" chip */
+.ebk-m-row-hidden {
+    > .item-content > .item-media,
+    > .item-link > .item-content > .item-media,
+    > .swipeout-content > .item-content > .item-media,
+    > .swipeout-content > .item-link > .item-content > .item-media,
+    .ebk-m-dimmable {
+        opacity: 0.55;
+    }
+}
+
+.ebk-m-hidden-chip {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    margin-inline-start: var(--ebk-space-2);
+    padding-inline: var(--ebk-space-2);
+    border: 1px solid var(--ebk-color-hairline);
+    border-radius: var(--ebk-radius-pill);
+    color: var(--ebk-color-text-secondary);
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.25rem;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.ebk-m-title-line {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+
+    > .ebk-m-title-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+/* Nested children: a hairline guide from the parent icon */
+.ebk-m-nested-child {
+    position: relative;
+
+    &::before {
+        content: "";
+        position: absolute;
+        inset-block: 0;
+        inset-inline-start: calc(var(--f7-safe-area-left) + 13px);
+        border-inline-start: 1px solid var(--ebk-color-hairline);
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    &.actual-last-child::before {
+        inset-block-end: 50%;
+    }
+
+    &::after {
+        content: "";
+        position: absolute;
+        inset-block-start: 50%;
+        inset-inline-start: calc(var(--f7-safe-area-left) + 13px);
+        width: 6px;
+        border-block-start: 1px solid var(--ebk-color-hairline);
+        pointer-events: none;
+        z-index: 1;
+    }
+}
+
+/* Non-drag move buttons shown in sort mode next to the drag handle */
+.ebk-m-move-buttons {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    margin-inline-start: var(--ebk-space-2);
+
+    > .link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: var(--ebk-touch-target-min, 44px);
+        min-height: var(--ebk-touch-target-min, 44px);
+        color: var(--ebk-color-text-secondary);
+
+        &.disabled {
+            opacity: 0.3;
+        }
+
+        > .icon {
+            font-size: 18px;
+        }
+    }
+}
+
+/* Data statistics and tabular figures */
+.ebk-m-figure {
+    color: var(--ebk-color-text-primary);
+    font-weight: 600;
+    font-variant-numeric: var(--ebk-font-numeric);
+}
+
+.ebk-m-code {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.75rem;
+    margin-inline-end: var(--ebk-space-3);
+    padding: 2px var(--ebk-space-2);
+    border: 1px solid var(--ebk-color-hairline);
+    border-radius: var(--ebk-radius-control);
+    background-color: var(--ebk-color-surface-sunken);
+    color: var(--ebk-color-text-primary);
+    font-family: var(--ebk-font-mono);
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+
+@media (forced-colors: active) {
+    .ebk-m-nested-child::before,
+    .ebk-m-nested-child::after,
+    .ebk-m-section-title.block-title::before {
+        display: none;
+    }
+}
+
+.ebk-m-dimmed {
+    opacity: 0.55;
+}
+
+/* nested child lists in filter pages: hairline guide along the indented children
+ * (drawn as a background because Framework7 reserves ul::before / ul::after for its own hairlines) */
+.list .ebk-m-nested-guide-list {
+    background-image: linear-gradient(var(--ebk-color-hairline), var(--ebk-color-hairline));
+    background-repeat: no-repeat;
+    background-position: calc(var(--f7-safe-area-left) + 28px) 0;
+    background-size: 1px calc(100% - 26px);
+}
+
+[dir='rtl'] .list .ebk-m-nested-guide-list {
+    background-position: right calc(var(--f7-safe-area-right) + 28px) top 0;
+}
+
+@media (forced-colors: active) {
+    .list .ebk-m-nested-guide-list {
+        background-image: none;
+    }
+}

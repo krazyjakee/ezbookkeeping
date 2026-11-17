@@ -1,56 +1,51 @@
 <template>
     <v-row class="match-height">
         <v-col cols="12">
-            <v-card>
+            <v-card class="ebk-mgmt-panel" :aria-busy="loading ? 'true' : 'false'">
                 <v-layout class="page-with-navigation-drawer">
-                    <v-navigation-drawer :permanent="alwaysShowNav" v-model="showNav">
-                        <div class="mx-4 my-3">
-                            <span class="text-body-medium">{{ tt('Data source') }}</span>
-                            <div class="text-body-large mt-1 mb-3">
-                                <a tabindex="-1" target="_blank" :href="exchangeRatesData.referenceUrl" v-if="!loading && exchangeRatesData && !isUserCustomExchangeRates && exchangeRatesData.referenceUrl">{{ exchangeRatesData.dataSource }}</a>
-                                <span v-else-if="!loading && exchangeRatesData && !isUserCustomExchangeRates && !exchangeRatesData.referenceUrl">{{ exchangeRatesData.dataSource }}</span>
-                                <span v-else-if="!loading && exchangeRatesData && isUserCustomExchangeRates">{{ tt('User Custom') }}</span>
-                                <span v-else-if="!loading && !exchangeRatesData">{{ tt('None') }}</span>
-                                <span v-else-if="loading">
-                                    <v-skeleton-loader class="skeleton-no-margin mt-2 mb-4 pt-h1 pb-h1" type="text" :loading="true"></v-skeleton-loader>
+                    <v-navigation-drawer class="ebk-mgmt-subnav" :permanent="alwaysShowNav" v-model="showNav">
+                        <div class="ebk-mgmt-subnav-section">
+                            <div class="ebk-mgmt-kv">
+                                <span class="ebk-mgmt-kv-label ebk-technical-heading">{{ tt('Data source') }}</span>
+                                <span class="ebk-mgmt-kv-value exchange-rates-source">
+                                    <a target="_blank" rel="noopener" :href="exchangeRatesData.referenceUrl" v-if="!loading && exchangeRatesData && !isUserCustomExchangeRates && exchangeRatesData.referenceUrl">{{ exchangeRatesData.dataSource }}</a>
+                                    <span v-else-if="!loading && exchangeRatesData && !isUserCustomExchangeRates && !exchangeRatesData.referenceUrl">{{ exchangeRatesData.dataSource }}</span>
+                                    <span v-else-if="!loading && exchangeRatesData && isUserCustomExchangeRates">{{ tt('User Custom') }}</span>
+                                    <span v-else-if="!loading && !exchangeRatesData">{{ tt('None') }}</span>
+                                    <v-skeleton-loader class="ebk-mgmt-skeleton" type="text" width="140" :loading="true" v-else-if="loading"></v-skeleton-loader>
                                 </span>
                             </div>
-                            <span class="text-body-medium" v-if="exchangeRatesDataUpdateTime || loading">{{ tt('Last Updated') }}</span>
-                            <div class="text-body-large mt-1" v-if="exchangeRatesDataUpdateTime || loading">
-                                <span v-if="!loading">{{ exchangeRatesDataUpdateTime }}</span>
-                                <span v-if="loading">
-                                    <v-skeleton-loader class="skeleton-no-margin mt-2 mb-4 pt-h1" type="text" :loading="true"></v-skeleton-loader>
-                                </span>
+                            <div class="ebk-mgmt-kv" v-if="exchangeRatesDataUpdateTime || loading">
+                                <span class="ebk-mgmt-kv-label ebk-technical-heading">{{ tt('Last Updated') }}</span>
+                                <span class="ebk-mgmt-kv-value" v-if="!loading">{{ exchangeRatesDataUpdateTime }}</span>
+                                <v-skeleton-loader class="ebk-mgmt-skeleton" type="text" width="120" :loading="true" v-else></v-skeleton-loader>
                             </div>
                         </div>
-                        <v-divider />
-                        <div class="mx-4 mt-3">
-                            <span class="text-body-medium">{{ tt('Base Amount') }}</span>
-                            <amount-input class="mt-2" density="compact"
+                        <div class="ebk-mgmt-subnav-section">
+                            <label class="ebk-mgmt-kv-label ebk-technical-heading d-block mb-2" for="exchange-rates-base-amount">{{ tt('Base Amount') }}</label>
+                            <amount-input id="exchange-rates-base-amount" density="compact"
                                           :currency="baseCurrency"
                                           :disabled="loading || !exchangeRatesData || !exchangeRatesData.exchangeRates || !exchangeRatesData.exchangeRates.length"
                                           v-model="baseAmount"/>
                         </div>
-                        <div class="mx-4 mt-2 mb-1">
-                            <span class="text-body-medium">{{ tt('Base Currency') }}</span>
-                        </div>
-                        <v-tabs show-arrows class="mb-4" direction="vertical"
+                        <span class="ebk-mgmt-subnav-title ebk-technical-heading">{{ tt('Base Currency') }}</span>
+                        <v-tabs show-arrows class="ebk-mgmt-subnav-tabs mb-4" direction="vertical"
                                 :disabled="loading" v-model="baseCurrency">
                             <template v-if="exchangeRatesData && exchangeRatesData.exchangeRates && exchangeRatesData.exchangeRates.length">
                                 <v-tab class="tab-text-truncate" :key="exchangeRate.currencyCode" :value="exchangeRate.currencyCode"
                                        v-for="exchangeRate in availableExchangeRates">
-                                    <div class="d-flex align-baseline w-100">
-                                        <span class="d-block text-truncate">{{ exchangeRate.currencyDisplayName }}</span>
-                                        <small class="smaller ms-1">{{ exchangeRate.currencyCode }}</small>
-                                    </div>
+                                    <span class="ebk-mgmt-subnav-tab-content w-100">
+                                        <span class="text-truncate">{{ exchangeRate.currencyDisplayName }}</span>
+                                        <span class="ebk-mgmt-subnav-tab-count ebk-font-mono">{{ exchangeRate.currencyCode }}</span>
+                                    </span>
                                 </v-tab>
                             </template>
                             <template v-else-if="!exchangeRatesData || !exchangeRatesData.exchangeRates || !exchangeRatesData.exchangeRates.length">
-                                <span class="mx-4 mt-h1 mb-3" v-if="!loading">{{ tt('None') }}</span>
+                                <span class="mx-4 mt-h1 mb-3 text-medium-emphasis" v-if="!loading">{{ tt('None') }}</span>
                                 <template v-else-if="loading">
                                     <v-skeleton-loader class="skeleton-no-margin mx-4 mt-h1 py-3" type="text"
                                                        :key="itemIdx" :loading="loading"
-                                                       v-for="itemIdx in [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]"></v-skeleton-loader>
+                                                       v-for="itemIdx in [ 1, 2, 3, 4, 5, 6, 7, 8 ]"></v-skeleton-loader>
                                 </template>
                             </template>
                         </v-tabs>
@@ -58,86 +53,113 @@
                     <v-main>
                         <v-window class="d-flex flex-grow-1 disable-tab-transition w-100-window-container" v-model="activeTab">
                             <v-window-item value="exchangeRatesPage">
-                                <v-card variant="flat" min-height="680">
-                                    <template #title>
-                                        <div class="title-and-toolbar d-flex align-center">
-                                            <v-btn class="me-3 d-lg-none" density="compact" color="default" variant="plain"
-                                                   :aria-label="tt('Open Menu')" :ripple="false" :icon="true" @click="showNav = !showNav">
-                                                <v-icon :icon="mdiMenu" size="24" />
-                                            </v-btn>
-                                            <span>{{ tt('Exchange Rates Data') }}</span>
-                                            <v-btn class="ms-3" color="default" variant="outlined"
+                                <v-card variant="flat" class="exchange-rates-content" min-height="680">
+                                    <header class="ebk-panel-header-strip ebk-mgmt-header">
+                                        <v-btn class="ebk-mgmt-header-menu-toggle d-lg-none" density="comfortable" color="default" variant="text"
+                                               :aria-label="tt('Open Menu')" :icon="true" @click="showNav = !showNav">
+                                            <v-icon :icon="mdiMenu" size="22" />
+                                        </v-btn>
+                                        <h2 class="ebk-mgmt-header-label">{{ tt('Exchange Rates Data') }}</h2>
+                                        <span class="ebk-mgmt-header-meta ebk-numeric" v-if="!loading && availableExchangeRates.length">{{ formatNumberToLocalizedNumerals(availableExchangeRates.length) }}</span>
+                                        <div class="ebk-panel-header-actions ebk-mgmt-header-actions">
+                                            <v-btn color="default" variant="outlined" :prepend-icon="mdiPencilOutline"
                                                    :disabled="loading" @click="update"
                                                    v-if="isUserCustomExchangeRates">{{ tt('Update') }}</v-btn>
-                                            <v-btn density="compact" color="default" variant="text" class="ms-2"
+                                            <v-btn density="comfortable" color="default" variant="text"
                                                    :aria-label="tt('Refresh')" :icon="true" :loading="loading" @click="reload(true)">
                                                 <template #loader>
                                                     <v-progress-circular indeterminate size="20"/>
                                                 </template>
-                                                <v-icon :icon="mdiRefresh" size="24" />
+                                                <v-icon :icon="mdiRefresh" size="22" />
                                                 <v-tooltip activator="parent">{{ tt('Refresh') }}</v-tooltip>
                                             </v-btn>
                                         </div>
-                                    </template>
+                                    </header>
 
-                                    <v-table class="exchange-rates-table table-striped"
-                                             density="default" :hover="!loading">
+                                    <div class="ebk-mgmt-summary" v-if="baseCurrency && availableExchangeRates.length">
+                                        <span class="ebk-mgmt-summary-item">
+                                            <span class="ebk-mgmt-summary-label ebk-technical-heading">{{ tt('Base Currency') }}</span>
+                                            <span class="ebk-mgmt-summary-value">{{ baseCurrencyDisplayName }}</span>
+                                            <span class="ebk-font-mono text-medium-emphasis">{{ baseCurrency }}</span>
+                                        </span>
+                                        <span class="ebk-mgmt-summary-separator" aria-hidden="true">·</span>
+                                        <span class="ebk-mgmt-summary-item">
+                                            <span class="ebk-mgmt-summary-label ebk-technical-heading">{{ tt('Base Amount') }}</span>
+                                            <span class="ebk-mgmt-summary-value">{{ getBaseAmountDisplay() }}</span>
+                                        </span>
+                                    </div>
+
+                                    <v-table class="ebk-mgmt-table exchange-rates-table" density="default" :hover="!loading">
                                         <thead>
                                         <tr>
-                                            <th>
-                                                <div class="d-flex align-center">
-                                                    <span>{{ tt('Currency') }}</span>
-                                                    <v-spacer/>
-                                                    <span>{{ tt('Amount') }}</span>
-                                                </div>
+                                            <th class="ebk-mgmt-column-name">{{ tt('Currency') }}</th>
+                                            <th class="ebk-mgmt-column-amount">{{ tt('Amount') }}</th>
+                                            <th class="ebk-mgmt-column-operation">
+                                                <span class="ebk-visually-hidden">{{ tt('Operation') }}</span>
                                             </th>
                                         </tr>
                                         </thead>
 
-                                        <tbody>
-                                        <tr :key="itemIdx"
-                                            v-for="itemIdx in (loading && (!exchangeRatesData || !exchangeRatesData.exchangeRates || exchangeRatesData.exchangeRates.length < 1) ? [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ] : [])">
-                                            <td class="px-0">
-                                                <v-skeleton-loader type="text" :loading="true"></v-skeleton-loader>
+                                        <tbody aria-hidden="true" v-if="loading && (!exchangeRatesData || !exchangeRatesData.exchangeRates || exchangeRatesData.exchangeRates.length < 1)">
+                                        <tr class="ebk-mgmt-row" :key="itemIdx" v-for="itemIdx in [ 1, 2, 3, 4, 5, 6, 7, 8 ]">
+                                            <td><v-skeleton-loader class="ebk-mgmt-skeleton" type="text" width="180" :loading="true"></v-skeleton-loader></td>
+                                            <td><v-skeleton-loader class="ebk-mgmt-skeleton ms-auto" type="text" width="80" :loading="true"></v-skeleton-loader></td>
+                                            <td></td>
+                                        </tr>
+                                        </tbody>
+
+                                        <tbody v-if="!loading && (!exchangeRatesData || !exchangeRatesData.exchangeRates || !exchangeRatesData.exchangeRates.length)">
+                                        <tr class="no-hover">
+                                            <td class="ebk-mgmt-column-state" colspan="3">
+                                                <state-panel type="error" :title="tt('Unable to retrieve exchange rates data')" v-if="loadError">
+                                                    <template #actions>
+                                                        <v-btn color="default" variant="outlined" :prepend-icon="mdiRefresh" @click="reload(true)">{{ tt('Retry') }}</v-btn>
+                                                    </template>
+                                                </state-panel>
+                                                <state-panel type="empty" :title="tt('No exchange rates data')" v-else>
+                                                    <template #actions v-if="isUserCustomExchangeRates">
+                                                        <v-btn color="default" variant="outlined" :prepend-icon="mdiPencilOutline" @click="update">{{ tt('Update') }}</v-btn>
+                                                    </template>
+                                                </state-panel>
                                             </td>
                                         </tr>
+                                        </tbody>
 
-                                        <tr v-if="!loading && (!exchangeRatesData || !exchangeRatesData.exchangeRates || !exchangeRatesData.exchangeRates.length)">
-                                            <td>{{ tt('No exchange rates data') }}</td>
-                                        </tr>
-
-                                        <tr class="exchange-rates-table-row-data" :key="exchangeRate.currencyCode"
-                                            v-for="exchangeRate in availableExchangeRates"
-                                            @mouseenter="hoveredCurrency = exchangeRate.currencyCode" @mouseleave="hoveredCurrency = ''">
-                                            <td>
-                                                <div class="d-flex align-center">
-                                                    <span>{{ exchangeRate.currencyDisplayName }}</span>
-                                                    <span class="text-body-small ms-1">{{ exchangeRate.currencyCode }}</span>
-
-                                                    <v-spacer/>
-
-                                                    <template v-if="hoveredCurrency === exchangeRate.currencyCode && !loading">
-                                                        <v-btn class="px-2 ms-2" color="default"
-                                                               density="comfortable" variant="text"
-                                                               v-if="exchangeRate.currencyCode !== baseCurrency"
-                                                               @click="setAsBaseline(exchangeRate.currencyCode, getFinalConvertedAmount(exchangeRate, false))">
-                                                            {{ tt('Set as Base') }}
-                                                        </v-btn>
-                                                        <v-btn class="px-2" color="default"
-                                                               density="comfortable" variant="text"
-                                                               :prepend-icon="mdiDeleteOutline"
-                                                               :loading="customExchangeRateRemoving[exchangeRate.currencyCode]"
-                                                               :disabled="loading || updating"
-                                                               v-if="exchangeRate.currencyCode !== defaultCurrency && isUserCustomExchangeRates"
-                                                               @click="remove(exchangeRate.currencyCode)">
-                                                            <template #loader>
-                                                                <v-progress-circular indeterminate size="20" width="2"/>
-                                                            </template>
-                                                            {{ tt('Delete') }}
-                                                        </v-btn>
-                                                    </template>
-
-                                                    <span class="text-body-large ms-3">{{ getFinalConvertedAmount(exchangeRate, true) }}</span>
+                                        <tbody v-if="availableExchangeRates.length">
+                                        <tr class="ebk-mgmt-row exchange-rates-table-row-data"
+                                            :class="{ 'ebk-row-selected': exchangeRate.currencyCode === baseCurrency }"
+                                            :key="exchangeRate.currencyCode"
+                                            v-for="exchangeRate in availableExchangeRates">
+                                            <td class="ebk-mgmt-column-name">
+                                                <div class="ebk-mgmt-row-content">
+                                                    <span class="exchange-rates-code ebk-font-mono">{{ exchangeRate.currencyCode }}</span>
+                                                    <span class="ebk-mgmt-name-text ms-3">{{ exchangeRate.currencyDisplayName }}</span>
+                                                    <span class="ebk-mgmt-hidden-chip exchange-rates-base-chip" v-if="exchangeRate.currencyCode === baseCurrency">{{ tt('Base Currency') }}</span>
+                                                </div>
+                                            </td>
+                                            <td class="ebk-mgmt-column-amount">
+                                                <span class="ebk-mgmt-amount">{{ getFinalConvertedAmount(exchangeRate, true) }}</span>
+                                            </td>
+                                            <td class="ebk-mgmt-column-operation">
+                                                <div class="ebk-mgmt-actions">
+                                                    <v-btn class="ebk-mgmt-reveal" color="default" density="comfortable" variant="text"
+                                                           :disabled="loading || updating"
+                                                           v-if="exchangeRate.currencyCode !== baseCurrency"
+                                                           @click="setAsBaseline(exchangeRate.currencyCode, getFinalConvertedAmount(exchangeRate, false))">
+                                                        {{ tt('Set as Base') }}
+                                                    </v-btn>
+                                                    <v-btn color="error" density="comfortable" variant="text" :icon="true"
+                                                           :aria-label="tt('Delete')"
+                                                           :loading="customExchangeRateRemoving[exchangeRate.currencyCode]"
+                                                           :disabled="loading || updating"
+                                                           v-if="exchangeRate.currencyCode !== defaultCurrency && isUserCustomExchangeRates"
+                                                           @click="remove(exchangeRate.currencyCode)">
+                                                        <template #loader>
+                                                            <v-progress-circular indeterminate size="20" width="2"/>
+                                                        </template>
+                                                        <v-icon :icon="mdiDeleteOutline" size="20" />
+                                                        <v-tooltip activator="parent">{{ tt('Delete') }}</v-tooltip>
+                                                    </v-btn>
                                                 </div>
                                             </td>
                                         </tr>
@@ -159,6 +181,7 @@
 
 <script setup lang="ts">
 import ConfirmDialog from '@/components/desktop/ConfirmDialog.vue';
+import StatePanel from '@/components/common/StatePanel.vue';
 import UpdateDialog from './list/dialogs/UpdateDialog.vue';
 
 import { ref, computed, useTemplateRef, watch } from 'vue';
@@ -181,7 +204,8 @@ import logger from '@/lib/logger.ts';
 import {
     mdiRefresh,
     mdiMenu,
-    mdiDeleteOutline
+    mdiDeleteOutline,
+    mdiPencilOutline
 } from '@mdi/js';
 
 type ConfirmDialogType = InstanceType<typeof ConfirmDialog>;
@@ -189,7 +213,7 @@ type UpdateDialogType = InstanceType<typeof UpdateDialog>;
 
 const { lgAndUp } = useDisplay();
 
-const { tt, getCurrentNumeralSystemType, formatExchangeRateAmountToWesternArabicNumerals } = useI18n();
+const { tt, getCurrentNumeralSystemType, formatExchangeRateAmountToWesternArabicNumerals, formatNumberToLocalizedNumerals } = useI18n();
 const {
     baseCurrency,
     baseAmount,
@@ -211,12 +235,18 @@ const updateDialog = useTemplateRef<UpdateDialogType>('updateDialog');
 const activeTab = ref<string>('exchangeRatesPage');
 const loading = ref<boolean>(true);
 const updating = ref<boolean>(false);
-const hoveredCurrency = ref<string>('');
+const loadError = ref<boolean>(false);
 const customExchangeRateRemoving = ref<Record<string, boolean>>({});
 const alwaysShowNav = ref<boolean>(lgAndUp.value);
 const showNav = ref<boolean>(lgAndUp.value);
 
 const numeralSystem = computed<NumeralSystem>(() => getCurrentNumeralSystemType());
+const baseCurrencyDisplayName = computed<string>(() => availableExchangeRates.value.find(exchangeRate => exchangeRate.currencyCode === baseCurrency.value)?.currencyDisplayName ?? baseCurrency.value);
+
+function getBaseAmountDisplay(): string {
+    const baseExchangeRate = availableExchangeRates.value.find(exchangeRate => exchangeRate.currencyCode === baseCurrency.value);
+    return baseExchangeRate ? getFinalConvertedAmount(baseExchangeRate, true) : '';
+}
 
 function reload(force: boolean): void {
     loading.value = true;
@@ -226,6 +256,7 @@ function reload(force: boolean): void {
         force: force
     }).then(() => {
         loading.value = false;
+        loadError.value = false;
 
         if (exchangeRatesData.value && exchangeRatesData.value.exchangeRates) {
             const exchangeRates = exchangeRatesData.value.exchangeRates;
@@ -246,6 +277,7 @@ function reload(force: boolean): void {
         }
     }).catch(error => {
         loading.value = false;
+        loadError.value = !exchangeRatesData.value || !exchangeRatesData.value.exchangeRates || !exchangeRatesData.value.exchangeRates.length;
 
         if (!error.processed) {
             desktopPageStore.addErrorToast(error);
@@ -266,7 +298,7 @@ function update(): void {
 }
 
 function remove(currency: string): void {
-    confirmDialog.value?.open('Are you sure you want to delete this user custom exchange rate?').then(() => {
+    confirmDialog.value?.open('Are you sure you want to delete this user custom exchange rate?', { color: 'error' }).then(() => {
         updating.value = true;
         customExchangeRateRemoving.value[currency] = true;
 
@@ -336,3 +368,34 @@ watch(lgAndUp, (newValue) => {
 
 reload(false);
 </script>
+
+<style>
+.exchange-rates-content {
+    border-radius: 0;
+}
+
+.exchange-rates-source a {
+    color: var(--ebk-color-primary-text);
+}
+
+.exchange-rates-code {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    min-width: 3.25rem;
+    height: 28px;
+    padding-inline: var(--ebk-space-2);
+    border: 1px solid var(--ebk-color-hairline);
+    border-radius: var(--ebk-radius-control);
+    background-color: var(--ebk-color-surface-sunken);
+    color: var(--ebk-color-text-primary);
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+
+.exchange-rates-base-chip {
+    border-color: var(--ebk-color-copper-line);
+    color: var(--ebk-color-primary-text);
+}
+</style>

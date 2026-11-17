@@ -38,7 +38,7 @@
             </template>
 
             <template #toolbar>
-                <v-btn class="ms-2 me-1" density="comfortable" variant="outlined" color="primary"
+                <v-btn class="ms-2 me-1" density="comfortable" variant="flat" color="primary"
                        :disabled="loading || loadingPreset || submitting || (!isImportDataFromTextbox && !isAIImageImport && !importFile) || (isImportDataFromTextbox && !importData) || (!isImportDataFromTextbox && !isAIImageImport && allSupportedEncodings && fileEncoding === 'auto' && !autoDetectedFileEncoding) || (!isImportDataFromTextbox && isAIImageImport && importImageFiles.length === 0)"
                        @click="parseData"
                        v-if="currentStep === 'defineColumn' || currentStep === 'executeCustomScript' || (currentStep === 'recognizeImages' && !submitting) || currentStep === 'uploadFile'">
@@ -51,7 +51,7 @@
                        @click="cancelBatchRecognizeImages()"
                        v-if="currentStep === 'recognizeImages' && submitting">{{ tt('Cancel Recognition') }}</v-btn>
 
-                <v-btn class="ms-2" density="comfortable" variant="outlined"
+                <v-btn class="ms-2" density="comfortable" variant="flat" color="primary"
                        :disabled="submitting || importTransactionCheckDataTab?.isEditing || !importTransactionCheckDataTab?.canImport"
                        @click="submit"
                        v-if="currentStep === 'checkData'">
@@ -130,10 +130,35 @@
             </template>
 
             <template #subtitle>
-                <v-divider class="mt-2" />
-                <div class="cursor-default mt-3 mx-3 mb-md-2">
-                    <steps-bar min-width="700" :always-horizontal="true" :clickable="false"
-                               :steps="allSteps" :current-step="currentStep" />
+                <nav class="ebk-panel-header-strip import-transaction-stepper mt-2" :aria-label="tt('Import Transactions')">
+                    <ol class="ebk-stepper">
+                        <template :key="step.name" v-for="(step, idx) in allSteps">
+                            <li class="ebk-stepper-separator" aria-hidden="true" v-if="idx > 0"></li>
+                            <li class="ebk-stepper-step"
+                                :class="{ 'ebk-stepper-step--current': step.name === currentStep, 'ebk-stepper-step--done': idx < currentStepIndex }"
+                                :aria-current="step.name === currentStep ? 'step' : undefined"
+                                :title="step.subTitle">
+                                <span class="ebk-stepper-index" aria-hidden="true">
+                                    <v-icon :icon="mdiCheck" size="14" v-if="idx < currentStepIndex" />
+                                    <template v-else>{{ formatNumberToLocalizedNumerals(idx + 1) }}</template>
+                                </span>
+                                <span>{{ step.title }}</span>
+                            </li>
+                        </template>
+                    </ol>
+                </nav>
+                <div class="import-transaction-progress ebk-progress-report" role="status" aria-live="polite"
+                     v-if="currentStep === 'checkData' && submitting">
+                    <div class="ebk-progress-report-line">
+                        <span class="ebk-technical-heading">{{ importProcess > 0 ? tt('format.misc.importingTransactions', { process: formatNumberToLocalizedNumerals(importProcess, 2) }) : tt('Import') }}</span>
+                        <span>
+                            <span class="ebk-progress-report-count">{{ formatNumberToLocalizedNumerals(importProgressCount) }}</span>
+                            <span> / {{ formatNumberToLocalizedNumerals(totalImportCount) }}</span>
+                        </span>
+                    </div>
+                    <v-progress-linear rounded color="primary" height="6"
+                                       :indeterminate="importProcess <= 0"
+                                       :model-value="importProcess" />
                 </div>
             </template>
 
@@ -263,7 +288,7 @@
                         />
                     </v-window-item>
                     <v-window-item value="finalResult">
-                        <div class="mx-4 my-4">
+                        <div class="import-transaction-result mx-4 my-4">
                             <v-alert class="my-4" type="warning" variant="tonal"
                                      v-if="importResultUnknown">{{ tt('The import result could not be confirmed. Check the result before importing again to avoid duplicate transactions.') }}</v-alert>
                             <v-alert class="my-4" type="error" variant="tonal"
@@ -271,6 +296,14 @@
                             <v-alert class="my-4" type="success" color="success-darken-1" variant="tonal"
                                      v-else-if="!importResultUnknown && !importErrorMessage">{{ tt('Data Import Completed') }}</v-alert>
 
+                            <div class="import-transaction-result-count" v-if="!importResultUnknown">
+                                <span class="import-transaction-result-figure ebk-numeric">{{ formatNumberToLocalizedNumerals(importedCount || 0) }}</span>
+                                <span class="import-transaction-result-total ebk-numeric">/ {{ formatNumberToLocalizedNumerals(totalImportCount) }}</span>
+                            </div>
+                            <v-progress-linear class="mb-3" rounded height="6"
+                                               :color="importErrorMessage ? 'error' : 'primary'"
+                                               :model-value="totalImportCount > 0 ? (importedCount || 0) / totalImportCount * 100 : 0"
+                                               v-if="!importResultUnknown" />
                             <div class="text-body-large"
                                  v-if="!importResultUnknown">{{ tt('format.misc.importTransactionBatchResult', { count: formatNumberToLocalizedNumerals(importedCount || 0), totalCount: formatNumberToLocalizedNumerals(totalImportCount) }) }}</div>
                             <div class="text-body-large"
@@ -373,7 +406,8 @@ import {
     mdiDotsVertical,
     mdiHelpCircleOutline,
     mdiImagePlusOutline,
-    mdiTrashCanOutline
+    mdiTrashCanOutline,
+    mdiCheck
 } from '@mdi/js';
 
 type ConfirmDialogType = InstanceType<typeof ConfirmDialog>;
@@ -417,6 +451,7 @@ const showState = ref<boolean>(false);
 const clientSessionId = ref<string>('');
 const currentStep = ref<ImportTransactionDialogStep>('uploadFile');
 const importProcess = ref<number>(0);
+const importProgressCount = ref<number>(0);
 const fileType = ref<string>('ezbookkeeping');
 const fileSubType = ref<string>('ezbookkeeping_csv');
 const fileEncoding = ref<string>('auto');
@@ -572,7 +607,7 @@ const allSteps = computed<StepBarItem[]>(() => {
     const steps: StepBarItem[] = [
         {
             name: 'uploadFile',
-            title: tt('Upload File'),
+            title: tt('Upload'),
             subTitle: tt('Upload Transaction Data File')
         }
     ];
@@ -587,7 +622,7 @@ const allSteps = computed<StepBarItem[]>(() => {
         } else {
             steps.push({
                 name: 'defineColumn',
-                title: tt('Define Column'),
+                title: tt('Map'),
                 subTitle: tt('Define and Check Column Mapping')
             });
         }
@@ -609,13 +644,15 @@ const allSteps = computed<StepBarItem[]>(() => {
         },
         {
             name: 'finalResult',
-            title: tt('Complete'),
+            title: tt('Import'),
             subTitle: tt('Data Import Completed')
         }
     ]);
 
     return steps;
 });
+
+const currentStepIndex = computed<number>(() => allSteps.value.findIndex(step => step.name === currentStep.value));
 
 const allSupportedImportFileTypesMap = computed<Record<string, LocalizedImportFileType>>(() => {
     const ret: Record<string, LocalizedImportFileType> = {};
@@ -1364,6 +1401,7 @@ function submit(): void {
         importErrorMessage.value = '';
         importResultUnknown.value = false;
         importProcess.value = 0;
+        importProgressCount.value = 0;
         remainingTransactions.value = [];
 
         let showProcessTimer : number | undefined = undefined;
@@ -1379,6 +1417,7 @@ function submit(): void {
                         && response.totalCount === transactions.length
                         && 0 <= response.importedCount && response.importedCount < response.totalCount) {
                         importProcess.value = response.importedCount / response.totalCount * 100;
+                        importProgressCount.value = response.importedCount;
                     }
                 }).catch(() => {
                     importProcess.value = 0;
@@ -1584,6 +1623,38 @@ defineExpose({
 </script>
 
 <style>
+.import-transaction-stepper {
+    overflow-x: auto;
+    padding-block: var(--ebk-space-2);
+    border-block-start: 1px solid var(--ebk-color-hairline);
+    background-color: var(--ebk-color-surface-sunken);
+    font-weight: 400;
+}
+
+.import-transaction-progress {
+    padding: var(--ebk-space-2) var(--ebk-space-4);
+    border-block-end: 1px solid var(--ebk-color-hairline);
+}
+
+.import-transaction-result-count {
+    display: flex;
+    align-items: baseline;
+    gap: var(--ebk-space-2);
+    margin-block-end: var(--ebk-space-2);
+}
+
+.import-transaction-result-figure {
+    color: var(--ebk-color-text-primary);
+    font-size: 2rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.import-transaction-result-total {
+    color: var(--ebk-color-text-secondary);
+    font-size: 1.25rem;
+}
+
 .import-transaction-dialog-layout {
     max-height: calc(100dvh - 48px);
 

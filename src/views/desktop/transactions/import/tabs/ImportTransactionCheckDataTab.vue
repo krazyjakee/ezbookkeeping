@@ -1,5 +1,31 @@
 <template>
     <div class="import-transaction-table-container d-flex flex-column">
+        <section class="import-check-issues" :class="{ 'import-check-issues--ok': invalidTransactionCount < 1 }"
+                 aria-labelledby="import-check-issues-title" v-if="importTransactions && importTransactions.length">
+            <span id="import-check-issues-title" class="import-check-issues-title ebk-technical-heading">{{ tt('Validation Issues') }}</span>
+            <span class="import-check-issues-ok" role="status" v-if="invalidTransactionCount < 1">
+                <v-icon :icon="mdiCheckCircleOutline" size="16" />
+                {{ tt('No validation issues') }}
+            </span>
+            <span class="import-check-issues-total" role="status" v-else>
+                <v-icon :icon="mdiAlertOutline" size="16" />
+                <span class="ebk-numeric">{{ formatNumberToLocalizedNumerals(invalidTransactionCount) }}</span>
+                <span class="text-medium-emphasis">/ {{ formatNumberToLocalizedNumerals(importTransactions.length) }}</span>
+            </span>
+            <ul class="import-check-issues-list" v-if="invalidTransactionCount > 0">
+                <template :key="issue.type" v-for="issue in validationIssues">
+                    <li class="import-check-issue" v-if="issue.count > 0">
+                        <span class="import-check-issue-label">{{ issue.title }}</span>
+                        <span class="import-check-issue-count ebk-numeric">{{ formatNumberToLocalizedNumerals(issue.count) }}</span>
+                        <v-btn class="import-check-issue-jump" color="default" variant="text" size="small" density="comfortable"
+                               :append-icon="mdiArrowDown"
+                               :disabled="!!disabled || isEditing"
+                               :aria-label="`${tt('Go to Row')}: ${issue.title}`"
+                               @click="jumpToIssue(issue.type)">{{ tt('Go to Row') }}</v-btn>
+                    </li>
+                </template>
+            </ul>
+        </section>
         <v-data-table
             fixed-header
             fixed-footer
@@ -15,6 +41,7 @@
             :search="JSON.stringify(filters)"
             :custom-filter="importTransactionsFilter"
             :no-data-text="tt('No data to import')"
+            :row-props="getImportTransactionRowProps"
             v-model:items-per-page="countPerPage"
             v-model:page="currentPage"
             @click="focusTableScrollContainerWhenNonEditing"
@@ -429,7 +456,7 @@ import BatchReplaceDialog, { type BatchReplaceDialogDataType } from '../dialogs/
 import BatchApplyRulesDialog from '../dialogs/BatchApplyRulesDialog.vue';
 import BatchCreateDialog, { type BatchCreateDialogDataType } from '../dialogs/BatchCreateDialog.vue';
 
-import { ref, computed, useTemplateRef, watch } from 'vue';
+import { ref, computed, useTemplateRef, watch, nextTick } from 'vue';
 
 import { useI18n } from '@/locales/helpers.ts';
 import { useTransactionTagSelectionBase } from '@/components/base/TransactionTagSelectionBase.ts';
@@ -498,7 +525,9 @@ import {
     mdiFilterOffOutline,
     mdiPlus,
     mdiComma,
-    mdiKeyboardTab
+    mdiKeyboardTab,
+    mdiCheckCircleOutline,
+    mdiArrowDown
 } from '@mdi/js';
 
 type BatchReplaceDialogType = InstanceType<typeof BatchReplaceDialog>;
@@ -580,6 +609,7 @@ const filters = ref<ImportTransactionCheckDataFilter>({
 
 const currentPage = ref<number>(1);
 const countPerPage = ref<number>(10);
+const highlightedTransactionIndex = ref<number>(-1);
 const showCustomDateRangeDialog = ref<boolean>(false);
 const showCustomAmountFilterDialog = ref<boolean>(false);
 const showCustomDescriptionDialog = ref<boolean>(false);
@@ -2258,6 +2288,161 @@ watch(filters, () => {
     deep: true
 });
 
+type ImportTransactionValidationIssueType = 'category' | 'account' | 'tag' | 'description';
+
+const ALL_VALIDATION_ISSUE_TYPES: ImportTransactionValidationIssueType[] = [ 'category', 'account', 'tag', 'description' ];
+
+interface ImportTransactionValidationIssue {
+    readonly type: ImportTransactionValidationIssueType;
+    readonly title: string;
+    readonly count: number;
+}
+
+function hasValidationIssue(transaction: ImportTransaction, type: ImportTransactionValidationIssueType): boolean {
+    if (type === 'category') {
+        const categoryId = transaction.categoryId;
+        return transaction.type !== TransactionType.ModifyBalance && (!categoryId || categoryId === '0' || !allCategoriesMap.value[categoryId]);
+    } else if (type === 'account') {
+        const sourceAccountId = transaction.sourceAccountId;
+        const destinationAccountId = transaction.destinationAccountId;
+
+        if (!sourceAccountId || sourceAccountId === '0' || !allAccountsMap.value[sourceAccountId]) {
+            return true;
+        }
+
+        return transaction.type === TransactionType.Transfer && (!destinationAccountId || destinationAccountId === '0' || !allAccountsMap.value[destinationAccountId]);
+    } else if (type === 'tag') {
+        if (!transaction.tagIds) {
+            return false;
+        }
+
+        for (const tagId of transaction.tagIds) {
+            if (!tagId || tagId === '0' || !allTagsMap.value[tagId]) {
+                return true;
+            }
+        }
+
+        return false;
+    } else if (type === 'description') {
+        return !!transaction.comment && transaction.comment.length > TRANSACTION_MAX_COMMENT_LENGTH;
+    }
+
+    return false;
+}
+
+const invalidTransactionCount = computed<number>(() => {
+    let count = 0;
+
+    for (const importTransaction of (props.importTransactions || [])) {
+        if (!importTransaction.valid) {
+            count++;
+        }
+    }
+
+    return count;
+});
+
+// validation issues with the number of affected transactions (guidelines §6.4)
+const validationIssues = computed<ImportTransactionValidationIssue[]>(() => {
+    const counts: Record<ImportTransactionValidationIssueType, number> = {
+        category: 0,
+        account: 0,
+        tag: 0,
+        description: 0
+    };
+
+    for (const importTransaction of (props.importTransactions || [])) {
+        if (importTransaction.valid) {
+            continue;
+        }
+
+        for (const type of ALL_VALIDATION_ISSUE_TYPES) {
+            if (hasValidationIssue(importTransaction, type)) {
+                counts[type]++;
+            }
+        }
+    }
+
+    return [
+        { type: 'category', title: tt('Invalid Category'), count: counts.category },
+        { type: 'account', title: tt('Invalid Account'), count: counts.account },
+        { type: 'tag', title: tt('Invalid Tag'), count: counts.tag },
+        { type: 'description', title: tt('Description Too Long'), count: counts.description }
+    ];
+});
+
+function getImportTransactionRowProps({ item }: { item: ImportTransaction }): Record<string, unknown> {
+    return {
+        class: {
+            'import-transaction-row-invalid': !item.valid,
+            'import-transaction-row-current': item.index === highlightedTransactionIndex.value
+        },
+        'data-import-index': item.index
+    };
+}
+
+// jumps to the next affected row after the one jumped to last time, so repeated presses walk through every issue
+function jumpToIssue(type: ImportTransactionValidationIssueType): void {
+    if (!props.importTransactions || !props.importTransactions.length || isEditing.value) {
+        return;
+    }
+
+    const isAffected = (transaction: ImportTransaction) => !transaction.valid && hasValidationIssue(transaction, type);
+    let anyAffectedHidden = false;
+    let firstDisplayed: { transaction: ImportTransaction, displayIndex: number } | null = null;
+    let nextDisplayed: { transaction: ImportTransaction, displayIndex: number } | null = null;
+    let displayIndex = 0;
+
+    for (const importTransaction of props.importTransactions) {
+        const displayed = isTransactionDisplayed(importTransaction);
+
+        if (isAffected(importTransaction)) {
+            if (!displayed) {
+                anyAffectedHidden = true;
+            } else {
+                if (!firstDisplayed) {
+                    firstDisplayed = { transaction: importTransaction, displayIndex };
+                }
+
+                if (!nextDisplayed && importTransaction.index > highlightedTransactionIndex.value) {
+                    nextDisplayed = { transaction: importTransaction, displayIndex };
+                }
+            }
+        }
+
+        if (displayed) {
+            displayIndex++;
+        }
+    }
+
+    const target = nextDisplayed ?? firstDisplayed;
+
+    if (!target) {
+        if (anyAffectedHidden) {
+            // the affected rows are hidden by the current filters
+            filters.value.minDatetime = null;
+            filters.value.maxDatetime = null;
+            filters.value.transactionType = null;
+            filters.value.category = null;
+            filters.value.amount = null;
+            filters.value.account = null;
+            filters.value.tag = null;
+            filters.value.description = null;
+            nextTick(() => jumpToIssue(type));
+        }
+
+        return;
+    }
+
+    highlightedTransactionIndex.value = target.transaction.index;
+    currentPage.value = Math.floor(target.displayIndex / countPerPage.value) + 1;
+
+    nextTick(() => {
+        const row = document.querySelector(`.import-transaction-table tr[data-import-index="${target.transaction.index}"]`);
+        row?.scrollIntoView({ block: 'center', behavior: 'auto' });
+    });
+}
+
 defineExpose({
     filterMenus,
     toolMenus,
@@ -2272,6 +2457,87 @@ defineExpose({
 </script>
 
 <style>
+/* Validation issues strip (guidelines §6.4): counts per issue and a jump-to-row action */
+.import-check-issues {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: var(--ebk-space-3);
+    row-gap: var(--ebk-space-1);
+    min-height: 40px;
+    padding: var(--ebk-space-1) var(--ebk-space-4);
+    border-block-end: 1px solid var(--ebk-color-hairline);
+    border-inline-start: 3px solid rgb(var(--v-theme-error));
+    background-color: rgba(var(--v-theme-error), 0.06);
+    font-size: 0.875rem;
+}
+
+.import-check-issue-label {
+    color: var(--ebk-color-text-primary);
+}
+
+.import-check-issues--ok {
+    border-inline-start-color: rgb(var(--v-theme-success));
+    background-color: transparent;
+}
+
+.import-check-issues-title {
+    color: var(--ebk-color-text-secondary);
+}
+
+.import-check-issues-ok,
+.import-check-issues-total {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ebk-space-1);
+    font-weight: 600;
+}
+
+.import-check-issues-total {
+    color: rgb(var(--v-theme-error));
+}
+
+.import-check-issues-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ebk-space-1) var(--ebk-space-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.import-check-issue {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ebk-space-1);
+    padding-inline-start: var(--ebk-space-3);
+    border-inline-start: 1px solid var(--ebk-color-hairline);
+}
+
+.import-check-issue-count {
+    min-width: 1.5rem;
+    padding-inline: var(--ebk-space-2);
+    border-radius: var(--ebk-radius-pill);
+    background-color: rgba(var(--v-theme-error), 0.12);
+    color: var(--ebk-color-text-primary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.import-transaction-table tr.import-transaction-row-invalid > td:first-child {
+    box-shadow: inset 2px 0 0 rgb(var(--v-theme-error));
+}
+
+[dir='rtl'] .import-transaction-table tr.import-transaction-row-invalid > td:first-child {
+    box-shadow: inset -2px 0 0 rgb(var(--v-theme-error));
+}
+
+.import-transaction-table tr.import-transaction-row-current > td {
+    background-color: var(--ebk-color-selected-background);
+}
+
 .import-transaction-table > .v-table__wrapper > table {
     th:not(:last-child),
     td:not(:last-child) {

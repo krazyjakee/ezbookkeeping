@@ -76,7 +76,6 @@
                         <f7-list strong inset dividers accordion-list class="combination-list-content">
                             <f7-list-item checkbox
                                           :class="{ 'has-child-list-item': account.type === AccountType.MultiSubAccounts.type && account.subAccounts && account.subAccounts.length > 0 }"
-                                          :title="account.name"
                                           :value="account.id"
                                           :checked="isAccountOrSubAccountsAllChecked(account, filterAccountIds)"
                                           :indeterminate="isAccountOrSubAccountsHasButNotAllChecked(account, filterAccountIds)"
@@ -84,29 +83,32 @@
                                           v-for="account in accountCategory.accounts"
                                           @change="updateAccountOrSubAccountsSelected">
                                 <template #media>
-                                    <ItemIcon :icon-type="getAccountIconType(account.iconType)" :icon-id="account.icon" :color="account.color">
-                                        <f7-badge color="gray" class="right-bottom-icon" v-if="account.hidden">
-                                            <f7-icon f7="eye_slash_fill"></f7-icon>
-                                        </f7-badge>
-                                    </ItemIcon>
+                                    <ItemIcon :icon-type="getAccountIconType(account.iconType)" :icon-id="account.icon" :color="account.color" :class="{ 'ebk-m-dimmed': account.hidden }" />
+                                </template>
+                                <template #title>
+                                    <span class="ebk-m-title-line">
+                                        <span class="ebk-m-title-text" :class="{ 'ebk-m-dimmed': account.hidden }">{{ account.name }}</span>
+                                        <span class="ebk-m-hidden-chip" v-if="account.hidden">{{ tt('Hidden') }}</span>
+                                    </span>
                                 </template>
 
                                 <template #root>
-                                    <ul class="padding-inline-start"
+                                    <ul class="padding-inline-start ebk-m-nested-guide-list"
                                         v-if="account.type === AccountType.MultiSubAccounts.type && account.subAccounts && account.subAccounts.length > 0">
                                         <f7-list-item checkbox
-                                                      :title="subAccount.name"
                                                       :value="subAccount.id"
                                                       :checked="isAccountChecked(subAccount, filterAccountIds)"
                                                       :key="subAccount.id"
                                                       v-for="subAccount in account.subAccounts"
                                                       @change="updateAccountSelected">
                                             <template #media>
-                                                <ItemIcon :icon-type="getAccountIconType(subAccount.iconType)" :icon-id="subAccount.icon" :color="subAccount.color">
-                                                    <f7-badge color="gray" class="right-bottom-icon" v-if="subAccount.hidden">
-                                                        <f7-icon f7="eye_slash_fill"></f7-icon>
-                                                    </f7-badge>
-                                                </ItemIcon>
+                                                <ItemIcon :icon-type="getAccountIconType(subAccount.iconType)" :icon-id="subAccount.icon" :color="subAccount.color" :class="{ 'ebk-m-dimmed': subAccount.hidden }" />
+                                            </template>
+                                            <template #title>
+                                                <span class="ebk-m-title-line">
+                                                    <span class="ebk-m-title-text" :class="{ 'ebk-m-dimmed': subAccount.hidden }">{{ subAccount.name }}</span>
+                                                    <span class="ebk-m-hidden-chip" v-if="subAccount.hidden">{{ tt('Hidden') }}</span>
+                                                </span>
                                             </template>
                                         </f7-list-item>
                                     </ul>
