@@ -103,7 +103,7 @@
                 class="list-item-with-header-and-title list-item-title-hide-overflow"
                 key="expenseCategorySelection"
                 link="#" no-chevron
-                :class="{ 'disabled': !hasVisibleExpenseCategories, 'readonly': mode === TransactionEditPageMode.View }"
+                :class="{ 'disabled': !hasVisibleExpenseCategories && !canAddNewCategory, 'readonly': mode === TransactionEditPageMode.View }"
                 :header="tt('Category')"
                 @click="showCategorySheet = true"
                 v-if="transaction.type === TransactionType.Expense"
@@ -126,8 +126,12 @@
                                            secondary-hidden-field="hidden"
                                            :enable-filter="true" :filter-placeholder="tt('Find category')" :filter-no-items-text="tt('No available category')"
                                            :items="allCategories[CategoryType.Expense]"
+                                           :add-primary-item-text="canAddNewCategory ? tt('Add Primary Category') : undefined"
+                                           :add-secondary-item-text="canAddNewCategory ? tt('Add Secondary Category') : undefined"
                                            v-model:show="showCategorySheet"
-                                           v-model="transaction.expenseCategoryId">
+                                           v-model="transaction.expenseCategoryId"
+                                           @add:primary="addNewCategory(CategoryType.Expense, undefined, $event)"
+                                           @add:secondary="(primaryItem, name) => addNewCategory(CategoryType.Expense, primaryItem, name)">
                 </tree-view-selection-sheet>
             </f7-list-item>
 
@@ -135,7 +139,7 @@
                 class="list-item-with-header-and-title list-item-title-hide-overflow"
                 key="incomeCategorySelection"
                 link="#" no-chevron
-                :class="{ 'disabled': !hasVisibleIncomeCategories, 'readonly': mode === TransactionEditPageMode.View }"
+                :class="{ 'disabled': !hasVisibleIncomeCategories && !canAddNewCategory, 'readonly': mode === TransactionEditPageMode.View }"
                 :header="tt('Category')"
                 @click="showCategorySheet = true"
                 v-if="transaction.type === TransactionType.Income"
@@ -158,8 +162,12 @@
                                            secondary-hidden-field="hidden"
                                            :enable-filter="true" :filter-placeholder="tt('Find category')" :filter-no-items-text="tt('No available category')"
                                            :items="allCategories[CategoryType.Income]"
+                                           :add-primary-item-text="canAddNewCategory ? tt('Add Primary Category') : undefined"
+                                           :add-secondary-item-text="canAddNewCategory ? tt('Add Secondary Category') : undefined"
                                            v-model:show="showCategorySheet"
-                                           v-model="transaction.incomeCategoryId">
+                                           v-model="transaction.incomeCategoryId"
+                                           @add:primary="addNewCategory(CategoryType.Income, undefined, $event)"
+                                           @add:secondary="(primaryItem, name) => addNewCategory(CategoryType.Income, primaryItem, name)">
                 </tree-view-selection-sheet>
             </f7-list-item>
 
@@ -167,7 +175,7 @@
                 class="list-item-with-header-and-title list-item-title-hide-overflow"
                 key="transferCategorySelection"
                 link="#" no-chevron
-                :class="{ 'disabled': !hasVisibleTransferCategories, 'readonly': mode === TransactionEditPageMode.View }"
+                :class="{ 'disabled': !hasVisibleTransferCategories && !canAddNewCategory, 'readonly': mode === TransactionEditPageMode.View }"
                 :header="tt('Category')"
                 @click="showCategorySheet = true"
                 v-if="transaction.type === TransactionType.Transfer"
@@ -190,8 +198,12 @@
                                            secondary-hidden-field="hidden"
                                            :enable-filter="true" :filter-placeholder="tt('Find category')" :filter-no-items-text="tt('No available category')"
                                            :items="allCategories[CategoryType.Transfer]"
+                                           :add-primary-item-text="canAddNewCategory ? tt('Add Primary Category') : undefined"
+                                           :add-secondary-item-text="canAddNewCategory ? tt('Add Secondary Category') : undefined"
                                            v-model:show="showCategorySheet"
-                                           v-model="transaction.transferCategoryId">
+                                           v-model="transaction.transferCategoryId"
+                                           @add:primary="addNewCategory(CategoryType.Transfer, undefined, $event)"
+                                           @add:secondary="(primaryItem, name) => addNewCategory(CategoryType.Transfer, primaryItem, name)">
                 </tree-view-selection-sheet>
             </f7-list-item>
 
@@ -410,7 +422,12 @@
                                         <f7-icon class="picture-control-icon picture-remove-icon" f7="trash" :aria-label="tt('Remove Picture')" v-if="pictureInfo.pictureId !== removingPictureId"></f7-icon>
                                         <f7-preloader color="white" :size="28" v-if="pictureInfo.pictureId === removingPictureId" />
                                     </div>
-                                    <image-box style="height: 100%" alt="picture" :src="getTransactionPictureUrl(pictureInfo)">
+                                    <div class="display-flex flex-direction-column justify-content-center align-items-center transaction-picture-document"
+                                         v-if="isPdfFileUrl(getTransactionPictureUrl(pictureInfo))">
+                                        <f7-icon class="picture-document-icon" f7="doc_text"></f7-icon>
+                                        <span class="picture-document-text">{{ tt('PDF Document') }}</span>
+                                    </div>
+                                    <image-box style="height: 100%" alt="picture" :src="getTransactionPictureUrl(pictureInfo)" v-else>
                                         <template #error>
                                             {{ tt('Failed to load image, please check whether the config "domain" and "root_url" are set correctly.') }}
                                         </template>
@@ -419,7 +436,7 @@
                             </swiper-slide>
                             <swiper-slide @click="showOpenPictureDialog" v-if="canAddTransactionPicture">
                                 <div class="display-flex justify-content-center align-items-center transaction-picture transaction-picture-add">
-                                    <f7-icon class="picture-control-icon" f7="plus" :aria-label="tt('Add Picture')" v-if="!uploadingPicture"></f7-icon>
+                                    <f7-icon class="picture-control-icon" f7="plus" :aria-label="tt('Add Picture or PDF Document')" v-if="!uploadingPicture"></f7-icon>
                                     <f7-preloader :size="28" v-if="uploadingPicture" />
                                 </div>
                             </swiper-slide>
@@ -448,6 +465,26 @@
             </f7-actions-group>
             <f7-actions-group v-if="!!getMapProvider()">
                 <f7-actions-button :class="{ 'disabled': !transaction.geoLocation }" @click="setGeoLocationByClickMap = false; showGeoLocationMapSheet = true">{{ tt('Show on the map') }}</f7-actions-button>
+            </f7-actions-group>
+            <f7-actions-group>
+                <f7-actions-button bold close>{{ tt('Cancel') }}</f7-actions-button>
+            </f7-actions-group>
+        </f7-actions>
+
+        <f7-actions close-by-outside-click close-on-escape :opened="showAddPictureActionSheet" @actions:closed="showAddPictureActionSheet = false">
+            <f7-actions-group>
+                <f7-actions-button @click="openPictureInput(true)">{{ tt('Take Photo') }}</f7-actions-button>
+                <f7-actions-button @click="openPictureInput(false)">{{ tt('Choose Picture or PDF Document') }}</f7-actions-button>
+            </f7-actions-group>
+            <f7-actions-group>
+                <f7-actions-button bold close>{{ tt('Cancel') }}</f7-actions-button>
+            </f7-actions-group>
+        </f7-actions>
+
+        <f7-actions close-by-outside-click close-on-escape :opened="showDocumentActionSheet" @actions:closed="showDocumentActionSheet = false">
+            <f7-actions-group>
+                <f7-actions-button @click="openDocument(false)">{{ tt('Open') }}</f7-actions-button>
+                <f7-actions-button @click="openDocument(true)">{{ tt('Download') }}</f7-actions-button>
             </f7-actions-group>
             <f7-actions-group>
                 <f7-actions-button bold close>{{ tt('Cancel') }}</f7-actions-button>
@@ -515,7 +552,8 @@
         <f7-photo-browser ref="pictureBrowser" type="popup" navbar-of-text="/"
                           :navbar-show-count="true" :exposition="false"
                           :photos="transactionPictures" :thumbs="transactionThumbs" />
-        <input ref="pictureInput" type="file" style="display: none" :accept="`${SUPPORTED_IMAGE_EXTENSIONS};capture=camera`" @change="onUploadPicture($event)" />
+        <input ref="pictureInput" type="file" style="display: none" :accept="SUPPORTED_TRANSACTION_PICTURE_EXTENSIONS" @change="onUploadPicture($event)" />
+        <input ref="cameraInput" type="file" style="display: none" :accept="CAMERA_CAPTURE_IMAGE_ACCEPT" capture="environment" @change="onUploadPicture($event)" />
     </f7-page>
 </template>
 
@@ -553,8 +591,9 @@ import { KnownFileType } from '@/core/file.ts';
 
 import { TRANSACTION_MAX_AMOUNT, TRANSACTION_MIN_AMOUNT } from '@/consts/transaction.ts';
 import { KnownErrorCode } from '@/consts/api.ts';
-import { SUPPORTED_IMAGE_EXTENSIONS } from '@/consts/file.ts';
+import { SUPPORTED_TRANSACTION_PICTURE_EXTENSIONS, CAMERA_CAPTURE_IMAGE_ACCEPT } from '@/consts/file.ts';
 
+import { TransactionCategory } from '@/models/transaction_category.ts';
 import { TransactionTemplate } from '@/models/transaction_template.ts';
 import type { TransactionPictureInfoBasicResponse } from '@/models/transaction_picture_info.ts';
 import { Transaction } from '@/models/transaction.ts';
@@ -574,6 +613,7 @@ import {
     isTransactionPicturesEnabled,
     getMapProvider
 } from '@/lib/server_settings.ts';
+import { isPdfFile, isPdfFileUrl, getFileDownloadUrl } from '@/lib/file.ts';
 import { compressJpgImageByQuality } from '@/lib/ui/common.ts';
 import logger from '@/lib/logger.ts';
 
@@ -667,6 +707,7 @@ const transactionTemplatesStore = useTransactionTemplatesStore();
 
 const pictureBrowser = useTemplateRef<PhotoBrowser.PhotoBrowser>('pictureBrowser');
 const pictureInput = useTemplateRef<HTMLInputElement>('pictureInput');
+const cameraInput = useTemplateRef<HTMLInputElement>('cameraInput');
 
 const loadingError = ref<unknown | null>(null);
 const removingPictureId = ref<string | null>(null);
@@ -677,6 +718,9 @@ const showQuickSavePopover = ref<boolean>(false);
 const showTimezonePopup = ref<boolean>(false);
 const showGeoLocationActionSheet = ref<boolean>(false);
 const showMoreActionSheet = ref<boolean>(false);
+const showAddPictureActionSheet = ref<boolean>(false);
+const showDocumentActionSheet = ref<boolean>(false);
+const selectedDocumentPicture = ref<TransactionPictureInfoBasicResponse | null>(null);
 const showSourceAmountSheet = ref<boolean>(false);
 const showDestinationAmountSheet = ref<boolean>(false);
 const showCategorySheet = ref<boolean>(false);
@@ -692,6 +736,10 @@ const showTransactionPictures = ref<boolean>(pageTypeAndMode?.type === Transacti
     && (pageTypeAndMode?.mode === TransactionEditPageMode.Add || pageTypeAndMode?.mode === TransactionEditPageMode.Edit)
     && settingsStore.appSettings.alwaysShowTransactionPicturesInMobileTransactionEditPage);
 const showAITextRecognitionSheet = ref<boolean>(false);
+
+let pendingNewCategory: { type: CategoryType, parentId: string, existingCategoryIds: Record<string, boolean> } | null = null;
+
+const canAddNewCategory = computed<boolean>(() => mode.value === TransactionEditPageMode.Add || mode.value === TransactionEditPageMode.Edit);
 
 const quickSaveButtonStyleType = computed<number>(() => settingsStore.appSettings.quickSaveButtonStyleInMobileTransactionListPage);
 const quickSaveButtonFloatingPosition = computed<string>(() => {
@@ -769,8 +817,14 @@ const transactionPictures = computed<Record<string, string | undefined>[]>(() =>
     }
 
     for (const picture of transaction.value.pictures) {
+        const pictureUrl = getTransactionPictureUrl(picture);
+
+        if (isPdfFileUrl(pictureUrl)) {
+            continue;
+        }
+
         thumbs.push({
-            url: getTransactionPictureUrl(picture)
+            url: pictureUrl
         });
     }
 
@@ -785,7 +839,13 @@ const transactionThumbs = computed<(string | undefined)[]>(() => {
     }
 
     for (const picture of transaction.value.pictures) {
-        thumbs.push(getTransactionPictureUrl(picture));
+        const pictureUrl = getTransactionPictureUrl(picture);
+
+        if (isPdfFileUrl(pictureUrl)) {
+            continue;
+        }
+
+        thumbs.push(pictureUrl);
     }
 
     return thumbs;
@@ -1367,7 +1427,35 @@ function showOpenPictureDialog(): void {
         return;
     }
 
-    pictureInput.value?.click();
+    showAddPictureActionSheet.value = true;
+}
+
+function openPictureInput(fromCamera: boolean): void {
+    showAddPictureActionSheet.value = false;
+
+    if (!canAddTransactionPicture.value || submitting.value) {
+        return;
+    }
+
+    if (fromCamera) {
+        cameraInput.value?.click();
+    } else {
+        pictureInput.value?.click();
+    }
+}
+
+function openDocument(download: boolean): void {
+    const pictureUrl = getTransactionPictureUrl(selectedDocumentPicture.value);
+    const documentUrl = download ? getFileDownloadUrl(pictureUrl) : pictureUrl;
+
+    showDocumentActionSheet.value = false;
+    selectedDocumentPicture.value = null;
+
+    if (!documentUrl) {
+        return;
+    }
+
+    window.open(documentUrl, '_blank');
 }
 
 function uploadPicture(file: File): void {
@@ -1378,9 +1466,13 @@ function uploadPicture(file: File): void {
     uploadingPicture.value = true;
     submitting.value = true;
 
-    compressJpgImageByQuality(file, imageUploadQualityType.value).then(blob => {
+    const pictureFilePromise: Promise<File> = isPdfFile(file)
+        ? Promise.resolve(KnownFileType.PDF.createFileFromBlob(file, 'document'))
+        : compressJpgImageByQuality(file, imageUploadQualityType.value).then(blob => KnownFileType.JPG.createFileFromBlob(blob, 'image'));
+
+    pictureFilePromise.then(pictureFile => {
         return transactionsStore.uploadTransactionPicture({
-            pictureFile: KnownFileType.JPG.createFileFromBlob(blob, "image")
+            pictureFile: pictureFile
         });
     }).then(response => {
         transaction.value.addPicture(response);
@@ -1398,7 +1490,25 @@ function uploadPicture(file: File): void {
 
 function viewOrRemovePicture(pictureInfo: TransactionPictureInfoBasicResponse): void {
     if (mode.value !== TransactionEditPageMode.Add && mode.value !== TransactionEditPageMode.Edit && transaction.value.pictures && transaction.value.pictures.length) {
-        pictureBrowser.value?.open();
+        if (isPdfFileUrl(getTransactionPictureUrl(pictureInfo))) {
+            selectedDocumentPicture.value = pictureInfo;
+            showDocumentActionSheet.value = true;
+            return;
+        }
+
+        let imageIndex = 0;
+
+        for (const picture of transaction.value.pictures) {
+            if (picture.pictureId === pictureInfo.pictureId) {
+                break;
+            }
+
+            if (!isPdfFileUrl(getTransactionPictureUrl(picture))) {
+                imageIndex++;
+            }
+        }
+
+        pictureBrowser.value?.open(imageIndex);
         return;
     }
 
@@ -1447,8 +1557,80 @@ function onUploadPicture(event: Event): void {
     uploadPicture(pictureFile);
 }
 
+function setTransactionCategoryId(categoryType: CategoryType, categoryId: string): void {
+    if (categoryType === CategoryType.Expense) {
+        transaction.value.expenseCategoryId = categoryId;
+    } else if (categoryType === CategoryType.Income) {
+        transaction.value.incomeCategoryId = categoryId;
+    } else if (categoryType === CategoryType.Transfer) {
+        transaction.value.transferCategoryId = categoryId;
+    }
+}
+
+function addNewCategory(categoryType: CategoryType, primaryCategory: unknown, categoryName?: string): void {
+    const parentCategory = primaryCategory instanceof TransactionCategory ? primaryCategory : undefined;
+    const parentId = parentCategory ? parentCategory.id : '0';
+    const existingCategoryIds: Record<string, boolean> = {};
+
+    for (const categoryId of Object.keys(transactionCategoriesStore.allTransactionCategoriesMap)) {
+        existingCategoryIds[categoryId] = true;
+    }
+
+    pendingNewCategory = {
+        type: categoryType,
+        parentId: parentId,
+        existingCategoryIds: existingCategoryIds
+    };
+
+    let url = `/category/add?type=${categoryType}&parentId=${parentId}`;
+
+    if (parentCategory) {
+        url += `&color=${parentCategory.color}&icon=${parentCategory.icon}`;
+    }
+
+    if (categoryName) {
+        url += `&name=${encodeURIComponent(categoryName)}`;
+    }
+
+    props.f7router.navigate(url);
+}
+
+function onReturnFromAddingNewCategory(): void {
+    if (!pendingNewCategory) {
+        return;
+    }
+
+    const pending = pendingNewCategory;
+    pendingNewCategory = null;
+
+    let newCategory: TransactionCategory | null = null;
+
+    for (const category of Object.values(transactionCategoriesStore.allTransactionCategoriesMap)) {
+        if (!pending.existingCategoryIds[category.id] && category.type === pending.type && category.parentId === pending.parentId) {
+            newCategory = category;
+            break;
+        }
+    }
+
+    if (!newCategory) {
+        return;
+    }
+
+    if (newCategory.parentId && newCategory.parentId !== '0') {
+        setTransactionCategoryId(pending.type, newCategory.id);
+    } else {
+        const newPrimaryCategory = newCategory;
+
+        // transactions can only use secondary categories, so offer to add a secondary category under the new primary category
+        showConfirm('Transactions require a secondary category. Do you want to add a secondary category under this primary category now?', () => {
+            addNewCategory(pending.type, newPrimaryCategory);
+        });
+    }
+}
+
 function onPageAfterIn(): void {
     routeBackOnError(props.f7router, loadingError);
+    onReturnFromAddingNewCategory();
 
     if (settingsStore.appSettings.autoGetCurrentGeoLocation && mode.value === TransactionEditPageMode.Add
         && !geoLocationStatus.value && !transaction.value.geoLocation) {
@@ -1457,6 +1639,10 @@ function onPageAfterIn(): void {
 }
 
 function onPageBeforeOut(): void {
+    if (pendingNewCategory) { // navigating to the add category page, the current page will be kept
+        return;
+    }
+
     if (submitted.value || pageTypeAndMode?.type !== TransactionEditPageType.Transaction || mode.value !== TransactionEditPageMode.Add || query['noTransactionDraft'] === 'true' || addByTemplateId.value || duplicateFromId.value) {
         return;
     }
@@ -1585,6 +1771,26 @@ init();
     width: 100%;
     height: 100%;
     border-radius: 8px;
+}
+
+.transaction-pictures .transaction-picture-container .transaction-picture .transaction-picture-document {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    background-color: var(--f7-list-bg-color);
+    border: 1px solid var(--f7-list-item-border-color, #ccc);
+    box-sizing: border-box;
+}
+
+.transaction-pictures .transaction-picture-container .transaction-picture .transaction-picture-document .picture-document-icon {
+    font-size: var(--ebk-transaction-picture-add-icon-size);
+    color: var(--f7-theme-color);
+}
+
+.transaction-pictures .transaction-picture-container .transaction-picture .transaction-picture-document .picture-document-text {
+    margin-top: 4px;
+    font-size: var(--f7-list-item-footer-font-size);
+    color: var(--f7-list-item-footer-text-color);
 }
 
 .transaction-pictures .transaction-picture-add {

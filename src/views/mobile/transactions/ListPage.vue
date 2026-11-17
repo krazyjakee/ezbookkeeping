@@ -328,9 +328,15 @@
                                 <div class="transaction-gallery-grid">
                                     <div class="transaction-picture-cell" :key="pictureInfo.pictureId"
                                          v-for="[transaction, pictureInfo] in allTransactionPictures(transactionMonthList.items)">
+                                        <f7-link class="display-flex flex-direction-column justify-content-center align-items-center transaction-picture-img transaction-picture-document"
+                                                 :href="`/transaction/detail?id=${transaction.id}&type=${transaction.type}`"
+                                                 v-if="isPdfFileUrl(getTransactionPictureUrl(pictureInfo))">
+                                            <f7-icon class="picture-document-icon" f7="doc_text"></f7-icon>
+                                            <span class="picture-document-text">{{ tt('PDF Document') }}</span>
+                                        </f7-link>
                                         <image-box class="transaction-picture-img" alt="picture"
                                                    :link="`/transaction/detail?id=${transaction.id}&type=${transaction.type}`"
-                                                   :src="getTransactionPictureUrl(pictureInfo)">
+                                                   :src="getTransactionPictureUrl(pictureInfo)" v-else>
                                             <template #error>
                                                 {{ tt('Failed to load image, please check whether the config "domain" and "root_url" are set correctly.') }}
                                             </template>
@@ -716,6 +722,7 @@ import {
     transactionTypeToCategoryType
 } from '@/lib/category.ts';
 import { allTransactionPictures } from '@/lib/transaction.ts';
+import { isPdfFileUrl } from '@/lib/file.ts';
 
 const props = defineProps<{
     f7route: Router.Route;
@@ -1794,5 +1801,20 @@ html[dir="rtl"] .list.transaction-info-list li.transaction-info .transaction-foo
     width: 100%;
     height: 100%;
     display: block;
+}
+
+.transaction-picture-img.transaction-picture-document {
+    display: flex;
+}
+
+.transaction-picture-document .picture-document-icon {
+    font-size: 32px;
+    color: var(--f7-theme-color);
+}
+
+.transaction-picture-document .picture-document-text {
+    margin-top: 4px;
+    font-size: var(--f7-list-item-footer-font-size);
+    color: var(--f7-list-item-footer-text-color);
 }
 </style>

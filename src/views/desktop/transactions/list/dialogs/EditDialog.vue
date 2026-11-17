@@ -155,14 +155,18 @@
                                                                    secondary-icon-field="icon" secondary-icon-type-field="iconType" secondary-icon-type="category" secondary-color-field="color"
                                                                    secondary-hidden-field="hidden"
                                                                    :readonly="mode === TransactionEditPageMode.View"
-                                                                   :disabled="loading || submitting || recognizing || !hasVisibleExpenseCategories"
+                                                                   :disabled="loading || submitting || recognizing || (!hasVisibleExpenseCategories && !canAddNewCategory)"
                                                                    :enable-filter="true" :filter-placeholder="tt('Find category')" :filter-no-items-text="tt('No available category')"
                                                                    :show-selection-primary-text="true"
                                                                    :custom-selection-primary-text="getTransactionPrimaryCategoryName(transaction.expenseCategoryId, allCategories[CategoryType.Expense])"
                                                                    :custom-selection-secondary-text="getTransactionSecondaryCategoryName(transaction.expenseCategoryId, allCategories[CategoryType.Expense])"
                                                                    :label="tt('Category')" :placeholder="tt('Category')"
                                                                    :items="allCategories[CategoryType.Expense] || []"
-                                                                   v-model="transaction.expenseCategoryId">
+                                                                   :add-primary-item-text="canAddNewCategory ? tt('Add Primary Category') : undefined"
+                                                                   :add-secondary-item-text="canAddNewCategory ? tt('Add Secondary Category') : undefined"
+                                                                   v-model="transaction.expenseCategoryId"
+                                                                   @add:primary="addNewCategory(CategoryType.Expense, undefined, $event)"
+                                                                   @add:secondary="(primaryItem, name) => addNewCategory(CategoryType.Expense, primaryItem, name)">
                                                 </two-column-select>
                                             </div>
                                         </template>
@@ -179,14 +183,18 @@
                                                                    secondary-icon-field="icon" secondary-icon-type-field="iconType" secondary-icon-type="category" secondary-color-field="color"
                                                                    secondary-hidden-field="hidden"
                                                                    :readonly="mode === TransactionEditPageMode.View"
-                                                                   :disabled="loading || submitting || recognizing || !hasVisibleIncomeCategories"
+                                                                   :disabled="loading || submitting || recognizing || (!hasVisibleIncomeCategories && !canAddNewCategory)"
                                                                    :enable-filter="true" :filter-placeholder="tt('Find category')" :filter-no-items-text="tt('No available category')"
                                                                    :show-selection-primary-text="true"
                                                                    :custom-selection-primary-text="getTransactionPrimaryCategoryName(transaction.incomeCategoryId, allCategories[CategoryType.Income])"
                                                                    :custom-selection-secondary-text="getTransactionSecondaryCategoryName(transaction.incomeCategoryId, allCategories[CategoryType.Income])"
                                                                    :label="tt('Category')" :placeholder="tt('Category')"
                                                                    :items="allCategories[CategoryType.Income] || []"
-                                                                   v-model="transaction.incomeCategoryId">
+                                                                   :add-primary-item-text="canAddNewCategory ? tt('Add Primary Category') : undefined"
+                                                                   :add-secondary-item-text="canAddNewCategory ? tt('Add Secondary Category') : undefined"
+                                                                   v-model="transaction.incomeCategoryId"
+                                                                   @add:primary="addNewCategory(CategoryType.Income, undefined, $event)"
+                                                                   @add:secondary="(primaryItem, name) => addNewCategory(CategoryType.Income, primaryItem, name)">
                                                 </two-column-select>
                                             </div>
                                         </template>
@@ -203,14 +211,18 @@
                                                                    secondary-icon-field="icon" secondary-icon-type-field="iconType" secondary-icon-type="category" secondary-color-field="color"
                                                                    secondary-hidden-field="hidden"
                                                                    :readonly="mode === TransactionEditPageMode.View"
-                                                                   :disabled="loading || submitting || recognizing || !hasVisibleTransferCategories"
+                                                                   :disabled="loading || submitting || recognizing || (!hasVisibleTransferCategories && !canAddNewCategory)"
                                                                    :enable-filter="true" :filter-placeholder="tt('Find category')" :filter-no-items-text="tt('No available category')"
                                                                    :show-selection-primary-text="true"
                                                                    :custom-selection-primary-text="getTransactionPrimaryCategoryName(transaction.transferCategoryId, allCategories[CategoryType.Transfer])"
                                                                    :custom-selection-secondary-text="getTransactionSecondaryCategoryName(transaction.transferCategoryId, allCategories[CategoryType.Transfer])"
                                                                    :label="tt('Category')" :placeholder="tt('Category')"
                                                                    :items="allCategories[CategoryType.Transfer] || []"
-                                                                   v-model="transaction.transferCategoryId">
+                                                                   :add-primary-item-text="canAddNewCategory ? tt('Add Primary Category') : undefined"
+                                                                   :add-secondary-item-text="canAddNewCategory ? tt('Add Secondary Category') : undefined"
+                                                                   v-model="transaction.transferCategoryId"
+                                                                   @add:primary="addNewCategory(CategoryType.Transfer, undefined, $event)"
+                                                                   @add:secondary="(primaryItem, name) => addNewCategory(CategoryType.Transfer, primaryItem, name)">
                                                 </two-column-select>
                                             </div>
                                         </template>
@@ -388,7 +400,12 @@
                                 <v-avatar rounded="lg" variant="tonal" size="160"
                                           class="cursor-pointer transaction-picture"
                                           color="rgba(0,0,0,0)" @click="viewOrRemovePicture(pictureInfo)">
-                                    <v-img :src="getTransactionPictureUrl(pictureInfo)">
+                                    <div class="d-flex flex-column align-center justify-center w-100 h-100 bg-light-primary transaction-picture-document"
+                                         v-if="isPdfFileUrl(getTransactionPictureUrl(pictureInfo))">
+                                        <v-icon size="64" :icon="mdiFilePdfBox"/>
+                                        <span class="text-body-medium mt-1">{{ tt('PDF Document') }}</span>
+                                    </div>
+                                    <v-img :src="getTransactionPictureUrl(pictureInfo)" v-else>
                                         <template #placeholder>
                                             <div class="d-flex align-center justify-center bg-light-primary">
                                                 <v-progress-circular color="grey-500" indeterminate size="48"></v-progress-circular>
@@ -404,6 +421,10 @@
                                         <v-icon size="64" :icon="mdiTrashCanOutline" :aria-label="tt('Remove Picture')" v-if="(mode === TransactionEditPageMode.Add || mode === TransactionEditPageMode.Edit) && pictureInfo.pictureId !== removingPictureId"/>
                                         <v-progress-circular color="grey-500" indeterminate size="48" v-if="(mode === TransactionEditPageMode.Add || mode === TransactionEditPageMode.Edit) && pictureInfo.pictureId === removingPictureId"></v-progress-circular>
                                         <v-icon size="64" :icon="mdiFullscreen" :aria-label="tt('View')" v-if="mode !== TransactionEditPageMode.Add && mode !== TransactionEditPageMode.Edit"/>
+                                        <v-btn class="transaction-picture-download-button" density="comfortable" variant="text" color="white"
+                                               :icon="mdiDownload" :aria-label="tt('Download')" :title="tt('Download')"
+                                               @click.stop="downloadPicture(pictureInfo)"
+                                               v-if="mode !== TransactionEditPageMode.Add && mode !== TransactionEditPageMode.Edit && isPdfFileUrl(getTransactionPictureUrl(pictureInfo))"/>
                                     </div>
                                 </v-avatar>
                             </v-col>
@@ -412,8 +433,8 @@
                                           class="transaction-picture transaction-picture-add"
                                           :class="{ 'enabled': !submitting, 'cursor-pointer': !submitting }"
                                           color="rgba(0,0,0,0)" @click="showOpenPictureDialog">
-                                    <v-tooltip activator="parent" v-if="!submitting">{{ tt('Add Picture') }}</v-tooltip>
-                                    <v-icon class="transaction-picture-add-icon" size="56" :aria-label="tt('Add Picture')" :icon="mdiImagePlusOutline" v-if="!uploadingPicture"/>
+                                    <v-tooltip activator="parent" v-if="!submitting">{{ tt('Add Picture or PDF Document') }}</v-tooltip>
+                                    <v-icon class="transaction-picture-add-icon" size="56" :aria-label="tt('Add Picture or PDF Document')" :icon="mdiImagePlusOutline" v-if="!uploadingPicture"/>
                                     <v-progress-circular color="grey-500" indeterminate size="48" v-if="uploadingPicture"></v-progress-circular>
                                 </v-avatar>
                             </v-col>
@@ -499,13 +520,15 @@
         </one-column-dialog-layout>
     </v-dialog>
 
+    <category-edit-dialog ref="categoryEditDialog" />
     <confirm-dialog ref="confirmDialog"/>
-    <input ref="pictureInput" type="file" style="display: none" :accept="SUPPORTED_IMAGE_EXTENSIONS" @change="onUploadPicture($event)" />
+    <input ref="pictureInput" type="file" style="display: none" :accept="SUPPORTED_TRANSACTION_PICTURE_EXTENSIONS" @change="onUploadPicture($event)" />
 </template>
 
 <script setup lang="ts">
 import MapView from '@/components/common/MapView.vue';
 import ConfirmDialog from '@/components/desktop/ConfirmDialog.vue';
+import CategoryEditDialog from '@/views/desktop/categories/list/dialogs/EditDialog.vue';
 
 import { ref, computed, useTemplateRef, watch, nextTick } from 'vue';
 
@@ -534,8 +557,9 @@ import { TemplateType, ScheduledTemplateFrequencyType } from '@/core/template.ts
 import { KnownFileType } from '@/core/file.ts';
 
 import { KnownErrorCode } from '@/consts/api.ts';
-import { SUPPORTED_IMAGE_EXTENSIONS } from '@/consts/file.ts';
+import { SUPPORTED_TRANSACTION_PICTURE_EXTENSIONS } from '@/consts/file.ts';
 
+import { TransactionCategory } from '@/models/transaction_category.ts';
 import { TransactionTemplate } from '@/models/transaction_template.ts';
 import type { TransactionPictureInfoBasicResponse } from '@/models/transaction_picture_info.ts';
 import { Transaction } from '@/models/transaction.ts';
@@ -559,6 +583,7 @@ import {
 import {
     isSupportGetGeoLocationByClick
 } from '@/lib/map/index.ts';
+import { isPdfFile, isPdfFileUrl, getFileDownloadUrl } from '@/lib/file.ts';
 import { compressJpgImageByQuality } from '@/lib/ui/common.ts';
 import logger from '@/lib/logger.ts';
 
@@ -574,7 +599,9 @@ import {
     mdiMenuDown,
     mdiImagePlusOutline,
     mdiTrashCanOutline,
-    mdiFullscreen
+    mdiFullscreen,
+    mdiFilePdfBox,
+    mdiDownload
 } from '@mdi/js';
 
 export interface TransactionEditOptions extends SetTransactionOptions {
@@ -594,6 +621,7 @@ interface TransactionEditResponse {
 
 type MapViewType = InstanceType<typeof MapView>;
 type ConfirmDialogType = InstanceType<typeof ConfirmDialog>;
+type CategoryEditDialogType = InstanceType<typeof CategoryEditDialog>;
 
 const props = defineProps<{
     type: TransactionEditPageType;
@@ -667,6 +695,7 @@ const desktopPageStore = useDesktopPageStore();
 
 const map = useTemplateRef<MapViewType>('map');
 const confirmDialog = useTemplateRef<ConfirmDialogType>('confirmDialog');
+const categoryEditDialog = useTemplateRef<CategoryEditDialogType>('categoryEditDialog');
 const pictureInput = useTemplateRef<HTMLInputElement>('pictureInput');
 
 let resolveFunc: ((response?: TransactionEditResponse) => void) | null = null;
@@ -696,6 +725,8 @@ const sourceAmountColor = computed<string | undefined>(() => {
 
     return undefined;
 });
+
+const canAddNewCategory = computed<boolean>(() => mode.value === TransactionEditPageMode.Add || mode.value === TransactionEditPageMode.Edit);
 
 const isTransactionModified = computed<boolean>(() => {
     if (mode.value === TransactionEditPageMode.Add) {
@@ -1212,9 +1243,13 @@ function uploadPicture(file: File): void {
     uploadingPicture.value = true;
     submitting.value = true;
 
-    compressJpgImageByQuality(file, imageUploadQualityType.value).then(blob => {
+    const pictureFilePromise: Promise<File> = isPdfFile(file)
+        ? Promise.resolve(KnownFileType.PDF.createFileFromBlob(file, 'document'))
+        : compressJpgImageByQuality(file, imageUploadQualityType.value).then(blob => KnownFileType.JPG.createFileFromBlob(blob, 'image'));
+
+    pictureFilePromise.then(pictureFile => {
         return transactionsStore.uploadTransactionPicture({
-            pictureFile: KnownFileType.JPG.createFileFromBlob(blob, "image")
+            pictureFile: pictureFile
         });
     }).then(response => {
         transaction.value.addPicture(response);
@@ -1257,6 +1292,61 @@ function viewOrRemovePicture(pictureInfo: TransactionPictureInfoBasicResponse): 
             removingPictureId.value = '';
             submitting.value = false;
         });
+    });
+}
+
+function downloadPicture(pictureInfo: TransactionPictureInfoBasicResponse): void {
+    const downloadUrl = getFileDownloadUrl(getTransactionPictureUrl(pictureInfo));
+
+    if (!downloadUrl) {
+        return;
+    }
+
+    window.open(downloadUrl, '_blank');
+}
+
+function setTransactionCategoryId(categoryType: CategoryType, categoryId: string): void {
+    if (categoryType === CategoryType.Expense) {
+        transaction.value.expenseCategoryId = categoryId;
+    } else if (categoryType === CategoryType.Income) {
+        transaction.value.incomeCategoryId = categoryId;
+    } else if (categoryType === CategoryType.Transfer) {
+        transaction.value.transferCategoryId = categoryId;
+    }
+}
+
+function addNewCategory(categoryType: CategoryType, primaryCategory: unknown, categoryName?: string): void {
+    const parentCategory = primaryCategory instanceof TransactionCategory ? primaryCategory : undefined;
+
+    categoryEditDialog.value?.open({
+        type: categoryType,
+        parentId: parentCategory ? parentCategory.id : '0',
+        color: parentCategory?.color,
+        icon: parentCategory?.icon,
+        name: categoryName
+    }).then(result => {
+        if (result && result.message) {
+            desktopPageStore.addToast(result.message);
+        }
+
+        const newCategory = result?.category;
+
+        if (!newCategory || !newCategory.id) {
+            return;
+        }
+
+        if (newCategory.parentId && newCategory.parentId !== '0') {
+            setTransactionCategoryId(categoryType, newCategory.id);
+        } else {
+            // transactions can only use secondary categories, so offer to add a secondary category under the new primary category
+            confirmDialog.value?.open('Transactions require a secondary category. Do you want to add a secondary category under this primary category now?').then(() => {
+                addNewCategory(categoryType, newCategory);
+            });
+        }
+    }).catch(error => {
+        if (error) {
+            desktopPageStore.addErrorToast(error);
+        }
     });
 }
 
@@ -1357,6 +1447,12 @@ defineExpose({
     align-items: center;
     justify-content: center;
     vertical-align: middle;
+}
+
+.transaction-picture .picture-control-icon > .transaction-picture-download-button {
+    position: absolute;
+    top: 4px;
+    right: 4px;
 }
 
 .transaction-picture:hover .transaction-picture-placeholder {

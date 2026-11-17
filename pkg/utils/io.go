@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bytes"
 	"io"
 	"os"
 	"path/filepath"
@@ -24,6 +25,60 @@ func GetImageContentType(fileExtension string) string {
 	}
 
 	return contentType
+}
+
+// PdfFileExtension represents the file extension of pdf document
+const PdfFileExtension = "pdf"
+
+// PdfFileMagicBytes represents the magic bytes at the beginning of a pdf document
+var PdfFileMagicBytes = []byte("%PDF-")
+
+var documentFileExtensionContentTypeMap = map[string]string{
+	PdfFileExtension: "application/pdf",
+}
+
+// GetTransactionAttachmentContentType returns the content type of specified transaction attachment file extension (images and pdf documents) or returns empty when the file extension is not supported
+func GetTransactionAttachmentContentType(fileExtension string) string {
+	contentType := GetImageContentType(fileExtension)
+
+	if contentType != "" {
+		return contentType
+	}
+
+	contentType, exists := documentFileExtensionContentTypeMap[fileExtension]
+
+	if !exists {
+		return ""
+	}
+
+	return contentType
+}
+
+// IsPdfFileExtension returns whether the specified file extension is pdf document
+func IsPdfFileExtension(fileExtension string) bool {
+	return fileExtension == PdfFileExtension
+}
+
+// GetTransactionAttachmentMagicBytesLength returns the length of the file header which needs to be read for checking the content of specified transaction attachment file extension
+func GetTransactionAttachmentMagicBytesLength(fileExtension string) int {
+	if IsPdfFileExtension(fileExtension) {
+		return len(PdfFileMagicBytes)
+	}
+
+	return 0
+}
+
+// IsTransactionAttachmentContentValid returns whether the file header matches the magic bytes required by specified transaction attachment file extension
+func IsTransactionAttachmentContentValid(fileExtension string, fileHeader []byte) bool {
+	if GetTransactionAttachmentContentType(fileExtension) == "" {
+		return false
+	}
+
+	if IsPdfFileExtension(fileExtension) {
+		return bytes.HasPrefix(fileHeader, PdfFileMagicBytes)
+	}
+
+	return true
 }
 
 // ListFileNamesWithPrefixAndSuffix returns file name list which has specified prefix and suffix

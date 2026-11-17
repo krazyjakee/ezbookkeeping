@@ -1,4 +1,7 @@
 export const SUPPORTED_IMAGE_EXTENSIONS: string = '.jpg,.jpeg,.png,.gif,.webp';
+export const SUPPORTED_DOCUMENT_EXTENSIONS: string = '.pdf';
+export const SUPPORTED_TRANSACTION_PICTURE_EXTENSIONS: string = `${SUPPORTED_IMAGE_EXTENSIONS},${SUPPORTED_DOCUMENT_EXTENSIONS}`;
+export const CAMERA_CAPTURE_IMAGE_ACCEPT: string = 'image/*';
 
 export const UTF_8 = 'utf-8';
 

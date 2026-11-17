@@ -11,6 +11,7 @@ export class KnownFileType {
     public static readonly JS = new KnownFileType('js', 'application/javascript');
     public static readonly JPG = new KnownFileType('jpg', 'image/jpeg');
     public static readonly PNG = new KnownFileType('png', 'image/png');
+    public static readonly PDF = new KnownFileType('pdf', 'application/pdf');
 
     public readonly extension: string;
     public readonly contentType: string;

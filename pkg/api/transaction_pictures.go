@@ -1,6 +1,9 @@
 package api
 
 import (
+	"io"
+	"mime/multipart"
+
 	"github.com/mayswind/ezbookkeeping/pkg/core"
 	"github.com/mayswind/ezbookkeeping/pkg/duplicatechecker"
 	"github.com/mayswind/ezbookkeeping/pkg/errs"
@@ -67,9 +70,9 @@ func (a *TransactionPicturesApi) TransactionPictureUploadHandler(c *core.WebCont
 
 	fileExtension := utils.GetFileNameExtension(pictureFiles[0].Filename)
 
-	if utils.GetImageContentType(fileExtension) == "" {
+	if utils.GetTransactionAttachmentContentType(fileExtension) == "" {
 		log.Warnf(c, "[transaction_pictures.TransactionPictureUploadHandler] the file extension \"%s\" of transaction picture in request is not supported for user \"uid:%d\"", fileExtension, uid)
-		return nil, errs.ErrImageTypeNotSupported
+		return nil, errs.ErrTransactionPictureTypeNotSupported
 	}
 
 	pictureFile, err := pictureFiles[0].Open()
@@ -77,6 +80,14 @@ func (a *TransactionPicturesApi) TransactionPictureUploadHandler(c *core.WebCont
 	if err != nil {
 		log.Errorf(c, "[transaction_pictures.TransactionPictureUploadHandler] failed to get transaction picture file from request for user \"uid:%d\", because %s", uid, err.Error())
 		return nil, errs.ErrOperationFailed
+	}
+
+	err = checkTransactionPictureFileContent(pictureFile, fileExtension)
+
+	if err != nil {
+		pictureFile.Close()
+		log.Warnf(c, "[transaction_pictures.TransactionPictureUploadHandler] the content of transaction picture in request does not match the file extension \"%s\" for user \"uid:%d\", because %s", fileExtension, uid, err.Error())
+		return nil, errs.Or(err, errs.ErrOperationFailed)
 	}
 
 	pictureInfo := a.createNewPictureInfoModel(uid, fileExtension, c.ClientIP())
@@ -142,10 +153,10 @@ func (a *TransactionPicturesApi) TransactionPictureUploadHandler(c *core.WebCont
 func (a *TransactionPicturesApi) TransactionPictureGetHandler(c *core.WebContext) ([]byte, string, *errs.Error) {
 	fileName := c.Param("fileName")
 	fileExtension := utils.GetFileNameExtension(fileName)
-	contentType := utils.GetImageContentType(fileExtension)
+	contentType := utils.GetTransactionAttachmentContentType(fileExtension)
 
 	if contentType == "" {
-		return nil, "", errs.ErrImageTypeNotSupported
+		return nil, "", errs.ErrTransactionPictureTypeNotSupported
 	}
 
 	fileBaseName := utils.GetFileNameWithoutExtension(fileName)
@@ -165,6 +176,8 @@ func (a *TransactionPicturesApi) TransactionPictureGetHandler(c *core.WebContext
 
 		return nil, "", errs.Or(err, errs.ErrOperationFailed)
 	}
+
+	setTransactionPictureResponseHeaders(c, pictureId, fileExtension, c.Query("download") == "true")
 
 	return pictureData, contentType, nil
 }
@@ -219,4 +232,51 @@ func (a *TransactionPicturesApi) createNewPictureInfoModel(uid int64, fileExtens
 		PictureExtension: fileExtension,
 		CreatedIp:        clientIp,
 	}
+}
+
+// checkTransactionPictureFileContent checks whether the beginning of the uploaded file matches the magic bytes of the file extension, and rewinds the file to the beginning
+func checkTransactionPictureFileContent(pictureFile multipart.File, fileExtension string) error {
+	if utils.GetTransactionAttachmentContentType(fileExtension) == "" {
+		return errs.ErrTransactionPictureTypeNotSupported
+	}
+
+	headerLength := utils.GetTransactionAttachmentMagicBytesLength(fileExtension)
+
+	if headerLength < 1 {
+		return nil
+	}
+
+	fileHeader := make([]byte, headerLength)
+	readLength, err := io.ReadFull(pictureFile, fileHeader)
+
+	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
+		return err
+	}
+
+	if !utils.IsTransactionAttachmentContentValid(fileExtension, fileHeader[:readLength]) {
+		return errs.ErrTransactionPictureContentInvalid
+	}
+
+	_, err = pictureFile.Seek(0, io.SeekStart)
+
+	return err
+}
+
+// setTransactionPictureResponseHeaders sets the security related response headers for the transaction picture or document
+func setTransactionPictureResponseHeaders(c *core.WebContext, pictureId int64, fileExtension string, download bool) {
+	c.Header("X-Content-Type-Options", "nosniff")
+
+	if !utils.IsPdfFileExtension(fileExtension) {
+		return
+	}
+
+	dispositionType := "inline"
+
+	if download {
+		dispositionType = "attachment"
+	}
+
+	// pdf documents can carry active content, so restrict everything except the browser built-in pdf viewer and disallow embedding into other pages
+	c.Header("Content-Disposition", dispositionType+"; filename=\""+utils.Int64ToString(pictureId)+"."+utils.PdfFileExtension+"\"")
+	c.Header("Content-Security-Policy", "default-src 'none'; object-src 'self'; img-src 'self' data: blob:; style-src 'unsafe-inline'; frame-ancestors 'none'; form-action 'none'; base-uri 'none'")
 }

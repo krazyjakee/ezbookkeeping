@@ -86,6 +86,17 @@
                     </v-list>
                 </div>
             </div>
+            <v-divider v-if="addPrimaryItemText || addSecondaryItemText" />
+            <div class="two-column-list-container" v-if="addPrimaryItemText || addSecondaryItemText">
+                <v-list class="py-0">
+                    <v-list-item :prepend-icon="mdiPlus" :title="addPrimaryItemText"
+                                 v-if="addPrimaryItemText" @click="onAddPrimaryItemClicked"></v-list-item>
+                </v-list>
+                <v-list class="py-0">
+                    <v-list-item :prepend-icon="mdiPlus" :title="addSecondaryItemText" :disabled="!activePrimaryItem"
+                                 v-if="addSecondaryItemText" @click="onAddSecondaryItemClicked"></v-list-item>
+                </v-list>
+            </div>
         </template>
     </v-select>
 </template>
@@ -117,7 +128,8 @@ import {
 
 import {
     mdiChevronRight,
-    mdiMagnify
+    mdiMagnify,
+    mdiPlus
 } from '@mdi/js';
 
 interface DesktopTwoColumnListItemSelectionProps extends CommonTwoColumnListItemSelectionProps {
@@ -133,12 +145,16 @@ interface DesktopTwoColumnListItemSelectionProps extends CommonTwoColumnListItem
     noItemText?: string;
     autoUpdateMenuPosition?: boolean;
     disableAutoSelectFirstSecondaryItem?: boolean;
+    addPrimaryItemText?: string;
+    addSecondaryItemText?: string;
 }
 
 const props = defineProps<DesktopTwoColumnListItemSelectionProps>();
 
 const emit = defineEmits<{
     (e: 'update:modelValue', value: unknown): void;
+    (e: 'add:primary', filterContent: string): void;
+    (e: 'add:secondary', primaryItem: unknown, filterContent: string): void;
 }>();
 
 const { tt, ti } = useI18n();
@@ -184,6 +200,10 @@ const currentPrimaryValue = computed<unknown>({
 
         const secondaryItem = getFirstVisibleItem(getFilteredSubItems(primaryItem), props.primaryHiddenField as string);
 
+        if (props.addSecondaryItemText) {
+            menuPrimaryValue.value = value;
+        }
+
         if (secondaryItem) {
             if (props.secondaryValueField) {
                 emit('update:modelValue', secondaryItem[props.secondaryValueField]);
@@ -204,7 +224,7 @@ const currentSecondaryValue = computed<unknown>({
 
 const selectedPrimaryItem = computed<unknown>(() => getSelectedPrimaryItem(currentPrimaryValue.value));
 const selectedSecondaryItem = computed<unknown>(() => getSelectedSecondaryItem(currentSecondaryValue.value, selectedPrimaryItem.value));
-const activePrimaryItem = computed<unknown>(() => menuState.value && props.disableAutoSelectFirstSecondaryItem ? getSelectedPrimaryItem(menuPrimaryValue.value) : selectedPrimaryItem.value);
+const activePrimaryItem = computed<unknown>(() => menuState.value && (props.disableAutoSelectFirstSecondaryItem || props.addSecondaryItemText) ? getSelectedPrimaryItem(menuPrimaryValue.value) : selectedPrimaryItem.value);
 
 const noSelectionText = computed<string>(() => props.noItemText ? props.noItemText : tt('None'));
 
@@ -261,6 +281,24 @@ function onPrimaryItemClicked(item: unknown): void {
 
 function onSecondaryItemClicked(subItem: unknown): void {
     updateCurrentSecondaryValue(currentSecondaryValue, subItem);
+}
+
+function onAddPrimaryItemClicked(): void {
+    const currentFilterContent = filterContent.value ?? '';
+    menuState.value = false;
+    emit('add:primary', currentFilterContent);
+}
+
+function onAddSecondaryItemClicked(): void {
+    const primaryItem = activePrimaryItem.value;
+    const currentFilterContent = filterContent.value ?? '';
+
+    if (!primaryItem) {
+        return;
+    }
+
+    menuState.value = false;
+    emit('add:secondary', primaryItem, currentFilterContent);
 }
 
 function onListKeydown(event: KeyboardEvent, column: TwoColumnListColumn): void {

@@ -43,8 +43,22 @@
                                       :color="secondaryColorField ? (subItem as Record<string, unknown>)[secondaryColorField] : undefined" v-if="secondaryIconField"></ItemIcon>
                         </template>
                     </f7-treeview-item>
+                    <f7-treeview-item :label="addSecondaryItemText"
+                                      v-if="addSecondaryItemText"
+                                      @click="onAddSecondaryItemClicked(item)">
+                        <template #media>
+                            <f7-icon f7="plus"></f7-icon>
+                        </template>
+                    </f7-treeview-item>
                 </f7-treeview-item>
             </f7-treeview>
+            <f7-list class="no-margin-top no-margin-bottom" v-if="addPrimaryItemText">
+                <f7-list-item link="#" no-chevron :title="addPrimaryItemText" @click="onAddPrimaryItemClicked">
+                    <template #media>
+                        <f7-icon f7="plus"></f7-icon>
+                    </template>
+                </f7-list-item>
+            </f7-list>
         </f7-page-content>
     </f7-sheet>
 </template>
@@ -64,6 +78,8 @@ import { type Framework7Dom, scrollSheetToTop } from '@/lib/ui/mobile.ts';
 
 interface MobileTwoLevelItemSelectionBaseProps extends TwoLevelItemSelectionBaseProps {
     show: boolean;
+    addPrimaryItemText?: string;
+    addSecondaryItemText?: string;
 }
 
 const props = defineProps<MobileTwoLevelItemSelectionBaseProps>();
@@ -71,6 +87,8 @@ const props = defineProps<MobileTwoLevelItemSelectionBaseProps>();
 const emit = defineEmits<{
     (e: 'update:modelValue', value: unknown): void;
     (e: 'update:show', value: boolean): void;
+    (e: 'add:primary', filterContent: string): void;
+    (e: 'add:secondary', primaryItem: unknown, filterContent: string): void;
 }>();
 
 const { tt, ti } = useI18n();
@@ -135,6 +153,18 @@ function onSecondaryItemClicked(subItem: unknown): void {
     updateCurrentSecondaryValue(currentValue, subItem);
     emit('update:modelValue', currentValue.value);
     emit('update:show', false);
+}
+
+function onAddPrimaryItemClicked(): void {
+    const currentFilterContent = filterContent.value ?? '';
+    emit('update:show', false);
+    emit('add:primary', currentFilterContent);
+}
+
+function onAddSecondaryItemClicked(primaryItem: unknown): void {
+    const currentFilterContent = filterContent.value ?? '';
+    emit('update:show', false);
+    emit('add:secondary', primaryItem, currentFilterContent);
 }
 
 function onSearchBarFocus(): void {

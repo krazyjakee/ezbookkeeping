@@ -115,6 +115,7 @@ import { generateRandomUUID } from '@/lib/misc.ts';
 
 interface TransactionCategoryEditResponse {
     message: string;
+    category?: TransactionCategory;
 }
 
 const { tt } = useI18n();
@@ -148,7 +149,7 @@ const isCategoryModified = computed<boolean>(() => {
     }
 });
 
-function open(options: { id?: string; parentId?: string; type?: CategoryType; currentCategory?: TransactionCategory, color?: ColorValue, icon?: string }): Promise<TransactionCategoryEditResponse> {
+function open(options: { id?: string; parentId?: string; type?: CategoryType; currentCategory?: TransactionCategory, color?: ColorValue, icon?: string, name?: string }): Promise<TransactionCategoryEditResponse> {
     showState.value = true;
     loading.value = true;
     submitting.value = false;
@@ -208,6 +209,10 @@ function open(options: { id?: string; parentId?: string; type?: CategoryType; cu
             category.value.icon = initCategory.value.icon;
         }
 
+        if (options.name) {
+            category.value.name = options.name;
+        }
+
         clientSessionId.value = generateRandomUUID();
         loading.value = false;
     }
@@ -232,7 +237,7 @@ function save(): void {
         category: category.value,
         isEdit: !!editCategoryId.value,
         clientSessionId: clientSessionId.value
-    }).then(() => {
+    }).then(savedCategory => {
         submitting.value = false;
 
         let message = 'You have saved this category';
@@ -241,7 +246,7 @@ function save(): void {
             message = 'You have added a new category';
         }
 
-        resolveFunc?.({ message });
+        resolveFunc?.({ message, category: savedCategory });
         showState.value = false;
     }).catch(error => {
         submitting.value = false;

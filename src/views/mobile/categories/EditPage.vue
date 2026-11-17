@@ -244,6 +244,10 @@ function init(): void {
             category.value.icon = query['icon'];
         }
 
+        if (query['name']) {
+            category.value.name = query['name'];
+        }
+
         clientSessionId.value = generateRandomUUID();
         loading.value = false;
     }
