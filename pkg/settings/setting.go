@@ -116,7 +116,6 @@ const (
 const (
 	OAuth2ProviderOIDC      string = "oidc"
 	OAuth2ProviderNextcloud string = "nextcloud"
-	OAuth2ProviderGitea     string = "gitea"
 	OAuth2ProviderGithub    string = "github"
 )
 
@@ -457,7 +456,6 @@ type Config struct {
 	OAuth2OIDCProviderCheckIssuerURL  bool
 	OAuth2OIDCCustomDisplayNameConfig MultiLanguageContentConfig
 	OAuth2NextcloudBaseUrl            string
-	OAuth2GiteaBaseUrl                string
 
 	// User
 	EnableUserRegister            bool
@@ -1204,8 +1202,6 @@ func loadAuthConfiguration(config *Config, configFile *ini.File, sectionName str
 		config.OAuth2Provider = OAuth2ProviderOIDC
 	} else if oauth2Provider == OAuth2ProviderNextcloud {
 		config.OAuth2Provider = OAuth2ProviderNextcloud
-	} else if oauth2Provider == OAuth2ProviderGitea {
-		config.OAuth2Provider = OAuth2ProviderGitea
 	} else if oauth2Provider == OAuth2ProviderGithub {
 		config.OAuth2Provider = OAuth2ProviderGithub
 	} else {
@@ -1228,7 +1224,6 @@ func loadAuthConfiguration(config *Config, configFile *ini.File, sectionName str
 	config.OAuth2OIDCProviderCheckIssuerURL = getConfigItemBoolValue(configFile, sectionName, "oidc_provider_check_issuer_url", true)
 	config.OAuth2OIDCCustomDisplayNameConfig = getMultiLanguageContentConfig(configFile, sectionName, "enable_oidc_display_name", "oidc_custom_display_name")
 	config.OAuth2NextcloudBaseUrl = getConfigItemStringValue(configFile, sectionName, "nextcloud_base_url")
-	config.OAuth2GiteaBaseUrl = getConfigItemStringValue(configFile, sectionName, "gitea_base_url")
 
 	return nil
 }

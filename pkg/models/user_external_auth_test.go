@@ -22,10 +22,6 @@ func TestUserExternalAuthInfoResponsesSliceLess(t *testing.T) {
 		Linked:           false,
 	})
 	userExternalAuthInfoResponsesSlice = append(userExternalAuthInfoResponsesSlice, &UserExternalAuthInfoResponse{
-		ExternalAuthType: core.USER_EXTERNAL_AUTH_TYPE_OAUTH2_GITEA,
-		Linked:           false,
-	})
-	userExternalAuthInfoResponsesSlice = append(userExternalAuthInfoResponsesSlice, &UserExternalAuthInfoResponse{
 		ExternalAuthType: core.USER_EXTERNAL_AUTH_TYPE_OAUTH2_GITHUB,
 		Linked:           true,
 		ExternalUsername: "test4",
@@ -36,6 +32,5 @@ func TestUserExternalAuthInfoResponsesSliceLess(t *testing.T) {
 
 	assert.Equal(t, core.USER_EXTERNAL_AUTH_TYPE_OAUTH2_GITHUB, userExternalAuthInfoResponsesSlice[0].ExternalAuthType)
 	assert.Equal(t, core.USER_EXTERNAL_AUTH_TYPE_OAUTH2_OIDC, userExternalAuthInfoResponsesSlice[1].ExternalAuthType)
-	assert.Equal(t, core.USER_EXTERNAL_AUTH_TYPE_OAUTH2_GITEA, userExternalAuthInfoResponsesSlice[2].ExternalAuthType)
-	assert.Equal(t, core.USER_EXTERNAL_AUTH_TYPE_OAUTH2_NEXTCLOUD, userExternalAuthInfoResponsesSlice[3].ExternalAuthType)
+	assert.Equal(t, core.USER_EXTERNAL_AUTH_TYPE_OAUTH2_NEXTCLOUD, userExternalAuthInfoResponsesSlice[2].ExternalAuthType)
 }

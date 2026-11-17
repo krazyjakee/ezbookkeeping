@@ -7,7 +7,6 @@ import (
 
 	"github.com/mayswind/ezbookkeeping/pkg/auth/oauth2/data"
 	"github.com/mayswind/ezbookkeeping/pkg/auth/oauth2/provider"
-	"github.com/mayswind/ezbookkeeping/pkg/auth/oauth2/provider/gitea"
 	"github.com/mayswind/ezbookkeeping/pkg/auth/oauth2/provider/github"
 	"github.com/mayswind/ezbookkeeping/pkg/auth/oauth2/provider/nextcloud"
 	"github.com/mayswind/ezbookkeeping/pkg/auth/oauth2/provider/oidc"
@@ -51,9 +50,6 @@ func InitializeOAuth2Provider(config *settings.Config) error {
 	} else if config.OAuth2Provider == settings.OAuth2ProviderNextcloud {
 		oauth2Provider, err = nextcloud.NewNextcloudOAuth2Provider(config, redirectUrl)
 		externalUserAuthType = core.USER_EXTERNAL_AUTH_TYPE_OAUTH2_NEXTCLOUD
-	} else if config.OAuth2Provider == settings.OAuth2ProviderGitea {
-		oauth2Provider, err = gitea.NewGiteaOAuth2Provider(config, redirectUrl)
-		externalUserAuthType = core.USER_EXTERNAL_AUTH_TYPE_OAUTH2_GITEA
 	} else if config.OAuth2Provider == settings.OAuth2ProviderGithub {
 		oauth2Provider, err = github.NewGithubOAuth2Provider(config, redirectUrl)
 		externalUserAuthType = core.USER_EXTERNAL_AUTH_TYPE_OAUTH2_GITHUB
