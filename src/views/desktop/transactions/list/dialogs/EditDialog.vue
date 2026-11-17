@@ -166,7 +166,7 @@
                                                                    :add-secondary-item-text="canAddNewCategory ? tt('Add Secondary Category') : undefined"
                                                                    v-model="transaction.expenseCategoryId"
                                                                    @add:primary="addNewCategory(CategoryType.Expense, undefined, $event)"
-                                                                   @add:secondary="(primaryItem, name) => addNewCategory(CategoryType.Expense, primaryItem, name)">
+                                                                   @add:secondary="(primaryItem: unknown, name: string) => addNewCategory(CategoryType.Expense, primaryItem, name)">
                                                 </two-column-select>
                                             </div>
                                         </template>
@@ -194,7 +194,7 @@
                                                                    :add-secondary-item-text="canAddNewCategory ? tt('Add Secondary Category') : undefined"
                                                                    v-model="transaction.incomeCategoryId"
                                                                    @add:primary="addNewCategory(CategoryType.Income, undefined, $event)"
-                                                                   @add:secondary="(primaryItem, name) => addNewCategory(CategoryType.Income, primaryItem, name)">
+                                                                   @add:secondary="(primaryItem: unknown, name: string) => addNewCategory(CategoryType.Income, primaryItem, name)">
                                                 </two-column-select>
                                             </div>
                                         </template>
@@ -222,7 +222,7 @@
                                                                    :add-secondary-item-text="canAddNewCategory ? tt('Add Secondary Category') : undefined"
                                                                    v-model="transaction.transferCategoryId"
                                                                    @add:primary="addNewCategory(CategoryType.Transfer, undefined, $event)"
-                                                                   @add:secondary="(primaryItem, name) => addNewCategory(CategoryType.Transfer, primaryItem, name)">
+                                                                   @add:secondary="(primaryItem: unknown, name: string) => addNewCategory(CategoryType.Transfer, primaryItem, name)">
                                                 </two-column-select>
                                             </div>
                                         </template>

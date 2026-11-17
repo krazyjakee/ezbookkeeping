@@ -334,4 +334,3 @@ func (h *mcpCreateAccountToolHandler) buildCreatePlan(uid int64, req *MCPCreateA
 
 	return plan, nil
 }
-

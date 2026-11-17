@@ -131,7 +131,7 @@
                                            v-model:show="showCategorySheet"
                                            v-model="transaction.expenseCategoryId"
                                            @add:primary="addNewCategory(CategoryType.Expense, undefined, $event)"
-                                           @add:secondary="(primaryItem, name) => addNewCategory(CategoryType.Expense, primaryItem, name)">
+                                           @add:secondary="(primaryItem: unknown, name: string) => addNewCategory(CategoryType.Expense, primaryItem, name)">
                 </tree-view-selection-sheet>
             </f7-list-item>
 
@@ -167,7 +167,7 @@
                                            v-model:show="showCategorySheet"
                                            v-model="transaction.incomeCategoryId"
                                            @add:primary="addNewCategory(CategoryType.Income, undefined, $event)"
-                                           @add:secondary="(primaryItem, name) => addNewCategory(CategoryType.Income, primaryItem, name)">
+                                           @add:secondary="(primaryItem: unknown, name: string) => addNewCategory(CategoryType.Income, primaryItem, name)">
                 </tree-view-selection-sheet>
             </f7-list-item>
 
@@ -203,7 +203,7 @@
                                            v-model:show="showCategorySheet"
                                            v-model="transaction.transferCategoryId"
                                            @add:primary="addNewCategory(CategoryType.Transfer, undefined, $event)"
-                                           @add:secondary="(primaryItem, name) => addNewCategory(CategoryType.Transfer, primaryItem, name)">
+                                           @add:secondary="(primaryItem: unknown, name: string) => addNewCategory(CategoryType.Transfer, primaryItem, name)">
                 </tree-view-selection-sheet>
             </f7-list-item>
 
