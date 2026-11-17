@@ -226,7 +226,7 @@
                             </div>
                         </div>
 
-                        <v-card-text class="transaction-calendar-container" v-if="pageType === TransactionListPageType.Calendar.type">
+                        <v-card-text class="transaction-calendar-container transaction-list-calendar-container" v-if="pageType === TransactionListPageType.Calendar.type">
                             <transaction-calendar show-amount show-income-amount show-expense-amount show-alternate-date
                                                   dates-have-any-transaction-clickable
                                                   day-has-transaction-class="font-weight-bold"
@@ -2453,7 +2453,7 @@ init(props);
 }
 
 /* Calendar */
-.transaction-calendar-container {
+.transaction-list-calendar-container.transaction-calendar-container {
     flex: 0 0 auto !important;
     padding: var(--ebk-space-4) !important;
     border-block-end: 1px solid var(--ebk-color-hairline);
