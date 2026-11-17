@@ -32,15 +32,6 @@ var MONTH_MAX_DAYS = []uint8{
 	uint8(31), // December
 }
 
-// NewFiscalYearStart creates a new FiscalYearStart from month and day values
-func NewFiscalYearStart(month uint8, day uint8) (FiscalYearStart, error) {
-	if !isValidFiscalYearMonthDay(month, day) {
-		return 0, errs.ErrFormatInvalid
-	}
-
-	return FiscalYearStart(uint16(month)<<8 | uint16(day)), nil
-}
-
 // GetMonthDay extracts the month and day from FiscalYearType
 func (f FiscalYearStart) GetMonthDay() (uint8, uint8, error) {
 	if f < FISCAL_YEAR_START_MIN || f > FISCAL_YEAR_START_MAX {

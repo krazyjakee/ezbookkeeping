@@ -109,7 +109,7 @@ func (t *gnucashTransactionDataRowIterator) Next(ctx core.Context, user *models.
 	t.currentIndex++
 
 	data := t.dataTable.allData[t.currentIndex]
-	rowItems, isValid, err := t.parseTransaction(ctx, user, data)
+	rowItems, isValid, err := t.parseTransaction(ctx, data)
 
 	if err != nil {
 		log.Errorf(ctx, "[gnucash_transaction_table.Next] cannot parsing transaction in %s, because %s", t.CurrentRowId(), err.Error())
@@ -124,7 +124,7 @@ func (t *gnucashTransactionDataRowIterator) Next(ctx core.Context, user *models.
 	}, nil
 }
 
-func (t *gnucashTransactionDataRowIterator) parseTransaction(ctx core.Context, user *models.User, gnucashTransaction *gnucashTransactionData) (map[datatable.TransactionDataTableColumn]string, bool, error) {
+func (t *gnucashTransactionDataRowIterator) parseTransaction(ctx core.Context, gnucashTransaction *gnucashTransactionData) (map[datatable.TransactionDataTableColumn]string, bool, error) {
 	data := make(map[datatable.TransactionDataTableColumn]string, len(gnucashTransactionSupportedColumns))
 
 	if gnucashTransaction.PostedDate == "" {

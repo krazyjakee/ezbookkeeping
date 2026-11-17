@@ -13,9 +13,7 @@ import (
 )
 
 // wechatPayTransactionDataXlsxFileImporter defines the structure of wechatPay xlsx importer for transaction data
-type wechatPayTransactionDataXlsxFileImporter struct {
-	dataHeaderStartContentBeginning string
-}
+type wechatPayTransactionDataXlsxFileImporter struct{}
 
 // Initialize a webchat pay transaction data xlsx file importer singleton instance
 var (

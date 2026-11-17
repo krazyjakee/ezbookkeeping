@@ -62,7 +62,7 @@ func (c *defaultTransactionDataJsonImporter) ParseImportedData(ctx core.Context,
 func (c *defaultTransactionDataJsonImporter) createNewDefaultTransactionDataTable(importRequest models.ImportTransactionRequest) (datatable.TransactionDataTable, error) {
 	transactionDataTable := datatable.CreateNewWritableTransactionDataTable(allJsonDataSupportedColumns)
 
-	if importRequest.Transactions == nil || len(importRequest.Transactions) < 1 {
+	if len(importRequest.Transactions) < 1 {
 		return nil, errs.ErrNotFoundTransactionDataInFile
 	}
 

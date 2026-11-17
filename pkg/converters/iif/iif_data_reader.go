@@ -88,7 +88,7 @@ func (r *iifDataReader) read(ctx core.Context) ([]*iifAccountDataset, []*iifTran
 			}
 
 			if currentDatasetType == iifAccountSampleLineSignColumnName {
-				currentAccountDataset, err = r.readAccountSampleLine(ctx, items)
+				currentAccountDataset, err = r.readAccountSampleLine(items)
 
 				if err != nil {
 					return nil, nil, err
@@ -180,7 +180,7 @@ func (r *iifDataReader) read(ctx core.Context) ([]*iifAccountDataset, []*iifTran
 	return allAccountDatasets, allTransactionDatasets, nil
 }
 
-func (r *iifDataReader) readAccountSampleLine(ctx core.Context, items []string) (*iifAccountDataset, error) {
+func (r *iifDataReader) readAccountSampleLine(items []string) (*iifAccountDataset, error) {
 	accountSampleItems := items
 	accountDataColumnIndexes := make(map[string]int, len(accountSampleItems))
 

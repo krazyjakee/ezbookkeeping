@@ -140,7 +140,7 @@ func (p *weChatPayTransactionDataRowParser) Parse(ctx core.Context, user *models
 	}
 
 	if data[datatable.TRANSACTION_DATA_TABLE_TRANSACTION_TYPE] == wechatPayTransactionTypeNameMapping[models.TRANSACTION_TYPE_INCOME] && statusName != "" {
-		if strings.Index(statusName, wechatPayTransactionDataStatusRefundName) >= 0 {
+		if strings.Contains(statusName, wechatPayTransactionDataStatusRefundName) {
 			amount, err := utils.ParseAmount(data[datatable.TRANSACTION_DATA_TABLE_AMOUNT])
 
 			if err == nil {

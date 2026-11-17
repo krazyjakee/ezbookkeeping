@@ -651,18 +651,6 @@ func bindJSONRPCApi(fns map[string]core.JSONRPCApiHandlerFunc, skipMethods map[s
 	}
 }
 
-func bindEventStreamApi(fn core.EventStreamApiHandlerFunc, config *settings.Config) gin.HandlerFunc {
-	return func(ginCtx *gin.Context) {
-		c := core.WrapWebContext(ginCtx, config.TrustedProxyIPs)
-		utils.SetEventStreamHeader(c)
-		err := fn(c)
-
-		if err != nil {
-			utils.WriteEventStreamJsonErrorResult(c, err)
-		}
-	}
-}
-
 func bindCachedJs(fn core.DataHandlerFunc, config *settings.Config, store persistence.CacheStore) gin.HandlerFunc {
 	return cache.CachePage(store, time.Minute, func(ginCtx *gin.Context) {
 		c := core.WrapWebContext(ginCtx, config.TrustedProxyIPs)

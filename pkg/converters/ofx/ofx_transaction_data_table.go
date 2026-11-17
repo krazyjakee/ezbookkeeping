@@ -115,7 +115,7 @@ func (t *ofxTransactionDataRowIterator) Next(ctx core.Context, user *models.User
 	t.currentIndex++
 
 	data := t.dataTable.allData[t.currentIndex]
-	rowItems, err := t.parseTransaction(ctx, user, data)
+	rowItems, err := t.parseTransaction(ctx, data)
 
 	if err != nil {
 		log.Errorf(ctx, "[ofx_transaction_table.Next] cannot parsing transaction in %s, because %s", t.CurrentRowId(), err.Error())
@@ -129,7 +129,7 @@ func (t *ofxTransactionDataRowIterator) Next(ctx core.Context, user *models.User
 	}, nil
 }
 
-func (t *ofxTransactionDataRowIterator) parseTransaction(ctx core.Context, user *models.User, ofxTransaction *ofxTransactionData) (map[datatable.TransactionDataTableColumn]string, error) {
+func (t *ofxTransactionDataRowIterator) parseTransaction(ctx core.Context, ofxTransaction *ofxTransactionData) (map[datatable.TransactionDataTableColumn]string, error) {
 	data := make(map[datatable.TransactionDataTableColumn]string, len(ofxTransactionSupportedColumns))
 
 	if ofxTransaction.PostedDate == "" {

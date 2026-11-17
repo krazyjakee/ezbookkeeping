@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	numberPattern = regexp.MustCompile("(-?\\d+)(\\.\\d+)?")
+	numberPattern = regexp.MustCompile(`(-?\d+)(\.\d+)?`)
 )
 
 // IsStringOnlyContainsDigits returns whether the specified string only contains digit characters

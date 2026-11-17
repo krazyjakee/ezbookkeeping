@@ -66,20 +66,6 @@ func NewJSONRPCResponse(id any, result any) *JSONRPCResponse {
 	}
 }
 
-// NewJSONRPCErrorResponse creates a new JSON-RPC error response
-func NewJSONRPCErrorResponse(id any, err *JSONRPCError) *JSONRPCResponse {
-	return &JSONRPCResponse{
-		JSONRPC: JSONRPCVersion,
-		Result:  nil,
-		Error: &JSONRPCError{
-			Code:    err.Code,
-			Message: err.Message,
-			Data:    nil,
-		},
-		ID: id,
-	}
-}
-
 // NewJSONRPCErrorResponseWithCause creates a new JSON-RPC error response
 func NewJSONRPCErrorResponseWithCause(id any, err *JSONRPCError, cause string) *JSONRPCResponse {
 	return &JSONRPCResponse{

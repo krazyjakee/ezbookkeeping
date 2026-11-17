@@ -67,7 +67,7 @@ func SubString(str string, start int, length int) string {
 // ContainsAnyString returns whether the specified string contains any string of sub string slice
 func ContainsAnyString(s string, substrs []string) bool {
 	for i := 0; i < len(substrs); i++ {
-		if strings.Index(s, substrs[i]) >= 0 {
+		if strings.Contains(s, substrs[i]) {
 			return true
 		}
 	}
@@ -263,17 +263,6 @@ func EncryptSecretToBase62(secret string, key string) (string, error) {
 	return encodeBase62(encryptedSecret), nil
 }
 
-// EncryptSecretToHex returns an encrypted secret encoded as hexadecimal
-func EncryptSecretToHex(secret string, key string) (string, error) {
-	encryptedSecret, err := AESGCMEncrypt(MD5Encode([]byte(key)), []byte(secret)) // md5encode make the aes key's length to 16
-
-	if err != nil {
-		return "", err
-	}
-
-	return hex.EncodeToString(encryptedSecret), nil
-}
-
 // DecryptSecretFromBase64 returns the decrypted secret from Base64 ciphertext
 func DecryptSecretFromBase64(encyptedSecret string, key string) (string, error) {
 	encyptedData, err := base64.StdEncoding.DecodeString(encyptedSecret)
@@ -294,23 +283,6 @@ func DecryptSecretFromBase64(encyptedSecret string, key string) (string, error) 
 // DecryptSecretFromBase62 returns the decrypted secret from Base62 ciphertext
 func DecryptSecretFromBase62(encryptedSecret string, key string) (string, error) {
 	encryptedData, err := decodeBase62(encryptedSecret)
-
-	if err != nil {
-		return "", err
-	}
-
-	secret, err := AESGCMDecrypt(MD5Encode([]byte(key)), encryptedData)
-
-	if err != nil {
-		return "", err
-	}
-
-	return string(secret), nil
-}
-
-// DecryptSecretFromHex returns the decrypted secret from hexadecimal ciphertext
-func DecryptSecretFromHex(encryptedSecret string, key string) (string, error) {
-	encryptedData, err := hex.DecodeString(encryptedSecret)
 
 	if err != nil {
 		return "", err

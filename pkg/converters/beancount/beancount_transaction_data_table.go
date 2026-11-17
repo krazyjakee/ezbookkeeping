@@ -104,7 +104,7 @@ func (t *beancountTransactionDataRowIterator) Next(ctx core.Context, user *model
 	t.currentIndex++
 
 	data := t.dataTable.allData[t.currentIndex]
-	rowItems, err := t.parseTransaction(ctx, user, data)
+	rowItems, err := t.parseTransaction(ctx, data)
 
 	if err != nil {
 		return nil, err
@@ -117,7 +117,7 @@ func (t *beancountTransactionDataRowIterator) Next(ctx core.Context, user *model
 	}, nil
 }
 
-func (t *beancountTransactionDataRowIterator) parseTransaction(ctx core.Context, user *models.User, beancountEntry *beancountTransactionEntry) (map[datatable.TransactionDataTableColumn]string, error) {
+func (t *beancountTransactionDataRowIterator) parseTransaction(ctx core.Context, beancountEntry *beancountTransactionEntry) (map[datatable.TransactionDataTableColumn]string, error) {
 	data := make(map[datatable.TransactionDataTableColumn]string, len(beancountTransactionSupportedColumns))
 
 	if beancountEntry.Date == "" {

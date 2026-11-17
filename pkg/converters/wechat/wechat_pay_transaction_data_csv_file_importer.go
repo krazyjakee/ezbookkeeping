@@ -15,10 +15,7 @@ import (
 )
 
 // wechatPayTransactionDataCsvFileImporter defines the structure of wechatPay csv importer for transaction data
-type wechatPayTransactionDataCsvFileImporter struct {
-	fileHeaderLineBeginning         string
-	dataHeaderStartContentBeginning string
-}
+type wechatPayTransactionDataCsvFileImporter struct{}
 
 // Initialize a webchat pay transaction data csv file importer singleton instance
 var (
