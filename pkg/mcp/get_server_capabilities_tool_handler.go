@@ -3,6 +3,7 @@ package mcp
 import (
 	"reflect"
 	"sort"
+	"time"
 
 	"github.com/mayswind/ezbookkeeping/pkg/core"
 	"github.com/mayswind/ezbookkeeping/pkg/models"
@@ -50,6 +51,14 @@ type MCPServerCapabilitiesLimits struct {
 	TemplateNameMaxLength           int    `json:"template_name_max_length" jsonschema_description:"Maximum length (in characters) of transaction template name"`
 	TemplateDescriptionMaxLength    int    `json:"template_description_max_length" jsonschema_description:"Maximum length (in characters) of transaction template description (comment)"`
 	BatchMaxItemsCount              int    `json:"batch_max_items_count" jsonschema_description:"Maximum count of items in one batch tool call (e.g. batch_create_transaction_categories, create_transaction_tags)"`
+	ImportMaxRows                   int    `json:"import_max_rows" jsonschema_description:"Maximum count of rows in one import_transactions call"`
+	ExportMaxRows                   int    `json:"export_max_rows" jsonschema_description:"Maximum count of transactions returned by one export_transactions call"`
+	TransactionReferencesMaxCount   int    `json:"transaction_references_max_count" jsonschema_description:"Maximum count of evidence / source references of one transaction"`
+	TransactionReferenceMaxLength   int    `json:"transaction_reference_max_length" jsonschema_description:"Maximum length (in characters) of the value of an evidence / source reference"`
+	IdempotencyKeyMaxLength         int    `json:"idempotency_key_max_length" jsonschema_description:"Maximum length (in characters) of idempotency_key"`
+	IdempotencyKeyRetentionDays     int    `json:"idempotency_key_retention_days" jsonschema_description:"How many days an idempotency key and its stored result are kept"`
+	OperationIdMaxLength            int    `json:"operation_id_max_length" jsonschema_description:"Maximum length (in characters) of operation_id"`
+	AttachmentFileNameMaxLength     int    `json:"attachment_file_name_max_length" jsonschema_description:"Maximum length (in characters) of the stored original file name of an attachment"`
 }
 
 // MCPServerCapabilitiesAttachments represents the transaction attachment settings
@@ -93,6 +102,11 @@ type MCPServerCapabilitiesFeatures struct {
 	BatchAtomicity        string `json:"batch_atomicity" jsonschema_description:"Commit semantics of batch tools"`
 	LiabilityBalances     string `json:"liability_balances" jsonschema_description:"Semantics of balances of liability accounts"`
 	TransactionQueryOrder string `json:"transaction_query_order" jsonschema_description:"Order of transactions returned by query_transactions"`
+	Idempotency           string `json:"idempotency" jsonschema_description:"Semantics of the idempotency_key parameter of write tools"`
+	AuditLog              string `json:"audit_log" jsonschema_description:"Which changes are recorded in the audit history (query_audit_log)"`
+	References            string `json:"references" jsonschema_description:"Semantics of evidence / source references of transactions"`
+	Import                string `json:"import" jsonschema_description:"Commit semantics of import_transactions"`
+	Reconciliation        string `json:"reconciliation" jsonschema_description:"Supported reconciliation actions"`
 }
 
 // MCPServerCapabilitiesEnumerationValues represents accepted textual enumeration values of MCP tool inputs
@@ -100,6 +114,7 @@ type MCPServerCapabilitiesEnumerationValues struct {
 	AccountCategories []string `json:"account_categories" jsonschema_description:"Accepted account categories"`
 	TransactionTypes  []string `json:"transaction_types" jsonschema_description:"Accepted transaction types"`
 	CategoryTypes     []string `json:"category_types" jsonschema_description:"Accepted transaction category types"`
+	ReferenceTypes    []string `json:"reference_types" jsonschema_description:"Accepted evidence / source reference types"`
 }
 
 type mcpGetServerCapabilitiesToolHandler struct{}
@@ -118,7 +133,7 @@ func (h *mcpGetServerCapabilitiesToolHandler) Name() string {
 
 // Description returns the description of the MCP tool
 func (h *mcpGetServerCapabilitiesToolHandler) Description() string {
-	return "Get the server version, supported capabilities and limits (description length, attachment types / sizes / counts, batch size, supported currencies, transaction edit scope) of ezBookkeeping. Call this before writing data to validate input in advance."
+	return "Get the server version, supported capabilities and limits (description length, attachment types / sizes / counts, batch and import size, export rows, reference and idempotency key limits, supported currencies, transaction edit scope) of ezBookkeeping. Call this before writing data to validate input in advance."
 }
 
 // DataOperationType returns how the MCP tool operates on business records
@@ -174,6 +189,14 @@ func (h *mcpGetServerCapabilitiesToolHandler) createNewMCPGetServerCapabilitiesR
 			TemplateNameMaxLength:           mcpTemplateNameMaxLength,
 			TemplateDescriptionMaxLength:    mcpTemplateCommentMaxLength,
 			BatchMaxItemsCount:              mcpMaximumBatchItemsCount,
+			ImportMaxRows:                   mcpImportMaxRows,
+			ExportMaxRows:                   mcpExportMaxRows,
+			TransactionReferencesMaxCount:   models.MaximumReferencesCountOfTransaction,
+			TransactionReferenceMaxLength:   models.TransactionReferenceValueMaxLength,
+			IdempotencyKeyMaxLength:         models.MCPIdempotencyKeyMaxLength,
+			IdempotencyKeyRetentionDays:     int(mcpIdempotencyRecordRetention / (24 * time.Hour)),
+			OperationIdMaxLength:            mcpOperationIdMaxLength,
+			AttachmentFileNameMaxLength:     models.TransactionPictureOriginalFileNameMaxLength,
 		},
 		Attachments: &MCPServerCapabilitiesAttachments{
 			MaxCountPerTransaction: models.MaximumPicturesCountOfTransaction,
@@ -181,7 +204,7 @@ func (h *mcpGetServerCapabilitiesToolHandler) createNewMCPGetServerCapabilitiesR
 			UploadViaMCP:           false,
 			UploadEncoding:         "base64 (RFC 4648 standard alphabet) in content_base64, a \"data:<mime>;base64,\" prefix is allowed. File names or local paths are never treated as uploads.",
 			ContentValidation:      "The file type is taken from file_extension or content_type, and the content must match it (magic bytes for PDF documents and detected type for images), otherwise the upload is rejected.",
-			Metadata:               "Attachment ID, transaction association, stored file extension / MIME type, byte size and a SHA-256 checksum computed from the stored file when read. The original file name is not stored.",
+			Metadata:               "Attachment ID, transaction association, stored file extension / MIME type, and the original file name (sanitized), byte size and SHA-256 checksum recorded at upload (pass file_name to upload_transaction_attachment). The SHA-256 checksum is also computed from the stored file when an attachment is read (integrity_verified compares both); attachments uploaded by older versions have no recorded metadata and use the computed checksum.",
 		},
 		ScheduledTransactions: &MCPServerCapabilitiesScheduled{},
 		Features: &MCPServerCapabilitiesFeatures{
@@ -193,12 +216,18 @@ func (h *mcpGetServerCapabilitiesToolHandler) createNewMCPGetServerCapabilitiesR
 			BatchAtomicity:        "Batch tools validate all items first; if any item is invalid nothing is saved. Committed results report the actual saved state (IDs and statuses) of every item.",
 			LiabilityBalances:     "For liability accounts (credit card, debt), balance is the signed accounting balance (negative means money owed) and outstanding_balance is the displayed balance in the web interface (positive means money owed).",
 			TransactionQueryOrder: "query_transactions returns transactions ordered by transaction time descending.",
+			Idempotency:           "All write tools accept an optional idempotency_key (and operation_id). Retrying the same request (same tool and arguments) with the same key returns the stored original result marked with idempotent_replay=true without executing the write again; the same key with a different request fails with idempotency_conflict, and a key whose request is still running fails with idempotency_in_progress. Keys are kept per user for idempotency_key_retention_days and are ignored for dry runs. A failed write does not consume the key.",
+			AuditLog:              "Every committed change made through MCP write tools (not dry runs, unchanged results or reads) is recorded with the tool, action, entity type, affected IDs, operation_id, idempotency_key, token ID, client IP and time, and can be queried with query_audit_log.",
+			References:            "Transactions can have structured evidence / source references (type and value): supplier, invoice_number, receipt_number, external_source_id, source_document and source_row. They are set by add_transaction / update_transaction / import_transactions, returned by get_transaction / query_transactions / export_transactions, and query_transactions can filter by reference_value.",
+			Import:                "import_transactions defaults to dry_run=true. " + mcpImportBatchSemantics,
+			Reconciliation:        "get_account_reconciliation_statement returns the statement of an account, set_account_reconciled_time marks an account as reconciled up to a time (requires current_user.use_last_reconciled_time), and export_transactions exports transactions with IDs, attachment checksums and references as CSV or JSON.",
 		},
 		SupportedCurrencies: h.getSupportedCurrencies(),
 		Values: &MCPServerCapabilitiesEnumerationValues{
 			AccountCategories: []string{mcpAccountCategoryCash, mcpAccountCategoryCheckingAccount, mcpAccountCategorySavingsAccount, mcpAccountCategoryCreditCard, mcpAccountCategoryVirtual, mcpAccountCategoryDebt, mcpAccountCategoryReceivables, mcpAccountCategoryCertificateOfDeposit, mcpAccountCategoryInvestment},
 			TransactionTypes:  []string{transactionTypeIncome, transactionTypeExpense, transactionTypeTransfer, transactionTypeModifyBalance},
 			CategoryTypes:     []string{mcpCategoryTypeIncome, mcpCategoryTypeExpense, mcpCategoryTypeTransfer},
+			ReferenceTypes:    models.AllTransactionReferenceTypes,
 		},
 	}
 

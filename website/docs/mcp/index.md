@@ -13,16 +13,16 @@ With the MCP protocol, you can use your preferred AI tools to add transactions (
 
 ## Configuration
 
-By default, ezBookkeeping does not enable the MCP server. You can enable it by updating the `enable_mcp` setting in the configuration file or by setting the environment variable. For details, see the [Configuration - MCP](/configuration/#mcp-model-context-protocol). After enabled, the "Generate Token" button will appear on "User Settings" -> "Security" page in the desktop version.
+By default, ezbookkeeping2 does not enable the MCP server. You can enable it by updating the `enable_mcp` setting in the configuration file or by setting the environment variable. For details, see the [Configuration - MCP](/configuration/#mcp-model-context-protocol). After enabled, the "Generate Token" button will appear on "User Settings" -> "Security" page in the desktop version.
 
 ## Integration with AI Tools
 
-The MCP service of ezBookkeeping requires a special token to access. You can go to "User Settings" -> "Security" and click the "Generate Token" button in desktop version, and then enter your password. Alternatively, you can generate the token by the `user-session-new` command in ezBookkeeping's CLI, for more details, see the [Command Line](/command_line/#userdata).
+The MCP service of ezbookkeeping2 requires a special token to access. You can go to "User Settings" -> "Security" and click the "Generate Token" button in desktop version, and then enter your password. Alternatively, you can generate the token by the `user-session-new` command in ezbookkeeping2's CLI, for more details, see the [Command Line](/command_line/#userdata).
 
 > [!NOTE] TIP
 > If the IP address used to access the MCP server is fixed (e.g., within a home network), you can restrict specific IP addresses that can access the MCP server. For details, see the [Configuration - MCP](/configuration/#mcp-model-context-protocol).
 
-Then, copy the following code into your AI tool's MCP server configuration to enable it to access and interact with ezBookkeeping data.
+Then, copy the following code into your AI tool's MCP server configuration to enable it to access and interact with ezbookkeeping2 data.
 
 ```json
 {
@@ -48,11 +48,14 @@ The following conventions apply to all tools. Call `get_server_capabilities` to 
 * **Name resolution**: an exact name match is preferred, otherwise a case-insensitive match is used. If a name matches more than one item, the tool fails with the `ambiguous_name` error and lists the candidates (ID, name and description); it never chooses one silently. Unknown names fail with `not_found` (unknown tags are no longer ignored silently).
 * **Dry run**: write tools that support `dry_run` perform exactly the same validation as the actual write (including description length, edit scope and name resolution) but save nothing. Results contain `dry_run: true` and statuses such as `would_be_created` or `would_be_updated`; committed results contain the saved IDs and the persisted values re-read from the database.
 * **Skip existing**: setup tools (`create_account`, `create_transaction_category`, `batch_create_transaction_categories`, `create_transaction_tags`, `create_transaction_tag_group`, `create_transaction_template`) support `skip_existing`. When enabled, an existing item with the same name (under the same parent / type / group) is reused and reported with status `existing`, so rerunning a setup does not create duplicates. It defaults to `true` for the batch tools (`batch_create_transaction_categories`, `create_transaction_tags`) and `create_transaction_tag_group`, and `false` otherwise.
-* **Batch atomicity**: batch tools validate all items first. If any item is invalid, nothing is saved and every item reports its own result. When committing, results report the actual saved state of every item (`created`, `existing`, `failed`, ...), so a partially failed batch can be inspected and safely rerun with `skip_existing`.
-* **Structured errors**: user-correctable errors are returned as a tool result with `isError: true` and the JSON body `{"success": false, "error": {"code", "message", "field", "limit", "actual", "value", "candidates"}}`. Error codes are `invalid_arguments`, `required`, `invalid_value`, `too_long`, `too_many`, `too_large`, `out_of_range`, `not_found`, `ambiguous_name`, `not_supported` and `not_allowed`. For example, an overlong description fails with `{"code": "too_long", "field": "comment", "limit": 1024, "actual": 1100}` during dry run as well.
+* **Batch atomicity**: batch tools validate all items first. If any item is invalid, nothing is saved and every item reports its own result. When committing, results report the actual saved state of every item (`created`, `existing`, `failed`, ...), so a partially failed batch can be inspected and safely rerun with `skip_existing`. `import_transactions` is the exception: each row is validated and committed independently (see [Bulk import](#bulk-import)).
+* **Idempotency keys**: every write tool accepts an optional `idempotency_key` (at most 128 characters, e.g. a UUID generated by the client). If a request times out or the connection drops, retry it with the same key: when the first attempt was committed, the stored original result is returned with `idempotent_replay: true` and nothing is written again. Reusing a key with different arguments (or another tool) fails with `idempotency_conflict`; a key whose first request is still running fails with `idempotency_in_progress`. Keys are scoped to the user, kept for 30 days (`limits.idempotency_key_retention_days`) and ignored for dry runs. A write which fails does not consume its key, so the corrected request can be retried with the same key. The argument order and whitespace do not matter, only the argument values.
+* **Operation IDs and audit history**: every write tool also accepts an optional `operation_id` (at most 128 characters), a client-provided operation or reference ID. Every committed change made through MCP (not dry runs, unchanged results or reads) is recorded in the audit history with the tool, action, entity type, affected IDs, `operation_id`, `idempotency_key`, token ID, client IP and time, see [Audit history](#audit-history).
+* **Evidence references**: transactions can carry structured evidence / source references, a list of `{"type", "value"}` objects. Types are `supplier`, `invoice_number`, `receipt_number`, `external_source_id`, `source_document` and `source_row`; values are at most 255 characters, and a transaction has at most 20 references (`limits.transaction_references_max_count`). They are set by `add_transaction`, `update_transaction` and `import_transactions`, returned by `get_transaction`, `query_transactions` and `export_transactions`, and `query_transactions` can filter by `reference_value`.
+* **Structured errors**: user-correctable errors are returned as a tool result with `isError: true` and the JSON body `{"success": false, "error": {"code", "message", "field", "limit", "actual", "value", "candidates"}}`. Error codes are `invalid_arguments`, `required`, `invalid_value`, `too_long`, `too_many`, `too_large`, `out_of_range`, `not_found`, `ambiguous_name`, `not_supported`, `not_allowed`, `idempotency_conflict`, `idempotency_in_progress` and `operation_failed`. For example, an overlong description fails with `{"code": "too_long", "field": "comment", "limit": 1024, "actual": 1100}` during dry run as well.
 * **Destructive operations**: delete tools only accept IDs and require `confirm: true`. Deletions are permanent and cannot be restored via MCP. They have the same restrictions as the web interface (e.g. an account or category in use cannot be deleted).
 * **Liability balances**: for liability accounts (credit card and debt), `balance` is the signed accounting balance (negative means money owed) and `outstanding_balance` is the balance shown in the web interface (positive means money owed). For example, after a £120 personally funded expense recorded against a director's loan debt account, `balance` is `-120.00` and `outstanding_balance` is `120.00`.
-* **Tool annotations**: every tool declares `readOnlyHint`, `destructiveHint`, `idempotentHint` and `openWorldHint`. Query, list, get and download tools are read-only; create, add and upload tools are non-destructive; update, hide, reorder, detach and delete tools are destructive.
+* **Tool annotations**: every tool declares `readOnlyHint`, `destructiveHint`, `idempotentHint` and `openWorldHint`. Query, list, get, download and export tools are read-only; create, add and upload tools are non-destructive; update, hide, reorder, detach, delete, import and set tools are destructive. `idempotentHint` describes the tool itself; any write tool can be made safe to retry with `idempotency_key`.
 * **Token permissions**: tokens generated with "Enable All MCP Tools" can use all tools, including the tools added in later versions. Tokens generated with a selected tool list can only use the selected tools.
 
 ### Get server capabilities
@@ -70,13 +73,13 @@ None
 | Field | Type | Description |
 | --- | --- | --- |
 | `server` | `object` | Application name, version, commit hash and supported MCP protocol version |
-| `limits` | `object` | Maximum lengths of transaction description, account / category / tag / tag group / template names and descriptions, maximum tags and attachments per transaction, transaction amount range, maximum items of one batch call |
+| `limits` | `object` | Maximum lengths of transaction description, account / category / tag / tag group / template names and descriptions, maximum tags and attachments per transaction, transaction amount range, maximum items of one batch call, maximum rows of `import_transactions` (`import_max_rows`) and `export_transactions` (`export_max_rows`), maximum count and length of evidence references, maximum length and retention of idempotency keys, maximum length of `operation_id` and of stored attachment file names |
 | `attachments` | `object` | Whether attachments are enabled, maximum file size in bytes (`max_file_size_bytes`, the upload cap), maximum count per transaction, supported file types (extension and content type), whether uploading via MCP is supported (`upload_via_mcp`, `true` when attachments are enabled), the upload encoding, the maximum base64 length of an upload (`max_upload_base64_length`), and how content is validated and which metadata is stored |
 | `scheduled_transactions` | `object` | Whether scheduled transactions are enabled on this server |
 | `current_user` | `object` | Default currency, transaction edit scope (the range of transaction time which can be created, modified or deleted) and whether last reconciled time is used |
-| `features` | `object` | Textual description of dry run, skip existing, name resolution, structured errors, destructive operations, batch atomicity, liability balances and query order semantics |
+| `features` | `object` | Textual description of dry run, skip existing, name resolution, structured errors, destructive operations, batch atomicity, liability balances, query order, idempotency, audit log, evidence references, import and reconciliation semantics |
 | `supported_currencies` | `string[]` | Supported currency codes (ISO 4217) |
-| `values` | `object` | Accepted account categories, transaction types and category types |
+| `values` | `object` | Accepted account categories, transaction types, category types and evidence reference types |
 
 ### Add transaction
 
@@ -103,7 +106,10 @@ None
 | `comment` | `string` | Optional | Transaction description (see `limits.transaction_description_max_length` of `get_server_capabilities`) |
 | `geo_location` | `object` | Optional | Geographic location (`latitude`, `longitude`) |
 | `attachment_ids` | `string[]` | Optional | IDs of uploaded but unattached attachments (returned by `upload_transaction_attachment`) to attach to the new transaction |
+| `references` | `object[]` | Optional | Evidence / source references (`type` and `value`), e.g. `[{"type": "supplier", "value": "ACME Ltd"}, {"type": "invoice_number", "value": "INV-001"}]` |
 | `dry_run` | `boolean` | Optional | If `true`, the transaction will not be saved, only validated |
+| `idempotency_key` | `string` | Optional | Idempotency key, retrying with the same key never creates a second transaction |
+| `operation_id` | `string` | Optional | Client operation / reference ID recorded in the audit history |
 
 **Response Parameters**
 
@@ -117,7 +123,7 @@ None
 | `account_balance` | `string` | Optional | Account balance (or outstanding balance for debt accounts) after the transaction |
 | `destination_account_balance` | `string` | Optional | Destination account balance (or outstanding balance for debt accounts) after the transaction (only for transfer transactions) |
 
-The response also contains the signed accounting balances of the affected accounts. See the tool output schema for details.
+The response also contains the signed accounting balances of the affected accounts, and `references_error` if the transaction was saved but its references could not be saved (retry with `update_transaction`). See the tool output schema for details.
 
 ### Query transactions
 
@@ -144,9 +150,11 @@ The response also contains the signed accounting balances of the affected accoun
 | `has_attachments` | `boolean` | Optional | Only return transactions which have attachments |
 | `keyword` | `string` | Optional | Keyword to search in transaction description |
 | `match_mode` | `string` | Optional | Match mode for keyword search (leave empty for database default setting, ignore_case for case-insensitive search) |
+| `reference_value` | `string` | Optional | Only return transactions with an evidence reference of exactly this value (e.g. an invoice number or external source ID). Can be combined with the time range, type, account and category filters only |
+| `reference_type` | `string` | Optional | Type of `reference_value` (any type if not set) |
 | `count` | `number` | Optional | Maximum number of results to return (default: 100) |
 | `page` | `number` | Optional | Page number for pagination (default: 1) |
-| `response_fields` | `string` | Optional | Comma-separated list of optional fields to include in the response (leave empty for all fields, available fields: time, currency, category_name, account_name, comment). The transaction `id` is always returned |
+| `response_fields` | `string` | Optional | Comma-separated list of optional fields to include in the response (leave empty for all fields, available fields: time, currency, category_name, account_name, comment, tags, geo_location, references). The transaction `id` is always returned |
 
 Transactions are always ordered by transaction time descending.
 
@@ -175,6 +183,7 @@ Transactions are always ordered by transaction time descending.
 | `destination_account_name` | `string` | Optional | Destination account name for transfer transactions |
 | `comment` | `string` | Optional | Description of the transaction |
 | `attachment_count` | `number` | Required | Count of attachments of the transaction |
+| `references` | `object[]` | Optional | Evidence / source references of the transaction |
 
 Each transaction also contains `account_id`, `category_id`, `destination_account_id`, tags and geographic location. See the tool output schema for details.
 
@@ -192,7 +201,7 @@ Each transaction also contains `account_id`, `category_id`, `destination_account
 
 **Response Parameters**
 
-Returns the full transaction (`MCPTransactionDetail`): ID, type, time and UTC offset, amount, currency, account / destination account (ID and name), category (ID, name and primary category), tags (ID and name), description, geographic location, attachments (ID, extension and content type) and their count, created / updated time, and whether the transaction can be edited under the current user's transaction edit scope.
+Returns the full transaction (`MCPTransactionDetail`): ID, type, time and UTC offset, amount, currency, account / destination account (ID and name), category (ID, name and primary category), tags (ID and name), description, geographic location, attachments (ID, extension, content type, and the original file name, size and SHA-256 checksum recorded at upload) and their count, evidence references, created / updated time, and whether the transaction can be edited under the current user's transaction edit scope.
 
 ### Update transaction
 
@@ -218,6 +227,8 @@ Returns the full transaction (`MCPTransactionDetail`): ID, type, time and UTC of
 | `geo_location` | `object` | Optional | New geographic location (`latitude`, `longitude`) |
 | `clear_geo_location` | `boolean` | Optional | Remove the geographic location |
 | `add_attachment_ids` | `string[]` | Optional | IDs of uploaded but unattached attachments to attach to the transaction (existing attachments are kept) |
+| `references` | `object[]` | Optional | Replace all evidence references of the transaction with this list |
+| `clear_references` | `boolean` | Optional | Remove all evidence references of the transaction |
 | `dry_run` | `boolean` | Optional | If `true`, only validate the changes |
 
 Only provided fields are changed. Both the original and the new transaction must be within the user's transaction edit scope. Existing attachments are never removed by this tool, use `detach_transaction_attachment` or `delete_transaction_attachment` instead.
@@ -255,9 +266,9 @@ Receipt pictures and PDF documents can be uploaded, attached, inspected, downloa
 
 | MCP Tool Name | Request Parameters | Description |
 | --- | --- | --- |
-| `upload_transaction_attachment` | `content_base64`, `file_extension` or `content_type`, `transaction_id`, `dry_run` | Upload a file whose content is passed as base64 in `content_base64`. Optionally attach it to an existing transaction, otherwise it is kept unattached. Returns the attachment ID, transaction association, size, MIME type, the SHA-256 checksum of the uploaded content and of the stored file read back (`verified: true` when they match) |
+| `upload_transaction_attachment` | `content_base64`, `file_extension` or `content_type`, `file_name`, `transaction_id`, `dry_run` | Upload a file whose content is passed as base64 in `content_base64`. Optionally attach it to an existing transaction, otherwise it is kept unattached. The original file name can be passed in `file_name` (if neither `file_extension` nor `content_type` is set, its extension is used as the file type). Returns the attachment ID, transaction association, original file name, size, MIME type, the SHA-256 checksum of the uploaded content and of the stored file read back (`verified: true` when they match) |
 | `list_transaction_attachments` | `transaction_id`, `limit` | List the attachments of a transaction, or the unattached attachments (newest first) when `transaction_id` is not set |
-| `get_transaction_attachment` | `attachment_id` | Inspect an attachment without downloading it (ID, transaction association, size, MIME type, SHA-256 checksum, whether the stored file is available) |
+| `get_transaction_attachment` | `attachment_id` | Inspect an attachment without downloading it (ID, transaction association, original file name, size, MIME type, SHA-256 checksum, the size and checksum recorded at upload and whether the stored file still matches them, whether the stored file is available) |
 | `download_transaction_attachment` | `attachment_id` | Download an attachment. The content is returned as an MCP embedded resource (`blob` in base64 with `mimeType`, URI `ezbookkeeping://transaction-attachments/<id>.<extension>`), followed by an embedded `application/json` resource with its metadata and checksum |
 | `detach_transaction_attachment` | `attachment_id`, `transaction_id` | Remove the reference from the transaction but keep the file as an unattached attachment, which can be attached to another transaction or deleted later |
 | `delete_transaction_attachment` | `attachment_id`, `confirm` | Delete an attached or unattached attachment permanently (the same as removing an attachment in the web interface) |
@@ -265,7 +276,7 @@ Receipt pictures and PDF documents can be uploaded, attached, inspected, downloa
 * **Upload cap**: the decoded content must not exceed `attachments.max_file_size_bytes` of `get_server_capabilities` (the `max_transaction_picture_size` setting, 10 MiB by default), so the base64 text must not exceed `attachments.max_upload_base64_length`. Oversized content fails with `too_large` (with `limit` and `actual` in bytes) before it is decoded. Downloads are bounded by the same limit.
 * **Content, not file names**: only the base64 encoded content in `content_base64` is uploaded. A file name or a path on the client machine is never read or treated as an upload, and fails as invalid base64.
 * **Validation**: the file type is taken from `file_extension` (e.g. `jpg`, `png`, `gif`, `webp`, `pdf`) or `content_type` (e.g. `image/jpeg`, `application/pdf`); if both are set, they must match. The content must match the file type (the same magic bytes check as the web upload for PDF documents, and the detected type for images), otherwise the upload fails with `invalid_value`. A dry run performs the same checks without saving.
-* **Metadata**: ezBookkeeping stores the attachment ID, the transaction association and the file type. The original file name is not stored, and the SHA-256 checksum is computed from the stored bytes whenever an attachment is listed, inspected or downloaded, so clients can verify that the bytes were persisted.
+* **Metadata**: ezbookkeeping2 stores the attachment ID, the transaction association, the file type, and the original file name (sanitized: directory parts and control characters are removed, at most 255 characters), byte size and SHA-256 checksum recorded at upload, both for uploads through MCP and through the web interface. In addition, the SHA-256 checksum is computed from the stored bytes whenever an attachment is listed, inspected or downloaded (`checksum_source: stored_file`), and `integrity_verified` reports whether the stored bytes still match the recorded size and checksum. Attachments uploaded by older versions have no recorded metadata and use the computed checksum only.
 * **Limits and permissions**: a transaction can have at most `attachments.max_count_per_transaction` attachments. Attaching, detaching and deleting attachments of a transaction require the transaction to be within the user's transaction edit scope and not in a hidden account, as in the web interface.
 * **Staged workflow**: upload the receipt with `upload_transaction_attachment` (without `transaction_id`), then pass the returned ID in `attachment_ids` of `add_transaction`, or in `add_attachment_ids` of `update_transaction`. If a step fails, the uploaded attachment stays unattached; find it with `list_transaction_attachments` (without `transaction_id`) and retry, or delete it with `delete_transaction_attachment`. When `upload_transaction_attachment` is called with `transaction_id` but attaching fails, the response contains `attach_error` and the saved (unattached) attachment ID.
 
@@ -276,8 +287,71 @@ Receipt pictures and PDF documents can be uploaded, attached, inspected, downloa
 | `query_account_balances_as_of` | `as_of`, `account_ids`, `include_hidden` | Balances of accounts as of a point in time (RFC 3339), including opening balances and balance modifications. Each account has its ID, category, currency, `signed_balance`, `balance` (displayed) and `outstanding_balance` (liability accounts), and the current signed balance for comparison. Also returns totals (assets, liabilities, net) by currency. Parent accounts are represented by their sub-accounts |
 | `query_transaction_totals` | `start_time`, `end_time`, `group_by` (`account`, `category`, `primary_category`, `tag` or `currency`), `account_ids`, `category_ids`, `tag_ids`, `keyword` | Activity totals over a date range from the same statistics as the web interface: `income`, `expense`, `transfer_in`, `transfer_out` and `net` per group and currency, with group IDs, plus overall `totals_by_currency`. Amounts are in the currency of each transaction's account (not converted). When grouping by tag, a transaction with several tags is counted in each of its tags, and transactions without tags are reported as `(no tags)` |
 | `get_account_reconciliation_statement` | `account_id` or `account_name`, `start_time`, `end_time`, `max_items` | The reconciliation statement of an account (the same data as in the web interface): opening and closing balances (signed and displayed), total inflows and outflows, and every transaction (`MCPTransactionDetail` with IDs and attachment references) with its direction, signed amount, counterpart account of transfers and the running balance before and after it, ordered by time ascending. At most `max_items` (default 200, maximum 1000) lines are returned; `truncated` indicates more lines exist |
+| `set_account_reconciled_time` | `account_id` or `account_name`, `reconciled_time` (default: now), `dry_run` | Mark an account as reconciled up to a point in time, the same as "Mark as reconciled" in the web interface (sets the last reconciled time of the account). It requires the user setting "use last reconciled time" (`current_user.use_last_reconciled_time` of `get_server_capabilities`), cannot move the time backwards, and is not allowed for parent accounts. If the transaction edit scope is `last_reconciled_time_or_later`, transactions of the account at or before this time can no longer be changed |
+| `export_transactions` | `start_time`, `end_time`, `type`, `account_id`, `category_id`, `reference_value`, `reference_type`, `format` (`csv` or `json`), `max_rows` | Export filtered transactions as machine-readable text: RFC 4180 CSV (default, with a header row; multiple values in one cell are separated by `; ` and references are formatted as `type=value`; free text starting with `=`, `+`, `-` or `@` is prefixed with `'` against formula injection) or full transactions as JSON. Each row includes the transaction ID, accounts, category, tags, description, attachment IDs with their recorded SHA-256 checksums and original file names, and evidence references. At most `max_rows` (default 500, maximum `limits.export_max_rows`) transactions are returned, ordered by time descending; `truncated` reports whether more transactions match |
 
 For example, a director's loan reimbursement can be followed by calling `get_account_reconciliation_statement` for the director's loan debt account: the personally funded expense appears as an `outflow` and the reimbursement transfer from the company bank account as an `inflow` with `counterpart_account_id` and `transfer_id`, and the closing outstanding balance returns to zero.
+
+### Bulk import
+
+**MCP Tool Name**
+
+`import_transactions`
+
+**Request Parameters**
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `rows` | `object[]` | Required | Rows to import, at most `limits.import_max_rows` (200). Each row has the same fields as `add_transaction` (`type`, `time`, `amount`, `account_id` / `account_name`, `destination_*`, `category_id` / `category_name`, `tag_ids` / `tags`, `comment`, `geo_location`, `attachment_ids`, `references`), plus `idempotency_key`, and `attachment_sha256` (checksums of the source documents, only used to find duplicates). A row with `transaction_id` updates that existing transaction instead (only non-empty fields are changed) |
+| `source_document` | `string` | Optional | Name of the source document, added as `source_document` reference to every new row without one |
+| `allow_duplicates_rows` | `number[]` | Optional | Row numbers (1-based) which are imported even if they are flagged as possible duplicates |
+| `dry_run` | `boolean` | Optional | Defaults to `true`. Set to `false` to commit |
+
+**Response Parameters**
+
+The response contains `dry_run`, `committed`, counts (`would_be_created_count`, `would_be_updated_count`, `created_count`, `updated_count`, `unchanged_count`, `skipped_count`, `failed_count`, `replayed_count`, `possible_duplicate_count`), `batch_semantics` and `results`, one per row in request order with:
+
+* `row`, `action` (`create` or `update`), `status` (`would_be_created`, `would_be_updated`, `created`, `updated`, `unchanged`, `skipped` or `failed`) and `transaction_id`;
+* `mapping`: the resolved account, destination account, category (with its primary category) and tags. Names are resolved like `add_transaction`: IDs first, then exact names, then case-insensitive names; an ambiguous name fails the row with `ambiguous_name` and its `candidates`;
+* `error`: the structured error of a failed row (the same validation as `add_transaction` / `update_transaction`, including field lengths and the transaction edit scope);
+* `possible_duplicate`, `duplicate_allowed` and `duplicate_candidates`: existing transactions (`transaction_id`) or earlier rows of the same batch (`row`) which may be the same record, with their `reasons`: `same_reference` (the same `external_source_id`, `invoice_number` or `receipt_number`), `same_source_document_and_row`, `same_attachment_checksum` (an existing attachment with the same SHA-256 recorded at upload, from `attachment_sha256` or the checksums of `attachment_ids`), and `same_amount_date_account` (the same type, account and amount within one day). Rows with possible duplicates are `skipped` unless listed in `allow_duplicates_rows`; uncertain matches are never merged silently;
+* `idempotency_key` and `idempotent_replay`.
+
+**Batch semantics**: rows are processed in order, and each row is validated and committed independently: a failed or skipped row does not stop or roll back the other rows, and the response reports the actual committed state of every row. To resume safely after a partial failure or a timeout, rerun the batch with the same per-row `idempotency_key`s (for example `<file>:<row>`): rows which were already committed return their stored result with `idempotent_replay: true` and are not created again, and only the remaining rows are written. Rows without idempotency keys are protected by the duplicate checks only. A top-level `idempotency_key` replays the result of the whole call only if the arguments are identical, so do not use the same top-level key when resubmitting corrected rows.
+
+Recommended workflow: call `import_transactions` with `dry_run` omitted, review the mappings, errors and duplicate candidates, fix the rows (or create missing categories with `batch_create_transaction_categories`), then call it again with `dry_run: false` and the same rows and keys.
+
+### Audit history
+
+**MCP Tool Name**
+
+`query_audit_log`
+
+**Request Parameters**
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `start_time` / `end_time` | `string` | Optional | Time range in RFC 3339 format |
+| `tool_name` | `string` | Optional | Only changes made by this tool (e.g. `add_transaction`) |
+| `action` | `string` | Optional | `create`, `update`, `delete`, `hide`, `reorder`, `upload`, `detach`, `import` or `reconcile` |
+| `entity_type` | `string` | Optional | `transaction`, `account`, `transaction_category`, `transaction_tag`, `transaction_tag_group`, `transaction_template` or `transaction_attachment` |
+| `entity_id` | `string` | Optional | Only changes which affected this ID |
+| `operation_id` | `string` | Optional | Only changes made with this client operation ID |
+| `count` / `page` | `number` | Optional | Pagination (default 50 per page, maximum 200) |
+
+**Response Parameters**
+
+Returns `total_count`, `current_page`, `total_page` and `logs` (newest first). Each log has its `id`, `time`, `source` (`mcp`), `tool_name`, `action`, `entity_type`, `entity_ids`, `operation_id`, `idempotency_key`, `token_id`, `client_ip` and small `details` (e.g. `status`, `changed_fields` and counts). Only committed changes made through MCP write tools are recorded; dry runs, unchanged results, replayed idempotent requests and reads are not recorded.
+
+### Example: director's loan expense and reimbursement
+
+The following workflow records a business expense paid personally by a director and its later reimbursement, entirely through MCP and without browser automation, direct database writes or server file system access. A director's loan is a liability (`debt`) account: the company owes the director while its outstanding balance is positive.
+
+1. **Setup (rerunnable)**: create the categories with `batch_create_transaction_categories` (e.g. an expense category "Business" with the secondary category "Software", and a transfer category "Director's Loan" with "Reimbursement"; `skip_existing` defaults to `true`), and the account with `create_account` `{"name": "Director's Loan", "category": "debt", "currency": "GBP", "skip_existing": true}`. Rerunning the setup reports `existing` items instead of creating duplicates.
+2. **Record the expense with its receipt**: upload the original receipt with `upload_transaction_attachment` (`content_base64`, `content_type: "application/pdf"`, `file_name: "receipt.pdf"`), then call `add_transaction` with `{"type": "expense", "amount": "120.00", "account_id": "<director's loan>", "category_id": "<software>", "time": "...", "attachment_ids": ["<attachment id>"], "references": [{"type": "supplier", "value": "ACME Ltd"}, {"type": "invoice_number", "value": "INV-001"}], "idempotency_key": "<uuid>"}`. The response contains the `transaction_id`, the attachment and `account_balance` `120.00` (outstanding) with `account_signed_balance` `-120.00`. The company bank account is not involved, so its balance is unchanged. If the call times out, retry it with the same `idempotency_key`: no second expense is created.
+3. **Later session**: retrieve the transaction with `get_transaction`, list and download the receipt with `list_transaction_attachments` and `download_transaction_attachment` (the checksum matches `sha256` recorded at upload), and correct the category with `update_transaction` (`category_id`), which keeps the transaction ID and does not recreate the expense. Evidence can be found later with `query_transactions` and `reference_value: "INV-001"`.
+4. **Reimbursement**: record the payment from the company bank account as a transfer, not as a second expense: `add_transaction` with `{"type": "transfer", "account_id": "<company bank>", "destination_account_id": "<director's loan>", "amount": "120.00", "destination_amount": "120.00", "category_id": "<reimbursement>", "time": "...", "idempotency_key": "<uuid>"}`. The transfer decreases the bank balance by £120 and clears the liability (outstanding balance `0.00`), and the expense total is unchanged.
+5. **Reconcile and export**: `get_account_reconciliation_statement` for the director's loan account shows the expense (`outflow`) and the reimbursement transfer (`inflow`, with `counterpart_account_id`) and a closing outstanding balance of zero; `set_account_reconciled_time` marks the account as reconciled, and `export_transactions` exports the transactions with IDs, attachment checksums and references. `query_audit_log` lists every change made by the assistant with its `operation_id`.
 
 ### Accounts
 

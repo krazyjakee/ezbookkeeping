@@ -32,6 +32,8 @@ type MCPUpdateTransactionRequest struct {
 	GeoLocation            *MCPTransactionDetailGeoLocation `json:"geo_location,omitempty" jsonschema_description:"New geographic location (optional)"`
 	ClearGeoLocation       bool                             `json:"clear_geo_location,omitempty" jsonschema_description:"If true, remove the geographic location from the transaction (optional, cannot be used with geo_location)"`
 	AddAttachmentIds       []string                         `json:"add_attachment_ids,omitempty" jsonschema_description:"IDs of uploaded but unattached attachments (returned by upload_transaction_attachment) to attach to the transaction (optional, existing attachments are kept; use detach_transaction_attachment or delete_transaction_attachment to remove attachments)"`
+	References             []*MCPTransactionReference       `json:"references,omitempty" jsonschema_description:"New structured evidence / source references (optional, when set, all references of the transaction are replaced with this list)"`
+	ClearReferences        bool                             `json:"clear_references,omitempty" jsonschema_description:"If true, remove all references from the transaction (optional, cannot be used with references)"`
 	DryRun                 bool                             `json:"dry_run,omitempty" jsonschema_description:"If true, the transaction will not be saved, only validated with the same rules as a real write (optional)"`
 }
 
@@ -53,6 +55,7 @@ type MCPUpdateTransactionResponse struct {
 	ChangedFields   []string                              `json:"changed_fields" jsonschema_description:"Fields which are (or would be) changed"`
 	Transaction     *MCPTransactionDetail                 `json:"transaction,omitempty" jsonschema_description:"The persisted transaction after update (when committed or unchanged) or the validated transaction which would be saved (when dry run)"`
 	AccountBalances []*MCPTransactionDetailAccountBalance `json:"account_balances,omitempty" jsonschema_description:"Balances of the affected accounts after the update (only when committed)"`
+	ReferencesError string                                `json:"references_error,omitempty" jsonschema_description:"Why the references could not be saved although the other changes have been saved (retry with references)"`
 }
 
 type mcpUpdateTransactionToolHandler struct{}
@@ -71,7 +74,7 @@ func (h *mcpUpdateTransactionToolHandler) Name() string {
 
 // Description returns the description of the MCP tool
 func (h *mcpUpdateTransactionToolHandler) Description() string {
-	return "Update an existing transaction in ezBookkeeping. Only the specified fields are changed (amount, accounts, category, time and timezone, description, tags, location). The user's transaction edit scope is applied to both the original and the new transaction time. Uploaded attachments can be added via add_attachment_ids, existing attachments are never removed by this tool. Use dry_run to validate without saving."
+	return "Update an existing transaction in ezBookkeeping. Only the specified fields are changed (amount, accounts, category, time and timezone, description, tags, location). The user's transaction edit scope is applied to both the original and the new transaction time. Uploaded attachments can be added via add_attachment_ids, existing attachments are never removed by this tool. Evidence references can be replaced via references or removed via clear_references. Use dry_run to validate without saving."
 }
 
 // DataOperationType returns how the MCP tool operates on business records
@@ -287,8 +290,26 @@ func (h *mcpUpdateTransactionToolHandler) Handle(c *core.WebContext, callToolReq
 		changedFields = append(changedFields, "attachments")
 	}
 
+	transactionChanged := len(changedFields) > 0
+	existingReferences := mcpReferenceLoad(c, uid, []int64{transaction.TransactionId}, services)[transaction.TransactionId]
+	newReferences := existingReferences
+	referencesChanged := false
+
+	if request.ClearReferences || len(request.References) > 0 {
+		newReferences, err = mcpReferenceParse("references", request.References)
+
+		if err != nil {
+			return nil, nil, err
+		}
+
+		if !mcpReferenceListEquals(existingReferences, newReferences) {
+			referencesChanged = true
+			changedFields = append(changedFields, "references")
+		}
+	}
+
 	if len(changedFields) == 0 {
-		return h.createResponse(c, uid, user, transaction, currentConfig, services, MCPWriteStatusUnchanged, changedFields, false, nil)
+		return h.createResponse(c, uid, user, transaction, currentConfig, services, MCPWriteStatusUnchanged, changedFields, false, nil, "")
 	}
 
 	if err := mcpTxnValidateAccounts(newTransaction, sourceAccount, destinationAccount); err != nil {
@@ -328,6 +349,9 @@ func (h *mcpUpdateTransactionToolHandler) Handle(c *core.WebContext, callToolReq
 			tagIds: map[int64][]int64{
 				newTransaction.TransactionId: newTagIds,
 			},
+			references: map[int64][]*models.TransactionReference{
+				newTransaction.TransactionId: newReferences,
+			},
 		}
 
 		response := MCPUpdateTransactionResponse{
@@ -350,19 +374,39 @@ func (h *mcpUpdateTransactionToolHandler) Handle(c *core.WebContext, callToolReq
 		addTransactionTagIds = newTagIds
 	}
 
-	changeToTransfer := newTransaction.Type == models.TRANSACTION_DB_TYPE_TRANSFER_OUT && transaction.Type != models.TRANSACTION_DB_TYPE_TRANSFER_OUT
-	err = services.GetTransactionService().ModifyTransaction(c, newTransaction, changeToTransfer, len(transactionTagIds), addTransactionTagIds, removeTransactionTagIds, addPictureIds, nil)
+	if transactionChanged {
+		changeToTransfer := newTransaction.Type == models.TRANSACTION_DB_TYPE_TRANSFER_OUT && transaction.Type != models.TRANSACTION_DB_TYPE_TRANSFER_OUT
+		err = services.GetTransactionService().ModifyTransaction(c, newTransaction, changeToTransfer, len(transactionTagIds), addTransactionTagIds, removeTransactionTagIds, addPictureIds, nil)
 
-	if err != nil {
-		if err == errs.ErrNothingWillBeUpdated {
-			return h.createResponse(c, uid, user, transaction, currentConfig, services, MCPWriteStatusUnchanged, make([]string, 0), false, nil)
+		if err != nil {
+			if err == errs.ErrNothingWillBeUpdated && !referencesChanged {
+				return h.createResponse(c, uid, user, transaction, currentConfig, services, MCPWriteStatusUnchanged, make([]string, 0), false, nil, "")
+			} else if err != errs.ErrNothingWillBeUpdated {
+				log.Errorf(c, "[update_transaction_tool_handler.Handle] failed to update transaction \"id:%d\" for user \"uid:%d\", because %s", transactionId, uid, err.Error())
+				return nil, nil, errs.Or(err, errs.ErrOperationFailed)
+			}
 		}
 
-		log.Errorf(c, "[update_transaction_tool_handler.Handle] failed to update transaction \"id:%d\" for user \"uid:%d\", because %s", transactionId, uid, err.Error())
-		return nil, nil, errs.Or(err, errs.ErrOperationFailed)
+		log.Infof(c, "[update_transaction_tool_handler.Handle] user \"uid:%d\" has updated transaction \"id:%d\" successfully", uid, transactionId)
 	}
 
-	log.Infof(c, "[update_transaction_tool_handler.Handle] user \"uid:%d\" has updated transaction \"id:%d\" successfully", uid, transactionId)
+	referencesError := ""
+
+	if referencesChanged {
+		err = mcpGetTransactionReferenceService(services).SetTransactionReferences(c, uid, transaction.TransactionId, newReferences)
+
+		if err != nil {
+			log.Errorf(c, "[update_transaction_tool_handler.Handle] failed to save references of transaction \"id:%d\" for user \"uid:%d\", because %s", transactionId, uid, err.Error())
+
+			if !transactionChanged {
+				return nil, nil, errs.Or(err, errs.ErrOperationFailed)
+			}
+
+			referencesError = err.Error()
+		} else {
+			log.Infof(c, "[update_transaction_tool_handler.Handle] user \"uid:%d\" has updated references of transaction \"id:%d\" successfully", uid, transactionId)
+		}
+	}
 
 	affectedAccountIds := utils.ToUniqueInt64Slice([]int64{transaction.AccountId, transaction.RelatedAccountId, newTransaction.AccountId, newTransaction.RelatedAccountId})
 	savedTransaction, err := services.GetTransactionService().GetTransactionByTransactionId(c, uid, transactionId)
@@ -372,15 +416,16 @@ func (h *mcpUpdateTransactionToolHandler) Handle(c *core.WebContext, callToolReq
 		savedTransaction = newTransaction
 	}
 
-	return h.createResponse(c, uid, user, savedTransaction, currentConfig, services, MCPWriteStatusUpdated, changedFields, true, affectedAccountIds)
+	return h.createResponse(c, uid, user, savedTransaction, currentConfig, services, MCPWriteStatusUpdated, changedFields, true, affectedAccountIds, referencesError)
 }
 
-func (h *mcpUpdateTransactionToolHandler) createResponse(c *core.WebContext, uid int64, user *models.User, transaction *models.Transaction, currentConfig *settings.Config, services MCPAvailableServices, status string, changedFields []string, committed bool, affectedAccountIds []int64) (any, []*MCPTextContent, error) {
+func (h *mcpUpdateTransactionToolHandler) createResponse(c *core.WebContext, uid int64, user *models.User, transaction *models.Transaction, currentConfig *settings.Config, services MCPAvailableServices, status string, changedFields []string, committed bool, affectedAccountIds []int64, referencesError string) (any, []*MCPTextContent, error) {
 	response := MCPUpdateTransactionResponse{
-		Success:       true,
-		Committed:     committed,
-		Status:        status,
-		ChangedFields: changedFields,
+		Success:         true,
+		Committed:       committed,
+		Status:          status,
+		ChangedFields:   changedFields,
+		ReferencesError: referencesError,
 	}
 
 	detailData, err := mcpTxnLoadDetailData(c, uid, []*models.Transaction{transaction}, currentConfig, services)
@@ -429,6 +474,14 @@ func mcpTxnValidateUpdateRequest(request *MCPUpdateTransactionRequest) error {
 
 	if count := len(request.AddAttachmentIds); count > models.MaximumPicturesCountOfTransaction {
 		return NewMCPTooManyItemsError("add_attachment_ids", models.MaximumPicturesCountOfTransaction, count)
+	}
+
+	if request.ClearReferences && len(request.References) > 0 {
+		return NewMCPInvalidFieldError("clear_references", "true", "\"clear_references\" cannot be used together with \"references\"")
+	}
+
+	if _, err := mcpReferenceParse("references", request.References); err != nil {
+		return err
 	}
 
 	if request.ClearGeoLocation && request.GeoLocation != nil {

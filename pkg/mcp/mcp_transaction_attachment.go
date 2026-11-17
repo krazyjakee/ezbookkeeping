@@ -20,7 +20,13 @@ import (
 const mcpAttachmentResourceUriPrefix = "ezbookkeeping://transaction-attachments/"
 
 // mcpAttachmentLimitationNote describes the limitations of transaction attachments which are shown in tool descriptions
-const mcpAttachmentLimitationNote = "The original file name is not stored (only the file type), and the SHA-256 checksum is computed from the stored bytes when the attachment is read."
+const mcpAttachmentLimitationNote = "The original file name, byte size and SHA-256 checksum are recorded at upload (attachments uploaded by older versions have no recorded metadata), and the SHA-256 checksum is also computed from the stored bytes when the attachment is read, so integrity can be verified."
+
+// Sources of the SHA-256 checksum of transaction attachments
+const (
+	mcpAttachmentChecksumSourceStoredFile     = "stored_file"
+	mcpAttachmentChecksumSourceUploadMetadata = "upload_metadata"
+)
 
 // mcpAttachmentContentTypeExtensionMap is the map of accepted content types (MIME types) and the file extensions which are saved
 var mcpAttachmentContentTypeExtensionMap = map[string]string{
@@ -35,16 +41,21 @@ var mcpAttachmentContentTypeExtensionMap = map[string]string{
 
 // MCPTransactionAttachmentInfo represents the information of a transaction attachment (receipt picture or document)
 type MCPTransactionAttachmentInfo struct {
-	Id               string `json:"id" jsonschema_description:"Attachment ID"`
-	Attached         bool   `json:"attached" jsonschema_description:"Whether the attachment is attached to a transaction (false means it is an uploaded but unattached attachment, which can be attached via add_transaction or update_transaction)"`
-	TransactionId    string `json:"transaction_id,omitempty" jsonschema_description:"ID of the transaction which the attachment is attached to (empty if unattached)"`
-	Extension        string `json:"extension" jsonschema_description:"Stored file extension of the attachment"`
-	ContentType      string `json:"content_type" jsonschema_description:"MIME type of the attachment"`
-	SizeBytes        int64  `json:"size_bytes,omitempty" jsonschema_description:"Size in bytes of the stored file"`
-	SHA256           string `json:"sha256,omitempty" jsonschema_description:"Hex encoded SHA-256 checksum computed from the stored file"`
-	ContentAvailable bool   `json:"content_available" jsonschema_description:"Whether the stored file can be read from the server storage"`
-	CreatedTime      string `json:"created_time,omitempty" jsonschema_description:"Upload time in RFC 3339 format (UTC)"`
-	UpdatedTime      string `json:"updated_time,omitempty" jsonschema_description:"Last update (attach / detach) time in RFC 3339 format (UTC)"`
+	Id                string `json:"id" jsonschema_description:"Attachment ID"`
+	Attached          bool   `json:"attached" jsonschema_description:"Whether the attachment is attached to a transaction (false means it is an uploaded but unattached attachment, which can be attached via add_transaction or update_transaction)"`
+	TransactionId     string `json:"transaction_id,omitempty" jsonschema_description:"ID of the transaction which the attachment is attached to (empty if unattached)"`
+	Extension         string `json:"extension" jsonschema_description:"Stored file extension of the attachment"`
+	ContentType       string `json:"content_type" jsonschema_description:"MIME type of the attachment"`
+	OriginalFileName  string `json:"original_file_name,omitempty" jsonschema_description:"Original file name recorded at upload (sanitized, empty for attachments uploaded by older versions or without a file name)"`
+	SizeBytes         int64  `json:"size_bytes,omitempty" jsonschema_description:"Size in bytes of the stored file (or the size recorded at upload if the stored file is not available)"`
+	SHA256            string `json:"sha256,omitempty" jsonschema_description:"Hex encoded SHA-256 checksum computed from the stored file (or the checksum recorded at upload if the stored file is not available)"`
+	ChecksumSource    string `json:"checksum_source,omitempty" jsonschema:"enum=stored_file,enum=upload_metadata" jsonschema_description:"Where sha256 comes from: stored_file (computed from the stored bytes) or upload_metadata (recorded at upload, the stored file is not available)"`
+	RecordedSizeBytes int64  `json:"recorded_size_bytes,omitempty" jsonschema_description:"Size in bytes recorded at upload (empty for attachments uploaded by older versions)"`
+	RecordedSHA256    string `json:"recorded_sha256,omitempty" jsonschema_description:"Hex encoded SHA-256 checksum recorded at upload (empty for attachments uploaded by older versions)"`
+	IntegrityVerified *bool  `json:"integrity_verified,omitempty" jsonschema_description:"Whether the stored file matches the size and checksum recorded at upload (only set when both are available)"`
+	ContentAvailable  bool   `json:"content_available" jsonschema_description:"Whether the stored file can be read from the server storage"`
+	CreatedTime       string `json:"created_time,omitempty" jsonschema_description:"Upload time in RFC 3339 format (UTC)"`
+	UpdatedTime       string `json:"updated_time,omitempty" jsonschema_description:"Last update (attach / detach) time in RFC 3339 format (UTC)"`
 }
 
 // mcpAttachmentCheckEnabled returns an error if transaction attachments are disabled on this server
@@ -215,9 +226,23 @@ func mcpAttachmentBuildInfo(pictureInfo *models.TransactionPictureInfo, data []b
 		info.TransactionId = utils.Int64ToString(pictureInfo.TransactionId)
 	}
 
+	info.OriginalFileName = pictureInfo.OriginalFileName
+	info.RecordedSizeBytes = pictureInfo.FileSize
+	info.RecordedSHA256 = pictureInfo.FileSha256
+
 	if contentAvailable {
 		info.SizeBytes = int64(len(data))
 		info.SHA256 = mcpAttachmentComputeChecksum(data)
+		info.ChecksumSource = mcpAttachmentChecksumSourceStoredFile
+
+		if pictureInfo.FileSha256 != "" {
+			verified := info.SHA256 == pictureInfo.FileSha256 && (pictureInfo.FileSize <= 0 || info.SizeBytes == pictureInfo.FileSize)
+			info.IntegrityVerified = &verified
+		}
+	} else if pictureInfo.FileSha256 != "" {
+		info.SizeBytes = pictureInfo.FileSize
+		info.SHA256 = pictureInfo.FileSha256
+		info.ChecksumSource = mcpAttachmentChecksumSourceUploadMetadata
 	}
 
 	if pictureInfo.CreatedUnixTime > 0 {

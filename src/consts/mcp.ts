@@ -196,6 +196,22 @@ export const ALL_MCP_TOOLS: NameAndDisplayName[] = [
     {
         name: 'get_account_reconciliation_statement',
         displayName:'Get Account Reconciliation Statement'
+    },
+    {
+        name: 'query_audit_log',
+        displayName:'Query Audit Log'
+    },
+    {
+        name: 'import_transactions',
+        displayName:'Import Transactions'
+    },
+    {
+        name: 'set_account_reconciled_time',
+        displayName:'Set Account Reconciled Time'
+    },
+    {
+        name: 'export_transactions',
+        displayName:'Export Transactions'
     }
 ];
 
@@ -223,5 +239,7 @@ export const DEFAULT_ENABLED_MCP_TOOL_NAMES: string[] = [
     'download_transaction_attachment',
     'query_account_balances_as_of',
     'query_transaction_totals',
-    'get_account_reconciliation_statement'
+    'get_account_reconciliation_statement',
+    'query_audit_log',
+    'export_transactions'
 ]

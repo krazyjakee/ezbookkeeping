@@ -189,5 +189,29 @@ func updateAllDatabaseTablesStructure(c *core.CliContext) error {
 
 	log.BootInfof(c, "[database.updateAllDatabaseTablesStructure] insights explorer table maintained successfully")
 
+	err = datastore.Container.UserDataStore.SyncStructs(new(models.TransactionReference))
+
+	if err != nil {
+		return err
+	}
+
+	log.BootInfof(c, "[database.updateAllDatabaseTablesStructure] transaction reference table maintained successfully")
+
+	err = datastore.Container.UserDataStore.SyncStructs(new(models.MCPIdempotencyRecord))
+
+	if err != nil {
+		return err
+	}
+
+	log.BootInfof(c, "[database.updateAllDatabaseTablesStructure] mcp idempotency record table maintained successfully")
+
+	err = datastore.Container.UserDataStore.SyncStructs(new(models.MCPAuditLog))
+
+	if err != nil {
+		return err
+	}
+
+	log.BootInfof(c, "[database.updateAllDatabaseTablesStructure] mcp audit log table maintained successfully")
+
 	return nil
 }

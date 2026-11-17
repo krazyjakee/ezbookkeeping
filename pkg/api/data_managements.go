@@ -35,6 +35,9 @@ type DataManagementsApi struct {
 	importPresets           *services.ImportPresetsService
 	userCustomExchangeRates *services.UserCustomExchangeRatesService
 	insightsExploreres      *services.InsightsExplorerService
+	transactionReferences   *services.TransactionReferenceService
+	mcpAuditLogs            *services.MCPAuditLogService
+	mcpIdempotencyRecords   *services.MCPIdempotencyRecordService
 }
 
 // Initialize a data management api singleton instance
@@ -56,6 +59,9 @@ var (
 		importPresets:           services.ImportPresets,
 		userCustomExchangeRates: services.UserCustomExchangeRates,
 		insightsExploreres:      services.InsightsExplorers,
+		transactionReferences:   services.TransactionReferences,
+		mcpAuditLogs:            services.MCPAuditLogs,
+		mcpIdempotencyRecords:   services.MCPIdempotencyRecords,
 	}
 )
 
@@ -250,6 +256,27 @@ func (a *DataManagementsApi) ClearAllDataHandler(c *core.WebContext) (any, *errs
 		return nil, errs.Or(err, errs.ErrOperationFailed)
 	}
 
+	err = a.transactionReferences.DeleteAllTransactionReferences(c, uid)
+
+	if err != nil {
+		log.Errorf(c, "[data_managements.ClearAllDataHandler] failed to delete all transaction references, because %s", err.Error())
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+
+	err = a.mcpAuditLogs.DeleteAllAuditLogs(c, uid)
+
+	if err != nil {
+		log.Errorf(c, "[data_managements.ClearAllDataHandler] failed to delete all mcp audit logs, because %s", err.Error())
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+
+	err = a.mcpIdempotencyRecords.DeleteAllRecords(c, uid)
+
+	if err != nil {
+		log.Errorf(c, "[data_managements.ClearAllDataHandler] failed to delete all mcp idempotency records, because %s", err.Error())
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+
 	log.Infof(c, "[data_managements.ClearAllDataHandler] user \"uid:%d\" has cleared all data", uid)
 	return true, nil
 }
@@ -287,6 +314,13 @@ func (a *DataManagementsApi) ClearAllTransactionsHandler(c *core.WebContext) (an
 
 	if err != nil {
 		log.Errorf(c, "[data_managements.ClearAllTransactionsHandler] failed to delete all transactions, because %s", err.Error())
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+
+	err = a.transactionReferences.DeleteAllTransactionReferences(c, uid)
+
+	if err != nil {
+		log.Errorf(c, "[data_managements.ClearAllTransactionsHandler] failed to delete all transaction references, because %s", err.Error())
 		return nil, errs.Or(err, errs.ErrOperationFailed)
 	}
 

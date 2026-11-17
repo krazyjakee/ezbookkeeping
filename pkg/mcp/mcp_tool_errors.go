@@ -17,6 +17,10 @@ const (
 	MCPToolErrorCodeAmbiguousName    = "ambiguous_name"
 	MCPToolErrorCodeNotSupported     = "not_supported"
 	MCPToolErrorCodeNotAllowed       = "not_allowed"
+
+	MCPToolErrorCodeIdempotencyConflict   = "idempotency_conflict"
+	MCPToolErrorCodeIdempotencyInProgress = "idempotency_in_progress"
+	MCPToolErrorCodeOperationFailed       = "operation_failed"
 )
 
 // MCPEntityCandidate represents a candidate entity when a name cannot be resolved to exactly one entity

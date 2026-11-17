@@ -123,6 +123,10 @@ func InitializeMCPHandlers(config *settings.Config) error {
 	registerMCPTextContentToolHandler(container, MCPQueryAccountBalancesAsOfToolHandler)
 	registerMCPTextContentToolHandler(container, MCPQueryTransactionTotalsToolHandler)
 	registerMCPTextContentToolHandler(container, MCPGetReconciliationStatementToolHandler)
+	registerMCPTextContentToolHandler(container, MCPQueryAuditLogToolHandler)
+	registerMCPTextContentToolHandler(container, MCPImportTransactionsToolHandler)
+	registerMCPTextContentToolHandler(container, MCPSetAccountReconciledTimeToolHandler)
+	registerMCPTextContentToolHandler(container, MCPExportTransactionsToolHandler)
 
 	Container = container
 	return nil
@@ -176,9 +180,38 @@ func handleTool[T MCPTextContent | MCPImageContent | MCPAudioContent | MCPResour
 		return nil, errs.ErrMCPToolNotEnabled
 	}
 
+	var writeCall *mcpWriteToolCall
+
+	if handler.DataOperationType() != MCP_TOOL_DATA_OPERATION_READ_ONLY && user != nil {
+		defaultDryRun := false
+
+		if defaultDryRunHandler, ok := any(handler).(mcpDefaultDryRunToolHandler); ok {
+			defaultDryRun = defaultDryRunHandler.DefaultDryRun()
+		}
+
+		var err error
+		writeCall, err = mcpBeginWriteToolCall(ctx, handler.Name(), mcpToolInputSupportsDryRun(handler.InputType()), defaultDryRun, callToolReq, user, services)
+
+		if err != nil {
+			var toolErr *MCPToolError
+
+			if errors.As(err, &toolErr) {
+				return createMCPToolErrorResponse(toolErr)
+			}
+
+			return nil, errs.Or(err, errs.ErrOperationFailed)
+		}
+
+		if writeCall.replayResponse != nil {
+			return createMCPToolReplayResponse(ctx, writeCall.replayResponse), nil
+		}
+	}
+
 	structuredResponse, result, err := handler.Handle(ctx, callToolReq, user, currentConfig, services)
 
 	if err != nil {
+		writeCall.abort(ctx)
+
 		var toolErr *MCPToolError
 
 		if errors.As(err, &toolErr) {
@@ -187,6 +220,8 @@ func handleTool[T MCPTextContent | MCPImageContent | MCPAudioContent | MCPResour
 
 		return nil, errs.Or(err, errs.ErrOperationFailed)
 	}
+
+	writeCall.finish(ctx, services, structuredResponse)
 
 	callToolResp := MCPCallToolResponse[T]{
 		Content: result,
@@ -243,6 +278,11 @@ func createNewMCPToolInfo[T MCPTextContent | MCPImageContent | MCPAudioContent |
 	if handler.InputType() != nil {
 		schema := schemeGenerator.ReflectFromType(handler.InputType())
 		schema.Version = ""
+
+		if dataOperationType != MCP_TOOL_DATA_OPERATION_READ_ONLY {
+			addMCPWriteToolControlArgumentsToSchema(schema)
+		}
+
 		mcpTool.InputSchema = schema
 	} else {
 		mcpTool.InputSchema = &jsonschema.Schema{
@@ -253,6 +293,11 @@ func createNewMCPToolInfo[T MCPTextContent | MCPImageContent | MCPAudioContent |
 	if handler.OutputType() != nil {
 		schema := schemeGenerator.ReflectFromType(handler.OutputType())
 		schema.Version = ""
+
+		if dataOperationType != MCP_TOOL_DATA_OPERATION_READ_ONLY {
+			addMCPWriteToolReplayFieldToSchema(schema)
+		}
+
 		mcpTool.OutputSchema = schema
 	} else {
 		mcpTool.OutputSchema = &jsonschema.Schema{
@@ -261,4 +306,43 @@ func createNewMCPToolInfo[T MCPTextContent | MCPImageContent | MCPAudioContent |
 	}
 
 	return mcpTool
+}
+
+// addMCPWriteToolControlArgumentsToSchema adds the control arguments accepted by all write tools (idempotency_key and operation_id) to the input schema
+func addMCPWriteToolControlArgumentsToSchema(schema *jsonschema.Schema) {
+	if schema == nil || schema.Properties == nil {
+		return
+	}
+
+	if _, exists := schema.Properties.Get(mcpIdempotencyKeyArgumentName); !exists {
+		maxLength := uint64(models.MCPIdempotencyKeyMaxLength)
+		schema.Properties.Set(mcpIdempotencyKeyArgumentName, &jsonschema.Schema{
+			Type:        "string",
+			MaxLength:   &maxLength,
+			Description: "Client generated idempotency key (optional, maximum 128 characters, e.g. a UUID). Retrying the same request with the same key returns the stored original result (marked with idempotent_replay=true) without executing the write again; the same key with a different request fails with idempotency_conflict. Keys are kept for 30 days and are ignored for dry runs",
+		})
+	}
+
+	if _, exists := schema.Properties.Get(mcpOperationIdArgumentName); !exists {
+		maxLength := uint64(mcpOperationIdMaxLength)
+		schema.Properties.Set(mcpOperationIdArgumentName, &jsonschema.Schema{
+			Type:        "string",
+			MaxLength:   &maxLength,
+			Description: "Client provided operation / reference ID (optional, maximum 128 characters) which is recorded in the audit history of committed changes (see query_audit_log)",
+		})
+	}
+}
+
+// addMCPWriteToolReplayFieldToSchema adds the idempotent_replay field of replayed results to the output schema of write tools
+func addMCPWriteToolReplayFieldToSchema(schema *jsonschema.Schema) {
+	if schema == nil || schema.Properties == nil {
+		return
+	}
+
+	if _, exists := schema.Properties.Get(mcpIdempotentReplayFieldName); !exists {
+		schema.Properties.Set(mcpIdempotentReplayFieldName, &jsonschema.Schema{
+			Type:        "boolean",
+			Description: "True if this is the stored result of an earlier call with the same idempotency key (the write was not executed again)",
+		})
+	}
 }

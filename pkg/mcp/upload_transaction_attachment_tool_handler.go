@@ -15,8 +15,9 @@ import (
 // MCPUploadTransactionAttachmentRequest represents all parameters of the upload transaction attachment request
 type MCPUploadTransactionAttachmentRequest struct {
 	ContentBase64 string `json:"content_base64" jsonschema_description:"The file content encoded in base64 (standard alphabet, a \"data:<mime>;base64,\" prefix is allowed). The decoded size must not exceed max_file_size_bytes reported by get_server_capabilities. A file name or local path is not a file content and is rejected"`
-	FileExtension string `json:"file_extension,omitempty" jsonschema_description:"File type of the content as file extension (e.g. jpg, png, gif, webp, pdf), required if content_type is not set"`
+	FileExtension string `json:"file_extension,omitempty" jsonschema_description:"File type of the content as file extension (e.g. jpg, png, gif, webp, pdf), required if content_type is not set (if neither is set, the extension of file_name is used)"`
 	ContentType   string `json:"content_type,omitempty" jsonschema_description:"File type of the content as MIME type (e.g. image/jpeg, application/pdf), required if file_extension is not set"`
+	FileName      string `json:"file_name,omitempty" jsonschema_description:"Original file name of the uploaded file (optional, e.g. receipt-2024-01-02.pdf). It is only stored as metadata (directory parts and control characters are removed and it is truncated to 255 characters), the file type is still taken from file_extension / content_type and validated against the content"`
 	TransactionId string `json:"transaction_id,omitempty" jsonschema_description:"ID of an existing transaction to attach the uploaded file to (optional). If not set, the attachment is kept unattached and can be attached later via attachment_ids of add_transaction or add_attachment_ids of update_transaction"`
 	DryRun        bool   `json:"dry_run,omitempty" jsonschema_description:"If true, the content is only validated (size, type, content and transaction checks) and nothing is saved (optional)"`
 }
@@ -29,6 +30,7 @@ type MCPUploadTransactionAttachmentResponse struct {
 	Status            string                        `json:"status" jsonschema:"enum=created,enum=would_be_created" jsonschema_description:"Result status"`
 	UploadedSizeBytes int64                         `json:"uploaded_size_bytes" jsonschema_description:"Size in bytes of the decoded uploaded content"`
 	UploadedSHA256    string                        `json:"uploaded_sha256" jsonschema_description:"Hex encoded SHA-256 checksum of the decoded uploaded content"`
+	OriginalFileName  string                        `json:"original_file_name,omitempty" jsonschema_description:"Sanitized original file name which is (or would be) stored"`
 	ContentType       string                        `json:"content_type" jsonschema_description:"MIME type of the uploaded content"`
 	Verified          bool                          `json:"verified" jsonschema_description:"Whether the stored file has been read back and its size and SHA-256 checksum match the uploaded content (only when committed)"`
 	Attached          bool                          `json:"attached" jsonschema_description:"Whether the attachment is attached to the transaction specified by transaction_id"`
@@ -63,7 +65,7 @@ func (h *mcpUploadTransactionAttachmentToolHandler) Name() string {
 
 // Description returns the description of the MCP tool
 func (h *mcpUploadTransactionAttachmentToolHandler) Description() string {
-	return "Upload a receipt picture or PDF document as a transaction attachment, passing the file content as base64 in content_base64 (decoded size limited by max_file_size_bytes of get_server_capabilities). The content is validated against the file type (extension and magic bytes). Optionally attach it to an existing transaction (transaction_id, the transaction edit scope and attachment count limit apply); otherwise it stays unattached and its ID can be passed to add_transaction (attachment_ids) or update_transaction (add_attachment_ids). Returns the attachment ID, transaction association, size, MIME type and the SHA-256 checksum read back from storage. " + mcpAttachmentLimitationNote
+	return "Upload a receipt picture or PDF document as a transaction attachment, passing the file content as base64 in content_base64 (decoded size limited by max_file_size_bytes of get_server_capabilities). The content is validated against the file type (extension and magic bytes). Optionally attach it to an existing transaction (transaction_id, the transaction edit scope and attachment count limit apply); otherwise it stays unattached and its ID can be passed to add_transaction (attachment_ids) or update_transaction (add_attachment_ids). Pass the original file name in file_name to keep it as metadata. Returns the attachment ID, transaction association, original file name, size, MIME type and the SHA-256 checksum read back from storage. " + mcpAttachmentLimitationNote
 }
 
 // DataOperationType returns how the MCP tool operates on business records
@@ -103,7 +105,13 @@ func (h *mcpUploadTransactionAttachmentToolHandler) Handle(c *core.WebContext, c
 		return nil, nil, err
 	}
 
-	extension, err := mcpAttachmentResolveExtension(request.FileExtension, request.ContentType)
+	fileExtension := request.FileExtension
+
+	if fileExtension == "" && request.ContentType == "" && request.FileName != "" {
+		fileExtension = utils.GetFileNameExtension(models.SanitizeTransactionPictureOriginalFileName(request.FileName))
+	}
+
+	extension, err := mcpAttachmentResolveExtension(fileExtension, request.ContentType)
 
 	if err != nil {
 		return nil, nil, err
@@ -150,6 +158,7 @@ func (h *mcpUploadTransactionAttachmentToolHandler) Handle(c *core.WebContext, c
 		UploadedSizeBytes: int64(len(data)),
 		UploadedSHA256:    mcpAttachmentComputeChecksum(data),
 		ContentType:       utils.GetTransactionAttachmentContentType(extension),
+		OriginalFileName:  models.SanitizeTransactionPictureOriginalFileName(request.FileName),
 	}
 
 	if request.DryRun {
@@ -163,6 +172,9 @@ func (h *mcpUploadTransactionAttachmentToolHandler) Handle(c *core.WebContext, c
 		TransactionId:    models.TransactionPictureNewPictureTransactionId,
 		PictureExtension: extension,
 		CreatedIp:        c.ClientIP(),
+		OriginalFileName: models.SanitizeTransactionPictureOriginalFileName(request.FileName),
+		FileSize:         response.UploadedSizeBytes,
+		FileSha256:       response.UploadedSHA256,
 	}
 
 	err = services.GetTransactionPictureService().UploadPicture(c, pictureInfo, &mcpAttachmentContentFile{Reader: bytes.NewReader(data)})

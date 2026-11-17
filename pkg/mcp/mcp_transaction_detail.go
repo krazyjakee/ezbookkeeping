@@ -25,9 +25,12 @@ type MCPTransactionDetailGeoLocation struct {
 
 // MCPTransactionDetailAttachment represents an attachment (picture or document) of the transaction
 type MCPTransactionDetailAttachment struct {
-	Id          string `json:"id" jsonschema_description:"Attachment ID"`
-	Extension   string `json:"extension" jsonschema_description:"File extension of the attachment"`
-	ContentType string `json:"content_type,omitempty" jsonschema_description:"Content type of the attachment"`
+	Id               string `json:"id" jsonschema_description:"Attachment ID"`
+	Extension        string `json:"extension" jsonschema_description:"File extension of the attachment"`
+	ContentType      string `json:"content_type,omitempty" jsonschema_description:"Content type of the attachment"`
+	OriginalFileName string `json:"original_file_name,omitempty" jsonschema_description:"Original file name recorded at upload (empty for attachments uploaded before original file names were recorded)"`
+	SizeBytes        int64  `json:"size_bytes,omitempty" jsonschema_description:"Size in bytes recorded at upload (empty for older attachments)"`
+	SHA256           string `json:"sha256,omitempty" jsonschema_description:"Hex encoded SHA-256 checksum recorded at upload (empty for older attachments, use get_transaction_attachment to compute it from the stored file)"`
 }
 
 // MCPTransactionDetail represents the full information of a transaction
@@ -55,6 +58,7 @@ type MCPTransactionDetail struct {
 	ScheduledCreated       bool                              `json:"scheduled_created,omitzero" jsonschema_description:"Whether the transaction was created by a scheduled transaction"`
 	AttachmentCount        int                               `json:"attachment_count" jsonschema_description:"Count of attachments of the transaction"`
 	Attachments            []*MCPTransactionDetailAttachment `json:"attachments,omitempty" jsonschema_description:"Attachments of the transaction"`
+	References             []*MCPTransactionReference        `json:"references,omitempty" jsonschema_description:"Structured evidence / source references of the transaction (supplier, invoice / receipt number, external source ID, source document and row)"`
 	CreatedTime            string                            `json:"created_time,omitempty" jsonschema_description:"Creation time in RFC 3339 format (UTC)"`
 	UpdatedTime            string                            `json:"updated_time,omitempty" jsonschema_description:"Last update time in RFC 3339 format (UTC)"`
 	Editable               *bool                             `json:"editable,omitempty" jsonschema_description:"Whether the current user can still edit or delete this transaction according to the transaction edit scope setting"`
@@ -67,6 +71,7 @@ type mcpTxnDetailData struct {
 	tags        map[int64]*models.TransactionTag
 	tagIds      map[int64][]int64
 	attachments map[int64][]*models.TransactionPictureInfo
+	references  map[int64][]*models.TransactionReference
 }
 
 // mcpTxnLoadDetailData loads all related data of the given transactions which are used to render transaction details
@@ -133,6 +138,8 @@ func mcpTxnLoadDetailData(c *core.WebContext, uid int64, transactions []*models.
 			data.attachments = attachments
 		}
 	}
+
+	data.references = mcpReferenceLoad(c, uid, transactionIds, services)
 
 	return data, nil
 }
@@ -236,12 +243,19 @@ func mcpTxnBuildDetail(transaction *models.Transaction, data *mcpTxnDetailData, 
 
 			for i := 0; i < len(attachments); i++ {
 				detail.Attachments = append(detail.Attachments, &MCPTransactionDetailAttachment{
-					Id:          utils.Int64ToString(attachments[i].PictureId),
-					Extension:   attachments[i].PictureExtension,
-					ContentType: utils.GetTransactionAttachmentContentType(attachments[i].PictureExtension),
+					Id:               utils.Int64ToString(attachments[i].PictureId),
+					Extension:        attachments[i].PictureExtension,
+					ContentType:      utils.GetTransactionAttachmentContentType(attachments[i].PictureExtension),
+					OriginalFileName: attachments[i].OriginalFileName,
+					SizeBytes:        attachments[i].FileSize,
+					SHA256:           attachments[i].FileSha256,
 				})
 			}
 		}
+	}
+
+	if data != nil && data.references != nil {
+		detail.References = mcpReferenceBuildInfos(data.references[transaction.TransactionId])
 	}
 
 	if user != nil {

@@ -1,6 +1,8 @@
 package api
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"io"
 	"mime/multipart"
 
@@ -90,7 +92,18 @@ func (a *TransactionPicturesApi) TransactionPictureUploadHandler(c *core.WebCont
 		return nil, errs.Or(err, errs.ErrOperationFailed)
 	}
 
+	fileSha256, fileSize, err := computeTransactionPictureFileChecksum(pictureFile)
+
+	if err != nil {
+		pictureFile.Close()
+		log.Errorf(c, "[transaction_pictures.TransactionPictureUploadHandler] failed to compute checksum of transaction picture file for user \"uid:%d\", because %s", uid, err.Error())
+		return nil, errs.ErrOperationFailed
+	}
+
 	pictureInfo := a.createNewPictureInfoModel(uid, fileExtension, c.ClientIP())
+	pictureInfo.OriginalFileName = models.SanitizeTransactionPictureOriginalFileName(pictureFiles[0].Filename)
+	pictureInfo.FileSize = fileSize
+	pictureInfo.FileSha256 = fileSha256
 
 	clientSessionIds := form.Value["clientSessionId"]
 	clientSessionId := ""
@@ -260,6 +273,24 @@ func checkTransactionPictureFileContent(pictureFile multipart.File, fileExtensio
 	_, err = pictureFile.Seek(0, io.SeekStart)
 
 	return err
+}
+
+// computeTransactionPictureFileChecksum returns the hex encoded SHA-256 checksum and the size of the uploaded file, and rewinds the file to the beginning
+func computeTransactionPictureFileChecksum(pictureFile multipart.File) (string, int64, error) {
+	hash := sha256.New()
+	size, err := io.Copy(hash, pictureFile)
+
+	if err != nil {
+		return "", 0, err
+	}
+
+	_, err = pictureFile.Seek(0, io.SeekStart)
+
+	if err != nil {
+		return "", 0, err
+	}
+
+	return hex.EncodeToString(hash.Sum(nil)), size, nil
 }
 
 // setTransactionPictureResponseHeaders sets the security related response headers for the transaction picture or document

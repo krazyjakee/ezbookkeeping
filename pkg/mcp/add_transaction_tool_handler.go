@@ -35,6 +35,7 @@ type MCPAddTransactionRequest struct {
 	Comment                string                           `json:"comment,omitempty" jsonschema_description:"Transaction description (maximum length is reported by get_server_capabilities)"`
 	GeoLocation            *MCPTransactionDetailGeoLocation `json:"geo_location,omitempty" jsonschema_description:"Geographic location of the transaction (optional)"`
 	AttachmentIds          []string                         `json:"attachment_ids,omitempty" jsonschema_description:"IDs of uploaded but unattached attachments (returned by upload_transaction_attachment) to attach to the new transaction (optional, maximum count is reported by get_server_capabilities)"`
+	References             []*MCPTransactionReference       `json:"references,omitempty" jsonschema_description:"Structured evidence / source references of the transaction (optional), e.g. [{\"type\":\"supplier\",\"value\":\"ACME Ltd\"},{\"type\":\"invoice_number\",\"value\":\"INV-001\"}]. Maximum count and value length are reported by get_server_capabilities"`
 	DryRun                 bool                             `json:"dry_run,omitempty" jsonschema_description:"If true, the transaction will not be saved, only validated with the same rules as a real write (optional)"`
 }
 
@@ -49,6 +50,7 @@ type MCPAddTransactionResponse struct {
 	DestinationAccountBalance       string                `json:"destination_account_balance,omitempty" jsonschema_description:"Destination account balance (or outstanding balance for debt accounts) after the transaction (only for transfer transactions)"`
 	DestinationAccountSignedBalance string                `json:"destination_account_signed_balance,omitempty" jsonschema_description:"Signed accounting balance of the destination account after the transaction (only for transfer transactions)"`
 	Transaction                     *MCPTransactionDetail `json:"transaction,omitempty" jsonschema_description:"The persisted transaction (when committed) or the validated transaction which would be saved (when dry run, without ID)"`
+	ReferencesError                 string                `json:"references_error,omitempty" jsonschema_description:"Why the references could not be saved although the transaction has been saved (retry with update_transaction and references)"`
 }
 
 type mcpAddTransactionToolHandler struct{}
@@ -67,7 +69,7 @@ func (h *mcpAddTransactionToolHandler) Name() string {
 
 // Description returns the description of the MCP tool
 func (h *mcpAddTransactionToolHandler) Description() string {
-	return "Add a new transaction in ezBookkeeping. Accounts, category and tags can be specified by ID (preferred) or by name; ambiguous or unknown names are rejected with candidates. Receipts uploaded by upload_transaction_attachment can be attached via attachment_ids. Use dry_run to validate without saving. Returns the saved transaction ID (with its attachments) and the resulting account balances."
+	return "Add a new transaction in ezBookkeeping. Accounts, category and tags can be specified by ID (preferred) or by name; ambiguous or unknown names are rejected with candidates. Receipts uploaded by upload_transaction_attachment can be attached via attachment_ids, and evidence such as supplier, invoice / receipt number or external source ID can be recorded in references. Use dry_run to validate without saving. Returns the saved transaction ID (with its attachments) and the resulting account balances."
 }
 
 // DataOperationType returns how the MCP tool operates on business records
@@ -104,6 +106,12 @@ func (h *mcpAddTransactionToolHandler) Handle(c *core.WebContext, callToolReq *M
 	}
 
 	if err := h.validateRequest(addTransactionRequest); err != nil {
+		return nil, nil, err
+	}
+
+	references, err := mcpReferenceParse("references", addTransactionRequest.References)
+
+	if err != nil {
 		return nil, nil, err
 	}
 
@@ -201,6 +209,17 @@ func (h *mcpAddTransactionToolHandler) Handle(c *core.WebContext, callToolReq *M
 
 		log.Infof(c, "[add_transaction_tool_handler.Handle] user \"uid:%d\" has created a new transaction \"id:%d\" successfully", uid, transaction.TransactionId)
 
+		referencesError := ""
+
+		if len(references) > 0 {
+			err = mcpGetTransactionReferenceService(services).SetTransactionReferences(c, uid, transaction.TransactionId, references)
+
+			if err != nil {
+				log.Errorf(c, "[add_transaction_tool_handler.Handle] failed to save references of transaction \"id:%d\" for user \"uid:%d\", because %s", transaction.TransactionId, uid, err.Error())
+				referencesError = err.Error()
+			}
+		}
+
 		accountIds := []int64{sourceAccount.AccountId}
 
 		if transaction.Type == models.TRANSACTION_DB_TYPE_TRANSFER_OUT {
@@ -228,7 +247,7 @@ func (h *mcpAddTransactionToolHandler) Handle(c *core.WebContext, callToolReq *M
 			}
 		}
 
-		return h.createNewMCPAddTransactionResponse(transaction, newAccounts, detail, false)
+		return h.createNewMCPAddTransactionResponse(transaction, newAccounts, detail, false, referencesError)
 	} else {
 		newAccounts := make(map[int64]*models.Account)
 		sourceAccountCopy := *sourceAccount
@@ -271,13 +290,16 @@ func (h *mcpAddTransactionToolHandler) Handle(c *core.WebContext, callToolReq *M
 			tagIds: map[int64][]int64{
 				0: tagIds,
 			},
+			references: map[int64][]*models.TransactionReference{
+				0: references,
+			},
 		}
 
 		detail := mcpTxnBuildDetail(transaction, detailData, nil, false)
 		detail.Id = ""
 		detail.AttachmentCount = len(pictureIds)
 
-		return h.createNewMCPAddTransactionResponse(transaction, newAccounts, detail, true)
+		return h.createNewMCPAddTransactionResponse(transaction, newAccounts, detail, true, "")
 	}
 }
 
@@ -314,6 +336,10 @@ func (h *mcpAddTransactionToolHandler) validateRequest(addTransactionRequest *MC
 	}
 
 	if err := checkMCPStringLength("comment", addTransactionRequest.Comment, false, mcpTransactionCommentMaxLength); err != nil {
+		return err
+	}
+
+	if _, err := mcpReferenceParse("references", addTransactionRequest.References); err != nil {
 		return err
 	}
 
@@ -412,7 +438,7 @@ func (h *mcpAddTransactionToolHandler) createNewTransactionModel(c *core.WebCont
 	return transaction, nil
 }
 
-func (h *mcpAddTransactionToolHandler) createNewMCPAddTransactionResponse(transaction *models.Transaction, accountsMap map[int64]*models.Account, detail *MCPTransactionDetail, dryRun bool) (any, []*MCPTextContent, error) {
+func (h *mcpAddTransactionToolHandler) createNewMCPAddTransactionResponse(transaction *models.Transaction, accountsMap map[int64]*models.Account, detail *MCPTransactionDetail, dryRun bool, referencesError string) (any, []*MCPTextContent, error) {
 	var sourceAccount *models.Account
 	var destinationAccount *models.Account
 
@@ -427,10 +453,11 @@ func (h *mcpAddTransactionToolHandler) createNewMCPAddTransactionResponse(transa
 	}
 
 	response := MCPAddTransactionResponse{
-		Success:     true,
-		DryRun:      dryRun,
-		Committed:   !dryRun,
-		Transaction: detail,
+		Success:         true,
+		DryRun:          dryRun,
+		Committed:       !dryRun,
+		Transaction:     detail,
+		ReferencesError: referencesError,
 	}
 
 	if !dryRun {
