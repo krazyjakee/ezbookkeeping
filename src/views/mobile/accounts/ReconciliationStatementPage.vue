@@ -60,40 +60,53 @@
             </f7-list-item>
         </f7-list>
 
-        <f7-list strong inset dividers class="margin-vertical-half" v-if="finishQuery && !startTime && !endTime">
-            <f7-list-item :title="tt('Date Range')" :after="tt('All')"></f7-list-item>
-        </f7-list>
-
-        <f7-list strong inset dividers class="margin-vertical-half" v-if="finishQuery && (startTime || endTime)">
-            <f7-list-item :title="tt('Start Time')" :after="displayStartDateTime"></f7-list-item>
-            <f7-list-item :title="tt('End Time')" :after="displayEndDateTime"></f7-list-item>
-        </f7-list>
-
-        <f7-list strong inset dividers class="margin-vertical skeleton-text" v-if="finishQuery && loading">
-            <f7-list-item :title="tt('Total Transactions')" after="Count"></f7-list-item>
-            <f7-list-item :title="tt('Total Inflows')" after="Count"></f7-list-item>
-            <f7-list-item :title="tt('Total Outflows')" after="Count"></f7-list-item>
-            <f7-list-item :title="tt('Net Cash Flow')" after="Count"></f7-list-item>
-        </f7-list>
-
-        <f7-list strong inset dividers class="margin-vertical" v-if="finishQuery && !loading">
-            <f7-list-item :title="tt('Total Transactions')"
-                          :after="formatNumberToLocalizedNumerals(reconciliationStatements.transactions.length)"
-                          v-if="reconciliationStatements && reconciliationStatements.transactions"></f7-list-item>
-            <f7-list-item :title="tt('Total Inflows')" :after="displayTotalInflows"></f7-list-item>
-            <f7-list-item :title="tt('Total Outflows')" :after="displayTotalOutflows"></f7-list-item>
-            <f7-list-item :title="tt('Net Cash Flow')" :after="displayTotalBalance"></f7-list-item>
-        </f7-list>
-
-        <f7-list strong inset dividers class="margin-vertical skeleton-text" v-if="finishQuery && loading">
-            <f7-list-item :title="tt('Opening Balance')" after="Count"></f7-list-item>
-            <f7-list-item :title="tt('Closing Balance')" after="Count"></f7-list-item>
-        </f7-list>
-
-        <f7-list strong inset dividers class="margin-vertical" v-if="finishQuery && !loading">
-            <f7-list-item :title="tt('Opening Balance')" :after="displayOpeningBalance"></f7-list-item>
-            <f7-list-item :title="tt('Closing Balance')" :after="displayClosingBalance"></f7-list-item>
-        </f7-list>
+        <section class="ebk-panel reconciliation-statement-summary-panel" aria-labelledby="reconciliation-statement-summary-title"
+                 v-if="finishQuery">
+            <header class="ebk-panel-header-strip">
+                <span id="reconciliation-statement-summary-title">{{ tt('Reconciliation Statement') }}</span>
+                <span class="reconciliation-statement-summary-meta">{{ currentAccountCurrency }}</span>
+            </header>
+            <div class="reconciliation-statement-summary-period">
+                <span v-if="!startTime && !endTime">{{ tt('Date Range') }} · {{ tt('All') }}</span>
+                <span v-if="startTime || endTime">{{ displayStartDateTime }} – {{ displayEndDateTime }}</span>
+            </div>
+            <dl class="reconciliation-statement-summary-grid" :class="{ 'skeleton-text': loading }">
+                <div class="reconciliation-statement-summary-cell">
+                    <dt class="ebk-technical-heading">{{ tt('Opening Balance') }}</dt>
+                    <dd class="ebk-numeric">{{ loading ? '0.00 USD' : displayOpeningBalance }}</dd>
+                </div>
+                <div class="reconciliation-statement-summary-cell">
+                    <dt class="ebk-technical-heading">{{ tt('Closing Balance') }}</dt>
+                    <dd class="ebk-numeric">{{ loading ? '0.00 USD' : displayClosingBalance }}</dd>
+                </div>
+                <div class="reconciliation-statement-summary-cell">
+                    <dt class="ebk-technical-heading"><span aria-hidden="true">↑ </span>{{ tt('Total Inflows') }}</dt>
+                    <dd>
+                        <span v-if="loading">0.00 USD</span>
+                        <signed-amount :text="displayTotalInflows" :type="reconciliationStatements?.totalInflows?.isZero() === false ? 'income' : 'none'" v-else />
+                    </dd>
+                </div>
+                <div class="reconciliation-statement-summary-cell">
+                    <dt class="ebk-technical-heading"><span aria-hidden="true">↓ </span>{{ tt('Total Outflows') }}</dt>
+                    <dd>
+                        <span v-if="loading">0.00 USD</span>
+                        <signed-amount :text="displayTotalOutflows" :type="reconciliationStatements?.totalOutflows?.isZero() === false ? 'expense' : 'none'" v-else />
+                    </dd>
+                </div>
+                <div class="reconciliation-statement-summary-cell">
+                    <dt class="ebk-technical-heading">{{ tt('Net Cash Flow') }}</dt>
+                    <dd>
+                        <span v-if="loading">0.00 USD</span>
+                        <signed-amount :text="displayAbsoluteTotalBalance" :type="netCashFlowAmountType" v-else />
+                    </dd>
+                </div>
+                <div class="reconciliation-statement-summary-cell">
+                    <dt class="ebk-technical-heading">{{ tt('Total Transactions') }}</dt>
+                    <dd class="ebk-numeric">{{ loading ? '0' : formatNumberToLocalizedNumerals(reconciliationStatements?.transactions?.length ?? 0) }}</dd>
+                </div>
+            </dl>
+            <p class="reconciliation-statement-summary-text" aria-live="polite" v-if="!loading && reconciliationStatements">{{ balanceMovementSummary }}</p>
+        </section>
 
         <f7-list strong inset dividers media-list
                  class="skeleton-text margin-vertical transaction-info-list reconciliation-statement-list"
@@ -211,10 +224,13 @@
                                         </div>
                                     </div>
                                     <div class="item-after">
-                                        <div class="transaction-amount"
-                                             :class="{ 'text-expense': item.transaction.type === TransactionType.Expense, 'text-income': item.transaction.type === TransactionType.Income }">
-                                            <span v-if="item.transaction.type === TransactionType.Transfer && item.transaction.destinationAccountId === accountId">{{ getDisplayDestinationAmount(item.transaction) }}</span>
-                                            <span v-else-if="item.transaction.type !== TransactionType.Transfer || item.transaction.destinationAccountId !== accountId">{{ getDisplaySourceAmount(item.transaction) }}</span>
+                                        <div class="transaction-amount">
+                                            <signed-amount :text="getDisplayDestinationAmount(item.transaction)" :type="getTransactionAmountType(item.transaction)"
+                                                           :hide-sign="item.transaction.hideAmount"
+                                                           v-if="item.transaction.type === TransactionType.Transfer && item.transaction.destinationAccountId === accountId" />
+                                            <signed-amount :text="getDisplaySourceAmount(item.transaction)" :type="getTransactionAmountType(item.transaction)"
+                                                           :hide-sign="item.transaction.hideAmount"
+                                                           v-else-if="item.transaction.type !== TransactionType.Transfer || item.transaction.destinationAccountId !== accountId" />
                                         </div>
                                     </div>
                                 </div>
@@ -357,12 +373,15 @@
 </template>
 
 <script setup lang="ts">
+import SignedAmount from '@/components/common/SignedAmount.vue';
+
 import { ref, computed, nextTick } from 'vue';
 import type { Router } from 'framework7/types';
 
 import { useI18n } from '@/locales/helpers.ts';
 import { useI18nUIComponents, showLoading, hideLoading, onSwipeoutDeleted } from '@/lib/ui/mobile.ts';
 import { useReconciliationStatementPageBase } from '@/views/base/accounts/ReconciliationStatementPageBase.ts';
+import { useChartTextSummary } from '@/components/base/ChartSummaryBase.ts';
 
 import { useSettingsStore } from '@/stores/setting.ts';
 import { useUserStore } from '@/stores/user.ts';
@@ -441,9 +460,10 @@ const {
     displayEndDateTime,
     displayTotalInflows,
     displayTotalOutflows,
-    displayTotalBalance,
     displayOpeningBalance,
     displayClosingBalance,
+    netCashFlowAmountType,
+    displayAbsoluteTotalBalance,
     updatePageOpenTime,
     isReconciliationStatementsResponseEquals,
     setReconciliationStatements,
@@ -451,10 +471,26 @@ const {
     getDisplayTime,
     isSameAsDefaultTimezoneOffsetMinutes,
     getDisplayTimezone,
+    getTransactionAmountType,
     getDisplaySourceAmount,
     getDisplayDestinationAmount,
     getDisplayAccountBalance
 } = useReconciliationStatementPageBase();
+
+const { getBalanceMovementSummary } = useChartTextSummary();
+
+// one-sentence text summary of the statement (design guideline D7)
+const balanceMovementSummary = computed<string>(() => {
+    const totalInflows = reconciliationStatements.value?.totalInflows;
+    const totalOutflows = reconciliationStatements.value?.totalOutflows;
+
+    return getBalanceMovementSummary(
+        displayOpeningBalance.value,
+        displayClosingBalance.value,
+        totalInflows && !totalInflows.isZero() ? `+${displayTotalInflows.value}` : displayTotalInflows.value,
+        totalOutflows && !totalOutflows.isZero() ? `\u2212${displayTotalOutflows.value}` : displayTotalOutflows.value
+    );
+});
 
 const settingsStore = useSettingsStore();
 const userStore = useUserStore();
@@ -851,5 +887,65 @@ init();
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.reconciliation-statement-summary-panel {
+    margin: var(--ebk-space-3) var(--ebk-space-3) 0;
+}
+
+.reconciliation-statement-summary-meta {
+    margin-inline-start: auto;
+    color: var(--ebk-color-text-secondary);
+    font-weight: 400;
+    letter-spacing: normal !important;
+}
+
+.reconciliation-statement-summary-period {
+    padding: var(--ebk-space-2) var(--ebk-space-3) 0;
+    color: var(--ebk-color-text-secondary);
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.reconciliation-statement-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin: 0;
+}
+
+.reconciliation-statement-summary-cell {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ebk-space-1);
+    min-width: 0;
+    padding: var(--ebk-space-2) var(--ebk-space-3);
+    border-block-end: 1px solid var(--ebk-color-hairline);
+}
+
+.reconciliation-statement-summary-cell:nth-child(even) {
+    border-inline-start: 1px solid var(--ebk-color-hairline);
+}
+
+.reconciliation-statement-summary-cell > dt {
+    color: var(--ebk-color-text-secondary);
+}
+
+.reconciliation-statement-summary-cell > dd {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.reconciliation-statement-summary-cell > dd .ebk-signed-amount {
+    white-space: normal;
+}
+
+.reconciliation-statement-summary-text {
+    margin: 0;
+    padding: var(--ebk-space-2) var(--ebk-space-3) var(--ebk-space-3);
+    color: var(--ebk-color-text-secondary);
+    font-size: 0.875rem;
+    line-height: 1.45;
 }
 </style>

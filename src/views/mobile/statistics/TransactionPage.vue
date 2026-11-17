@@ -58,85 +58,114 @@
             </f7-list>
         </f7-popover>
 
-        <f7-card class="margin-vertical-half" v-if="analysisType === StatisticsAnalysisType.CategoricalAnalysis && query.categoricalChartType === CategoricalChartType.Pie.type">
-            <f7-card-header class="no-border display-block">
-                <div :class="{ 'statistics-chart-header': true, 'width-100': true, 'text-align-right': textDirection === TextDirection.LTR, 'text-align-left': textDirection === TextDirection.RTL}">
-                    <span style="margin-inline-end: 4px;">{{ tt('Sort by') }}</span>
-                    <f7-link href="#" popover-open=".sorting-type-popover-menu" :class="{ 'disabled': loading }">{{ querySortingTypeName }}</f7-link>
-                </div>
-            </f7-card-header>
-            <f7-card-content class="pie-chart-container" style="margin-top: -6px" :padding="false">
-                <pie-chart
-                    :items="[
-                        { name: '---', value: parseBigDecimal(60), color: '7c7c7f' },
-                        { name: '---', value: parseBigDecimal(20), color: 'a5a5aa' },
-                        { name: '---', value: parseBigDecimal(20), color: 'c5c5c9' }
-                    ]"
-                    :value-type="ChartValueType.Amount"
-                    :skeleton="true"
-                    :show-center-text="true"
-                    :show-selected-item-info="true"
-                    :use-custom-color="true"
-                    class="statistics-pie-chart"
-                    center-text-background="#cccccc"
-                    v-if="loading"
-                ></pie-chart>
-                <pie-chart
-                    :items="categoricalAnalysisData.items"
-                    :value-type="ChartValueType.Amount"
-                    :show-value="showAmountInChart"
-                    :show-percent="showPercentInCategoricalChart"
-                    :show-center-text="true"
-                    :show-selected-item-info="true"
-                    :enable-click-item="true"
-                    :default-currency="defaultCurrency"
-                    class="statistics-pie-chart"
-                    v-else-if="!loading"
-                    @click="onClickPieChartItem"
-                >
-                    <text class="statistics-pie-chart-total-amount-title" v-if="categoricalAnalysisData.items && categoricalAnalysisData.items.length">
-                        {{ totalAmountName }}
-                    </text>
-                    <text class="statistics-pie-chart-total-amount-value" v-if="categoricalAnalysisData.items && categoricalAnalysisData.items.length">
-                        {{ getDisplayAmount(categoricalAnalysisData.value, defaultCurrency, 16) }}
-                    </text>
-                    <text class="statistics-pie-chart-total-no-data" cy="50%" v-if="!categoricalAnalysisData.items || !categoricalAnalysisData.items.length">
-                        {{ tt('No data') }}
-                    </text>
-                </pie-chart>
-            </f7-card-content>
-        </f7-card>
+        <section class="ebk-panel statistics-period-panel" :class="{ 'disabled': loading }" :aria-label="tt('Date Range')">
+            <f7-link class="statistics-period-step" :class="{ 'disabled': reloading || !canShiftDateRange }" :aria-label="tt('Previous Period')" @click="shiftDateRange(-1)">
+                <f7-icon class="icon-with-direction" f7="chevron_left"></f7-icon>
+            </f7-link>
+            <f7-link class="statistics-period-name" :class="{ 'disabled': reloading || !canChangeDateRange }" popover-open=".date-popover-menu">
+                <span :class="{ 'tabbar-item-changed': isQueryDateRangeChanged }">{{ queryDateRangeName }}</span>
+            </f7-link>
+            <f7-link class="statistics-period-step" :class="{ 'disabled': reloading || !canShiftDateRange }" :aria-label="tt('Next Period')" @click="shiftDateRange(1)">
+                <f7-icon class="icon-with-direction" f7="chevron_right"></f7-icon>
+            </f7-link>
+            <f7-link class="statistics-period-aggregation" :class="{ 'disabled': reloading }" popover-open=".date-aggregation-popover-menu"
+                     v-if="analysisType === StatisticsAnalysisType.TrendAnalysis">
+                <span :class="{ 'tabbar-item-changed': trendDateAggregationType !== ChartDateAggregationType.Default.type }">{{ queryTrendDateAggregationTypeName }}</span>
+            </f7-link>
+            <f7-link class="statistics-period-aggregation" :class="{ 'disabled': reloading }" popover-open=".date-aggregation-popover-menu"
+                     v-if="analysisType === StatisticsAnalysisType.AssetTrends">
+                <span :class="{ 'tabbar-item-changed': assetTrendsDateAggregationType !== ChartDateAggregationType.Default.type }">{{ queryAssetTrendsDateAggregationTypeName }}</span>
+            </f7-link>
+        </section>
 
-        <f7-card class="margin-vertical-half" v-else-if="analysisType === StatisticsAnalysisType.CategoricalAnalysis && query.categoricalChartType === CategoricalChartType.Bar.type">
-            <f7-card-header class="no-border display-block">
-                <div class="statistics-chart-header display-flex width-100 justify-content-space-between">
-                    <div>
-                        {{ totalAmountName }}
-                    </div>
-                    <div class="align-self-flex-end">
-                        <span style="margin-inline-end: 4px;">{{ tt('Sort by') }}</span>
-                        <f7-link href="#" popover-open=".sorting-type-popover-menu">{{ querySortingTypeName }}</f7-link>
-                    </div>
+        <f7-block class="statistics-analysis-segmented" :class="{ 'disabled': loading || reloading }">
+            <f7-segmented strong round>
+                <f7-button round :key="item.type" :text="item.name" :active="analysisType === item.type"
+                           v-for="item in allAnalysisTypeItems"
+                           @click="setAnalysisType(item.type)"></f7-button>
+            </f7-segmented>
+        </f7-block>
+
+        <section class="ebk-panel statistics-panel" aria-labelledby="statistics-chart-panel-title">
+            <header class="ebk-panel-header-strip">
+                <span id="statistics-chart-panel-title" class="statistics-panel-title">{{ queryChartDataTypeName }}</span>
+                <div class="ebk-panel-header-actions statistics-panel-actions">
+                    <f7-segmented class="statistics-chart-type-segmented" v-if="allChartTypes.length">
+                        <f7-button small :key="chartType.type" :text="chartType.displayName"
+                                   :active="queryChartType === chartType.type"
+                                   :class="{ 'disabled': loading }"
+                                   v-for="chartType in allChartTypes"
+                                   @click="setChartType(chartType.type)"></f7-button>
+                    </f7-segmented>
+                    <f7-link class="statistics-sort-link" href="#" popover-open=".sorting-type-popover-menu" :class="{ 'disabled': loading }">
+                        <span>{{ tt('Sort by') }}</span>&nbsp;<span>{{ querySortingTypeName }}</span>
+                    </f7-link>
                 </div>
-                <div class="display-flex width-100">
-                    <div :class="{ 'statistics-list-item-overview-amount': true, 'text-expense': query.chartDataType === ChartDataType.OutflowsByAccount.type || query.chartDataType === ChartDataType.ExpenseByAccount.type || query.chartDataType === ChartDataType.ExpenseByPrimaryCategory.type || query.chartDataType === ChartDataType.ExpenseBySecondaryCategory.type, 'text-income': query.chartDataType === ChartDataType.InflowsByAccount.type || query.chartDataType === ChartDataType.IncomeByAccount.type || query.chartDataType === ChartDataType.IncomeByPrimaryCategory.type || query.chartDataType === ChartDataType.IncomeBySecondaryCategory.type }">
-                        <span v-if="!loading && categoricalAnalysisData && categoricalAnalysisData.items && categoricalAnalysisData.items.length">
-                            {{ getDisplayAmount(categoricalAnalysisData.value, defaultCurrency) }}
-                        </span>
-                        <span :class="{ 'skeleton-text': loading }" v-else-if="loading || !categoricalAnalysisData || !categoricalAnalysisData.items || !categoricalAnalysisData.items.length">
-                            {{ loading ? '***.**' : '---' }}
-                        </span>
-                    </div>
+            </header>
+
+            <state-panel type="error" class="statistics-state-panel" :title="tt('Unable to retrieve transaction statistics')"
+                         v-if="loadingError">
+                <template #actions>
+                    <f7-button small fill-false outline @click="retryLoading">{{ tt('Refresh') }}</f7-button>
+                </template>
+            </state-panel>
+
+            <template v-else-if="analysisType === StatisticsAnalysisType.CategoricalAnalysis && query.categoricalChartType === CategoricalChartType.Pie.type">
+                <div class="pie-chart-container">
+                    <pie-chart
+                        :items="[
+                            { name: '---', value: parseBigDecimal(60), color: '7c7c7f' },
+                            { name: '---', value: parseBigDecimal(20), color: 'a5a5aa' },
+                            { name: '---', value: parseBigDecimal(20), color: 'c5c5c9' }
+                        ]"
+                        :value-type="ChartValueType.Amount"
+                        :skeleton="true"
+                        :show-center-text="true"
+                        :show-selected-item-info="true"
+                        :use-custom-color="true"
+                        class="statistics-pie-chart"
+                        center-text-background="#cccccc"
+                        v-if="loading"
+                    ></pie-chart>
+                    <pie-chart
+                        :items="categoricalAnalysisData.items"
+                        :value-type="ChartValueType.Amount"
+                        :show-value="showAmountInChart"
+                        :show-percent="showPercentInCategoricalChart"
+                        :show-center-text="true"
+                        :show-selected-item-info="true"
+                        :enable-click-item="true"
+                        :default-currency="defaultCurrency"
+                        class="statistics-pie-chart"
+                        v-else-if="!loading && hasCategoricalData"
+                        @click="onClickPieChartItem"
+                    >
+                        <text class="statistics-pie-chart-total-amount-title">
+                            {{ totalAmountName }}
+                        </text>
+                        <text class="statistics-pie-chart-total-amount-value">
+                            {{ getDisplayAmount(categoricalAnalysisData.value, defaultCurrency, 16) }}
+                        </text>
+                    </pie-chart>
+                    <state-panel type="empty" class="statistics-state-panel" :title="tt('No transaction data')"
+                                 v-else-if="!loading && !hasCategoricalData" />
                 </div>
-            </f7-card-header>
-            <f7-card-content style="margin-top: -14px" :padding="false">
-                <f7-list strong inset dividers class="statistics-list-item skeleton-text" v-if="loading">
-                    <f7-list-item class="item-no-divider" link="#" :key="itemIdx" v-for="itemIdx in [ 1, 2, 3 ]">
+            </template>
+
+            <template v-else-if="analysisType === StatisticsAnalysisType.CategoricalAnalysis && query.categoricalChartType === CategoricalChartType.Bar.type">
+                <div class="statistics-panel-total">
+                    <span class="ebk-technical-heading">{{ totalAmountName }}</span>
+                    <span class="statistics-panel-total-amount" :class="{ 'skeleton-text': loading }" v-if="loading">***.**</span>
+                    <signed-amount class="statistics-panel-total-amount"
+                                   :text="getSignedAmount(categoricalAnalysisData.value).text"
+                                   :type="getSignedAmount(categoricalAnalysisData.value).type"
+                                   v-else-if="hasCategoricalData" />
+                </div>
+                <f7-list dividers class="statistics-ranked-list skeleton-text" v-if="loading">
+                    <f7-list-item class="statistics-list-item" link="#" :key="itemIdx" v-for="itemIdx in [ 1, 2, 3 ]">
                         <template #media>
-                            <div class="display-flex no-padding-horizontal">
-                                <div class="display-flex align-items-center statistics-icon">
-                                    <f7-icon f7="app_fill"></f7-icon>
-                                </div>
+                            <div class="display-flex align-items-center statistics-icon">
+                                <f7-icon f7="app_fill"></f7-icon>
                             </div>
                         </template>
                         <template #title>
@@ -158,23 +187,18 @@
                     </f7-list-item>
                 </f7-list>
 
-                <f7-list strong inset dividers v-else-if="!loading && (!categoricalAnalysisData || !categoricalAnalysisData.items || !categoricalAnalysisData.items.length)">
-                    <f7-list-item :title="tt('No transaction data')"></f7-list-item>
-                </f7-list>
+                <state-panel type="empty" class="statistics-state-panel" :title="tt('No transaction data')"
+                             v-else-if="!loading && !hasCategoricalData" />
 
-                <f7-list strong inset dividers v-else-if="!loading && categoricalAnalysisData && categoricalAnalysisData.items && categoricalAnalysisData.items.length">
-                    <f7-list-item class="item-no-divider display-none"></f7-list-item>
-                    <template v-for="(item, idx) in categoricalAnalysisData.items">
-                        <f7-list-item class="statistics-list-item item-no-divider"
+                <f7-list dividers class="statistics-ranked-list" v-else-if="!loading && hasCategoricalData">
+                    <template :key="idx" v-for="(item, idx) in categoricalAnalysisData.items">
+                        <f7-list-item class="statistics-list-item"
                                       :link="getTransactionItemLinkUrl(item.id)"
-                                      :key="idx"
                                       v-if="!item.hidden">
                             <template #media>
-                                <div class="display-flex no-padding-horizontal">
-                                    <div class="display-flex align-items-center statistics-icon">
-                                        <ItemIcon :icon-type="getIconType(queryChartDataCategory, item.iconType)" :icon-id="item.icon" :color="item.color" v-if="item.icon"></ItemIcon>
-                                        <f7-icon f7="pencil_ellipsis_rectangle" v-else-if="!item.icon"></f7-icon>
-                                    </div>
+                                <div class="display-flex align-items-center statistics-icon">
+                                    <ItemIcon :icon-type="getIconType(queryChartDataCategory, item.iconType)" :icon-id="item.icon" :color="item.color" v-if="item.icon"></ItemIcon>
+                                    <f7-icon f7="pencil_ellipsis_rectangle" v-else-if="!item.icon"></f7-icon>
                                 </div>
                             </template>
 
@@ -186,7 +210,7 @@
                             </template>
 
                             <template #after>
-                                <span>{{ getDisplayAmount(item.value, defaultCurrency) }}</span>
+                                <signed-amount :text="getSignedAmount(item.value).text" :type="getSignedAmount(item.value).type" />
                             </template>
 
                             <template #inner-end>
@@ -199,20 +223,9 @@
                         </f7-list-item>
                     </template>
                 </f7-list>
-            </f7-card-content>
-        </f7-card>
+            </template>
 
-        <f7-card class="margin-vertical-half" v-else-if="analysisType === StatisticsAnalysisType.TrendAnalysis">
-            <f7-card-header class="no-border display-block">
-                <div class="statistics-chart-header display-flex width-100 justify-content-space-between">
-                    <div></div>
-                    <div class="align-self-flex-end">
-                        <span style="margin-inline-end: 4px;">{{ tt('Sort by') }}</span>
-                        <f7-link href="#" popover-open=".sorting-type-popover-menu">{{ querySortingTypeName }}</f7-link>
-                    </div>
-                </div>
-            </f7-card-header>
-            <f7-card-content style="margin-top: -14px" :padding="false">
+            <div class="statistics-trends-chart" v-else-if="analysisType === StatisticsAnalysisType.TrendAnalysis">
                 <trends-bar-chart
                     chart-mode="monthly"
                     :loading="loading || reloading"
@@ -231,20 +244,9 @@
                     :default-currency="defaultCurrency"
                     @click="onClickTrendChartItem"
                 />
-            </f7-card-content>
-        </f7-card>
+            </div>
 
-        <f7-card class="margin-vertical-half" v-else-if="analysisType === StatisticsAnalysisType.AssetTrends">
-            <f7-card-header class="no-border display-block">
-                <div class="statistics-chart-header display-flex width-100 justify-content-space-between">
-                    <div></div>
-                    <div class="align-self-flex-end">
-                        <span style="margin-inline-end: 4px;">{{ tt('Sort by') }}</span>
-                        <f7-link href="#" popover-open=".sorting-type-popover-menu">{{ querySortingTypeName }}</f7-link>
-                    </div>
-                </div>
-            </f7-card-header>
-            <f7-card-content style="margin-top: -14px" :padding="false">
+            <div class="statistics-trends-chart" v-else-if="analysisType === StatisticsAnalysisType.AssetTrends">
                 <trends-bar-chart
                     chart-mode="daily"
                     :loading="loading || reloading"
@@ -263,8 +265,49 @@
                     :default-currency="defaultCurrency"
                     @click="onClickTrendChartItem"
                 />
-            </f7-card-content>
-        </f7-card>
+            </div>
+        </section>
+
+        <section class="ebk-panel statistics-panel" aria-labelledby="statistics-ranked-list-title"
+                 v-if="!loading && !loadingError && rankedListItems.length">
+            <header class="ebk-panel-header-strip">
+                <span id="statistics-ranked-list-title">{{ tt('Breakdown') }}</span>
+                <span class="statistics-panel-meta">{{ rankedListMeta }}</span>
+            </header>
+            <ol class="statistics-ranked-rows">
+                <li class="statistics-ranked-row" :key="item.key" v-for="(item, idx) in rankedListItems">
+                    <span class="statistics-ranked-row-index ebk-numeric">{{ idx + 1 }}</span>
+                    <span class="statistics-ranked-row-name">{{ item.name }}</span>
+                    <span class="statistics-ranked-row-percent ebk-numeric" v-if="item.percent">{{ item.percent }}</span>
+                    <signed-amount class="statistics-ranked-row-amount" :text="item.amount.text" :type="item.amount.type" />
+                </li>
+            </ol>
+        </section>
+
+        <section class="ebk-panel statistics-panel statistics-summary-panel" aria-labelledby="statistics-summary-title"
+                 v-if="!loading && !loadingError && (incomeExpenseTotals || summarySentences.length)">
+            <header class="ebk-panel-header-strip">
+                <span id="statistics-summary-title">{{ tt('Report Summary') }}</span>
+                <span class="statistics-panel-meta">{{ queryDateRangeName }}</span>
+            </header>
+            <div class="statistics-summary-row" v-if="incomeExpenseTotals">
+                <div class="statistics-summary-cell">
+                    <span class="ebk-technical-heading"><span aria-hidden="true">↑ </span>{{ tt('Income') }}</span>
+                    <signed-amount :text="getSignedAmount(incomeExpenseTotals.income, 'income').text" :type="getSignedAmount(incomeExpenseTotals.income, 'income').type" />
+                </div>
+                <div class="statistics-summary-cell">
+                    <span class="ebk-technical-heading"><span aria-hidden="true">↓ </span>{{ tt('Expense') }}</span>
+                    <signed-amount :text="getSignedAmount(incomeExpenseTotals.expense, 'expense').text" :type="getSignedAmount(incomeExpenseTotals.expense, 'expense').type" />
+                </div>
+                <div class="statistics-summary-cell">
+                    <span class="ebk-technical-heading">{{ tt('Net Movement') }}</span>
+                    <signed-amount :text="getNetAmount(incomeExpenseTotals.net).text" :type="getNetAmount(incomeExpenseTotals.net).type" />
+                </div>
+            </div>
+            <div class="statistics-summary-text" aria-live="polite" v-if="summarySentences.length">
+                <p :key="idx" v-for="(sentence, idx) in summarySentences">{{ sentence }}</p>
+            </div>
+        </section>
 
         <f7-popover class="sorting-type-popover-menu">
             <f7-list dividers>
@@ -281,29 +324,6 @@
             </f7-list>
         </f7-popover>
 
-        <f7-toolbar tabbar bottom :class="{ 'compact-tabbar': true, 'toolbar-item-auto-size': true, 'disabled': loading }">
-            <f7-link :class="{ 'disabled': reloading || !canShiftDateRange }" :aria-label="tt('Previous Period')" @click="shiftDateRange(-1)">
-                <f7-icon class="icon-with-direction" f7="arrow_left_square"></f7-icon>
-            </f7-link>
-            <f7-link :class="{ 'tabbar-text-with-ellipsis': true, 'disabled': reloading || !canChangeDateRange }" popover-open=".date-popover-menu">
-                <span :class="{ 'tabbar-item-changed': isQueryDateRangeChanged }">{{ queryDateRangeName }}</span>
-            </f7-link>
-            <f7-link :class="{ 'disabled': reloading || !canShiftDateRange }" :aria-label="tt('Next Period')" @click="shiftDateRange(1)">
-                <f7-icon class="icon-with-direction" f7="arrow_right_square"></f7-icon>
-            </f7-link>
-            <f7-link :class="{ 'tabbar-text-with-ellipsis': true, 'disabled': reloading }" popover-open=".date-aggregation-popover-menu"
-                     v-if="analysisType === StatisticsAnalysisType.TrendAnalysis">
-                <span :class="{ 'tabbar-item-changed': trendDateAggregationType !== ChartDateAggregationType.Default.type }">{{ queryTrendDateAggregationTypeName }}</span>
-            </f7-link>
-            <f7-link :class="{ 'tabbar-text-with-ellipsis': true, 'disabled': reloading }" popover-open=".date-aggregation-popover-menu"
-                     v-if="analysisType === StatisticsAnalysisType.AssetTrends">
-                <span :class="{ 'tabbar-item-changed': assetTrendsDateAggregationType !== ChartDateAggregationType.Default.type }">{{ queryAssetTrendsDateAggregationTypeName }}</span>
-            </f7-link>
-            <f7-link class="tabbar-text-with-ellipsis" :key="chartType.type"
-                     v-for="chartType in allChartTypes" @click="setChartType(chartType.type)">
-                <span :class="{ 'tabbar-item-changed': queryChartType === chartType.type }">{{ chartType.displayName }}</span>
-            </f7-link>
-        </f7-toolbar>
 
         <f7-popover class="date-popover-menu"
                     @popover:open="scrollPopoverToSelectedItem">
@@ -392,18 +412,22 @@
 </template>
 
 <script setup lang="ts">
+import SignedAmount from '@/components/common/SignedAmount.vue';
+import StatePanel from '@/components/common/StatePanel.vue';
+
 import { ref, computed } from 'vue';
 import type { Router } from 'framework7/types';
 
 import { useI18n } from '@/locales/helpers.ts';
-import { useStatisticsTransactionPageBase } from '@/views/base/statistics/StatisticsTransactionPageBase.ts';
+import { type StatisticsAmountKind, useStatisticsTransactionPageBase } from '@/views/base/statistics/StatisticsTransactionPageBase.ts';
+import { useChartTextSummary } from '@/components/base/ChartSummaryBase.ts';
 
 import { useAccountsStore } from '@/stores/account.ts';
 import { useTransactionCategoriesStore } from '@/stores/transactionCategory.ts';
 import { useStatisticsStore } from '@/stores/statistics.ts';
 
 import type { TypeAndDisplayName } from '@/core/base.ts';
-import { TextDirection } from '@/core/text.ts';
+import type { BigDecimal } from '@/core/numeral.ts';
 import { type TextualYearMonth, type TimeRangeAndDateType, DateRangeScene, DateRange } from '@/core/datetime.ts';
 import { type CategoricalChartSourceDataItem, ChartValueType } from '@/core/chart.ts';
 import {
@@ -416,8 +440,10 @@ import {
 } from '@/core/statistics.ts';
 
 import { isString, isNumber } from '@/lib/common.ts';
-import { parseBigDecimal } from '@/lib/numeral.ts';
+import { BIG_DECIMAL_ZERO, parseBigDecimal } from '@/lib/numeral.ts';
 import {
+    getYearMonthDayDateTime,
+    parseDateTimeFromUnixTime,
     getGregorianCalendarYearAndMonthFromUnixTime,
     getYearMonthFirstUnixTime,
     getYearMonthLastUnixTime,
@@ -433,12 +459,27 @@ const props = defineProps<{
     f7router: Router.Router;
 }>();
 
+interface StatisticsSignedAmount {
+    text: string;
+    type: 'income' | 'expense' | 'none';
+}
+
+interface StatisticsRankedListItem {
+    key: string;
+    name: string;
+    percent: string;
+    amount: StatisticsSignedAmount;
+}
+
 const {
     tt,
-    getCurrentLanguageTextDirection,
     getAllCategoricalChartTypes,
+    formatDateTimeToLongDate,
+    formatDateTimeToGregorianLikeShortYearMonth,
     formatPercentToLocalizedNumerals
 } = useI18n();
+
+const { getRankedItemsSummary, getSeriesSummary, getIncomeExpenseSummary } = useChartTextSummary();
 
 const { showPrompt, showToast, routeBackOnError } = useI18nUIComponents();
 
@@ -478,6 +519,8 @@ const {
     categoricalAnalysisData,
     trendsAnalysisData,
     assetTrendsData,
+    chartDataAmountKind,
+    incomeExpenseTotals,
     canShowCustomDateRange,
     getTransactionCategoricalAnalysisDataItemDisplayColor,
     getDisplayAmount
@@ -493,7 +536,141 @@ const showCustomDateRangeSheet = ref<boolean>(false);
 const showCustomMonthRangeSheet = ref<boolean>(false);
 const showMoreActionSheet = ref<boolean>(false);
 
-const textDirection = computed<TextDirection>(() => getCurrentLanguageTextDirection());
+const allAnalysisTypeItems = computed<{ type: StatisticsAnalysisType, name: string }[]>(() => [
+    { type: StatisticsAnalysisType.CategoricalAnalysis, name: tt('Categories') },
+    { type: StatisticsAnalysisType.TrendAnalysis, name: tt('Trends') },
+    { type: StatisticsAnalysisType.AssetTrends, name: tt('Asset Trends') }
+]);
+
+const hasCategoricalData = computed<boolean>(() => !!categoricalAnalysisData.value && !!categoricalAnalysisData.value.items && categoricalAnalysisData.value.items.length > 0);
+
+// ranked list with exact values that accompanies the chart (design guideline D7)
+const rankedListItems = computed<StatisticsRankedListItem[]>(() => {
+    const result: StatisticsRankedListItem[] = [];
+
+    if (analysisType.value === StatisticsAnalysisType.CategoricalAnalysis) {
+        // the bar chart type is already a ranked list with exact values
+        if (query.value.categoricalChartType !== CategoricalChartType.Pie.type || !hasCategoricalData.value) {
+            return result;
+        }
+
+        for (const item of categoricalAnalysisData.value.items) {
+            if (item.hidden) {
+                continue;
+            }
+
+            result.push({
+                key: item.id,
+                name: item.name,
+                percent: showPercentInCategoricalChart.value && item.percent >= 0 && item.value.isPositiveOrZero() ? formatPercentToLocalizedNumerals(item.percent, 2, '<0.01') : '',
+                amount: getSignedAmount(item.value)
+            });
+        }
+    } else if (analysisType.value === StatisticsAnalysisType.TrendAnalysis && trendsAnalysisData.value) {
+        // trends are flows: each series is ranked by its total of the selected period
+        const items = trendsAnalysisData.value.items.filter(item => !item.hidden);
+        let positiveTotal: BigDecimal = BIG_DECIMAL_ZERO;
+
+        for (const item of items) {
+            if (item.value.isPositive()) {
+                positiveTotal = positiveTotal.add(item.value);
+            }
+        }
+
+        for (const item of items) {
+            const percent = positiveTotal.isPositive() && item.value.isPositive() ? item.value.divide(positiveTotal).multiply(100).toDoubleNumber() : -1;
+
+            result.push({
+                key: item.id,
+                name: translateNameInTrendsChart.value ? tt(item.name) : item.name,
+                percent: percent >= 0 && items.length > 1 ? formatPercentToLocalizedNumerals(percent, 2, '<0.01') : '',
+                amount: getSignedAmount(item.value)
+            });
+        }
+    } else if (analysisType.value === StatisticsAnalysisType.AssetTrends && assetTrendsData.value) {
+        // balances are stocks: each series shows its latest value, never a sum of the period
+        for (const item of assetTrendsData.value.items) {
+            if (item.hidden || !item.items.length) {
+                continue;
+            }
+
+            const latestValue = item.items[item.items.length - 1]!.value;
+
+            result.push({
+                key: item.id,
+                name: translateNameInTrendsChart.value ? tt(item.name) : item.name,
+                percent: '',
+                amount: { text: getDisplayAmount(latestValue, defaultCurrency.value), type: 'none' }
+            });
+        }
+    }
+
+    return result;
+});
+
+const rankedListMeta = computed<string>(() => {
+    if (analysisType.value === StatisticsAnalysisType.AssetTrends) {
+        const latestDates: string[] = [];
+
+        for (const item of assetTrendsData.value?.items ?? []) {
+            const latest = item.items[item.items.length - 1];
+
+            if (!item.hidden && latest) {
+                latestDates.push(formatDateTimeToLongDate(getYearMonthDayDateTime(latest.year, latest.month, latest.day)));
+                break;
+            }
+        }
+
+        return latestDates[0] ?? '';
+    }
+
+    return queryDateRangeName.value;
+});
+
+const summarySentences = computed<string[]>(() => {
+    const sentences: string[] = [];
+    const formatValue = (value: BigDecimal) => getDisplayAmount(value, defaultCurrency.value);
+
+    if (incomeExpenseTotals.value) {
+        sentences.push(getIncomeExpenseSummary(
+            getSignedAmountText(getSignedAmount(incomeExpenseTotals.value.income, 'income')),
+            getSignedAmountText(getSignedAmount(incomeExpenseTotals.value.expense, 'expense')),
+            getSignedAmountText(getNetAmount(incomeExpenseTotals.value.net))
+        ));
+    }
+
+    if (analysisType.value === StatisticsAnalysisType.CategoricalAnalysis && hasCategoricalData.value) {
+        sentences.push(getRankedItemsSummary(categoricalAnalysisData.value.items.filter(item => !item.hidden), {
+            totalName: totalAmountName.value,
+            formatValue: formatValue,
+            showPercent: showPercentInCategoricalChart.value
+        }));
+    } else if (analysisType.value === StatisticsAnalysisType.TrendAnalysis && trendsAnalysisData.value) {
+        const items = trendsAnalysisData.value.items.filter(item => !item.hidden);
+
+        if (items.length === 1 && items[0]) {
+            sentences.push(getSeriesSummary(translateNameInTrendsChart.value ? tt(items[0].name) : items[0].name,
+                items[0].items.map(dataItem => ({ label: formatDateTimeToGregorianLikeShortYearMonth(parseDateTimeFromUnixTime(getYearMonthFirstUnixTime(dataItem))), value: dataItem.value })),
+                formatValue));
+        } else if (items.length > 1) {
+            sentences.push(getRankedItemsSummary(items.map(item => ({ name: translateNameInTrendsChart.value ? tt(item.name) : item.name, value: item.value })), {
+                totalName: totalAmountName.value,
+                formatValue: formatValue,
+                showPercent: false
+            }));
+        }
+    } else if (analysisType.value === StatisticsAnalysisType.AssetTrends && assetTrendsData.value) {
+        const items = assetTrendsData.value.items.filter(item => !item.hidden);
+
+        if (items.length === 1 && items[0] && items[0].items.length) {
+            sentences.push(getSeriesSummary(translateNameInTrendsChart.value ? tt(items[0].name) : items[0].name,
+                [items[0].items[items[0].items.length - 1]!].map(dataItem => ({ label: formatDateTimeToLongDate(getYearMonthDayDateTime(dataItem.year, dataItem.month, dataItem.day)), value: dataItem.value })),
+                formatValue));
+        }
+    }
+
+    return sentences.filter(sentence => !!sentence);
+});
 
 const allChartTypes = computed<TypeAndDisplayName[]>(() => {
     if (analysisType.value === StatisticsAnalysisType.CategoricalAnalysis) {
@@ -519,6 +696,54 @@ const queryChartType = computed<number | undefined>({
         setChartType(value);
     }
 });
+
+function getSignedAmount(value: BigDecimal, kind?: StatisticsAmountKind): StatisticsSignedAmount {
+    const amountKind = kind ?? chartDataAmountKind.value;
+
+    if (amountKind === 'none' || value.isZero()) {
+        return { text: getDisplayAmount(value, defaultCurrency.value), type: 'none' };
+    }
+
+    if (value.isNegative()) {
+        return { text: getDisplayAmount(value.negate(), defaultCurrency.value), type: amountKind === 'income' ? 'expense' : 'income' };
+    }
+
+    return { text: getDisplayAmount(value, defaultCurrency.value), type: amountKind };
+}
+
+function getNetAmount(value: BigDecimal): StatisticsSignedAmount {
+    return getSignedAmount(value, value.isZero() ? 'none' : 'income');
+}
+
+function getSignedAmountText(amount: StatisticsSignedAmount): string {
+    if (amount.type === 'income') {
+        return `+${amount.text}`;
+    } else if (amount.type === 'expense') {
+        return `\u2212${amount.text}`;
+    }
+
+    return amount.text;
+}
+
+function setAnalysisType(type: StatisticsAnalysisType): void {
+    if (analysisType.value === type) {
+        return;
+    }
+
+    let chartDataType = query.value.chartDataType;
+
+    if (!ChartDataType.isAvailableForAnalysisType(chartDataType, type)) {
+        chartDataType = type === StatisticsAnalysisType.AssetTrends ? ChartDataType.DefaultForAssetTrends.type : ChartDataType.Default.type;
+    }
+
+    setChartDataType(type, chartDataType);
+}
+
+function retryLoading(): void {
+    loadingError.value = null;
+    loading.value = true;
+    init();
+}
 
 function getTransactionItemLinkUrl(itemId: string, dateRange?: TimeRangeAndDateType): string {
     return `/transaction/list?${statisticsStore.getTransactionListPageParams(analysisType.value, itemId, dateRange)}`;
@@ -916,7 +1141,8 @@ init();
 }
 
 .statistics-pie-chart .pie-chart-text-group {
-    fill: #fff;
+    fill: var(--ebk-color-text-primary);
+    font-variant-numeric: tabular-nums;
     text-anchor: middle;
 }
 
@@ -944,5 +1170,215 @@ init();
 .chart-data-type-popover-menu .popover-inner {
     max-height: 440px;
     overflow-y: auto;
+}
+
+/* Instrument panel layout (#32) */
+.statistics-period-panel {
+    display: flex;
+    align-items: center;
+    gap: var(--ebk-space-1);
+    margin: var(--ebk-space-3) var(--ebk-space-3) 0;
+    padding: var(--ebk-space-1) var(--ebk-space-2);
+    min-height: 52px;
+}
+
+.statistics-period-panel .statistics-period-step {
+    flex: 0 0 auto;
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
+}
+
+.statistics-period-panel .statistics-period-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    justify-content: center;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.statistics-period-panel .statistics-period-name > span,
+.statistics-period-panel .statistics-period-aggregation > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.statistics-period-panel .statistics-period-aggregation {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 40%;
+    min-height: 44px;
+    padding-inline: var(--ebk-space-2);
+    border-inline-start: 1px solid var(--ebk-color-hairline);
+    font-size: 0.875rem;
+}
+
+.statistics-analysis-segmented.block {
+    margin: var(--ebk-space-3) var(--ebk-space-3) 0;
+    padding: 0;
+}
+
+.statistics-panel {
+    margin: var(--ebk-space-3) var(--ebk-space-3) 0;
+    overflow: hidden;
+}
+
+.statistics-panel:last-of-type {
+    margin-block-end: var(--ebk-space-4);
+}
+
+.statistics-panel .ebk-panel-header-strip {
+    flex-wrap: wrap;
+    padding-block: var(--ebk-space-1);
+}
+
+.statistics-panel-title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.statistics-panel-meta {
+    color: var(--ebk-color-text-secondary);
+    font-weight: 400;
+    letter-spacing: normal !important;
+    text-transform: none !important;
+    font-variant-numeric: tabular-nums;
+}
+
+.statistics-panel-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--ebk-space-2);
+    font-size: 0.75rem;
+    font-weight: 400;
+}
+
+.statistics-chart-type-segmented.segmented {
+    width: auto;
+}
+
+.statistics-chart-type-segmented .button {
+    min-height: 32px;
+    padding-inline: var(--ebk-space-2);
+    font-size: 0.75rem;
+}
+
+.statistics-sort-link {
+    min-height: 32px;
+    white-space: nowrap;
+}
+
+.statistics-state-panel {
+    margin: var(--ebk-space-3);
+}
+
+.statistics-panel .pie-chart-container {
+    padding-block: var(--ebk-space-2);
+}
+
+.statistics-panel-total {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--ebk-space-2);
+    padding: var(--ebk-space-3) var(--ebk-space-3) 0;
+    color: var(--ebk-color-text-secondary);
+}
+
+.statistics-panel-total-amount {
+    color: var(--ebk-color-text-primary);
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.statistics-panel .list.statistics-ranked-list,
+.statistics-trends-chart .list {
+    margin: 0;
+    --f7-list-inset-side-margin: 0;
+    --f7-list-strong-bg-color: transparent;
+    --f7-list-outline-border-color: transparent;
+}
+
+.statistics-ranked-rows {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.statistics-ranked-row {
+    display: flex;
+    align-items: center;
+    gap: var(--ebk-space-2);
+    min-height: 52px;
+    padding: var(--ebk-space-2) var(--ebk-space-3);
+    border-block-end: 1px solid var(--ebk-color-hairline);
+}
+
+.statistics-ranked-row:last-child {
+    border-block-end: 0;
+}
+
+.statistics-ranked-row-index {
+    flex: 0 0 1.5rem;
+    color: var(--ebk-color-text-secondary);
+    font-size: 0.75rem;
+}
+
+.statistics-ranked-row-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.statistics-ranked-row-percent {
+    flex: 0 0 auto;
+    color: var(--ebk-color-text-secondary);
+    font-size: 0.75rem;
+}
+
+.statistics-ranked-row-amount {
+    flex: 0 0 auto;
+    font-weight: 600;
+}
+
+.statistics-summary-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.statistics-summary-cell {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ebk-space-1);
+    min-width: 0;
+    padding: var(--ebk-space-3);
+    color: var(--ebk-color-text-secondary);
+}
+
+.statistics-summary-cell + .statistics-summary-cell {
+    border-inline-start: 1px solid var(--ebk-color-hairline);
+}
+
+.statistics-summary-cell > .ebk-signed-amount {
+    font-size: 1rem;
+    font-weight: 600;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.statistics-summary-text {
+    padding: var(--ebk-space-3);
+    border-block-start: 1px solid var(--ebk-color-hairline);
+    line-height: 1.5;
+}
+
+.statistics-summary-text > p {
+    margin: 0;
+}
+
+.statistics-summary-text > p + p {
+    margin-block-start: var(--ebk-space-2);
 }
 </style>

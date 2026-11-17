@@ -9,7 +9,7 @@
                       :start-time="startTime" :end-time="endTime"
                       :start-year-month="undefined" :end-year-month="undefined"
                       :sorting-type="ChartSortingType.Amount.type"
-                      :data-aggregation-type="ChartDataAggregationType.Last"
+                      :data-aggregation-type="ChartDataAggregationType.Last" legend-value-mode="last"
                       :date-aggregation-type="ChartDateAggregationType.Month.type"
                       :fiscal-year-start="fiscalYearStart" :items="items"
                       :value-type="ChartValueType.Amount" :show-value="showAmountInHomePage"

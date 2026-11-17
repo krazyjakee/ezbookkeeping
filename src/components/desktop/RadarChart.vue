@@ -23,6 +23,10 @@ import { BIG_DECIMAL_ZERO, isBigDecimal } from '@/lib/numeral.ts';
 import { max } from '@/lib/math.ts';
 import { getDisplayColor } from '@/lib/color.ts';
 import { getChartAnimationOptions } from '@/lib/motion.ts';
+import {
+    getChartThemePalette,
+    getChartTooltipStyleOptions
+} from '@/components/base/ChartThemeBase.ts';
 
 interface RadarChartData {
     indicators: RadarChartDataItem[];
@@ -94,7 +98,7 @@ const radarData = computed<RadarChartData>(() => {
             indicators.push({
                 name: name,
                 max: maxValue.toDoubleNumber(),
-                color: isDarkMode.value ? '#ccc' : '#333'
+                color: getChartThemePalette(isDarkMode.value).textSecondary as ColorStyleValue
             });
         }
 
@@ -152,7 +156,7 @@ const radarData = computed<RadarChartData>(() => {
             indicators.push({
                 name: '',
                 max: 0,
-                color: isDarkMode.value ? '#ccc' : '#333'
+                color: getChartThemePalette(isDarkMode.value).textSecondary as ColorStyleValue
             });
         }
     }
@@ -168,11 +172,7 @@ const chartOptions = computed<object>(() => {
     return {
         tooltip: {
             trigger: 'item',
-            backgroundColor: isDarkMode.value ? '#333' : '#fff',
-            borderColor: isDarkMode.value ? '#333' : '#fff',
-            textStyle: {
-                color: isDarkMode.value ? '#eee' : '#333'
-            },
+            ...getChartTooltipStyleOptions(isDarkMode.value),
             formatter: (params: CallbackDataParams) => {
                 return radarData.value.allSeries[params.dataIndex ?? 0]?.tooltip ?? '';
             }
@@ -184,7 +184,7 @@ const chartOptions = computed<object>(() => {
             top: 0,
             data: radarData.value.allSeries.map(item => item.id),
             textStyle: {
-                color: isDarkMode.value ? '#eee' : '#333'
+                color: getChartThemePalette(isDarkMode.value).textPrimary
             },
             formatter: (id: string) => radarData.value.seriesIdMap[id]?.name ?? id
         },
@@ -193,12 +193,12 @@ const chartOptions = computed<object>(() => {
             splitNumber: (!props.skeleton && radarData.value.allSeries.length) ? 5 : 1,
             splitLine: {
                 lineStyle: {
-                    color: (!props.skeleton && radarData.value.allSeries.length) ? '#e8e8e7' : '#d3d3d3'
+                    color: (!props.skeleton && radarData.value.allSeries.length) ? getChartThemePalette(isDarkMode.value).axisLine : '#d3d3d3'
                 }
             },
             splitArea: {
                 areaStyle: {
-                    color: (!props.skeleton && radarData.value.allSeries.length) ? (isDarkMode.value ? ['#363534', '#1a1a1a'] : ['#faf8f4', '#fff']) : ['#d3d3d3', '#d3d3d3']
+                    color: (!props.skeleton && radarData.value.allSeries.length) ? [getChartThemePalette(isDarkMode.value).surfaceSunken, getChartThemePalette(isDarkMode.value).surface] : ['#d3d3d3', '#d3d3d3']
                 }
             },
             indicator: radarData.value.indicators

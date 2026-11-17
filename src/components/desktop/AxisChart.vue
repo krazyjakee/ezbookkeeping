@@ -29,6 +29,18 @@ import { BIG_DECIMAL_ZERO, BIG_DECIMAL_NEGATIVE_INFINITY, BIG_DECIMAL_POSITIVE_I
 import { getDisplayColor } from '@/lib/color.ts';
 import { sortStatisticsItems } from '@/lib/statistics.ts';
 import { getChartAnimationOptions } from '@/lib/motion.ts';
+import {
+    CHART_EXPENSE_LINE_TYPE,
+    getChartThemePalette,
+    getChartTooltipStyleOptions,
+    getChartAxisPointerLabelOptions,
+    getChartAxisLabelStyleOptions,
+    getChartAxisLineOptions,
+    getChartSplitLineOptions,
+    getChartLegendStyleOptions,
+    getChartDecal,
+    getChartSeriesSymbol
+} from '@/components/base/ChartThemeBase.ts';
 
 export type AxisChartDisplayType = 'line' | 'area' | 'column' | 'bubble';
 
@@ -49,7 +61,10 @@ interface AxisChartDataItem {
     stack?: string;
     smooth?: boolean;
     showSymbol?: boolean;
-    symbolSize?: (data: number) => number;
+    symbol?: string;
+    symbolSize?: number | ((data: number) => number);
+    lineStyle?: object;
+    barMaxWidth?: number;
     animation: boolean;
     data: number[];  // only used for echarts rendering, the actual value is in allOriginalData
 }
@@ -93,6 +108,9 @@ const props = defineProps<{
     tooltipExtraColumnNames?: string[];
     tooltipExtraColumnTotalValues?: (categoryIndex: number, totalValue: BigDecimal, visibleSeriesIds: string[]) => string[];
     tooltipExtraColumnValues?: (seriesId: string, categoryIndex: number, currentValue: BigDecimal) => string[];
+    dashedLines?: boolean; // expense series are drawn with dashed lines (design guideline D7)
+    legendValueMode?: 'sum' | 'last' | 'none'; // value shown next to each legend label: 'sum' for flows (default), 'last' (latest point) for balances
+    lastValueIndex?: number; // index of the latest category that has data, used by the 'last' legend value mode
 }>();
 
 const emit = defineEmits<{
@@ -190,16 +208,25 @@ const axisChartData = computed<AxisChartData>(() => {
             }
         }
 
+        const seriesIndex = allSeries.length;
+        const decal = getChartDecal(seriesIndex, isDarkMode.value);
         const finalItem: AxisChartDataItem = {
             id: item.id ?? getItemName(item.name),
             name: item.id ?? getItemName(item.name),
             itemStyle: {
-                color: getDisplayColor(props.useCustomColor && item.color ? item.color : chartColors.value[allSeries.length % chartColors.value.length]),
+                color: getDisplayColor(props.useCustomColor && item.color ? item.color : chartColors.value[seriesIndex % chartColors.value.length]),
+                ...(decal ? { decal: decal } : {})
             },
             selected: true,
             type: 'line',
             smooth: props.smoothCurve,
             showSymbol: !props.hideLineSymbols,
+            symbol: getChartSeriesSymbol(seriesIndex),
+            symbolSize: 6,
+            lineStyle: {
+                width: 2,
+                type: props.dashedLines ? CHART_EXPENSE_LINE_TYPE : 'solid'
+            },
             ...getChartAnimationOptions(!props.noAnimation && !props.skeleton),
             data: allAmounts.map(amount => amount.toDoubleNumber())
         };
@@ -216,6 +243,7 @@ const axisChartData = computed<AxisChartData>(() => {
             finalItem.areaStyle = {};
         } else if (props.type === 'column') {
             finalItem.type = 'bar';
+            finalItem.barMaxWidth = 48;
         } else if (props.type === 'bubble') {
             finalItem.type = 'scatter';
             finalItem.symbolSize = (data: number): number => {
@@ -277,22 +305,59 @@ const yAxisWidth = computed<number>(() => {
     return width;
 });
 
+const seriesLegendDisplayValues = computed<Record<string, string>>(() => {
+    const ret: Record<string, string> = {};
+    const legendValueMode = props.legendValueMode ?? 'sum';
+
+    if (legendValueMode === 'none' || props.skeleton || props.oneHundredPercentStacked || props.type === 'bubble') {
+        return ret;
+    }
+
+    for (const [series, index] of itemAndIndex(axisChartData.value.allSeries)) {
+        const values = axisChartData.value.allOriginalData[index] ?? [];
+
+        if (!values.length) {
+            continue;
+        }
+
+        if (legendValueMode === 'last') {
+            const lastIndex = isNumber(props.lastValueIndex) && props.lastValueIndex >= 0 && props.lastValueIndex < values.length ? props.lastValueIndex : values.length - 1;
+            ret[series.id] = getDisplayValue(values[lastIndex] ?? BIG_DECIMAL_ZERO);
+        } else {
+            let total: BigDecimal = BIG_DECIMAL_ZERO;
+
+            for (const value of values) {
+                total = total.add(value);
+            }
+
+            ret[series.id] = getDisplayValue(total);
+        }
+    }
+
+    return ret;
+});
+
 const chartOptions = computed<object>(() => {
+    const palette = getChartThemePalette(isDarkMode.value);
+
     return {
+        backgroundColor: 'transparent',
         tooltip: {
             trigger: 'axis',
             axisPointer: {
-                type: 'cross',
-                label: {
-                    backgroundColor: isDarkMode.value ? '#333' : '#fff',
-                    color: isDarkMode.value ? '#eee' : '#333'
+                type: props.type === 'column' ? 'shadow' : 'cross',
+                label: getChartAxisPointerLabelOptions(isDarkMode.value),
+                lineStyle: {
+                    color: palette.copperLine
                 },
+                crossStyle: {
+                    color: palette.copperLine
+                },
+                shadowStyle: {
+                    color: isDarkMode.value ? 'rgba(236, 226, 217, 0.05)' : 'rgba(54, 47, 42, 0.05)'
+                }
             },
-            backgroundColor: isDarkMode.value ? '#333' : '#fff',
-            borderColor: isDarkMode.value ? '#333' : '#fff',
-            textStyle: {
-                color: isDarkMode.value ? '#eee' : '#333'
-            },
+            ...getChartTooltipStyleOptions(isDarkMode.value),
             formatter: (params: CallbackDataParams[]) => {
                 let tooltip = '';
                 let totalAmount: BigDecimal = BIG_DECIMAL_ZERO;
@@ -391,7 +456,7 @@ const chartOptions = computed<object>(() => {
                     const displayTotalAmount = getDisplayValue(totalAmount);
                     let totalColumnCount = 2;
 
-                    let totalTooltip = `<tr><td><span class="chart-pointer" style="background-color: ${isDarkMode.value ? '#eee' : '#333'}"></span>`
+                    let totalTooltip = `<tr><td><span class="chart-pointer" style="background-color: ${palette.textPrimary}"></span>`
                         + `<span>${props.totalNameInTooltip}</span></td><td><span class="ms-5" style="float: inline-end">${displayTotalAmount}</span></td>`;
 
                     if (props.tooltipExtraColumnNames) {
@@ -407,7 +472,7 @@ const chartOptions = computed<object>(() => {
                     }
 
                     totalTooltip += '</tr>';
-                    totalTooltip += `<tr><td colspan="${totalColumnCount}" ${actualDisplayItemCount > 0 ? 'style="border-bottom: ' + (isDarkMode.value ? '#eee' : '#333') + ' dashed 1px"' : ''}></td></tr>`;
+                    totalTooltip += `<tr><td colspan="${totalColumnCount}" ${actualDisplayItemCount > 0 ? 'style="border-bottom: ' + palette.hairline + ' solid 1px"' : ''}></td></tr>`;
                     tooltip = totalTooltip + tooltip;
                 }
 
@@ -438,10 +503,12 @@ const chartOptions = computed<object>(() => {
             bottom: props.legendPosition === 'bottom' ? 5 : undefined,
             data: axisChartData.value.allSeries.map(item => item.name),
             selected: selectedLegends.value,
-            textStyle: {
-                color: isDarkMode.value ? '#eee' : '#333'
-            },
-            formatter: (id: string) => allItemsMap.value[id] ? getItemName(allItemsMap.value[id].name) : id
+            ...getChartLegendStyleOptions(isDarkMode.value),
+            formatter: (id: string) => {
+                const name = allItemsMap.value[id] ? getItemName(allItemsMap.value[id].name) : id;
+                const legendValue = seriesLegendDisplayValues.value[id];
+                return legendValue ? `${name}  ${legendValue}` : name;
+            }
         },
         grid: {
             left: props.noMargin ? 0 : (props.hideYAxisLabels ? 10 : yAxisWidth.value),
@@ -456,14 +523,17 @@ const chartOptions = computed<object>(() => {
                 boundaryGap: !props.hideYAxisLabels,
                 inverse: textDirection.value === TextDirection.RTL,
                 axisLine: {
-                    show: !props.hideXAxisLine
+                    show: !props.hideXAxisLine,
+                    ...getChartAxisLineOptions(isDarkMode.value)
                 },
                 axisTick: {
-                    show: !props.hideXAxisLine
+                    show: !props.hideXAxisLine,
+                    ...getChartAxisLineOptions(isDarkMode.value)
                 },
                 axisLabel: {
                     show: !props.hideXAxisLabels,
-                    color: isDarkMode.value ? '#888' : '#666'
+                    hideOverlap: true,
+                    ...getChartAxisLabelStyleOptions(isDarkMode.value)
                 }
             }
         ],
@@ -474,7 +544,7 @@ const chartOptions = computed<object>(() => {
                 max: props.oneHundredPercentStacked ? 100 : undefined,
                 axisLabel: {
                     show: !props.hideYAxisLabels && (props.showValue !== false || props.valueType !== ChartValueType.Amount),
-                    color: isDarkMode.value ? '#888' : '#666',
+                    ...getChartAxisLabelStyleOptions(isDarkMode.value),
                     formatter: (value: number) => {
                         return getDisplayValue(parseBigDecimal(value));
                     }
@@ -487,12 +557,7 @@ const chartOptions = computed<object>(() => {
                         }
                     }
                 },
-                splitLine: {
-                    show: !props.hideHorizontalGridLines,
-                    lineStyle: {
-                        color: isDarkMode.value ? '#4f4f4f' : '#e1e6f2',
-                    }
-                }
+                splitLine: getChartSplitLineOptions(isDarkMode.value, !props.hideHorizontalGridLines)
             }
         ],
         series: axisChartData.value.allSeries

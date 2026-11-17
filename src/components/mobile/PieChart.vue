@@ -19,13 +19,11 @@
 
             <circle class="pie-chart-text-background"
                     cx="0" cy="0"
-                    stroke="#ddd"
-                    :style="{ '--pie-chart-text-background': centerTextBackground ? centerTextBackground : '#7f2020' }"
+                    :style="centerTextBackground ? { '--pie-chart-text-background': centerTextBackground } : undefined"
                     :r="diameter / 2.5"
                     v-if="showCenterText"/>
 
-            <circle cx="0" cy="0"
-                    stroke="#ddd"
+            <circle class="pie-chart-text-border" cx="0" cy="0"
                     fill="transparent"
                     :r="diameter / 2.5"
                     v-if="showCenterText"/>
@@ -287,16 +285,21 @@ function clickItem(item: CommonPieChartDataItem): void {
 }
 
 .pie-chart-background {
-    fill: #f0f0f0;
+    fill: var(--ebk-color-surface-sunken);
 }
 
-.dark .pie-chart-background {
-    fill: #181818;
-}
-
+/* the center of the donut is the panel surface with the total and its label (design guideline §4.5) */
 .pie-chart-text-background {
-    --pie-chart-text-background: #7f2020;
+    --pie-chart-text-background: var(--ebk-color-surface);
     fill: var(--pie-chart-text-background);
+}
+
+.pie-chart-text-border {
+    stroke: var(--ebk-color-hairline);
+}
+
+.pie-chart-item {
+    stroke-linecap: butt;
 }
 
 .pie-chart-text-group {

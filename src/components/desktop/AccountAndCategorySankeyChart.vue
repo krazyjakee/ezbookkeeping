@@ -29,6 +29,10 @@ import { isString, isNumber } from '@/lib/common.ts';
 import { BIG_DECIMAL_ZERO } from '@/lib/numeral.ts';
 import { getExpenseAndIncomeAmountColor } from '@/lib/ui/common.ts';
 import { getChartAnimationOptions } from '@/lib/motion.ts';
+import {
+    getChartLabelTextStyleOptions,
+    getChartTooltipStyleOptions
+} from '@/components/base/ChartThemeBase.ts';
 
 enum SankeyChartDepth {
     PrimaryIncomeCategory = 0,
@@ -244,11 +248,7 @@ const chartOptions = computed<object>(() => {
     return {
         tooltip: {
             trigger: 'item',
-            backgroundColor: isDarkMode.value ? '#333' : '#fff',
-            borderColor: isDarkMode.value ? '#333' : '#fff',
-            textStyle: {
-                color: isDarkMode.value ? '#eee' : '#333'
-            },
+            ...getChartTooltipStyleOptions(isDarkMode.value),
             formatter: (params: CallbackDataParams) => {
                 if (params.dataType === 'node') {
                     const dataItem = params.data as SankeyChartNodeItem;
@@ -310,6 +310,7 @@ const chartOptions = computed<object>(() => {
                 roam: true,
                 layoutIterations: 0,
                 label: {
+                    ...getChartLabelTextStyleOptions(isDarkMode.value),
                     formatter: (params: CallbackDataParams) => {
                         const dataItem = params.data as SankeyChartNodeItem;
                         return dataItem.displayName;

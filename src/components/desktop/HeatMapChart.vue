@@ -21,6 +21,11 @@ import { type AxisChartSourceDataItem, ChartValueType } from '@/core/chart.ts';
 import { isArray } from '@/lib/common.ts';
 import { BIG_DECIMAL_ZERO, BIG_DECIMAL_POSITIVE_INFINITY, parseBigDecimal } from '@/lib/numeral.ts';
 import { getChartAnimationOptions } from '@/lib/motion.ts';
+import {
+    getChartAxisLabelStyleOptions,
+    getChartThemePalette,
+    getChartTooltipStyleOptions
+} from '@/components/base/ChartThemeBase.ts';
 
 interface HeatMapData {
     allSeriesNames: string[];
@@ -161,11 +166,7 @@ const yAxisWidth = computed<number>(() => {
 const chartOptions = computed<object>(() => {
     return {
         tooltip: {
-            backgroundColor: isDarkMode.value ? '#333' : '#fff',
-            borderColor: isDarkMode.value ? '#333' : '#fff',
-            textStyle: {
-                color: isDarkMode.value ? '#eee' : '#333'
-            },
+            ...getChartTooltipStyleOptions(isDarkMode.value),
             formatter: (params: CallbackDataParams) => {
                 if (!props.showValue) {
                     return '';
@@ -196,7 +197,7 @@ const chartOptions = computed<object>(() => {
                     color: isDarkMode.value ? [ '#1a1a1a', '#c67e48' ] : [ '#faf8f4', '#c67e48' ]
                 },
                 textStyle: {
-                    color: isDarkMode.value ? '#888' : '#666'
+                    ...getChartAxisLabelStyleOptions(isDarkMode.value)
                 },
                 formatter: (value: number) => {
                     if (!props.showValue) {
@@ -226,7 +227,7 @@ const chartOptions = computed<object>(() => {
                 data: props.allCategoryNames,
                 inverse: textDirection.value === TextDirection.RTL,
                 axisLabel: {
-                    color: isDarkMode.value ? '#888' : '#666'
+                    ...getChartAxisLabelStyleOptions(isDarkMode.value)
                 }
             }
         ],
@@ -236,7 +237,7 @@ const chartOptions = computed<object>(() => {
                 data: heatMapData.value.allSeriesNames,
                 inverse: true,
                 axisLabel: {
-                    color: isDarkMode.value ? '#888' : '#666'
+                    ...getChartAxisLabelStyleOptions(isDarkMode.value)
                 }
             }
         ],
@@ -247,7 +248,7 @@ const chartOptions = computed<object>(() => {
                 data: heatMapData.value.data,
                 label: {
                     show: props.showValue ?? false,
-                    color: isDarkMode.value ? '#eee' : '#333',
+                    color: getChartThemePalette(isDarkMode.value).textPrimary,
                     formatter: (params: CallbackDataParams) => {
                         if (!props.showValue) {
                             return '';

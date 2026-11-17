@@ -12,6 +12,9 @@
                 :hide-line-symbols="hideLineSymbols"
                 :no-margin="noMargin"
                 :smooth-curve="smoothCurve"
+                :dashed-lines="dashedLines"
+                :legend-value-mode="finalLegendValueMode"
+                :last-value-index="lastDataIndex"
                 :translate-name="translateName"
                 :default-currency="defaultCurrency" :use-custom-color="useCustomColor"
                 :enable-click-item="enableClickItem"
@@ -106,6 +109,8 @@ interface DesktopTrendsChartProps<T extends TrendsChartDateType> extends CommonT
     smoothCurve?: boolean;
     hideLegend?: boolean;
     legendPosition?: 'top' | 'bottom';
+    dashedLines?: boolean;
+    legendValueMode?: 'sum' | 'last' | 'none'; // defaults to 'last' for balance data (last value aggregation) and 'sum' otherwise
 }
 
 const props = defineProps<DesktopTrendsChartProps<TrendsChartDateType>>();
@@ -129,6 +134,14 @@ const { allDateRanges } = useTrendsChartBase(props);
 const userStore = useUserStore();
 
 const axisChart = useTemplateRef<AxisChartType>('axisChart');
+
+const finalLegendValueMode = computed<'sum' | 'last' | 'none'>(() => {
+    if (props.legendValueMode) {
+        return props.legendValueMode;
+    }
+
+    return props.dataAggregationType === ChartDataAggregationType.Last ? 'last' : 'sum';
+});
 
 const chartDisplayType = computed<AxisChartDisplayType | undefined>(() => {
     if (props.type === TrendChartType.Area.type) {
@@ -216,39 +229,7 @@ const allSeriesData = computed<AxisChartSourceDataItem[]>(() => {
         const dateRangeAmountMap: Record<string, ({ value: BigDecimal } & (Year1BasedMonth | YearMonthDay))[]> = {};
 
         for (const dataItem of item.items) {
-            let dateRangeKey = '';
-
-            if (props.chartMode === 'daily' && 'month' in dataItem) {
-                if (props.dateAggregationType === ChartDateAggregationType.Year.type) {
-                    dateRangeKey = dataItem.year.toString();
-                } else if (props.dateAggregationType === ChartDateAggregationType.FiscalYear.type) {
-                    const fiscalYear = getFiscalYearFromUnixTime(
-                        getYearMonthFirstUnixTime({ year: dataItem.year, month1base: dataItem.month }),
-                        props.fiscalYearStart
-                    );
-                    dateRangeKey = fiscalYear.toString();
-                } else if (props.dateAggregationType === ChartDateAggregationType.Quarter.type) {
-                    dateRangeKey = `${dataItem.year}-${Math.floor((dataItem.month - 1) / 3) + 1}`;
-                } else if (props.dateAggregationType === ChartDateAggregationType.Month.type) {
-                    dateRangeKey = `${dataItem.year}-${dataItem.month}`;
-                } else { // if (props.dateAggregationType === ChartDateAggregationType.Day.type) {
-                    dateRangeKey = `${dataItem.year}-${dataItem.month}-${dataItem.day}`;
-                }
-            } else if (props.chartMode === 'monthly' && 'month1base' in dataItem) {
-                if (props.dateAggregationType === ChartDateAggregationType.Year.type) {
-                    dateRangeKey = dataItem.year.toString();
-                } else if (props.dateAggregationType === ChartDateAggregationType.FiscalYear.type) {
-                    const fiscalYear = getFiscalYearFromUnixTime(
-                        getYearMonthFirstUnixTime({ year: dataItem.year, month1base: dataItem.month1base }),
-                        props.fiscalYearStart
-                    );
-                    dateRangeKey = fiscalYear.toString();
-                } else if (props.dateAggregationType === ChartDateAggregationType.Quarter.type) {
-                    dateRangeKey = `${dataItem.year}-${Math.floor((dataItem.month1base - 1) / 3) + 1}`;
-                } else { // if (props.dateAggregationType === ChartDateAggregationType.Month.type) {
-                    dateRangeKey = `${dataItem.year}-${dataItem.month1base}`;
-                }
-            }
+            const dateRangeKey = getDataItemDateRangeKey(dataItem);
 
             const dataItems = dateRangeAmountMap[dateRangeKey] || [];
             dataItems.push(dataItem);
@@ -281,6 +262,32 @@ const allSeriesData = computed<AxisChartSourceDataItem[]>(() => {
     }
 
     return result;
+});
+
+// index of the latest period that has data in any series, later periods (e.g. future months) are empty
+const lastDataIndex = computed<number>(() => {
+    const dateRangeKeyIndexes: Record<string, number> = {};
+    let lastIndex = -1;
+
+    for (const [dateRange, index] of itemAndIndex(allDateRanges.value)) {
+        dateRangeKeyIndexes[getDateRangeKey(dateRange) ?? ''] = index;
+    }
+
+    for (const item of props.items) {
+        if (item.hidden) {
+            continue;
+        }
+
+        for (const dataItem of item.items) {
+            const index = dateRangeKeyIndexes[getDataItemDateRangeKey(dataItem)];
+
+            if (isNumber(index) && index > lastIndex) {
+                lastIndex = index;
+            }
+        }
+    }
+
+    return lastIndex;
 });
 
 const seriesIdValuesMap = computed<Record<string, BigDecimal[]>>(() => {
@@ -320,6 +327,44 @@ const yoyIndexMap = computed<Record<number, number>>(() => {
 
     return result;
 });
+
+function getDataItemDateRangeKey(dataItem: Year1BasedMonth | YearMonthDay): string {
+    let dateRangeKey = '';
+
+    if (props.chartMode === 'daily' && 'month' in dataItem) {
+        if (props.dateAggregationType === ChartDateAggregationType.Year.type) {
+            dateRangeKey = dataItem.year.toString();
+        } else if (props.dateAggregationType === ChartDateAggregationType.FiscalYear.type) {
+            const fiscalYear = getFiscalYearFromUnixTime(
+                getYearMonthFirstUnixTime({ year: dataItem.year, month1base: dataItem.month }),
+                props.fiscalYearStart
+            );
+            dateRangeKey = fiscalYear.toString();
+        } else if (props.dateAggregationType === ChartDateAggregationType.Quarter.type) {
+            dateRangeKey = `${dataItem.year}-${Math.floor((dataItem.month - 1) / 3) + 1}`;
+        } else if (props.dateAggregationType === ChartDateAggregationType.Month.type) {
+            dateRangeKey = `${dataItem.year}-${dataItem.month}`;
+        } else { // if (props.dateAggregationType === ChartDateAggregationType.Day.type) {
+            dateRangeKey = `${dataItem.year}-${dataItem.month}-${dataItem.day}`;
+        }
+    } else if (props.chartMode === 'monthly' && 'month1base' in dataItem) {
+        if (props.dateAggregationType === ChartDateAggregationType.Year.type) {
+            dateRangeKey = dataItem.year.toString();
+        } else if (props.dateAggregationType === ChartDateAggregationType.FiscalYear.type) {
+            const fiscalYear = getFiscalYearFromUnixTime(
+                getYearMonthFirstUnixTime({ year: dataItem.year, month1base: dataItem.month1base }),
+                props.fiscalYearStart
+            );
+            dateRangeKey = fiscalYear.toString();
+        } else if (props.dateAggregationType === ChartDateAggregationType.Quarter.type) {
+            dateRangeKey = `${dataItem.year}-${Math.floor((dataItem.month1base - 1) / 3) + 1}`;
+        } else { // if (props.dateAggregationType === ChartDateAggregationType.Month.type) {
+            dateRangeKey = `${dataItem.year}-${dataItem.month1base}`;
+        }
+    }
+
+    return dateRangeKey;
+}
 
 function getDateRangeKey(dateRange: YearUnixTime | FiscalYearUnixTime | YearQuarterUnixTime | YearMonthUnixTime | YearMonthDayUnixTime, yearOffset?: number): string | undefined {
     if (props.dateAggregationType === ChartDateAggregationType.Day.type && props.chartMode !== 'daily') {
@@ -488,8 +533,25 @@ function exportData(): { headers: string[], data: string[][] } {
     return axisChart.value?.exportData() ?? { headers: [], data: [] };
 }
 
+/**
+ * Returns the displayed periods and the values of each visible series, used by pages to render the data table
+ * and the text summary that accompany the chart (design guideline D7)
+ */
+function getDisplayData(): { periods: string[], lastDataIndex: number, series: { id: string, name: string, values: BigDecimal[] }[] } {
+    return {
+        periods: allDisplayDateRanges.value,
+        lastDataIndex: lastDataIndex.value,
+        series: allSeriesData.value.map(item => ({
+            id: item.id ?? item.name,
+            name: props.translateName ? tt(item.name) : item.name,
+            values: item.values
+        }))
+    };
+}
+
 defineExpose({
-    exportData
+    exportData,
+    getDisplayData
 })
 </script>
 
