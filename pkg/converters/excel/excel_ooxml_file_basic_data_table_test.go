@@ -9,6 +9,12 @@ import (
 	"github.com/mayswind/ezbookkeeping/pkg/errs"
 )
 
+func TestCreateNewExcelOOXMLFileBasicDataTable_InvalidFile(t *testing.T) {
+	datatable, err := CreateNewExcelOOXMLFileBasicDataTable([]byte("not an xlsx file"), false)
+	assert.NotNil(t, err)
+	assert.Nil(t, datatable)
+}
+
 func TestExcelOOXMLFileBasicDataTableDataRowCount(t *testing.T) {
 	testdata, err := os.ReadFile("../../../testdata/simple_excel_file.xlsx")
 	assert.Nil(t, err)
