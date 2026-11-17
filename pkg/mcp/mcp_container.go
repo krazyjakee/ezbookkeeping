@@ -2,6 +2,7 @@ package mcp
 
 import (
 	"encoding/json/v2"
+	"errors"
 
 	"github.com/invopop/jsonschema"
 	orderedmap "github.com/wk8/go-ordered-map/v2"
@@ -81,6 +82,38 @@ func InitializeMCPHandlers(config *settings.Config) error {
 	registerMCPTextContentToolHandler(container, MCPQueryTransactionsToolHandler)
 	registerMCPTextContentToolHandler(container, MCPAddTransactionToolHandler)
 	registerMCPTextContentToolHandler(container, MCPDeleteTransactionToolHandler)
+	registerMCPTextContentToolHandler(container, MCPGetServerCapabilitiesToolHandler)
+	registerMCPTextContentToolHandler(container, MCPListAccountsToolHandler)
+	registerMCPTextContentToolHandler(container, MCPGetAccountToolHandler)
+	registerMCPTextContentToolHandler(container, MCPCreateAccountToolHandler)
+	registerMCPTextContentToolHandler(container, MCPUpdateAccountToolHandler)
+	registerMCPTextContentToolHandler(container, MCPHideAccountToolHandler)
+	registerMCPTextContentToolHandler(container, MCPDeleteAccountToolHandler)
+	registerMCPTextContentToolHandler(container, MCPListTransactionCategoriesToolHandler)
+	registerMCPTextContentToolHandler(container, MCPGetTransactionCategoryToolHandler)
+	registerMCPTextContentToolHandler(container, MCPCreateTransactionCategoryToolHandler)
+	registerMCPTextContentToolHandler(container, MCPBatchCreateTransactionCategoriesToolHandler)
+	registerMCPTextContentToolHandler(container, MCPUpdateTransactionCategoryToolHandler)
+	registerMCPTextContentToolHandler(container, MCPHideTransactionCategoryToolHandler)
+	registerMCPTextContentToolHandler(container, MCPReorderTransactionCategoriesToolHandler)
+	registerMCPTextContentToolHandler(container, MCPDeleteTransactionCategoryToolHandler)
+	registerMCPTextContentToolHandler(container, MCPListTransactionTagsToolHandler)
+	registerMCPTextContentToolHandler(container, MCPCreateTransactionTagsToolHandler)
+	registerMCPTextContentToolHandler(container, MCPUpdateTransactionTagToolHandler)
+	registerMCPTextContentToolHandler(container, MCPReorderTransactionTagsToolHandler)
+	registerMCPTextContentToolHandler(container, MCPDeleteTransactionTagToolHandler)
+	registerMCPTextContentToolHandler(container, MCPCreateTransactionTagGroupToolHandler)
+	registerMCPTextContentToolHandler(container, MCPUpdateTransactionTagGroupToolHandler)
+	registerMCPTextContentToolHandler(container, MCPReorderTransactionTagGroupsToolHandler)
+	registerMCPTextContentToolHandler(container, MCPDeleteTransactionTagGroupToolHandler)
+	registerMCPTextContentToolHandler(container, MCPGetTransactionToolHandler)
+	registerMCPTextContentToolHandler(container, MCPUpdateTransactionToolHandler)
+	registerMCPTextContentToolHandler(container, MCPListTransactionTemplatesToolHandler)
+	registerMCPTextContentToolHandler(container, MCPGetTransactionTemplateToolHandler)
+	registerMCPTextContentToolHandler(container, MCPCreateTransactionTemplateToolHandler)
+	registerMCPTextContentToolHandler(container, MCPUpdateTransactionTemplateToolHandler)
+	registerMCPTextContentToolHandler(container, MCPHideTransactionTemplateToolHandler)
+	registerMCPTextContentToolHandler(container, MCPDeleteTransactionTemplateToolHandler)
 
 	Container = container
 	return nil
@@ -137,6 +170,12 @@ func handleTool[T MCPTextContent | MCPImageContent | MCPAudioContent | MCPResour
 	structuredResponse, result, err := handler.Handle(ctx, callToolReq, user, currentConfig, services)
 
 	if err != nil {
+		var toolErr *MCPToolError
+
+		if errors.As(err, &toolErr) {
+			return createMCPToolErrorResponse(toolErr)
+		}
+
 		return nil, errs.Or(err, errs.ErrOperationFailed)
 	}
 
@@ -150,6 +189,26 @@ func handleTool[T MCPTextContent | MCPImageContent | MCPAudioContent | MCPResour
 	}
 
 	return callToolResp, nil
+}
+
+// createMCPToolErrorResponse returns the tool result with isError set to true for user-correctable errors,
+// so that the client (and the model) can read the failing field, limit and candidates and correct the input
+func createMCPToolErrorResponse(toolErr *MCPToolError) (any, error) {
+	content, err := json.Marshal(&MCPToolErrorResult{
+		Success: false,
+		Error:   toolErr,
+	})
+
+	if err != nil {
+		return nil, errs.ErrOperationFailed
+	}
+
+	return MCPCallToolResponse[MCPTextContent]{
+		Content: []*MCPTextContent{
+			NewMCPTextContent(string(content)),
+		},
+		IsError: true,
+	}, nil
 }
 
 func createNewMCPToolInfo[T MCPTextContent | MCPImageContent | MCPAudioContent | MCPResourceLink | MCPEmbeddedResource](name string, handler MCPToolHandler[T]) *MCPTool {

@@ -16,11 +16,14 @@ import (
 // MCPDeleteTransactionRequest represents all parameters of the delete transaction request
 type MCPDeleteTransactionRequest struct {
 	TransactionId string `json:"transaction_id" jsonschema_description:"Transaction ID"`
+	Confirm       bool   `json:"confirm" jsonschema_description:"Must be true to confirm the permanent deletion of the transaction (and its attachments). There is no restore operation"`
 }
 
 // MCPDeleteTransactionResponse represents the response structure for delete transaction
 type MCPDeleteTransactionResponse struct {
-	Success bool `json:"success" jsonschema_description:"Indicates whether this operation is successful"`
+	Success              bool   `json:"success" jsonschema_description:"Indicates whether this operation is successful"`
+	DeletedTransactionId string `json:"deleted_transaction_id" jsonschema_description:"ID of the deleted transaction"`
+	Permanent            bool   `json:"permanent" jsonschema_description:"Always true, deleted transactions cannot be restored through ezBookkeeping"`
 }
 
 type mcpDeleteTransactionToolHandler struct{}
@@ -39,7 +42,7 @@ func (h *mcpDeleteTransactionToolHandler) Name() string {
 
 // Description returns the description of the MCP tool
 func (h *mcpDeleteTransactionToolHandler) Description() string {
-	return "Delete an existing transaction in ezBookkeeping."
+	return "Permanently delete an existing transaction in ezBookkeeping (for transfers, both sides are deleted). Account balances are reverted, and its tags and attachments are removed together with the transaction. ezBookkeeping has no restore (undo) operation, so \"confirm\" must be set to true. The user's transaction edit scope applies."
 }
 
 // DataOperationType returns how the MCP tool operates on business records
@@ -85,6 +88,10 @@ func (h *mcpDeleteTransactionToolHandler) Handle(c *core.WebContext, callToolReq
 		return nil, nil, errs.ErrTransactionIdInvalid
 	}
 
+	if !deleteTransactionRequest.Confirm {
+		return nil, nil, NewMCPToolError(MCPToolErrorCodeNotAllowed, "confirm", "deleting a transaction is permanent and cannot be undone, set \"confirm\" to true to delete transaction \""+deleteTransactionRequest.TransactionId+"\"")
+	}
+
 	uid := user.Uid
 	transaction, err := services.GetTransactionService().GetTransactionByTransactionId(c, uid, transactionId)
 
@@ -95,7 +102,7 @@ func (h *mcpDeleteTransactionToolHandler) Handle(c *core.WebContext, callToolReq
 
 	if transaction.Type == models.TRANSACTION_DB_TYPE_TRANSFER_IN {
 		log.Warnf(c, "[delete_transaction_tool_handler.Handle] cannot delete transaction \"id:%d\" for user \"uid:%d\", because transaction type is transfer in", transactionId, uid)
-		return nil, nil, errs.ErrTransactionTypeInvalid
+		return nil, nil, NewMCPToolError(MCPToolErrorCodeNotAllowed, "transaction_id", "transaction \""+deleteTransactionRequest.TransactionId+"\" is the incoming side of a transfer, please delete the transfer by its ID \""+utils.Int64ToString(transaction.RelatedId)+"\" instead")
 	}
 
 	usedAccounts, err := h.getTransactionUsedAccounts(c, uid, transaction, services)
@@ -121,7 +128,7 @@ func (h *mcpDeleteTransactionToolHandler) Handle(c *core.WebContext, callToolReq
 
 	log.Infof(c, "[delete_transaction_tool_handler.Handle] user \"uid:%d\" has deleted transaction \"id:%d\"", uid, transactionId)
 
-	return h.createMCPDeleteTransactionResponse()
+	return h.createMCPDeleteTransactionResponse(transactionId)
 }
 
 func (h *mcpDeleteTransactionToolHandler) getTransactionUsedAccounts(c *core.WebContext, uid int64, transaction *models.Transaction, services MCPAvailableServices) (map[int64]*models.Account, error) {
@@ -153,9 +160,11 @@ func (h *mcpDeleteTransactionToolHandler) getTransactionUsedAccounts(c *core.Web
 	return accountMap, nil
 }
 
-func (h *mcpDeleteTransactionToolHandler) createMCPDeleteTransactionResponse() (any, []*MCPTextContent, error) {
+func (h *mcpDeleteTransactionToolHandler) createMCPDeleteTransactionResponse(transactionId int64) (any, []*MCPTextContent, error) {
 	response := MCPDeleteTransactionResponse{
-		Success: true,
+		Success:              true,
+		DeletedTransactionId: utils.Int64ToString(transactionId),
+		Permanent:            true,
 	}
 
 	content, err := json.Marshal(response)

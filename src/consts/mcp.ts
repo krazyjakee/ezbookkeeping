@@ -32,6 +32,134 @@ export const ALL_MCP_TOOLS: NameAndDisplayName[] = [
     {
         name: 'delete_transaction',
         displayName:'Delete Transaction'
+    },
+    {
+        name: 'get_server_capabilities',
+        displayName:'Get Server Capabilities'
+    },
+    {
+        name: 'list_accounts',
+        displayName:'List Accounts'
+    },
+    {
+        name: 'get_account',
+        displayName:'Get Account'
+    },
+    {
+        name: 'create_account',
+        displayName:'Create Account'
+    },
+    {
+        name: 'update_account',
+        displayName:'Update Account'
+    },
+    {
+        name: 'hide_account',
+        displayName:'Hide Account'
+    },
+    {
+        name: 'delete_account',
+        displayName:'Delete Account'
+    },
+    {
+        name: 'list_transaction_categories',
+        displayName:'List Transaction Categories'
+    },
+    {
+        name: 'get_transaction_category',
+        displayName:'Get Transaction Category'
+    },
+    {
+        name: 'create_transaction_category',
+        displayName:'Create Transaction Category'
+    },
+    {
+        name: 'batch_create_transaction_categories',
+        displayName:'Batch Create Transaction Categories'
+    },
+    {
+        name: 'update_transaction_category',
+        displayName:'Update Transaction Category'
+    },
+    {
+        name: 'hide_transaction_category',
+        displayName:'Hide Transaction Category'
+    },
+    {
+        name: 'reorder_transaction_categories',
+        displayName:'Reorder Transaction Categories'
+    },
+    {
+        name: 'delete_transaction_category',
+        displayName:'Delete Transaction Category'
+    },
+    {
+        name: 'list_transaction_tags',
+        displayName:'List Transaction Tags'
+    },
+    {
+        name: 'create_transaction_tags',
+        displayName:'Create Transaction Tags'
+    },
+    {
+        name: 'update_transaction_tag',
+        displayName:'Update Transaction Tag'
+    },
+    {
+        name: 'reorder_transaction_tags',
+        displayName:'Reorder Transaction Tags'
+    },
+    {
+        name: 'delete_transaction_tag',
+        displayName:'Delete Transaction Tag'
+    },
+    {
+        name: 'create_transaction_tag_group',
+        displayName:'Create Transaction Tag Group'
+    },
+    {
+        name: 'update_transaction_tag_group',
+        displayName:'Update Transaction Tag Group'
+    },
+    {
+        name: 'reorder_transaction_tag_groups',
+        displayName:'Reorder Transaction Tag Groups'
+    },
+    {
+        name: 'delete_transaction_tag_group',
+        displayName:'Delete Transaction Tag Group'
+    },
+    {
+        name: 'get_transaction',
+        displayName:'Get Transaction'
+    },
+    {
+        name: 'update_transaction',
+        displayName:'Update Transaction'
+    },
+    {
+        name: 'list_transaction_templates',
+        displayName:'List Transaction Templates'
+    },
+    {
+        name: 'get_transaction_template',
+        displayName:'Get Transaction Template'
+    },
+    {
+        name: 'create_transaction_template',
+        displayName:'Create Transaction Template'
+    },
+    {
+        name: 'update_transaction_template',
+        displayName:'Update Transaction Template'
+    },
+    {
+        name: 'hide_transaction_template',
+        displayName:'Hide Transaction Template'
+    },
+    {
+        name: 'delete_transaction_template',
+        displayName:'Delete Transaction Template'
     }
 ];
 
@@ -44,5 +172,14 @@ export const DEFAULT_ENABLED_MCP_TOOL_NAMES: string[] = [
     'query_all_transaction_tags',
     'query_latest_exchange_rates',
     'query_transactions',
-    'add_transaction'
+    'add_transaction',
+    'get_server_capabilities',
+    'list_accounts',
+    'get_account',
+    'list_transaction_categories',
+    'get_transaction_category',
+    'list_transaction_tags',
+    'get_transaction',
+    'list_transaction_templates',
+    'get_transaction_template'
 ]

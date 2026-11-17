@@ -21,6 +21,9 @@ type ModelContextProtocolAPI struct {
 	transactions          *services.TransactionService
 	transactionCategories *services.TransactionCategoryService
 	transactionTags       *services.TransactionTagService
+	transactionTagGroups  *services.TransactionTagGroupService
+	transactionTemplates  *services.TransactionTemplateService
+	transactionPictures   *services.TransactionPictureService
 	accounts              *services.AccountService
 	users                 *services.UserService
 	tokens                *services.TokenService
@@ -35,6 +38,9 @@ var (
 		transactions:          services.Transactions,
 		transactionCategories: services.TransactionCategories,
 		transactionTags:       services.TransactionTags,
+		transactionTagGroups:  services.TransactionTagGroups,
+		transactionTemplates:  services.TransactionTemplates,
+		transactionPictures:   services.TransactionPictures,
 		accounts:              services.Accounts,
 		users:                 services.Users,
 		tokens:                services.Tokens,
@@ -278,6 +284,21 @@ func (a *ModelContextProtocolAPI) GetAccountService() *services.AccountService {
 // GetUserService implements the MCPAvailableServices interface
 func (a *ModelContextProtocolAPI) GetUserService() *services.UserService {
 	return a.users
+}
+
+// GetTransactionTagGroupService implements the MCPAvailableServices interface
+func (a *ModelContextProtocolAPI) GetTransactionTagGroupService() *services.TransactionTagGroupService {
+	return a.transactionTagGroups
+}
+
+// GetTransactionTemplateService implements the MCPAvailableServices interface
+func (a *ModelContextProtocolAPI) GetTransactionTemplateService() *services.TransactionTemplateService {
+	return a.transactionTemplates
+}
+
+// GetTransactionPictureService implements the MCPAvailableServices interface
+func (a *ModelContextProtocolAPI) GetTransactionPictureService() *services.TransactionPictureService {
+	return a.transactionPictures
 }
 
 // getMCPVersion returns the MCP protocol version from the request header
