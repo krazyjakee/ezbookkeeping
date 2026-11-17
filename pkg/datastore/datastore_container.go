@@ -138,8 +138,8 @@ func getPostgresConnectionString(dbConfig *settings.DatabaseConfig) (string, err
 			return "", errs.ErrDatabaseHostInvalid
 		}
 
-		return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
-			url.QueryEscape(dbConfig.DatabaseUser), url.QueryEscape(dbConfig.DatabasePassword), host, port, dbConfig.DatabaseName, dbConfig.DatabaseSSLMode), nil
+		return fmt.Sprintf("postgres://%s@%s/%s?sslmode=%s",
+			url.UserPassword(dbConfig.DatabaseUser, dbConfig.DatabasePassword), net.JoinHostPort(host, port), dbConfig.DatabaseName, dbConfig.DatabaseSSLMode), nil
 	}
 }
 

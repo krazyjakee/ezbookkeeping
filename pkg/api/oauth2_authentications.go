@@ -154,14 +154,14 @@ func (a *OAuth2AuthenticationApi) CallbackHandler(c *core.WebContext) (string, *
 	remarkParts := strings.Split(remark, "|")
 
 	if len(remarkParts) != 4 || remarkParts[0] != platform || remarkParts[1] != clientSessionId {
-		log.Errorf(c, "[oauth2_authentications.CallbackHandler] invalid oauth 2.0 state \"%s\" in duplicate checker for client session id \"%s\"", remark, clientSessionId)
+		log.Errorf(c, "[oauth2_authentications.CallbackHandler] invalid oauth 2.0 state in duplicate checker for client session id \"%s\"", clientSessionId)
 		return a.redirectToFailedCallbackPage(c, errs.ErrInvalidOAuth2State)
 	}
 
 	uid, err := utils.StringToInt64(remarkParts[2])
 
 	if err != nil {
-		log.Errorf(c, "[oauth2_authentications.CallbackHandler] invalid uid \"%s\" in oauth 2.0 state \"%s\"", remarkParts[2], remark)
+		log.Errorf(c, "[oauth2_authentications.CallbackHandler] invalid uid in oauth 2.0 state for client session id \"%s\"", clientSessionId)
 		return a.redirectToFailedCallbackPage(c, errs.ErrInvalidOAuth2State)
 	}
 
@@ -170,7 +170,7 @@ func (a *OAuth2AuthenticationApi) CallbackHandler(c *core.WebContext) (string, *
 	expectedState := fmt.Sprintf("%s|%s|%s", platform, clientSessionId, utils.MD5EncodeToString([]byte(expectedRemark)))
 
 	if oauth2CallbackReq.State != expectedState {
-		log.Errorf(c, "[oauth2_authentications.CallbackHandler] mismatched random string in oauth 2.0 state, expected \"%s\", got \"%s\"", expectedState, oauth2CallbackReq.State)
+		log.Errorf(c, "[oauth2_authentications.CallbackHandler] mismatched random string in oauth 2.0 state for client session id \"%s\"", clientSessionId)
 		return a.redirectToFailedCallbackPage(c, errs.ErrInvalidOAuth2State)
 	}
 

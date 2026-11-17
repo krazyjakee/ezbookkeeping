@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isTextualUUID } from '@/lib/common.ts';
+import { isArrayEquals, isTextualUUID } from '@/lib/common.ts';
 
 describe('isTextualUUID', () => {
 	it('should return false for null', () => {
@@ -66,4 +66,50 @@ describe('isTextualUUID', () => {
 	it('should return true for all-f UUID', () => {
 		expect(isTextualUUID('ffffffff-ffff-ffff-ffff-ffffffffffff')).toBe(true);
 	});
+});
+
+describe('isArrayEquals', () => {
+    interface Item {
+        key: string;
+        value: number;
+    }
+
+    const getKey = (item: Item): string => item.key;
+    const itemsEqual = (left: Item, right: Item): boolean => left.key === right.key && left.value === right.value;
+
+    it.each(['__proto__', 'constructor', 'toString'])('compares items with the key %s', key => {
+        expect(isArrayEquals([{ key, value: 1 }], [{ key, value: 1 }], getKey, itemsEqual)).toBe(true);
+        expect(isArrayEquals([{ key, value: 1 }], [{ key, value: 2 }], getKey, itemsEqual)).toBe(false);
+    });
+
+    it('matches reordered duplicates without modifying either array', () => {
+        const left = [
+            Object.freeze({ key: 'account', value: 1 }),
+            Object.freeze({ key: 'account', value: 2 }),
+            Object.freeze({ key: 'account', value: 1 })
+        ];
+        const right = [left[1]!, left[0]!, left[2]!];
+        Object.freeze(left);
+        Object.freeze(right);
+
+        expect(isArrayEquals(left, right, getKey, itemsEqual)).toBe(true);
+        expect(left.map(item => item.value)).toEqual([1, 2, 1]);
+        expect(right.map(item => item.value)).toEqual([2, 1, 1]);
+    });
+
+    it('rejects different duplicate counts even when lengths and keys match', () => {
+        const left = [{ key: 'account', value: 1 }, { key: 'account', value: 1 }, { key: 'account', value: 2 }];
+        const right = [{ key: 'account', value: 1 }, { key: 'account', value: 2 }, { key: 'account', value: 2 }];
+
+        expect(isArrayEquals(left, right, getKey, itemsEqual)).toBe(false);
+    });
+
+    it('rejects missing keys and different lengths', () => {
+        expect(isArrayEquals([{ key: 'first', value: 1 }], [{ key: 'second', value: 1 }], getKey, itemsEqual)).toBe(false);
+        expect(isArrayEquals([{ key: 'first', value: 1 }], [], getKey, itemsEqual)).toBe(false);
+    });
+
+    it('compares empty arrays', () => {
+        expect(isArrayEquals([], [], getKey, itemsEqual)).toBe(true);
+    });
 });

@@ -1,10 +1,14 @@
 package datastore
 
 import (
+	"net"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
+	"github.com/mayswind/ezbookkeeping/pkg/errs"
 	"github.com/mayswind/ezbookkeeping/pkg/settings"
 )
 
@@ -64,4 +68,56 @@ func TestGetPostgreSQLConnectionString_UnixSocket(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, expectedValue, actualValue)
+}
+
+func TestGetPostgreSQLConnectionString_TCPRoundTrip(t *testing.T) {
+	for _, testCase := range []struct {
+		name     string
+		host     string
+		username string
+		password string
+	}{
+		{name: "spaces", host: "localhost:5432", username: "book keeper", password: "secret phrase"},
+		{name: "plus signs", host: "localhost:5432", username: "book+keeper", password: "secret+phrase"},
+		{name: "reserved characters", host: "localhost:5432", username: "book@keeper:%", password: "secret@phrase:%"},
+		{name: "IPv6", host: "[::1]:5432", username: "username", password: "password"},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			connectionString, err := getPostgresConnectionString(&settings.DatabaseConfig{
+				DatabaseType:     "postgres",
+				DatabaseHost:     testCase.host,
+				DatabaseName:     "dbname",
+				DatabaseUser:     testCase.username,
+				DatabasePassword: testCase.password,
+				DatabaseSSLMode:  "disable",
+			})
+			require.NoError(t, err)
+
+			parsed, err := url.Parse(connectionString)
+			require.NoError(t, err)
+			require.NotNil(t, parsed.User)
+			assert.Equal(t, testCase.username, parsed.User.Username())
+			password, hasPassword := parsed.User.Password()
+			assert.True(t, hasPassword)
+			assert.Equal(t, testCase.password, password)
+			assert.Equal(t, testCase.host, parsed.Host)
+			_, port, err := net.SplitHostPort(parsed.Host)
+			require.NoError(t, err)
+			assert.Equal(t, "5432", port)
+			assert.Equal(t, "/dbname", parsed.Path)
+			assert.Equal(t, "disable", parsed.Query().Get("sslmode"))
+		})
+	}
+}
+
+func TestGetPostgreSQLConnectionString_InvalidHost(t *testing.T) {
+	for _, host := range []string{"localhost", "[::1", "::1:5432"} {
+		t.Run(host, func(t *testing.T) {
+			connectionString, err := getPostgresConnectionString(&settings.DatabaseConfig{
+				DatabaseHost: host,
+			})
+			assert.ErrorIs(t, err, errs.ErrDatabaseHostInvalid)
+			assert.Empty(t, connectionString)
+		})
+	}
 }

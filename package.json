@@ -15,7 +15,8 @@
     "serve": "cross-env NODE_ENV=development vite",
     "build": "cross-env NODE_ENV=production vite build",
     "serve:dist": "vite preview",
-    "lint": "vue-tsc --noEmit && eslint . --fix",
+    "lint": "vue-tsc --noEmit && eslint .",
+    "lint:fix": "vue-tsc --noEmit && eslint . --fix",
     "test": "vitest run"
   },
   "dependencies": {
@@ -51,8 +52,6 @@
     "vuetify": "4.3.1"
   },
   "devDependencies": {
-    "@jest/globals": "30.5.2",
-    "@tsconfig/node26": "26.0.1",
     "@types/cbor-js": "0.1.1",
     "@types/crypto-js": "4.2.2",
     "@types/git-rev-sync": "2.0.2",
@@ -68,7 +67,6 @@
     "postcss-preset-env": "11.6.2",
     "sass": "1.107.1",
     "terser": "5.51.2",
-    "ts-node": "10.9.2",
     "typescript": "6.0.3",
     "vite": "8.3.5",
     "vite-plugin-checker": "0.14.5",

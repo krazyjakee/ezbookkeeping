@@ -15,7 +15,7 @@
 [![Forked from mayswind/ezbookkeeping](https://img.shields.io/badge/forked%20from-mayswind%2Fezbookkeeping-lightgrey.svg?logo=github)](https://github.com/mayswind/ezbookkeeping)
 
 ## Introduction
-ezrbookkeeping is an open source, powerful, self-hosted personal finance app that is easy to use. It helps you record daily transactions, import data from various sources, and quickly search and filter your bills. You can analyze historical data using built-in charts or perform custom queries with your own chart dimensions to better understand spending patterns and financial trends. ezrbookkeeping is easy to deploy, and you can start it with just one single Docker command. Designed to be resource-efficient, it runs smoothly on devices such as home servers, NAS and Raspberry Pi.
+ezrbookkeeping is a self-hosted bookkeeping app for recording transactions, managing accounts and categories, and importing financial data. Built-in charts and custom queries help you review balances, spending and income. It supports SQLite, MySQL and PostgreSQL, with Docker images and standalone binaries for deployment.
 
 ezrbookkeeping offers tailored interfaces for mobile and desktop devices. With PWA (Progressive Web Apps) support, you can [add it to your mobile home screen](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/mobile/add_to_home_screen.gif) and use it like a native app.
 
@@ -132,6 +132,8 @@ You can also build a Docker image. Make sure you have [Docker](https://www.docke
 ## Contributing
 We welcome contributions of all kinds.
 
+See the [development guide](https://krazyjakee.github.io/ezbookkeeping/developing/) for the application entrypoints, local setup, build commands and verification checks. `npm run lint` checks types and lint rules without editing files; use `npm run lint:fix` to apply lint fixes explicitly.
+
 If you find a bug, please [submit an issue](https://github.com/krazyjakee/ezbookkeeping/issues) on GitHub.
 
 If you would like to contribute code, you can fork the repository and open a pull request.
@@ -177,7 +179,7 @@ Currently available translations:
 1. [中文 (简体)](https://krazyjakee.github.io/ezbookkeeping/zh_Hans)
 
 ## Compatibility
-ezrbookkeeping only changes the product name, Docker image (`krazyjakee/ezrbookkeeping`) and release archive names (`ezrbookkeeping-<version>-<os>-<arch>`). The following identifiers are intentionally unchanged, so existing installations upgrade without data migration:
+ezrbookkeeping uses its own product name, Docker image (`krazyjakee/ezrbookkeeping`) and release archive names (`ezrbookkeeping-<version>-<os>-<arch>`). The following identifiers are intentionally retained for compatibility with existing installations:
 
 - Executable name `ezbookkeeping` (inside release archives and the Docker image)
 - Configuration file `conf/ezbookkeeping.ini` and all of its keys, and the `EBK_` environment variable prefix

@@ -132,30 +132,27 @@ func (a *UserCustomIconsApi) CustomIconUploadHandler(c *core.WebContext) (any, *
 		log.Errorf(c, "[user_custom_icons.CustomIconUploadHandler] failed to get custom icon file from request for user \"uid:%d\", because %s", uid, err.Error())
 		return nil, errs.ErrOperationFailed
 	}
+	defer customIconFile.Close()
 
 	imageConfig, imageFormat, err := image.DecodeConfig(customIconFile)
 
 	if err != nil {
 		log.Errorf(c, "[user_custom_icons.CustomIconUploadHandler] failed to decode custom icon image config for user \"uid:%d\", because %s", uid, err.Error())
-		_ = customIconFile.Close()
 		return nil, errs.ErrImageTypeNotSupported
 	}
 
 	if imageFormat != models.UserCustomIconFileExtension {
 		log.Warnf(c, "[user_custom_icons.CustomIconUploadHandler] unsupported custom icon image format \"%s\" for user \"uid:%d\"", imageFormat, uid)
-		_ = customIconFile.Close()
 		return nil, errs.ErrUserCustomIconExtensionInvalid
 	}
 
 	if imageConfig.Width < 1 || imageConfig.Height < 1 || imageConfig.Width > maximumUserCustomIconPixels || imageConfig.Height > maximumUserCustomIconPixels {
 		log.Warnf(c, "[user_custom_icons.CustomIconUploadHandler] invalid custom icon image dimensions \"%dx%d\" for user \"uid:%d\"", imageConfig.Width, imageConfig.Height, uid)
-		_ = customIconFile.Close()
 		return nil, errs.ErrUserCustomIconDimensionsInvalid
 	}
 
 	if _, err = customIconFile.Seek(0, 0); err != nil {
 		log.Errorf(c, "[user_custom_icons.CustomIconUploadHandler] failed to seek to the beginning of custom icon file for user \"uid:%d\", because %s", uid, err.Error())
-		_ = customIconFile.Close()
 		return nil, errs.ErrOperationFailed
 	}
 
