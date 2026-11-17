@@ -291,6 +291,11 @@ func (a *OAuth2AuthenticationApi) CallbackHandler(c *core.WebContext) (string, *
 				return a.redirectToFailedCallbackPage(c, errs.ErrEmailIsInvalid)
 			}
 
+			if !utils.IsEmailDomainAllowed(email, a.CurrentConfig().RegisterAllowedEmailDomains) {
+				log.Warnf(c, "[oauth2_authentications.CallbackHandler] email domain of \"%s\" is not allowed to register", email)
+				return a.redirectToFailedCallbackPage(c, errs.ErrEmailDomainNotAllowedToRegister)
+			}
+
 			if !utils.IsValidNickName(nickName) {
 				return a.redirectToFailedCallbackPage(c, errs.ErrNickNameIsInvalid)
 			}

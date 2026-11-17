@@ -1131,6 +1131,7 @@
         "username already exists": "Username already exists",
         "email already exists": "Email already exists",
         "user registration not allowed": "User registration is not allowed",
+        "email domain not allowed to register": "Registration is not allowed for this email domain",
         "login name is invalid": "Login name is invalid",
         "login name or password is invalid": "Login name or password is invalid",
         "login name or password is wrong": "Login name or password is wrong",

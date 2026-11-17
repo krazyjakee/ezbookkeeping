@@ -42,4 +42,5 @@ var (
 	ErrUserNameIsInvalid                                   = NewNormalError(NormalSubcategoryUser, 33, http.StatusBadRequest, "user name is invalid")
 	ErrNickNameIsInvalid                                   = NewNormalError(NormalSubcategoryUser, 34, http.StatusBadRequest, "nick name is invalid")
 	ErrLastReconciledTimeIsNotEnabled                      = NewNormalError(NormalSubcategoryUser, 35, http.StatusBadRequest, "last reconciled time is not enabled")
+	ErrEmailDomainNotAllowedToRegister                     = NewNormalError(NormalSubcategoryUser, 36, http.StatusBadRequest, "email domain not allowed to register")
 )

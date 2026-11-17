@@ -70,6 +70,11 @@ func (a *UsersApi) UserRegisterHandler(c *core.WebContext) (any, *errs.Error) {
 	userRegisterReq.Email = strings.TrimSpace(userRegisterReq.Email)
 	userRegisterReq.Nickname = strings.TrimSpace(userRegisterReq.Nickname)
 
+	if !utils.IsEmailDomainAllowed(userRegisterReq.Email, a.CurrentConfig().RegisterAllowedEmailDomains) {
+		log.Warnf(c, "[users.UserRegisterHandler] email domain of \"%s\" is not allowed to register", userRegisterReq.Email)
+		return nil, errs.ErrEmailDomainNotAllowedToRegister
+	}
+
 	user := &models.User{
 		Username:             userRegisterReq.Username,
 		Email:                userRegisterReq.Email,

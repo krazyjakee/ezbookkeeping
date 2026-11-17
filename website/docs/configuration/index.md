@@ -339,6 +339,7 @@ Note that if the same configuration option is set using all three methods above,
 | Option Name | Default Value | Description |
 | --- | --- | --- |
 | `enable_register` | `true` | Whether to enable user registration. |
+| `register_allowed_email_domains` |  | Comma-separated list of email domains allowed to register, including OAuth 2.0 auto registration (e.g. `company.com,*.company.org`). A domain beginning with `*.` allows all of its subdomains. Leave blank to allow email addresses of any domain. |
 | `enable_email_verify` | `false` | Whether to enable user email validation. |
 | `enable_force_email_verify` | `false` | Whether to require user email must be verified when login. |
 | `enable_custom_icon` | `true` | Whether to enable user custom icon. |

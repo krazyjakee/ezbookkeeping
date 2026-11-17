@@ -461,6 +461,7 @@ type Config struct {
 
 	// User
 	EnableUserRegister            bool
+	RegisterAllowedEmailDomains   []string
 	EnableUserVerifyEmail         bool
 	EnableUserForceVerifyEmail    bool
 	EnableUserCustomIcon          bool
@@ -1234,6 +1235,7 @@ func loadAuthConfiguration(config *Config, configFile *ini.File, sectionName str
 
 func loadUserConfiguration(config *Config, configFile *ini.File, sectionName string) error {
 	config.EnableUserRegister = getConfigItemBoolValue(configFile, sectionName, "enable_register", false)
+	config.RegisterAllowedEmailDomains = getConfigItemStringListValue(configFile, sectionName, "register_allowed_email_domains")
 	config.EnableUserVerifyEmail = getConfigItemBoolValue(configFile, sectionName, "enable_email_verify", false)
 	config.EnableUserForceVerifyEmail = getConfigItemBoolValue(configFile, sectionName, "enable_force_email_verify", false)
 	config.EnableUserCustomIcon = getConfigItemBoolValue(configFile, sectionName, "enable_custom_icon", false)
@@ -1548,6 +1550,22 @@ func getConfigItemStringValue(configFile *ini.File, sectionName string, itemName
 	} else {
 		return value
 	}
+}
+
+func getConfigItemStringListValue(configFile *ini.File, sectionName string, itemName string) []string {
+	configValue := getConfigItemStringValue(configFile, sectionName, itemName)
+	items := strings.Split(configValue, ",")
+	ret := make([]string, 0, len(items))
+
+	for i := 0; i < len(items); i++ {
+		item := strings.ToLower(strings.TrimSpace(items[i]))
+
+		if item != "" {
+			ret = append(ret, item)
+		}
+	}
+
+	return ret
 }
 
 func getConfigItemUint8Value(configFile *ini.File, sectionName string, itemName string, defaultValue uint8) uint8 {

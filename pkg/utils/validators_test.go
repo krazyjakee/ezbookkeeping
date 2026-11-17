@@ -323,3 +323,37 @@ func TestIsValidDayMonthYearLongDateFormat_ValidLongDateFormat(t *testing.T) {
 	actualValue = IsValidDayMonthYearLongOrShortDateFormat(datetime)
 	assert.True(t, actualValue)
 }
+
+func TestIsEmailDomainAllowed_EmptyAllowedDomains(t *testing.T) {
+	assert.True(t, IsEmailDomainAllowed("foo@example.com", nil))
+	assert.True(t, IsEmailDomainAllowed("foo@example.com", []string{}))
+}
+
+func TestIsEmailDomainAllowed_ExactDomain(t *testing.T) {
+	allowedDomains := []string{"company.com", "Example.org"}
+
+	assert.True(t, IsEmailDomainAllowed("foo@company.com", allowedDomains))
+	assert.True(t, IsEmailDomainAllowed("foo@COMPANY.COM", allowedDomains))
+	assert.True(t, IsEmailDomainAllowed("foo@example.org", allowedDomains))
+	assert.False(t, IsEmailDomainAllowed("foo@sub.company.com", allowedDomains))
+	assert.False(t, IsEmailDomainAllowed("foo@evilcompany.com", allowedDomains))
+	assert.False(t, IsEmailDomainAllowed("foo@company.com.evil.com", allowedDomains))
+	assert.False(t, IsEmailDomainAllowed("foo@other.com", allowedDomains))
+}
+
+func TestIsEmailDomainAllowed_WildcardSubdomain(t *testing.T) {
+	allowedDomains := []string{"*.company.com"}
+
+	assert.True(t, IsEmailDomainAllowed("foo@sub.company.com", allowedDomains))
+	assert.True(t, IsEmailDomainAllowed("foo@a.b.company.com", allowedDomains))
+	assert.False(t, IsEmailDomainAllowed("foo@company.com", allowedDomains))
+	assert.False(t, IsEmailDomainAllowed("foo@evilcompany.com", allowedDomains))
+}
+
+func TestIsEmailDomainAllowed_InvalidEmail(t *testing.T) {
+	allowedDomains := []string{"company.com"}
+
+	assert.False(t, IsEmailDomainAllowed("", allowedDomains))
+	assert.False(t, IsEmailDomainAllowed("company.com", allowedDomains))
+	assert.False(t, IsEmailDomainAllowed("foo@", allowedDomains))
+}
