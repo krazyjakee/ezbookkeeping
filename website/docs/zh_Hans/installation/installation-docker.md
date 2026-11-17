@@ -117,4 +117,3 @@ services:
       - "/var/log/ezbookkeeping:/ezbookkeeping/log" # 请确保 UID:GID 是 1000:1000
 ```
 
-如果你感兴趣，你可以查看 [https://ezbookkeeping-demo.mayswind.net](https://ezbookkeeping-demo.mayswind.net) 背后的 [docker-compose 文件](/configurations/demo/docker-compose.yml){target=_blank} 与 [nginx 的 conf 文件](/configurations/demo/ezbookkeeping.demo.conf){target=_blank}。

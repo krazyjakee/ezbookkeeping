@@ -39,9 +39,9 @@ ezrbookkeeping 并不是一个桌面应用，而是一个自托管的服务端�
 ezrbookkeeping 是开箱即用的，无需设置任何额外的设置项即可启动运行。但是如果你正式使用它，还需要正确配置以下几个配置项：
 
 1. `security` 节中的 `secret_key`（环境变量 `EBK_SECURITY_SECRET_KEY`）：需要设置为一个随机字符串，随机字符串可以使用 ezrbookkeeping 命令行工具 `ezbookkeeping security gen-secret-key` 或 `openssl rand -base64 32` 生成
-2. `server` 节中的 `domain`（环境变量 `EBK_SERVER_DOMAIN`）：需要设置为用户访问的域名或者 IP 地址（例如 `ezbookkeeping-demo.mayswind.net` 或 `192.168.1.2`）。如果设置错误将会导致用户头像或交易图片无法显示，以及 ezrbookkeeping 发送的邮件中的链接地址错误
+2. `server` 节中的 `domain`（环境变量 `EBK_SERVER_DOMAIN`）：需要设置为用户访问的域名或者 IP 地址（例如 `ezbookkeeping.example.com` 或 `192.168.1.2`）。如果设置错误将会导致用户头像或交易图片无法显示，以及 ezrbookkeeping 发送的邮件中的链接地址错误
 
-如果你想使用 Nginx 等反向代理，并且暴露给用户的协议、端口号与 ezrbookkeeping 的 Web 服务器设置不同，还需要设置 `server` 节中的 `root_url`（环境变量 `EBK_SERVER_ROOT_URL`），例如 `https://ezbookkeeping-demo.mayswind.net/`。
+如果你想使用 Nginx 等反向代理，并且暴露给用户的协议、端口号与 ezrbookkeeping 的 Web 服务器设置不同，还需要设置 `server` 节中的 `root_url`（环境变量 `EBK_SERVER_ROOT_URL`），例如 `https://ezbookkeeping.example.com/`。
 
 如果你想使用 MySQL 作为数据库，需要设置 `database` 节中的 `type`（环境变量 `EBK_DATABASE_TYPE`） 为 `mysql`，同时设置数据库主机 `host`（例如 `mysql.domain:3306` 或 `/var/run/mysqld/mysqld.sock`）、数据库名 `name`、数据库访问用户 `user`、数据库访问密码 `passwd`。
 

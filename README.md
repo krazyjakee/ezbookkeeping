@@ -19,8 +19,6 @@ ezrbookkeeping is a self-hosted bookkeeping app for recording transactions, mana
 
 ezrbookkeeping offers tailored interfaces for mobile and desktop devices. With PWA (Progressive Web Apps) support, you can [add it to your mobile home screen](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/mobile/add_to_home_screen.gif) and use it like a native app.
 
-Upstream ezBookkeeping live demo: [https://ezbookkeeping-demo.mayswind.net](https://ezbookkeeping-demo.mayswind.net)
-
 ## Features
 - **Open Source & Self-Hosted**
     - Built for privacy and control
