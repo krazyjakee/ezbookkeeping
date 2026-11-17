@@ -88,6 +88,11 @@ func (s *UserCustomExchangeRatesService) UpdateCustomExchangeRate(c core.Context
 		}
 
 		newCustomExchangeRate, err = models.CreateUserCustomExchangeRate(uid, currency, rate, defaultCurrencyExchangeRate.Rate)
+
+		if err != nil {
+			return errs.ErrNumberInvalid
+		}
+
 		newCustomExchangeRate.CreatedUnixTime = now
 		newCustomExchangeRate.UpdatedUnixTime = now
 		newCustomExchangeRate.DeletedUnixTime = 0
