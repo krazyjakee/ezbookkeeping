@@ -150,8 +150,8 @@ The token stylesheet also adds these app-wide rules. Pages and components get no
 | `.ebk-canvas-grid` | Canvas color with a 24px grid at 3.5%. Removed in forced-colors mode and when printing. Use it on the page canvas only, never under dense tables |
 | `.ebk-panel` | Surface panel: 1px hairline border, 10px radius, elevation 1 |
 | `.ebk-panel--active` / `.ebk-panel--selected` | Copper line on the leading (inline-start) edge, mirrored in RTL |
-| `.ebk-panel--bracketed` | Copper L-brackets at the start-start and end-end corners via `::before` / `::after`. They use logical properties, so RTL is mirrored. Hidden in forced-colors mode. Use only on overview widgets and dialog headers, and don't put `overflow: hidden` on the panel |
-| `.ebk-panel-header-strip` | 40px (desktop) or 36px (mobile) header strip: technical type, hairline underneath, `.ebk-panel-header-actions` pushed to the end |
+| `.ebk-panel--bracketed` | Copper L-brackets at the start-start and end-end corners via `::before` / `::after`. They use logical properties, so RTL is mirrored. Hidden in forced-colors mode. Per guideline D3, use it only on hero panels (overview position, login access) and dialogs, and don't put `overflow: hidden` on the panel |
+| `.ebk-panel-header-strip` | 40px (desktop) or 36px (mobile) header strip: technical type, hairline underneath, `.ebk-panel-header-actions` pushed to the end. Draws the copper **start tick** (an L at the top start corner, logical properties, hidden in forced-colors) required by guideline D3 |
 | `.ebk-technical-heading` | Technical heading type only (0.75rem, 600, `.08em`). Uppercase only for Latin-script languages via `:lang()` (en, de, es, fr, it, nl, pl, pt, ro, sk, sl, tr, vi) |
 | `.ebk-glow` / `.ebk-glow-focus` | Copper glow, always on or only while focused. Only for focused controls, primary button hover, the active navigation item and live indicators |
 | `.ebk-numeric` | Tabular numerals |
