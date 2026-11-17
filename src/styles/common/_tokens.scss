@@ -313,6 +313,7 @@ body :is([class*="amount"], [class*="balance"]) {
         linear-gradient(to right, var(--ebk-color-grid-line) 1px, transparent 1px),
         linear-gradient(to bottom, var(--ebk-color-grid-line) 1px, transparent 1px);
     background-size: var(--ebk-grid-size) var(--ebk-grid-size);
+    background-repeat: repeat;
 }
 
 /* Panels */

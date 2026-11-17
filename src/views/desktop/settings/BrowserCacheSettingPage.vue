@@ -1,25 +1,25 @@
 <template>
     <v-row>
         <v-col cols="12" v-if="isSupportedFileCache">
-            <v-card :class="{ 'disabled': loading }">
-                <template #title>
-                    <div class="d-flex align-center">
-                        <span>{{ tt('File Cache') }}</span>
-                        <v-btn density="compact" color="default" variant="text" class="ms-2"
+            <v-card class="ebk-settings-panel" :class="{ 'disabled': loading }">
+                <header class="ebk-panel-header-strip ebk-settings-panel-header">
+                    <h2 class="ebk-settings-panel-title">{{ tt('File Cache') }}</h2>
+                    <div class="ebk-panel-header-actions">
+                        <v-btn density="compact" color="default" variant="text" size="28"
                                :aria-label="tt('Refresh')" :icon="true" :loading="loading" @click="loadCacheStatistics(true)">
                             <template #loader>
-                                <v-progress-circular indeterminate size="20"/>
+                                <v-progress-circular indeterminate size="18"/>
                             </template>
-                            <v-icon :icon="mdiRefresh" size="24" />
+                            <v-icon :icon="mdiRefresh" size="20" />
                             <v-tooltip activator="parent">{{ tt('Refresh') }}</v-tooltip>
                         </v-btn>
                     </div>
-                </template>
+                </header>
 
-                <v-card-text class="d-flex align-end" style="height: 3rem">
-                    <span class="text-body-large">{{ tt('Used storage') }}</span>
-                    <v-skeleton-loader class="d-inline-block skeleton-no-margin ms-2 pt-1 pb-1" type="text" style="width: 100px" :loading="true" v-if="loading"></v-skeleton-loader>
-                    <span class="text-title-medium ms-2" v-if="!loading">{{ fileCacheStatistics ? formatVolumeToLocalizedNumerals(fileCacheStatistics.totalCacheSize, 2) : '-' }}</span>
+                <v-card-text class="ebk-settings-readout">
+                    <span class="ebk-settings-readout-label ebk-technical-heading">{{ tt('Used storage') }}</span>
+                    <v-skeleton-loader class="d-inline-block skeleton-no-margin pt-1 pb-1" type="text" style="width: 100px" :loading="true" v-if="loading"></v-skeleton-loader>
+                    <span class="ebk-settings-readout-value ebk-numeric" v-if="!loading">{{ fileCacheStatistics ? formatVolumeToLocalizedNumerals(fileCacheStatistics.totalCacheSize, 2) : '-' }}</span>
                 </v-card-text>
 
                 <v-card-text class="py-0">
@@ -64,7 +64,7 @@
                         ]">
                             <div class="d-flex align-center">
                                 <div class="me-3">
-                                    <v-avatar rounded :color="item.color" size="42" class="elevation-1">
+                                    <v-avatar rounded :color="item.color" size="42" variant="tonal">
                                         <v-icon size="24" :icon="item.icon"/>
                                     </v-avatar>
                                 </div>
@@ -72,7 +72,7 @@
                                 <div class="d-flex flex-column">
                                     <span class="text-body-small">{{ tt(item.title) }}</span>
                                     <v-skeleton-loader class="skeleton-no-margin pt-2 pb-2" type="text" style="width: 100px" :loading="true" v-if="loading"></v-skeleton-loader>
-                                    <span class="text-title-medium" v-if="!loading">{{ item.count }}</span>
+                                    <span class="text-title-medium ebk-numeric" v-if="!loading">{{ item.count }}</span>
                                 </div>
                             </div>
                         </v-col>
@@ -89,17 +89,15 @@
         </v-col>
 
         <v-col cols="12">
-            <v-card>
-                <template #title>
-                    <div class="d-flex align-center">
-                        <span>{{ tt('Exchange Rates Data') }}</span>
-                    </div>
-                </template>
+            <v-card class="ebk-settings-panel">
+                <header class="ebk-panel-header-strip ebk-settings-panel-header">
+                    <h2 class="ebk-settings-panel-title">{{ tt('Exchange Rates Data') }}</h2>
+                </header>
 
-                <v-card-text class="d-flex align-end py-0">
-                    <span class="text-body-large">{{ tt('Used storage') }}</span>
-                    <v-skeleton-loader class="d-inline-block skeleton-no-margin ms-2 mt-1 pt-1 pb-1" type="text" style="width: 100px" :loading="true" v-if="loading"></v-skeleton-loader>
-                    <span class="text-title-medium ms-2" v-if="!loading">{{ formatVolumeToLocalizedNumerals(exchangeRatesCacheSize ?? 0, 2) }}</span>
+                <v-card-text class="ebk-settings-readout">
+                    <span class="ebk-settings-readout-label ebk-technical-heading">{{ tt('Used storage') }}</span>
+                    <v-skeleton-loader class="d-inline-block skeleton-no-margin pt-1 pb-1" type="text" style="width: 100px" :loading="true" v-if="loading"></v-skeleton-loader>
+                    <span class="ebk-settings-readout-value ebk-numeric" v-if="!loading">{{ formatVolumeToLocalizedNumerals(exchangeRatesCacheSize ?? 0, 2) }}</span>
                 </v-card-text>
 
                 <v-card-text>
@@ -112,7 +110,10 @@
         </v-col>
 
         <v-col cols="12">
-            <v-card :title="tt('Cache Expiration Time')">
+            <v-card class="ebk-settings-panel">
+                <header class="ebk-panel-header-strip ebk-settings-panel-header">
+                    <h2 class="ebk-settings-panel-title">{{ tt('Cache Expiration Time') }}</h2>
+                </header>
                 <v-form>
                     <v-card-text>
                         <v-row>

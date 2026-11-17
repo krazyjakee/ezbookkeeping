@@ -1,15 +1,17 @@
 <template>
     <v-row>
         <v-col cols="12">
-            <v-card :class="{ 'disabled': updatingPassword }" :title="tt('Modify Password')">
+            <v-card class="ebk-settings-panel" :class="{ 'disabled': updatingPassword }">
+                <header class="ebk-panel-header-strip ebk-settings-panel-header">
+                    <h2 class="ebk-settings-panel-title">{{ tt('Modify Password') }}</h2>
+                </header>
                 <v-form>
-                    <v-card-text class="pt-2">
-                        <span class="text-body-large">{{ tt('After changing the password, other devices will be logged out. Please use the new password to log in on other devices.') }}</span>
+                    <v-card-text class="ebk-settings-panel-note">
+                        <v-icon class="ebk-settings-panel-note-icon" size="18" :icon="mdiInformationOutline" />
+                        <span>{{ tt('After changing the password, other devices will be logged out. Please use the new password to log in on other devices.') }}</span>
                     </v-card-text>
 
-                    <v-divider/>
-
-                    <v-card-text class="mt-1">
+                    <v-card-text class="pt-2">
                         <v-row>
                             <v-col cols="12" md="6">
                                 <v-text-field
@@ -55,12 +57,9 @@
                         </v-row>
                     </v-card-text>
 
-                    <v-divider/>
-
-                    <v-card-text class="d-flex flex-wrap gap-4">
-                        <v-btn :disabled="!newPassword || !confirmPassword || updatingPassword" @click="updatePassword">
+                    <v-card-text class="ebk-settings-panel-footer">
+                        <v-btn color="primary" :loading="updatingPassword" :disabled="!newPassword || !confirmPassword || updatingPassword" @click="updatePassword">
                             {{ tt('Save Changes') }}
-                            <v-progress-circular indeterminate size="22" class="ms-2" v-if="updatingPassword"></v-progress-circular>
                         </v-btn>
                     </v-card-text>
                 </v-form>
@@ -68,20 +67,20 @@
         </v-col>
 
         <v-col cols="12" v-if="isOAuth2Enabled() && (loadingExternalAuth || (thirdPartyLoginList && thirdPartyLoginList.length))">
-            <v-card :class="{ 'disabled': loadingExternalAuth }">
-                <template #title>
-                    <div class="d-flex align-center">
-                        <span>{{ tt('Third-Party Login') }}</span>
-                        <v-btn density="compact" color="default" variant="text" size="24" class="ms-2"
+            <v-card class="ebk-settings-panel" :class="{ 'disabled': loadingExternalAuth }">
+                <header class="ebk-panel-header-strip ebk-settings-panel-header">
+                    <h2 class="ebk-settings-panel-title">{{ tt('Third-Party Login') }}</h2>
+                    <div class="ebk-panel-header-actions">
+                        <v-btn density="compact" color="default" variant="text" size="28"
                                :aria-label="tt('Refresh')" :icon="true" :loading="loadingExternalAuth" @click="reloadExternalAuth(false)">
                             <template #loader>
-                                <v-progress-circular indeterminate size="20"/>
+                                <v-progress-circular indeterminate size="18"/>
                             </template>
-                            <v-icon :icon="mdiRefresh" size="24" />
+                            <v-icon :icon="mdiRefresh" size="20" />
                             <v-tooltip activator="parent">{{ tt('Refresh') }}</v-tooltip>
                         </v-btn>
                     </div>
-                </template>
+                </header>
 
                 <v-table class="table-striped text-no-wrap" :hover="!loadingExternalAuth">
                     <thead>
@@ -130,22 +129,23 @@
         </v-col>
 
         <v-col cols="12">
-            <v-card :class="{ 'disabled': loadingSession }">
-                <template #title>
-                    <div class="d-flex align-center">
-                        <span>{{ tt('Device & Sessions') }}</span>
-                        <v-btn class="ms-3" density="compact" color="default" variant="outlined"
+            <v-card class="ebk-settings-panel" :class="{ 'disabled': loadingSession }">
+                <header class="ebk-panel-header-strip ebk-settings-panel-header">
+                    <h2 class="ebk-settings-panel-title">{{ tt('Device & Sessions') }}</h2>
+                    <span class="ebk-settings-panel-meta ebk-numeric" v-if="!loadingSession && sessions.length">{{ sessions.length }}</span>
+                    <div class="ebk-panel-header-actions">
+                        <v-btn density="compact" color="default" variant="text"
                                @click="generateToken" v-if="isAPITokenEnabled() || isMCPServerEnabled()">{{ tt('Generate Token') }}</v-btn>
-                        <v-btn density="compact" color="default" variant="text" size="24" class="ms-2"
+                        <v-btn density="compact" color="default" variant="text" size="28"
                                :aria-label="tt('Refresh')" :icon="true" :loading="loadingSession" @click="reloadSessions(false)">
                             <template #loader>
-                                <v-progress-circular indeterminate size="20"/>
+                                <v-progress-circular indeterminate size="18"/>
                             </template>
-                            <v-icon :icon="mdiRefresh" size="24" />
+                            <v-icon :icon="mdiRefresh" size="20" />
                             <v-tooltip activator="parent">{{ tt('Refresh') }}</v-tooltip>
                         </v-btn>
                     </div>
-                </template>
+                </header>
 
                 <v-table class="table-striped text-no-wrap" :hover="!loadingSession">
                     <thead>
@@ -233,6 +233,7 @@ import { generateRandomUUID } from '@/lib/misc.ts';
 
 import {
     mdiRefresh,
+    mdiInformationOutline,
     mdiLinkVariant,
     mdiGithub,
     mdiCellphone,

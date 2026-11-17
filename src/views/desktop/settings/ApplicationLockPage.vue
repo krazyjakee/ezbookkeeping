@@ -1,7 +1,17 @@
 <template>
     <v-row>
         <v-col cols="12">
-            <v-card :title="tt('Application Lock')">
+            <v-card class="ebk-settings-panel">
+                <header class="ebk-panel-header-strip ebk-settings-panel-header">
+                    <h2 class="ebk-settings-panel-title">{{ tt('Application Lock') }}</h2>
+                    <div class="ebk-panel-header-actions">
+                        <span class="ebk-settings-status" :class="{ 'ebk-settings-status--on': isEnableApplicationLock }">
+                            <v-icon size="16" :icon="isEnableApplicationLock ? mdiLockOutline : mdiLockOpenVariantOutline" />
+                            <span>{{ isEnableApplicationLock ? tt('Enabled') : tt('Disabled') }}</span>
+                        </span>
+                    </div>
+                </header>
+
                 <v-card-text class="mt-2">
                     <span class="text-body-large" v-if="!isEnableApplicationLock">
                         {{ tt('Application lock is not enabled') }}
@@ -11,50 +21,39 @@
                     </span>
                 </v-card-text>
 
-                <v-card-text class="pt-0" v-if="isEnableApplicationLock">
-                    <v-switch :disabled="true"
-                              :label="tt('Unlock with PIN Code')"
-                              v-model="isEnableApplicationLock"/>
-                    <v-switch :label="tt('Unlock with WebAuthn')"
-                              :loading="enablingWebAuthn"
-                              v-model="isEnableApplicationLockWebAuthn"
-                              v-if="isSupportedWebAuthn"/>
+                <div class="setting-items pb-2" v-if="isEnableApplicationLock">
+                    <div class="setting-item">
+                        <span>{{ tt('Unlock with PIN Code') }}</span>
+                        <v-spacer/>
+                        <v-switch class="ms-4" :disabled="true" :aria-label="tt('Unlock with PIN Code')" v-model="isEnableApplicationLock"/>
+                    </div>
+                    <div class="setting-item" v-if="isSupportedWebAuthn">
+                        <span>{{ tt('Unlock with WebAuthn') }}</span>
+                        <v-spacer/>
+                        <v-switch class="ms-4" :aria-label="tt('Unlock with WebAuthn')" :loading="enablingWebAuthn" v-model="isEnableApplicationLockWebAuthn"/>
+                    </div>
+                </div>
+
+                <v-card-text :class="{ 'pt-0': !isEnableApplicationLock }">
+                    <p class="text-body-medium text-medium-emphasis mb-4">
+                        <span v-if="!isEnableApplicationLock">{{ tt('Please enter a new 6-digit PIN code. The PIN code would encrypt your local data, so you need to enter it every time you open this app. If this PIN code is lost, you will need to log in again.') }}</span>
+                        <span v-if="isEnableApplicationLock">{{ tt('Your current PIN code is required to disable application lock.') }}</span>
+                    </p>
+                    <span class="ebk-settings-field-label ebk-technical-heading">{{ tt('PIN Code') }}</span>
+                    <div style="max-width: 428px">
+                        <pin-code-input :secure="true" :length="6" v-model="pinCode" @pincode:confirm="confirm" />
+                    </div>
                 </v-card-text>
 
-                <v-card-text class="py-0">
-                    <span class="text-body-large" v-if="!isEnableApplicationLock">
-                        {{ tt('Please enter a new 6-digit PIN code. The PIN code would encrypt your local data, so you need to enter it every time you open this app. If this PIN code is lost, you will need to log in again.') }}
-                    </span>
-                    <span class="text-body-large" v-if="isEnableApplicationLock">
-                        {{ tt('Your current PIN code is required to disable application lock.') }}
-                    </span>
-                </v-card-text>
-
-                <v-card-text class="mt-4 py-0">
-                    <v-row class="mb-3">
-                        <v-col cols="12" md="12">
-                            <div style="max-width: 428px">
-                                <pin-code-input :secure="true" :length="6" v-model="pinCode" @pincode:confirm="confirm" />
-                            </div>
-                        </v-col>
-                    </v-row>
-                </v-card-text>
-
-                <v-divider/>
-
-                <v-card-text>
-                    <v-row>
-                        <v-col cols="12" class="d-flex flex-wrap gap-4">
-                            <v-btn :disabled="!pinCodeValid"
-                                   v-if="!isEnableApplicationLock" @click="enable">
-                                {{ tt('Enable Application Lock') }}
-                            </v-btn>
-                            <v-btn :disabled="!pinCodeValid"
-                                   v-if="isEnableApplicationLock" @click="disable">
-                                {{ tt('Disable Application Lock') }}
-                            </v-btn>
-                        </v-col>
-                    </v-row>
+                <v-card-text class="ebk-settings-panel-footer">
+                    <v-btn color="primary" :disabled="!pinCodeValid"
+                           v-if="!isEnableApplicationLock" @click="enable">
+                        {{ tt('Enable Application Lock') }}
+                    </v-btn>
+                    <v-btn color="error" variant="tonal" :disabled="!pinCodeValid"
+                           v-if="isEnableApplicationLock" @click="disable">
+                        {{ tt('Disable Application Lock') }}
+                    </v-btn>
                 </v-card-text>
             </v-card>
         </v-col>
@@ -82,6 +81,11 @@ import {
     clearWebAuthnConfig
 } from '@/lib/userstate.ts';
 import logger from '@/lib/logger.ts';
+
+import {
+    mdiLockOutline,
+    mdiLockOpenVariantOutline
+} from '@mdi/js';
 
 const { tt } = useI18n();
 const { isSupportedWebAuthn, isEnableApplicationLock, isEnableApplicationLockWebAuthn } = useAppLockPageBase();

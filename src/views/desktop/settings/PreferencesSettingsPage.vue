@@ -1,41 +1,43 @@
 <template>
     <v-row>
         <v-col cols="12">
-            <v-card class="setting-items" :title="tt('General Settings')">
+            <v-card class="ebk-settings-panel setting-items">
+                <header class="ebk-panel-header-strip ebk-settings-panel-header">
+                    <h2 class="ebk-settings-panel-title">{{ tt('Appearance') }}</h2>
+                </header>
+                <v-card-text class="pa-0 text-body-medium">
+                    <div class="setting-item" role="group" aria-labelledby="preferences-theme-label">
+                        <span id="preferences-theme-label">{{ tt('Theme') }}</span>
+                        <v-spacer/>
+                        <v-btn-toggle class="ebk-settings-segmented ms-4" density="compact" mandatory
+                                      :aria-label="tt('Theme')" v-model="currentTheme">
+                            <v-btn :key="item.value" :value="item.value" :prepend-icon="getThemeIcon(item.value)"
+                                   :aria-pressed="currentTheme === item.value ? 'true' : 'false'"
+                                   v-for="item in allThemes">{{ item.name }}</v-btn>
+                        </v-btn-toggle>
+                    </div>
+
+                    <div class="setting-item" role="group" aria-labelledby="preferences-motion-label">
+                        <span id="preferences-motion-label">{{ tt('Motion') }}</span>
+                        <v-spacer/>
+                        <v-btn-toggle class="ebk-settings-segmented ms-4" density="compact" mandatory
+                                      :aria-label="tt('Motion')" v-model="motionPreference">
+                            <v-btn :key="item.value" :value="item.value"
+                                   :aria-pressed="motionPreference === item.value ? 'true' : 'false'"
+                                   v-for="item in allMotionPreferences">{{ item.name }}</v-btn>
+                        </v-btn-toggle>
+                    </div>
+                </v-card-text>
+            </v-card>
+        </v-col>
+
+        <v-col cols="12">
+            <v-card class="ebk-settings-panel setting-items">
+                <header class="ebk-panel-header-strip ebk-settings-panel-header">
+                    <h2 class="ebk-settings-panel-title">{{ tt('General Settings') }}</h2>
+                </header>
                 <v-form>
                     <v-card-text class="pa-0 text-body-medium">
-                        <div class="setting-item">
-                            <span>{{ tt('Theme') }}</span>
-                            <v-spacer/>
-                            <v-select
-                                class="ms-4"
-                                density="compact"
-                                item-title="name"
-                                item-value="value"
-                                persistent-placeholder
-                                max-width="400px"
-                                :placeholder="tt('Theme')"
-                                :items="allThemes"
-                                v-model="currentTheme"
-                            />
-                        </div>
-
-                        <div class="setting-item">
-                            <span>{{ tt('Motion') }}</span>
-                            <v-spacer/>
-                            <v-select
-                                class="ms-4"
-                                density="compact"
-                                item-title="name"
-                                item-value="value"
-                                persistent-placeholder
-                                max-width="400px"
-                                :placeholder="tt('Motion')"
-                                :items="allMotionPreferences"
-                                v-model="motionPreference"
-                            />
-                        </div>
-
                         <div class="setting-item">
                             <span>{{ tt('Timezone') }}</span>
                             <v-spacer/>
@@ -90,7 +92,10 @@
         </v-col>
 
         <v-col cols="12">
-            <v-card class="setting-items" :title="tt('Navigation Bar')">
+            <v-card class="ebk-settings-panel setting-items">
+                <header class="ebk-panel-header-strip ebk-settings-panel-header">
+                    <h2 class="ebk-settings-panel-title">{{ tt('Navigation Bar') }}</h2>
+                </header>
                 <v-form>
                     <v-card-text class="pa-0 text-body-medium">
                         <div class="setting-item">
@@ -104,7 +109,10 @@
         </v-col>
 
         <v-col cols="12">
-            <v-card class="setting-items" :title="tt('Overview Page')">
+            <v-card class="ebk-settings-panel setting-items">
+                <header class="ebk-panel-header-strip ebk-settings-panel-header">
+                    <h2 class="ebk-settings-panel-title">{{ tt('Overview Page') }}</h2>
+                </header>
                 <v-form>
                     <v-card-text class="pa-0 text-body-medium">
                         <div class="setting-item">
@@ -182,7 +190,10 @@
         </v-col>
 
         <v-col cols="12">
-            <v-card class="setting-items" :title="tt('Transaction List Page')">
+            <v-card class="ebk-settings-panel setting-items">
+                <header class="ebk-panel-header-strip ebk-settings-panel-header">
+                    <h2 class="ebk-settings-panel-title">{{ tt('Transaction List Page') }}</h2>
+                </header>
                 <v-form>
                     <v-card-text class="pa-0 text-body-medium">
                         <div class="setting-item">
@@ -259,7 +270,10 @@
         </v-col>
 
         <v-col cols="12">
-            <v-card class="setting-items" :title="tt('Transaction Edit Page')">
+            <v-card class="ebk-settings-panel setting-items">
+                <header class="ebk-panel-header-strip ebk-settings-panel-header">
+                    <h2 class="ebk-settings-panel-title">{{ tt('Transaction Edit Page') }}</h2>
+                </header>
                 <v-form>
                     <v-card-text class="pa-0 text-body-medium">
                         <div class="setting-item">
@@ -305,7 +319,10 @@
         </v-col>
 
         <v-col cols="12">
-            <v-card class="setting-items" :title="tt('AI Clipboard Text Recognition')">
+            <v-card class="ebk-settings-panel setting-items">
+                <header class="ebk-panel-header-strip ebk-settings-panel-header">
+                    <h2 class="ebk-settings-panel-title">{{ tt('AI Clipboard Text Recognition') }}</h2>
+                </header>
                 <v-form>
                     <v-card-text class="pa-0 text-body-medium">
                         <div class="setting-item">
@@ -319,7 +336,10 @@
         </v-col>
 
         <v-col cols="12">
-            <v-card class="setting-items" :title="tt('AI Image Recognition')">
+            <v-card class="ebk-settings-panel setting-items">
+                <header class="ebk-panel-header-strip ebk-settings-panel-header">
+                    <h2 class="ebk-settings-panel-title">{{ tt('AI Image Recognition') }}</h2>
+                </header>
                 <v-form>
                     <v-card-text class="pa-0 text-body-medium">
                         <div class="setting-item">
@@ -333,7 +353,10 @@
         </v-col>
 
         <v-col cols="12">
-            <v-card class="setting-items" :title="tt('Import Transaction Dialog')">
+            <v-card class="ebk-settings-panel setting-items">
+                <header class="ebk-panel-header-strip ebk-settings-panel-header">
+                    <h2 class="ebk-settings-panel-title">{{ tt('Import Transaction Dialog') }}</h2>
+                </header>
                 <v-form>
                     <v-card-text class="pa-0 text-body-medium">
                         <div class="setting-item">
@@ -347,7 +370,10 @@
         </v-col>
 
         <v-col cols="12">
-            <v-card class="setting-items" :title="tt('Insights Explorer Page')">
+            <v-card class="ebk-settings-panel setting-items">
+                <header class="ebk-panel-header-strip ebk-settings-panel-header">
+                    <h2 class="ebk-settings-panel-title">{{ tt('Insights Explorer Page') }}</h2>
+                </header>
                 <v-form>
                     <v-card-text class="pa-0 text-body-medium">
                         <div class="setting-item">
@@ -378,7 +404,10 @@
         </v-col>
 
         <v-col cols="12">
-            <v-card class="setting-items" :title="tt('Account List Page')">
+            <v-card class="ebk-settings-panel setting-items">
+                <header class="ebk-panel-header-strip ebk-settings-panel-header">
+                    <h2 class="ebk-settings-panel-title">{{ tt('Account List Page') }}</h2>
+                </header>
                 <v-form>
                     <v-card-text class="pa-0 text-body-medium">
                         <div class="setting-item">
@@ -428,7 +457,10 @@
         </v-col>
 
         <v-col cols="12">
-            <v-card class="setting-items" :title="tt('Exchange Rates Data Page')">
+            <v-card class="ebk-settings-panel setting-items">
+                <header class="ebk-panel-header-strip ebk-settings-panel-header">
+                    <h2 class="ebk-settings-panel-title">{{ tt('Exchange Rates Data Page') }}</h2>
+                </header>
                 <v-form>
                     <v-card-text class="pa-0 text-body-medium">
                         <div class="setting-item">
@@ -480,7 +512,7 @@ import TransactionTagFilterSettingsDialog from '@/views/desktop/common/dialogs/T
 import ChartColorSchemeDialog from './dialogs/ChartColorSchemeDialog.vue';
 import AccountCategoryDisplayOrderDialog from './dialogs/AccountCategoryDisplayOrderDialog.vue';
 
-import { ref, computed, useTemplateRef } from 'vue';
+import { ref, computed, useTemplateRef, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTheme } from 'vuetify';
 
@@ -504,6 +536,12 @@ import { DEFAULT_PAGE_COUNTS } from '@/consts/page.ts';
 
 import { isDefaultDesktopOverviewLayout, parseDesktopOverviewLayout } from '@/lib/overview_layout.ts';
 import { getSystemTheme } from '@/lib/ui/common.ts';
+
+import {
+    mdiThemeLightDark,
+    mdiWhiteBalanceSunny,
+    mdiWeatherNight
+} from '@mdi/js';
 
 type ChartColorSchemeDialogType = InstanceType<typeof ChartColorSchemeDialog>;
 type AccountCategoryDisplayOrderDialogType = InstanceType<typeof AccountCategoryDisplayOrderDialog>;
@@ -584,6 +622,16 @@ const currentTheme = computed<string>({
         }
     }
 });
+
+function getThemeIcon(value: string): string {
+    if (value === ThemeType.Light) {
+        return mdiWhiteBalanceSunny;
+    } else if (value === ThemeType.Dark) {
+        return mdiWeatherNight;
+    } else {
+        return mdiThemeLightDark;
+    }
+}
 
 const allMotionPreferences = computed<NameValue[]>(() => [
     { name: tt('System Default'), value: MotionPreference.System },
@@ -682,4 +730,9 @@ function init(): void {
 }
 
 init();
+
+// Preferences apply and save immediately; confirm each save with a snackbar (§6.5)
+watch(() => settingsStore.appSettings, () => {
+    desktopPageStore.addToast('Settings saved');
+}, { deep: true });
 </script>

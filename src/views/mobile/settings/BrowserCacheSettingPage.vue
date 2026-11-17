@@ -1,5 +1,5 @@
 <template>
-    <f7-page ptr @ptr:refresh="reloadCacheStatistics">
+    <f7-page class="ebk-settings-page" ptr @ptr:refresh="reloadCacheStatistics">
         <f7-navbar>
             <f7-nav-left :class="{ 'disabled': loading }" :back-link="tt('Back')"></f7-nav-left>
             <f7-nav-title :title="tt('Browser Cache Management')"></f7-nav-title>

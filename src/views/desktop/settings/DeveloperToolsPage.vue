@@ -1,12 +1,10 @@
 <template>
     <v-row>
         <v-col cols="12">
-            <v-card v-if="isLanguagePreviewEnabled()">
-                <template #title>
-                    <div class="d-flex align-center">
-                        <span>{{ tt('Preview Language Configuration') }}</span>
-                    </div>
-                </template>
+            <v-card class="ebk-settings-panel" v-if="isLanguagePreviewEnabled()">
+                <header class="ebk-panel-header-strip ebk-settings-panel-header">
+                    <h2 class="ebk-settings-panel-title">{{ tt('Preview Language Configuration') }}</h2>
+                </header>
 
                 <v-card-text class="mt-2 text-body-medium">
                     <div>
@@ -62,10 +60,8 @@
                     </div>
                 </v-card-text>
 
-                <v-divider />
-
-                <v-card-text class="d-flex flex-wrap gap-4">
-                    <v-btn :disabled="!currentLanguageConfigJson || !currentLanguageConfigJson.trim()" @click="applyPreview">
+                <v-card-text class="ebk-settings-panel-footer">
+                    <v-btn color="primary" :disabled="!currentLanguageConfigJson || !currentLanguageConfigJson.trim()" @click="applyPreview">
                         {{ tt('Apply Preview') }}
                     </v-btn>
 

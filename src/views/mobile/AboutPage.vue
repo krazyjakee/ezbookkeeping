@@ -1,5 +1,5 @@
 <template>
-    <f7-page>
+    <f7-page class="ebk-settings-page">
         <f7-navbar>
             <f7-nav-left :back-link="tt('Back')"></f7-nav-left>
             <f7-nav-title :title="tt('About')"></f7-nav-title>
@@ -10,7 +10,19 @@
             </f7-nav-right>
         </f7-navbar>
 
-        <f7-block-title class="margin-top">{{ tt('global.app.title') }}</f7-block-title>
+        <div class="ebk-settings-identity">
+            <img alt="" class="ebk-settings-identity-logo" :src="APPLICATION_LOGO_PATH" />
+            <div class="ebk-settings-identity-text">
+                <h2 class="ebk-settings-identity-title">{{ tt('global.app.title') }}</h2>
+                <div class="ebk-settings-identity-meta">
+                    <span>Based on ezBookkeeping, originally created by </span>
+                    <f7-link class="display-inline" @click="openExternalUrl('https://github.com/mayswind')">MaysWind</f7-link>
+                    <span> · Released under the MIT License</span>
+                </div>
+            </div>
+        </div>
+
+        <f7-block-title>{{ tt('global.app.title') }}</f7-block-title>
         <f7-list strong inset dividers>
             <f7-list-item :title="tt('Version')" :after="clientVersion" @click="showVersion"></f7-list-item>
             <f7-list-item :title="tt('Build Time')" :after="clientBuildTime" v-if="clientBuildTime"></f7-list-item>
@@ -20,14 +32,14 @@
             <f7-list-item :title="tt('License')" link="#" popup-open=".license-popup"></f7-list-item>
         </f7-list>
 
-        <f7-block-title class="margin-top" v-if="exchangeRatesData && !isUserCustomExchangeRates">{{ tt('Exchange Rates Data') }}</f7-block-title>
+        <f7-block-title v-if="exchangeRatesData && !isUserCustomExchangeRates">{{ tt('Exchange Rates Data') }}</f7-block-title>
         <f7-list strong inset dividers v-if="exchangeRatesData && !isUserCustomExchangeRates">
             <f7-list-item :title="tt('Provider')" :after="exchangeRatesData.dataSource" link="#"
                           @click="openExternalUrl(exchangeRatesData.referenceUrl)" v-if="exchangeRatesData.referenceUrl"></f7-list-item>
             <f7-list-item :title="tt('Provider')" :after="exchangeRatesData.dataSource" v-if="!exchangeRatesData.referenceUrl"></f7-list-item>
         </f7-list>
 
-        <f7-block-title class="margin-top" v-if="mapProviderName">{{ tt('Map') }}</f7-block-title>
+        <f7-block-title v-if="mapProviderName">{{ tt('Map') }}</f7-block-title>
         <f7-list strong inset dividers v-if="mapProviderName">
             <f7-list-item :title="tt('Provider')" :after="mapProviderName" link="#"
                           @click="openExternalUrl(mapProviderWebsite)" v-if="mapProviderWebsite"></f7-list-item>
@@ -44,7 +56,7 @@
                     <p>
                         <span :key="num" v-for="(line, num) in licenseLines"
                               :style="{ 'display': line ? 'initial' : 'block', 'padding' : line ? '0' : '0 0 1em 0' }">
-                            {{ line }}
+                            {{ `${line} ` }}
                         </span>
                     </p>
                     <hr/>
@@ -164,6 +176,7 @@ import { useI18nUIComponents, isiOSHomeScreenMode, showLoading, hideLoading } fr
 import { useAboutPageBase } from '@/views/base/AboutPageBase.ts';
 
 import type { LanguageOption } from '@/core/language.ts';
+import { APPLICATION_LOGO_PATH } from '@/consts/asset.ts';
 import { isWebAuthnCompletelySupported } from '@/lib/webauthn.ts';
 import { getStringifiedServerSetting } from '@/lib/server_settings.ts';
 

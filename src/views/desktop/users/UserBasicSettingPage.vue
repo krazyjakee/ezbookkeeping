@@ -1,11 +1,13 @@
 <template>
     <v-row>
         <v-col cols="12">
-            <v-card class="setting-items" :class="{ 'disabled': loading || saving }">
-                <template #title>
-                    <span>{{ tt('Basic Settings') }}</span>
-                    <v-progress-circular indeterminate size="20" class="ms-3" v-if="loading"></v-progress-circular>
-                </template>
+            <v-card class="setting-items ebk-settings-panel" :class="{ 'disabled': loading || saving }">
+                <header class="ebk-panel-header-strip ebk-settings-panel-header">
+                    <h2 class="ebk-settings-panel-title">{{ tt('Basic Settings') }}</h2>
+                    <div class="ebk-panel-header-actions">
+                        <v-progress-circular indeterminate size="18" v-if="loading"></v-progress-circular>
+                    </div>
+                </header>
 
                 <v-card-text class="d-flex mt-2">
                     <v-avatar rounded="lg" variant="tonal" size="100" class="me-4 user-profile-avatar-icon"
@@ -31,7 +33,7 @@
                     </v-avatar>
                     <div class="d-flex flex-column justify-center gap-3">
                         <div class="d-flex text-body-large">
-                            <span class="me-1">{{ tt('Username:') }}</span>
+                            <span class="me-1 text-medium-emphasis">{{ tt('Username:') }}</span>
                             <v-skeleton-loader class="skeleton-no-margin" type="text" style="width: 100px" :loading="true" v-if="loading"></v-skeleton-loader>
                             <span v-if="!loading">{{ oldProfile.username }}</span>
                         </div>
@@ -477,15 +479,13 @@
                         </div>
                     </v-card-text>
 
-                    <v-divider />
-
-                    <v-card-text class="d-flex flex-wrap gap-4">
-                        <v-btn :disabled="inputIsNotChanged || inputIsInvalid || saving" @click="save">
+                    <v-card-text class="ebk-settings-panel-footer ebk-settings-panel-footer--sticky">
+                        <span class="ebk-settings-panel-footer-status" role="status" v-if="!loading && !inputIsNotChanged">{{ tt('Unsaved changes') }}</span>
+                        <v-btn color="primary" :loading="saving" :disabled="inputIsNotChanged || inputIsInvalid || saving" @click="save">
                             {{ tt('Save Changes') }}
-                            <v-progress-circular indeterminate size="22" class="ms-2" v-if="saving"></v-progress-circular>
                         </v-btn>
 
-                        <v-btn color="default" variant="tonal" @click="reset">
+                        <v-btn color="default" variant="outlined" :disabled="saving" @click="reset">
                             {{ tt('Reset') }}
                         </v-btn>
                     </v-card-text>
