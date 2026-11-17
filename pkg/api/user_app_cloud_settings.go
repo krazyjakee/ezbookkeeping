@@ -76,7 +76,6 @@ func (a *UserApplicationCloudSettingsApi) ApplicationSettingsUpdateHandler(c *co
 
 	var userApplicationCloudSettings *models.UserApplicationCloudSetting
 
-	// Retry up to 3 times
 	for i := 0; i < 3; i++ {
 		userApplicationCloudSettings, err = a.userAppCloudSettings.GetUserApplicationCloudSettingsByUid(c, uid)
 
@@ -96,7 +95,6 @@ func (a *UserApplicationCloudSettingsApi) ApplicationSettingsUpdateHandler(c *co
 			lastUpdateTime = userApplicationCloudSettings.UpdatedUnixTime
 		}
 
-		// Check if the full update settings are the same as the existing settings
 		if userAppCloudSettingUpdateReq.FullUpdate {
 			if len(userAppCloudSettingUpdateReq.Settings) == len(oldApplicationCloudSettingsMap) {
 				needUpdate := false
@@ -114,7 +112,7 @@ func (a *UserApplicationCloudSettingsApi) ApplicationSettingsUpdateHandler(c *co
 					return false, errs.ErrNothingWillBeUpdated
 				}
 			}
-		} else { // Check if the partial update settings are the same as the existing settings or the settings to update are not set to sync
+		} else {
 			needUpdate := true
 
 			for _, setting := range userAppCloudSettingUpdateReq.Settings {
@@ -195,7 +193,7 @@ func (a *UserApplicationCloudSettingsApi) ApplicationSettingsUpdateHandler(c *co
 			break
 		}
 
-		time.Sleep(100 * time.Millisecond) // Wait for 100 milliseconds before retrying
+		time.Sleep(100 * time.Millisecond)
 	}
 
 	if err != nil {

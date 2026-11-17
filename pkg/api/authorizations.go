@@ -612,20 +612,10 @@ func (a *AuthorizationsApi) getAuthResponse(c *core.WebContext, token string, cl
 		return nil, errs.Or(err, errs.ErrOperationFailed)
 	}
 
-	mapProxyEnabled := a.CurrentConfig().EnableMapDataFetchProxy && a.CurrentConfig().SupportMapDataFetchProxy
-	amapInternalProxyEnabled := a.CurrentConfig().MapProvider == settings.AmapProvider && a.CurrentConfig().AmapSecurityVerificationMethod == settings.AmapSecurityVerificationInternalProxyMethod
-	var mapProxyToken string
+	mapProxyToken, err := a.generateMapProxyToken(c, a.tokens, claims, tokenRecord)
 
-	if claims != nil && claims.Type == core.USER_TOKEN_TYPE_NORMAL && (mapProxyEnabled || amapInternalProxyEnabled) {
-		token, _, err := a.tokens.DeriveMapProxyToken(c, claims, tokenRecord)
-
-		if err != nil {
-			log.Errorf(c, "[authorizations.getAuthResponse] failed to derive map proxy token for user \"uid:%d\", because %s", user.Uid, err.Error())
-			return nil, errs.Or(err, errs.ErrOperationFailed)
-		}
-
-		mapProxyToken = token
-		c.SetTextualMapProxyToken(token)
+	if err != nil {
+		return nil, errs.Or(err, errs.ErrOperationFailed)
 	}
 
 	return &models.AuthResponse{

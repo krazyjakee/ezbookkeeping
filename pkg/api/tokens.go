@@ -415,7 +415,7 @@ func (a *TokensApi) TokenRefreshHandler(c *core.WebContext) (any, *errs.Error) {
 			return nil, errs.Or(err, errs.ErrOperationFailed)
 		}
 
-		mapProxyToken, err := a.generateMapProxyToken(c, user.Uid, c.GetTokenClaims(), c.GetTokenRecord())
+		mapProxyToken, err := a.generateMapProxyToken(c, a.tokens, c.GetTokenClaims(), c.GetTokenRecord())
 
 		if err != nil {
 			return nil, errs.Or(err, errs.ErrOperationFailed)
@@ -467,7 +467,7 @@ func (a *TokensApi) TokenRefreshHandler(c *core.WebContext) (any, *errs.Error) {
 		return nil, errs.Or(err, errs.ErrOperationFailed)
 	}
 
-	mapProxyToken, err := a.generateMapProxyToken(c, user.Uid, claims, tokenRecord)
+	mapProxyToken, err := a.generateMapProxyToken(c, a.tokens, claims, tokenRecord)
 
 	if err != nil {
 		return nil, errs.Or(err, errs.ErrOperationFailed)
@@ -483,29 +483,6 @@ func (a *TokensApi) TokenRefreshHandler(c *core.WebContext) (any, *errs.Error) {
 	}
 
 	return refreshResp, nil
-}
-
-func (a *TokensApi) generateMapProxyToken(c *core.WebContext, uid int64, claims *core.UserTokenClaims, tokenRecord core.TokenRecord) (string, error) {
-	if claims == nil || claims.Type != core.USER_TOKEN_TYPE_NORMAL {
-		return "", nil
-	}
-
-	mapProxyEnabled := a.CurrentConfig().EnableMapDataFetchProxy && a.CurrentConfig().SupportMapDataFetchProxy
-	amapInternalProxyEnabled := a.CurrentConfig().MapProvider == settings.AmapProvider && a.CurrentConfig().AmapSecurityVerificationMethod == settings.AmapSecurityVerificationInternalProxyMethod
-
-	if !mapProxyEnabled && !amapInternalProxyEnabled {
-		return "", nil
-	}
-
-	token, _, err := a.tokens.DeriveMapProxyToken(c, claims, tokenRecord)
-
-	if err != nil {
-		log.Errorf(c, "[tokens.generateMapProxyToken] failed to derive map proxy token for user \"uid:%d\", because %s", uid, err.Error())
-		return "", errs.Or(err, errs.ErrOperationFailed)
-	}
-
-	c.SetTextualMapProxyToken(token)
-	return token, nil
 }
 
 // getMCPToolsMask converts registered tool names to their permanent permission bits.
