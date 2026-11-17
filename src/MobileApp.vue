@@ -1,6 +1,12 @@
 <template>
     <f7-app v-bind="f7params">
-        <f7-view id="main-view" main url="/"></f7-view>
+        <f7-view id="main-view" class="safe-areas" main url="/"></f7-view>
+        <Transition name="ebk-fade">
+            <div class="ebk-offline-banner" role="status" aria-live="polite" v-if="isOffline">
+                <i class="icon f7-icons" aria-hidden="true">wifi_slash</i>
+                <span>{{ tt('You are offline. Changes cannot be saved until the connection is restored.') }}</span>
+            </div>
+        </Transition>
     </f7-app>
 </template>
 
@@ -100,6 +106,10 @@ const f7params = ref<Framework7Parameters>({
         backdrop: true,
         closeOnEscape: true
     },
+    input: {
+        // keep a focused input away from the on-screen keyboard and the bottom toolbar (android scrolls by default, ios scrolls natively)
+        scrollIntoViewCentered: true
+    },
     smartSelect: {
         routableModals: false
     },
@@ -116,6 +126,7 @@ const f7params = ref<Framework7Parameters>({
 });
 
 const notification = ref<Notification.Notification | null>(null);
+const isOffline = ref<boolean>(typeof navigator !== 'undefined' && navigator.onLine === false);
 
 const hasPushPopupBackdrop = ref<boolean | undefined>(undefined);
 const hasBackdrop = ref<boolean | undefined>(undefined);
@@ -145,6 +156,45 @@ function setThemeColorMeta(darkMode: boolean | undefined): void {
     }
 }
 
+function updateOnlineState(): void {
+    isOffline.value = navigator.onLine === false;
+}
+
+function setupDialogAccessibility(dialog: Dialog.Dialog): void {
+    const dialogElement = dialog.el as HTMLElement | undefined;
+
+    if (!dialogElement) {
+        return;
+    }
+
+    const titleElement = dialogElement.querySelector<HTMLElement>('.dialog-title');
+
+    if (!dialogElement.hasAttribute('role')) {
+        dialogElement.setAttribute('role', dialogElement.querySelector('.dialog-buttons') ? 'alertdialog' : 'dialog');
+    }
+
+    dialogElement.setAttribute('aria-modal', 'true');
+
+    if (titleElement) {
+        if (!titleElement.id) {
+            titleElement.id = `ebk-dialog-title-${Date.now().toString(36)}`;
+        }
+
+        dialogElement.setAttribute('aria-labelledby', titleElement.id);
+    }
+
+    // dialogs with inputs (prompts) focus their input, the others focus the safe action:
+    // the first non-primary button (cancel), or the only button of an alert
+    if (dialogElement.querySelector('input, textarea, select') || dialogElement.contains(document.activeElement)) {
+        return;
+    }
+
+    const buttons = Array.from(dialogElement.querySelectorAll<HTMLButtonElement>('.dialog-buttons > .dialog-button'));
+    const safeButton = buttons.length > 1 ? buttons.find(button => !button.classList.contains('button-fill')) : buttons[0];
+
+    safeButton?.focus({ preventScroll: true });
+}
+
 function onBackdropChanged(element: { push?: boolean, opened?: boolean }): void {
     if (element.push) {
         hasPushPopupBackdrop.value = element.opened;
@@ -166,6 +216,7 @@ onMounted(() => {
         f7.on('actionsClose', (actions: Actions.Actions) => onBackdropChanged(actions));
         f7.on('dialogOpen', (dialog: Dialog.Dialog) => onBackdropChanged(dialog));
         f7.on('dialogClose', (dialog: Dialog.Dialog) => onBackdropChanged(dialog));
+        f7.on('dialogOpened', (dialog: Dialog.Dialog) => setupDialogAccessibility(dialog));
         f7.on('popoverOpen', (popover: Popover.Popover) => onBackdropChanged(popover));
         f7.on('popoverClose', (popover: Popover.Popover) => onBackdropChanged(popover));
         f7.on('popupOpen', (popup: Popup.Popup) => onBackdropChanged(popup));
@@ -213,6 +264,10 @@ onMounted(() => {
             }
         });
     });
+
+    window.addEventListener('online', updateOnlineState);
+    window.addEventListener('offline', updateOnlineState);
+    updateOnlineState();
 
     document.addEventListener('DOMContentLoaded', () => {
         const languageInfo = getCurrentLanguageInfo();
