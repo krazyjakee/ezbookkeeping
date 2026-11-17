@@ -6,7 +6,7 @@ title: "Installation"
 
 ezrbookkeeping is an open source, powerful, self-hosted personal finance app that is easy to use. It helps you record daily transactions, import data from various sources, and quickly search and filter your bills. You can analyze historical data using built-in charts or perform custom queries with your own chart dimensions to better understand spending patterns and financial trends. ezrbookkeeping is easy to deploy, and you can start it with just one single Docker command. Designed to be resource-efficient, it runs smoothly on devices such as Raspberry Pi, NAS, and MicroServers.
 
-ezrbookkeeping offers tailored interfaces for both mobile and desktop devices. With support for PWA (Progressive Web Apps), you can even [add it to your mobile home screen](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/mobile/add_to_home_screen.gif) and use it like a native app.
+ezrbookkeeping offers tailored interfaces for both mobile and desktop devices. With support for PWA (Progressive Web Apps), you can even [add it to your mobile home screen](/faq/#how-to-add-ezrbookkeeping-to-home-screen-of-mobile-phone) and use it like a native app.
 
 ezrbookkeeping uses a lightweight tech stack and an efficient architecture to keep the application minimal, while still providing powerful features. You can explore all supported features in [Feature List](/features/).
 

@@ -119,7 +119,14 @@ ezrbookkeeping is a self-hosted software, accessed entirely through your browser
 
 ezrbookkeeping supports PWA (Progressive Web Apps). You can add it to your phone's screen using your system browser. The system will automatically cache the necessary static files. When you open ezrbookkeeping directly from your phone's home screen, it will behave like a native app.
 
-For detailed steps, see the [guide](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/mobile/add_to_home_screen.gif).
+To add it:
+
+1. Open the mobile version of ezrbookkeeping (for example `https://your-server/mobile`) in your phone's system browser and log in.
+2. **iOS / iPadOS (Safari):** tap the **Share** button, then **Add to Home Screen**.
+3. **Android (Chrome):** open the browser menu, then tap **Install app** or **Add to Home screen**.
+4. Open ezrbookkeeping from the new home screen icon.
+
+<img src="/images/screenshots/mobile_overview_light.jpg" alt="ezrbookkeeping mobile overview opened from the home screen" width="292" />
 
 ## What is the default user in ezrbookkeeping
 

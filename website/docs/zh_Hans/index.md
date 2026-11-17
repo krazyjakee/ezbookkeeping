@@ -2,6 +2,7 @@
 layout: home
 
 hero:
+    eyebrow: "自托管 · 企业记账"
     name: "ezrbookkeeping"
     text: "稳定、面向企业的自托管记账应用"
     tagline: "mayswind/ezbookkeeping 的商业化分支。稳定性、成熟度与商业用途优先，不包含个人生活记录功能。"
@@ -14,45 +15,49 @@ hero:
           link: https://github.com/krazyjakee/ezbookkeeping
 
 screenshots:
-    - light: /images/zh_Hans/desktop_screenshot_light.png
-      dark: /images/zh_Hans/desktop_screenshot_dark.png
-      alt: 桌面版
-    - light: /images/zh_Hans/mobile_screenshot_light.png
-      dark: /images/zh_Hans/mobile_screenshot_dark.png
-      alt: 移动版
+    - light: /images/screenshots/desktop_overview_light.jpg
+      dark: /images/screenshots/desktop_overview_dark.jpg
+      label: 桌面版 · 概览
+      alt: ezrbookkeeping 桌面版概览
+      kind: desktop
+    - light: /images/screenshots/mobile_overview_light.jpg
+      dark: /images/screenshots/mobile_overview_dark.jpg
+      label: 移动版 · 概览
+      alt: ezrbookkeeping 移动版概览
+      kind: mobile
 
 features:
     - title: 开源 & 自托管
-      icon: 🛠️
+      icon: "01 · 托管"
       details:
           专为隐私与数据自主而设计
     - title: 轻量 & 快速
-      icon: ⚡
+      icon: "02 · 资源占用"
       details:
           资源占用极少，适合家庭服务器、NAS 以及树莓派 (Raspberry Pi)
     - title: 安装简单
-      icon: 📦
+      icon: "03 · 部署"
       details:
           支持 Docker <br/>
           支持 SQLite、MySQL、PostgreSQL 多种数据库 <br/>
           跨平台运行 (Windows, macOS, Linux, FreeBSD) <br/>
           支持 x86, amd64, ARM 架构
     - title: 友好的用户界面
-      icon: 🎨
+      icon: "04 · 界面"
       details:
           针对手机与桌面优化的 UI <br/>
           支持 PWA，带来接近原生 App 的使用体验 <br/>
           自定义首页布局 <br/>
           深色模式
     - title: AI 驱动的功能
-      icon: 🤖
+      icon: "05 · AI"
       details:
           文字、收据图片识别 <br/>
           AI 自定义图表生成 <br/>
           MCP (Model Context Protocol) 用于 AI 集成 <br/>
           Agent Skill 和 API 命令行脚本工具用于 AI 集成
     - title: 强大的记账功能
-      icon: 📘
+      icon: "06 · 记账"
       details:
           两级账户与两级分类 <br/>
           支持交易图片附件 <br/>
@@ -60,21 +65,21 @@ features:
           支持定时交易 <br/>
           高级筛选、搜索、数据可视化与分析功能
     - title: 本地化与国际化
-      icon: 🌍
+      icon: "07 · 本地化"
       details:
           多语言与多币种支持 <br/>
           多汇率数据源及汇率自动更新 <br/>
           多时区支持 <br/>
           自定义日期、数字与货币格式
     - title: 安全可靠
-      icon: 🔐
+      icon: "08 · 安全"
       details:
           两步认证 (2FA) <br/>
           OIDC 外部认证<br/>
           登录频次限制 <br/>
           应用锁 (PIN 码 / WebAuthn)
     - title: 数据导入 & 导出
-      icon: 📑
+      icon: "09 · 数据迁移"
       details:
           导入 CSV、Excel、OFX、QFX、QIF、IIF、Camt.052、Camt.053、MT940、GnuCash、Firefly III、Beancount、随手记，以及支付宝、微信支付及京东金融的对账单 等多种格式 <br/>
           CSV、Excel 导入支持自定义列映射、规则以及脚本代码

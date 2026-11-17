@@ -16,6 +16,12 @@ export default defineConfig({
     base: websiteBasePath,
     srcDir: './docs',
     cleanUrls: true,
+    head: [
+        ['link', { rel: 'icon', type: 'image/png', sizes: '32x32', href: `${websiteBasePath}images/logo.png` }],
+        ['link', { rel: 'apple-touch-icon', href: `${websiteBasePath}images/touchicon.png` }],
+        // canvas colour; the theme updates it when the dark mode changes (see theme/index.ts)
+        ['meta', { name: 'theme-color', content: '#f7f4ef' }]
+    ],
     metaChunk: true,
     lastUpdated: true,
     markdown: {

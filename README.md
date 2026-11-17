@@ -17,7 +17,7 @@
 ## Introduction
 ezrbookkeeping is a self-hosted bookkeeping app for recording transactions, managing accounts and categories, and importing financial data. Built-in charts and custom queries help you review balances, spending and income. It supports SQLite, MySQL and PostgreSQL, with Docker images and standalone binaries for deployment.
 
-ezrbookkeeping offers tailored interfaces for mobile and desktop devices. With PWA (Progressive Web Apps) support, you can [add it to your mobile home screen](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/mobile/add_to_home_screen.gif) and use it like a native app.
+ezrbookkeeping offers tailored interfaces for mobile and desktop devices. With PWA (Progressive Web Apps) support, you can add it to your mobile home screen (open it in your phone's browser, then choose **Add to Home Screen** or **Install app** from the browser menu) and use it like a native app.
 
 ## Features
 - **Open Source & Self-Hosted**
@@ -63,10 +63,29 @@ For a full list of features, visit the [Full Feature List](https://krazyjakee.gi
 
 ## Screenshots
 ### Desktop Version
-[![ezrbookkeeping](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/desktop/en.png)](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/desktop/en.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/krazyjakee/ezbookkeeping/main/website/docs/public/images/screenshots/desktop_overview_dark.jpg">
+  <img src="https://raw.githubusercontent.com/krazyjakee/ezbookkeeping/main/website/docs/public/images/screenshots/desktop_overview_light.jpg" alt="ezrbookkeeping desktop overview with monthly position, asset summary, period tiles, expense trends and transaction calendar">
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/krazyjakee/ezbookkeeping/main/website/docs/public/images/screenshots/desktop_transactions_dark.jpg">
+  <img src="https://raw.githubusercontent.com/krazyjakee/ezbookkeeping/main/website/docs/public/images/screenshots/desktop_transactions_light.jpg" alt="ezrbookkeeping desktop transaction list grouped by date with signed amounts">
+</picture>
 
 ### Mobile Version
-[![ezrbookkeeping](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/mobile/en.png)](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/mobile/en.png)
+<p>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/krazyjakee/ezbookkeeping/main/website/docs/public/images/screenshots/mobile_overview_dark.jpg">
+  <img src="https://raw.githubusercontent.com/krazyjakee/ezbookkeeping/main/website/docs/public/images/screenshots/mobile_overview_light.jpg" alt="ezrbookkeeping mobile overview with monthly position and period summary" width="292">
+</picture>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/krazyjakee/ezbookkeeping/main/website/docs/public/images/screenshots/mobile_transaction_add_dark.jpg">
+  <img src="https://raw.githubusercontent.com/krazyjakee/ezbookkeeping/main/website/docs/public/images/screenshots/mobile_transaction_add_light.jpg" alt="ezrbookkeeping mobile transaction entry" width="292">
+</picture>
+</p>
+
+Screenshots use the bundled demo data and follow your light / dark preference. See the [documentation site](https://krazyjakee.github.io/ezbookkeeping/) for more.
 
 ## Installation
 ### Run with Docker

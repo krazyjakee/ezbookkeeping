@@ -119,7 +119,14 @@ ezrbookkeeping 是一个自托管的软件，通过你的浏览器进行访问�
 
 ezrbookkeeping 支持 PWA（Progressive Web Apps），你可以使用系统浏览器将其添加到手机屏幕，系统会自动缓存必须的静态文件。从手机主屏幕直接打开 ezrbookkeeping 时会像手机原生应用一样。
 
-详细步骤，参考 [教程](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/mobile/add_to_home_screen.gif)。
+添加步骤：
+
+1. 在手机的系统浏览器中打开 ezrbookkeeping 的移动版（例如 `https://your-server/mobile`）并登录。
+2. **iOS / iPadOS（Safari）：** 点击 **分享** 按钮，然后选择 **添加到主屏幕**。
+3. **Android（Chrome）：** 打开浏览器菜单，然后选择 **安装应用** 或 **添加到主屏幕**。
+4. 从主屏幕上新出现的图标打开 ezrbookkeeping。
+
+<img src="/images/screenshots/mobile_overview_light.jpg" alt="从主屏幕打开的 ezrbookkeeping 移动版首页" width="292" />
 
 ## ezrbookkeeping 的默认用户是什么
 
