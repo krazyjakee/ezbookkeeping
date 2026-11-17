@@ -29,6 +29,17 @@ export interface CommonPeriodStatisticsWidgetProps {
     dateType?: number;
 }
 
+/**
+ * An amount prepared for the SignedAmount component (design guidelines D1): the formatted absolute amount
+ * without sign, the transaction type that decides the sign and colour, and whether the sign must be hidden
+ * (zero, hidden or unavailable amounts)
+ */
+export interface SignedDisplayAmount {
+    text: string;
+    type: 'income' | 'expense' | 'none';
+    hideSign: boolean;
+}
+
 export function usePeriodStatisticsWidgetBase(props: CommonPeriodStatisticsWidgetProps) {
     const {
         tt,
@@ -115,6 +126,10 @@ export function usePeriodStatisticsWidgetBase(props: CommonPeriodStatisticsWidge
         return formatPercentToLocalizedNumerals(rate, 2, '<0.01');
     });
 
+    const currentSignedDisplayIncomeAmount = computed<SignedDisplayAmount>(() => getSignedDisplayAmount(currentOverviewItem.value, 'income'));
+    const currentSignedDisplayExpenseAmount = computed<SignedDisplayAmount>(() => getSignedDisplayAmount(currentOverviewItem.value, 'expense'));
+    const currentSignedDisplayNetIncomeAmount = computed<SignedDisplayAmount>(() => getSignedDisplayAmount(currentOverviewItem.value, 'net'));
+
     const currentDetailsUrl = computed<string>(() => {
         return `/transaction/list?${overviewStore.getTransactionListPageParams({ dateType: props.dateType })}`
     });
@@ -155,6 +170,40 @@ export function usePeriodStatisticsWidgetBase(props: CommonPeriodStatisticsWidge
         return formatAmountToLocalizedNumeralsWithCurrency(amount, defaultCurrency.value) + (incomplete ? INCOMPLETE_AMOUNT_SUFFIX : '');
     }
 
+    function getSignedDisplayAmount(item: TransactionOverviewDataItem | undefined, kind: 'income' | 'expense' | 'net'): SignedDisplayAmount {
+        if (!item || !item.valid) {
+            return {
+                text: '',
+                type: kind === 'net' ? 'none' : kind,
+                hideSign: true
+            };
+        }
+
+        let amount: BigDecimal;
+        let incomplete: boolean;
+        let type: 'income' | 'expense' | 'none';
+
+        if (kind === 'income') {
+            amount = item.incomeAmount;
+            incomplete = item.incompleteIncomeAmount;
+            type = 'income';
+        } else if (kind === 'expense') {
+            amount = item.expenseAmount;
+            incomplete = item.incompleteExpenseAmount;
+            type = 'expense';
+        } else {
+            amount = item.incomeAmount.subtract(item.expenseAmount);
+            incomplete = item.incompleteIncomeAmount || item.incompleteExpenseAmount;
+            type = amount.isZero() ? 'none' : (amount.isNegative() ? 'expense' : 'income');
+        }
+
+        return {
+            text: getDisplayAmount(amount.abs(), incomplete),
+            type: type,
+            hideSign: !showAmountInHomePage.value || amount.isZero()
+        };
+    }
+
     function getDisplayIncomeAmount(category: TransactionOverviewDataItem): string {
         return getDisplayAmount(category.incomeAmount, category.incompleteIncomeAmount);
     }
@@ -179,11 +228,15 @@ export function usePeriodStatisticsWidgetBase(props: CommonPeriodStatisticsWidge
         currentDisplayExpenseAmount,
         currentDisplayNetIncomeAmount,
         currentDisplaySavingsRate,
+        currentSignedDisplayIncomeAmount,
+        currentSignedDisplayExpenseAmount,
+        currentSignedDisplayNetIncomeAmount,
         currentDetailsUrl,
         // functions
         getOverviewItem,
         getDisplayDateTime,
         getDisplayAmount,
+        getSignedDisplayAmount,
         getDisplayIncomeAmount,
         getDisplayExpenseAmount
     };

@@ -1,6 +1,9 @@
 <template>
-    <f7-card class="no-margin-top margin-bottom" :class="{ disabled: loading }">
-        <f7-card-content class="transaction-calendar-container no-padding">
+    <overview-widget-panel flush class="mobile-transaction-calendar-panel"
+                           :title="title || tt('Transaction Calendar')"
+                           :meta="displayDateRange?.thisMonth?.displayTime"
+                           :loading="loading">
+        <div class="transaction-calendar-container" :class="{ 'mobile-transaction-calendar-busy': loading }">
             <transaction-calendar calendar-class="justify-content-center" week-day-name-type="short"
                                   :readonly="loading || editing" :is-dark-mode="isDarkMode"
                                   :default-currency="false"
@@ -12,12 +15,17 @@
                                   :show-alternate-date="showAlternateDate"
                                   :model-value="currentCalendarDate"
                                   @update:model-value="selectDate" />
-        </f7-card-content>
-    </f7-card>
+        </div>
+    </overview-widget-panel>
 </template>
 
 <script setup lang="ts">
+import OverviewWidgetPanel from './OverviewWidgetPanel.vue';
+
 import { computed } from 'vue';
+
+import { useI18n } from '@/locales/helpers.ts';
+import { usePeriodStatisticsWidgetBase } from '@/views/base/overview/PeriodStatisticsWidgetBase.ts';
 
 import { useTransactionCalendarWidgetBase } from '@/views/base/overview/TransactionCalendarWidgetBase.ts';
 
@@ -40,7 +48,11 @@ const emit = defineEmits<{
     (e: 'navigate', type: MobileOverviewWidgetNavigationType, path?: string): void;
 }>();
 
+const { tt } = useI18n();
+
 const environmentsStore = useEnvironmentsStore();
+
+const { displayDateRange } = usePeriodStatisticsWidgetBase({});
 
 const {
     currentCalendarDate,
@@ -64,3 +76,28 @@ function selectDate(date: TextualYearMonthDay): void {
     }
 }
 </script>
+
+<style>
+.mobile-transaction-calendar-panel .transaction-calendar-container {
+    padding: var(--ebk-space-1) var(--ebk-space-1) var(--ebk-space-2);
+    transition: opacity var(--ebk-motion-duration-sm) var(--ebk-motion-ease-standard);
+}
+
+.mobile-transaction-calendar-panel .mobile-transaction-calendar-busy {
+    opacity: 0.6;
+}
+
+.mobile-transaction-calendar-panel .transaction-calendar-daily-amount.text-income::before {
+    content: "↑";
+    margin-inline-end: 1px;
+}
+
+.mobile-transaction-calendar-panel .transaction-calendar-daily-amount.text-expense::before {
+    content: "↓";
+    margin-inline-end: 1px;
+}
+
+.mobile-transaction-calendar-panel .transaction-calendar-daily-amount {
+    font-variant-numeric: var(--ebk-font-numeric);
+}
+</style>

@@ -1,126 +1,62 @@
 <template>
-    <f7-list strong inset dividers class="overview-widget-list transaction-info-list no-margin-top margin-bottom"
-             :class="{ 'skeleton-text': loading }" :media-list="loading || !!transactions.length">
-        <f7-list-item group-title v-if="showTitle">
-            <small>{{ title || tt('Recent Transactions') }}</small>
-        </f7-list-item>
-
-        <template v-if="loading && !transactions.length">
-            <f7-list-item link="#" chevron-center class="transaction-info" :key="idx" v-for="idx in itemCount">
-                <template #media>
-                    <div class="display-flex flex-direction-column transaction-date">
-                        <span class="transaction-day width-100 flex-direction-column">DD</span>
-                        <span class="transaction-day-of-week width-100 flex-direction-column">Sun</span>
-                    </div>
-                </template>
-                <template #inner>
-                    <div class="display-flex no-padding-horizontal">
-                        <div class="item-media">
-                            <div class="transaction-icon display-flex align-items-center">
-                                <f7-icon f7="app_fill"></f7-icon>
-                            </div>
-                        </div>
-                        <div class="actual-item-inner">
-                            <div class="item-title-row">
-                                <div class="item-title">
-                                    <div class="transaction-category-name no-padding">
-                                        <span>Category</span>
-                                    </div>
-                                </div>
-                                <div class="item-after">
-                                    <div class="transaction-amount">
-                                        <span>0.00 USD</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="item-text">
-                                <div class="transaction-description">
-                                    <span>Transaction Description</span>
-                                </div>
-                            </div>
-                            <div class="item-footer">
-                                <div class="transaction-footer">
-                                    <span>HH:mm</span>
-                                    <span>·</span>
-                                    <span>Source Account</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </template>
-            </f7-list-item>
-        </template>
-
-        <f7-list-item :title="tt('No data')" v-else-if="!loading && !transactions.length"></f7-list-item>
-
-        <f7-list-item chevron-center class="transaction-info"
-                      :link="`/transaction/detail?id=${transaction.id}&type=${transaction.type}`"
-                      :key="transaction.id"
-                      v-for="(transaction, idx) in transactions"
-                      v-else-if="transactions.length">
-            <template #media>
-                <div class="display-flex flex-direction-column transaction-date" :style="getTransactionDateStyle(transaction, idx > 0 ? transactions[idx - 1] : undefined)">
-                    <span class="transaction-day width-100 flex-direction-column">
-                        {{ getDisplayDayOfMonth(transaction) }}
+    <overview-widget-panel flush :title="title || tt('Recent Transactions')" :show-title="showTitle"
+                           :loading="loading" :empty="!loading && !transactions.length">
+        <div class="mobile-overview-rows" v-if="transactions.length">
+            <a class="mobile-overview-row mobile-recent-transaction-row"
+               :href="`/transaction/detail?id=${transaction.id}&type=${transaction.type}`"
+               :key="transaction.id" v-for="transaction in transactions">
+                <span class="mobile-overview-row-icon">
+                    <ItemIcon :icon-type="getCategoryIconType(getTransactionCategory(transaction)?.iconType)"
+                              :icon-id="getTransactionCategory(transaction)?.icon ?? ''"
+                              :color="getTransactionCategory(transaction)?.color"
+                              v-if="getTransactionCategory(transaction) && getTransactionCategory(transaction)?.color"></ItemIcon>
+                    <f7-icon f7="pencil_ellipsis_rectangle" v-else></f7-icon>
+                </span>
+                <span class="mobile-overview-row-main">
+                    <span class="mobile-overview-row-title">{{ getTransactionCategoryName(transaction) }}</span>
+                    <span class="mobile-overview-row-meta mobile-recent-transaction-meta" v-if="getSourceAccount(transaction)">
+                        <span>{{ getSourceAccount(transaction)?.name }}</span>
+                        <template v-if="isTransferBetweenAccounts(transaction)">
+                            <span aria-hidden="true" class="mobile-recent-transaction-arrow">→</span>
+                            <span>{{ getDestinationAccount(transaction)?.name }}</span>
+                        </template>
                     </span>
-                    <span class="transaction-day-of-week width-100 flex-direction-column">
-                        {{ getDisplayDayOfWeek(transaction) }}
+                    <span class="mobile-overview-row-meta mobile-recent-transaction-meta">
+                        <span class="ebk-numeric">{{ getDisplayDayOfWeek(transaction) }} {{ getDisplayDayOfMonth(transaction) }} · {{ getDisplayTime(transaction) }}</span>
+                        <template v-if="transaction.comment">
+                            <span>·</span>
+                            <span>{{ transaction.comment }}</span>
+                        </template>
                     </span>
-                </div>
-            </template>
-            <template #inner>
-                <div class="display-flex no-padding-horizontal">
-                    <div class="item-media">
-                        <div class="transaction-icon display-flex align-items-center">
-                            <ItemIcon :icon-type="getCategoryIconType(getTransactionCategory(transaction)?.iconType)"
-                                      :icon-id="getTransactionCategory(transaction)?.icon ?? ''"
-                                      :color="getTransactionCategory(transaction)?.color"
-                                      v-if="getTransactionCategory(transaction) && getTransactionCategory(transaction)?.color"></ItemIcon>
-                            <f7-icon v-else-if="!getTransactionCategory(transaction) || !getTransactionCategory(transaction)?.color"
-                                     f7="pencil_ellipsis_rectangle">
-                            </f7-icon>
-                        </div>
-                    </div>
-                    <div class="actual-item-inner">
-                        <div class="item-title-row">
-                            <div class="item-title">
-                                <div class="transaction-category-name no-padding">
-                                    <span>{{ getTransactionCategoryName(transaction) }}</span>
-                                </div>
-                            </div>
-                            <div class="item-after">
-                                <div class="transaction-amount"
-                                     :class="{ 'text-expense': transaction.type === TransactionType.Expense, 'text-income': transaction.type === TransactionType.Income }">
-                                    <span>{{ getDisplayAmount(transaction) }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="item-text">
-                            <div class="transaction-description" v-if="transaction.comment">
-                                <span>{{ transaction.comment }}</span>
-                            </div>
-                        </div>
-                        <div class="item-footer">
-                            <div class="transaction-footer">
-                                <span>{{ getDisplayTime(transaction) }}</span>
-                                <template v-if="getSourceAccount(transaction)">
-                                    <span>·</span>
-                                    <span>{{ getSourceAccount(transaction)?.name }}</span>
-                                </template>
-                                <template v-if="getSourceAccount(transaction) && transaction.type === TransactionType.Transfer && getDestinationAccount(transaction) && getSourceAccount(transaction)?.id !== getDestinationAccount(transaction)?.id">
-                                    <f7-icon class="transaction-account-arrow icon-with-direction" f7="arrow_right"></f7-icon>
-                                    <span>{{ getDestinationAccount(transaction)?.name }}</span>
-                                </template>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </template>
-        </f7-list-item>
-    </f7-list>
+                </span>
+                <span class="mobile-overview-row-end">
+                    <signed-amount show-type-label :type="getAmountType(transaction)" :text="getDisplayAmount(transaction)"
+                                   :hide-sign="isAmountHidden(transaction)" />
+                </span>
+                <f7-icon class="mobile-overview-row-chevron icon-with-direction" f7="chevron_right" aria-hidden="true"></f7-icon>
+            </a>
+        </div>
+        <div class="mobile-overview-rows skeleton-text" v-else-if="loading">
+            <div class="mobile-overview-row mobile-recent-transaction-row" :key="idx" v-for="idx in itemCount">
+                <span class="mobile-overview-row-icon"><f7-icon f7="app_fill"></f7-icon></span>
+                <span class="mobile-overview-row-main">
+                    <span class="mobile-overview-row-title">Category</span>
+                    <span class="mobile-overview-row-meta">Source Account</span>
+                    <span class="mobile-overview-row-meta">Sun DD · HH:mm</span>
+                </span>
+                <span class="mobile-overview-row-end">
+                    <span>0.00 GBP</span>
+                    <span class="mobile-recent-transaction-type">Expense</span>
+                </span>
+            </div>
+        </div>
+    </overview-widget-panel>
 </template>
 
 <script setup lang="ts">
+import OverviewWidgetPanel from './OverviewWidgetPanel.vue';
+import SignedAmount from '@/components/common/SignedAmount.vue';
+
 import { computed } from 'vue';
 
 import { useI18n } from '@/locales/helpers.ts';
@@ -180,23 +116,6 @@ const recentTransactionsQuery = computed<OverviewRecentTransactionsQuery>(() => 
 }));
 const transactions = computed<TransactionInfoResponse[]>(() => overviewStore.getRecentTransactions(recentTransactionsQuery.value).slice(0, props.itemCount));
 
-function getTransactionDateStyle(transaction: TransactionInfoResponse, previousTransaction: TransactionInfoResponse | undefined): Record<string, string> {
-    if (!previousTransaction) {
-        return {};
-    }
-
-    const transactionTime = getTransactionDateTime(transaction);
-    const previousTransactionTime = getTransactionDateTime(previousTransaction);
-
-    if (transactionTime.getGregorianCalendarDay() !== previousTransactionTime.getGregorianCalendarDay()) {
-        return {};
-    }
-
-    return {
-        color: 'transparent'
-    };
-}
-
 function getTransactionDateTime(transaction: TransactionInfoResponse) {
     return parseDateTimeFromUnixTimeWithTimezoneOffset(transaction.time, transaction.utcOffset);
 }
@@ -217,6 +136,28 @@ function getDisplayAmount(transaction: TransactionInfoResponse): string {
     const account = getSourceAccount(transaction);
     const amount = !showAmountInHomePage.value || transaction.hideAmount ? DISPLAY_HIDDEN_AMOUNT : parseBigDecimal(transaction.sourceAmount);
     return formatAmountToLocalizedNumeralsWithCurrency(amount, account?.currency ?? '');
+}
+
+function isAmountHidden(transaction: TransactionInfoResponse): boolean {
+    return !showAmountInHomePage.value || !!transaction.hideAmount || parseBigDecimal(transaction.sourceAmount).isZero();
+}
+
+function getAmountType(transaction: TransactionInfoResponse): 'income' | 'expense' | 'transfer' | 'none' {
+    if (transaction.type === TransactionType.Income) {
+        return 'income';
+    } else if (transaction.type === TransactionType.Expense) {
+        return 'expense';
+    } else if (transaction.type === TransactionType.Transfer) {
+        return 'transfer';
+    } else {
+        return 'none';
+    }
+}
+
+function isTransferBetweenAccounts(transaction: TransactionInfoResponse): boolean {
+    const sourceAccount = getSourceAccount(transaction);
+    const destinationAccount = getDestinationAccount(transaction);
+    return transaction.type === TransactionType.Transfer && !!sourceAccount && !!destinationAccount && sourceAccount.id !== destinationAccount.id;
 }
 
 function getSourceAccount(transaction: TransactionInfoResponse): Account | undefined {
@@ -255,3 +196,31 @@ function getTransactionCategoryName(transaction: TransactionInfoResponse): strin
     }
 }
 </script>
+
+<style>
+.mobile-recent-transaction-row {
+    min-height: 60px;
+}
+
+.mobile-recent-transaction-meta > span + span {
+    margin-inline-start: 4px;
+}
+
+.mobile-recent-transaction-arrow {
+    display: inline-block;
+}
+
+html[dir="rtl"] .mobile-recent-transaction-arrow {
+    transform: scaleX(-1);
+}
+
+.mobile-recent-transaction-type {
+    color: var(--mobile-overview-panel-text-secondary);
+    font-size: 0.75rem;
+    font-weight: 400;
+}
+
+.mobile-recent-transaction-row .ebk-signed-amount-type {
+    font-weight: 400;
+}
+</style>

@@ -1,24 +1,30 @@
 <template>
-    <v-card class="overview-widget transaction-calendar-heatmap-card h-100" :class="{ disabled: loading }">
-        <template #title>
-            <overview-widget-header :title="title || tt('Transaction Calendar Heatmap')" :icon="mdiCalendarMonthOutline" />
-        </template>
+    <overview-widget-panel class="overview-widget--chart transaction-calendar-heatmap-card"
+                           :title="title || tt('Transaction Calendar Heatmap')"
+                           :meta="`${tt(transactionTypeName)} · ${tt('format.misc.nMonths', { n: months })}`"
+                           :loading="loading" :empty="!hasData"
+                           body-class="overview-widget__chart-body transaction-calendar-heatmap-body">
+        <date-range-calendar-heat-map-chart :start-time="startTime" :end-time="endTime"
+                                            :items="items" :value-type="ChartValueType.Amount"
+                                            :value-type-name="tt(transactionTypeName)" :default-currency="defaultCurrency"
+                                            :outlier-color-mode="outlierColorMode"
+                                            :outlier-top-count="outlierTopCount"
+                                            :outlier-amount-threshold="outlierAmountThreshold"
+                                            :show-value="showAmountInHomePage" :enable-click-item="!editing"
+                                            @click="clickDate" />
 
-        <v-card-text class="transaction-calendar-heatmap-body pa-0 overflow-hidden">
-            <date-range-calendar-heat-map-chart :start-time="startTime" :end-time="endTime"
-                                                :items="items" :value-type="ChartValueType.Amount"
-                                                :value-type-name="tt(transactionTypeName)" :default-currency="defaultCurrency"
-                                                :outlier-color-mode="outlierColorMode"
-                                                :outlier-top-count="outlierTopCount"
-                                                :outlier-amount-threshold="outlierAmountThreshold"
-                                                :show-value="showAmountInHomePage" :enable-click-item="!editing"
-                                                @click="clickDate" />
-        </v-card-text>
-    </v-card>
+        <template #footer v-if="items.length">
+            <span class="overview-widget__summary-label ebk-technical-heading">{{ transactionType === TransactionType.Income ? tt('Total Income') : tt('Total Expense') }}</span>
+            <signed-amount class="overview-widget__summary-item"
+                           :type="transactionType === TransactionType.Income ? 'income' : 'expense'"
+                           :text="displayTotal" :hide-sign="!showAmountInHomePage" />
+        </template>
+    </overview-widget-panel>
 </template>
 
 <script setup lang="ts">
-import OverviewWidgetHeader from './OverviewWidgetHeader.vue';
+import OverviewWidgetPanel from './OverviewWidgetPanel.vue';
+import SignedAmount from '@/components/common/SignedAmount.vue';
 
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
@@ -46,9 +52,7 @@ import {
     getUnixTimeAfterUnixTime
 } from '@/lib/datetime.ts';
 
-import {
-    mdiCalendarMonthOutline
-} from '@mdi/js';
+import { DISPLAY_HIDDEN_AMOUNT } from '@/consts/numeral.ts';
 
 const props = defineProps<{
     loading: boolean;
@@ -63,7 +67,7 @@ const props = defineProps<{
 
 const router = useRouter();
 
-const { tt } = useI18n();
+const { tt, formatAmountToLocalizedNumeralsWithCurrency } = useI18n();
 
 const settingsStore = useSettingsStore();
 const userStore = useUserStore();
@@ -115,6 +119,19 @@ const items = computed<CalendarChartSourceDataItem[]>(() => {
     return result;
 });
 
+const hasData = computed<boolean>(() => overviewStore.transactionDailyAmountsData.length > 0);
+
+// text summary with the exact total of the visible range (design guidelines D7)
+const displayTotal = computed<string>(() => {
+    let total: BigDecimal = BIG_DECIMAL_ZERO;
+
+    for (const item of items.value) {
+        total = total.add(item.value);
+    }
+
+    return formatAmountToLocalizedNumeralsWithCurrency(showAmountInHomePage.value ? total.abs() : DISPLAY_HIDDEN_AMOUNT, defaultCurrency.value);
+});
+
 function clickDate(date: string): void {
     const dateTime = parseDateTimeFromKnownDateTimeFormat(date, KnownDateTimeFormat.DefaultDate);
 
@@ -127,15 +144,3 @@ function clickDate(date: string): void {
     router.push(`/transaction/list?${overviewStore.getTransactionListPageParams({ type: props.transactionType, dateType: DateRange.Custom.type, minTime, maxTime })}`);
 }
 </script>
-
-<style scoped>
-.transaction-calendar-heatmap-card {
-    display: flex;
-    flex-direction: column;
-}
-
-.transaction-calendar-heatmap-body {
-    flex: 1 1 0;
-    min-height: 0;
-}
-</style>

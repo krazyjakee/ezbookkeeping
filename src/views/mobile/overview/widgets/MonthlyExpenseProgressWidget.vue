@@ -1,40 +1,46 @@
 <template>
-    <f7-list strong inset dividers class="overview-transaction-list no-margin-top margin-bottom">
-        <f7-list-item group-title v-if="showTitle">
-            <small>{{ title || tt('Monthly Expense Progress') }}</small>
-        </f7-list-item>
-        <f7-list-item class="item-title-full-line">
-            <template #title>
-                <div class="overview-widget-primary-amount skeleton-text" v-if="loading">0.00 USD</div>
-                <div class="overview-widget-primary-amount" :class="{ 'text-expense': !!currentDisplayExpenseAmount }" v-else-if="!loading">
-                    {{ currentDisplayExpenseAmount || tt('No data') }}
-                </div>
-                <div class="display-flex justify-content-space-between">
-                    <small>{{ tt('Month elapsed') }}</small>
-                    <small class="margin-left-half text-truncate skeleton-text" v-if="loading">100.0</small>
-                    <small v-else-if="!loading">{{ displayElapsedPercent }}</small>
-                </div>
-                <f7-progressbar class="margin-top-half" :progress="currentMonthElapsedPercent * 100"></f7-progressbar>
-            </template>
-        </f7-list-item>
-        <f7-list-item class="item-title-full-line">
-            <template #footer>
-                <div class="overview-transaction-footer default-text-color display-flex justify-content-space-between">
-                    <span>{{ tt('Estimated month-end expense') }}</span>
-                    <div class="margin-left-half text-truncate skeleton-text" v-if="loading">0.00 USD</div>
-                    <span class="margin-left-half text-truncate" v-else-if="!loading">{{ displayEstimatedExpense }}</span>
-                </div>
-                <div class="overview-transaction-footer display-flex justify-content-space-between">
-                    <span>{{ tt('Last month total') }}</span>
-                    <div class="margin-left-half text-truncate skeleton-text" v-if="loading">0.00 USD</div>
-                    <span class="margin-left-half text-truncate" v-else-if="!loading">{{ displayLastMonthExpense }}</span>
-                </div>
-            </template>
-        </f7-list-item>
-    </f7-list>
+    <overview-widget-panel :title="title || tt('Monthly Expense Progress')" :show-title="showTitle"
+                           :meta="displayDateRange?.thisMonth?.displayTime" :loading="loading">
+        <div class="mobile-overview-hero">
+            <span class="mobile-overview-label ebk-technical-heading">
+                <span class="mobile-overview-label-arrow" aria-hidden="true">↓</span>{{ tt('Expense') }}
+            </span>
+            <span class="mobile-overview-hero-amount" :class="{ 'skeleton-text': loading }">
+                <span v-if="loading">0.00 GBP</span>
+                <signed-amount type="expense" :text="currentDisplayExpenseAmount" :hide-sign="isHiddenOrZero(currentExpenseAmount)" v-else-if="currentDisplayExpenseAmount" />
+                <span class="mobile-overview-no-data" v-else>{{ tt('No data') }}</span>
+            </span>
+        </div>
+
+        <div class="mobile-expense-progress-elapsed">
+            <div class="mobile-overview-detail-row">
+                <span>{{ tt('Month elapsed') }}</span>
+                <span>{{ displayElapsedPercent }}</span>
+            </div>
+            <f7-progressbar :progress="currentMonthElapsedPercent * 100" :aria-label="tt('Month elapsed')"></f7-progressbar>
+        </div>
+
+        <div class="mobile-overview-net-line">
+            <div class="mobile-overview-detail-row">
+                <span>{{ tt('Estimated month-end expense') }}</span>
+                <span :class="{ 'skeleton-text': loading }">
+                    <signed-amount type="expense" no-color :text="displayEstimatedExpense" :hide-sign="isHiddenOrZero(estimatedExpense)" />
+                </span>
+            </div>
+            <div class="mobile-overview-detail-row margin-top-half">
+                <span>{{ tt('Last month total') }}</span>
+                <span :class="{ 'skeleton-text': loading }">
+                    <signed-amount type="expense" no-color :text="displayLastMonthExpense" :hide-sign="isHiddenOrZero(lastMonthExpense)" />
+                </span>
+            </div>
+        </div>
+    </overview-widget-panel>
 </template>
 
 <script setup lang="ts">
+import OverviewWidgetPanel from './OverviewWidgetPanel.vue';
+import SignedAmount from '@/components/common/SignedAmount.vue';
+
 import { ref, computed } from 'vue';
 
 import { useI18n } from '@/locales/helpers.ts';
@@ -54,6 +60,8 @@ defineProps<{
 
 const { tt, formatPercentToLocalizedNumerals } = useI18n();
 const {
+    showAmountInHomePage,
+    displayDateRange,
     transactionOverview,
     currentExpenseAmount,
     currentDisplayExpenseAmount,
@@ -71,4 +79,23 @@ const lastMonthExpense = computed<BigDecimal>(() => transactionOverview.value.la
 const displayElapsedPercent = formatPercentToLocalizedNumerals(currentMonthElapsedPercent.value * 100.0, 0, '<1');
 const displayEstimatedExpense = computed<string>(() => getDisplayAmount(estimatedExpense.value, !!transactionOverview.value.thisMonth?.incompleteExpenseAmount));
 const displayLastMonthExpense = computed<string>(() => getDisplayAmount(lastMonthExpense.value, !!transactionOverview.value.lastMonth?.incompleteExpenseAmount));
+
+function isHiddenOrZero(amount: BigDecimal): boolean {
+    return !showAmountInHomePage.value || amount.isZero();
+}
 </script>
+
+<style>
+.mobile-expense-progress-elapsed {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ebk-space-2);
+    margin-block-start: var(--ebk-space-3);
+}
+
+.mobile-overview-no-data {
+    color: var(--mobile-overview-panel-text-secondary);
+    font-size: 1rem;
+    font-weight: 400;
+}
+</style>

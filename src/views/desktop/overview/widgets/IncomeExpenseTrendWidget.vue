@@ -1,9 +1,9 @@
 <template>
-    <v-card class="overview-widget d-flex flex-column" :class="{ 'disabled': loading }">
-        <template #title>
-            <overview-widget-header :title="displayTitle" :icon="mdiPoll" />
-        </template>
-
+    <overview-widget-panel class="overview-widget--chart"
+                           :title="displayTitle"
+                           :meta="displayMonthCount"
+                           :loading="loading" :empty="!monthlyIncomeAndExpenseData.length"
+                           body-class="overview-widget__chart-body">
         <monthly-income-and-expense-chart :data="monthlyIncomeAndExpenseData" :is-dark-mode="isDarkMode"
                                           :loading="loading" :disabled="loading" :enable-click-item="true"
                                           :chart-type="chartType"
@@ -12,11 +12,24 @@
                                           :hide-x-axis-labels="!showXAxisLabels" :hide-legend="!showLegend"
                                           :no-margin="!showLegend && !showXAxisLabels"
                                           @click="clickMonthlyIncomeOrExpense" />
-    </v-card>
+
+        <template #footer v-if="latestMonth">
+            <span class="overview-widget__summary-label ebk-technical-heading">{{ latestMonth.name }}</span>
+            <span class="overview-widget__summary-item" v-if="showIncome">
+                <span class="ebk-visually-hidden">{{ tt('Income') }}</span>
+                <signed-amount type="income" :text="latestMonth.income.text" :hide-sign="latestMonth.income.hideSign" />
+            </span>
+            <span class="overview-widget__summary-item" v-if="showExpense">
+                <span class="ebk-visually-hidden">{{ tt('Expense') }}</span>
+                <signed-amount type="expense" :text="latestMonth.expense.text" :hide-sign="latestMonth.expense.hideSign" />
+            </span>
+        </template>
+    </overview-widget-panel>
 </template>
 
 <script setup lang="ts">
-import OverviewWidgetHeader from './OverviewWidgetHeader.vue';
+import OverviewWidgetPanel from './OverviewWidgetPanel.vue';
+import SignedAmount from '@/components/common/SignedAmount.vue';
 import { type MonthlyIncomeAndExpenseCardClickEvent } from '@/components/desktop/MonthlyIncomeAndExpenseChart.vue';
 
 import { computed } from 'vue';
@@ -25,9 +38,13 @@ import { useTheme } from 'vuetify';
 
 import { useI18n } from '@/locales/helpers.ts';
 
+import { useSettingsStore } from '@/stores/setting.ts';
+import { useUserStore } from '@/stores/user.ts';
 import { useOverviewStore } from '@/stores/overview.ts';
 
+import type { BigDecimal } from '@/core/numeral.ts';
 import { DateRange } from '@/core/datetime.ts';
+import { DISPLAY_HIDDEN_AMOUNT, INCOMPLETE_AMOUNT_SUFFIX } from '@/consts/numeral.ts';
 import { ThemeType } from '@/core/theme.ts';
 import { TransactionType } from '@/core/transaction.ts';
 import {
@@ -37,11 +54,18 @@ import {
 } from '@/models/transaction.ts';
 
 import { BIG_DECIMAL_ZERO } from '@/lib/numeral.ts';
-import { getUnixTimeAfterUnixTime, getUnixTimeBeforeUnixTime } from '@/lib/datetime.ts';
+import { getUnixTimeAfterUnixTime, getUnixTimeBeforeUnixTime, parseDateTimeFromUnixTime } from '@/lib/datetime.ts';
 
-import {
-    mdiPoll
-} from '@mdi/js';
+interface SummaryAmount {
+    text: string;
+    hideSign: boolean;
+}
+
+interface LatestMonthSummary {
+    name: string;
+    income: SummaryAmount;
+    expense: SummaryAmount;
+}
 
 const props = defineProps<{
     loading: boolean;
@@ -57,24 +81,27 @@ const props = defineProps<{
 const router = useRouter();
 const theme = useTheme();
 
-const { tt } = useI18n();
+const { tt, formatAmountToLocalizedNumeralsWithCurrency, formatDateTimeToGregorianLikeLongYearMonth } = useI18n();
 
+const settingsStore = useSettingsStore();
+const userStore = useUserStore();
 const overviewStore = useOverviewStore();
 
 const isDarkMode = computed<boolean>(() => theme.global.name.value === ThemeType.Dark);
 const transactionOverview = computed<TransactionOverviewData>(() => overviewStore.transactionOverview);
+
+const showIncome = computed<boolean>(() => props.transactionTypes.includes(TransactionType.Income));
+const showExpense = computed<boolean>(() => props.transactionTypes.includes(TransactionType.Expense));
+const displayMonthCount = computed<string>(() => props.months > 0 ? tt('format.misc.nMonths', { n: props.months }) : '');
 
 const displayTitle = computed<string>(() => {
     if (props.title) {
         return props.title;
     }
 
-    const showIncome = props.transactionTypes.includes(TransactionType.Income);
-    const showExpense = props.transactionTypes.includes(TransactionType.Expense);
-
-    if (showIncome && !showExpense) {
+    if (showIncome.value && !showExpense.value) {
         return tt('Income Trends');
-    } else if (!showIncome && showExpense) {
+    } else if (!showIncome.value && showExpense.value) {
         return tt('Expense Trends');
     } else {
         return tt('Income and Expense Trends');
@@ -112,6 +139,30 @@ const monthlyIncomeAndExpenseData = computed<TransactionMonthlyIncomeAndExpenseD
 
     return data.slice(-props.months);
 });
+
+// text summary with the exact values of the latest month (design guidelines D7)
+const latestMonth = computed<LatestMonthSummary | null>(() => {
+    const latest = monthlyIncomeAndExpenseData.value.at(-1);
+
+    if (!latest) {
+        return null;
+    }
+
+    return {
+        name: formatDateTimeToGregorianLikeLongYearMonth(parseDateTimeFromUnixTime(latest.monthStartTime)),
+        income: getSummaryAmount(latest.incomeAmount, latest.incompleteIncomeAmount),
+        expense: getSummaryAmount(latest.expenseAmount, latest.incompleteExpenseAmount)
+    };
+});
+
+function getSummaryAmount(amount: BigDecimal, incomplete: boolean): SummaryAmount {
+    const showAmount = settingsStore.appSettings.showAmountInHomePage;
+
+    return {
+        text: showAmount ? formatAmountToLocalizedNumeralsWithCurrency(amount, userStore.currentUserDefaultCurrency) + (incomplete ? INCOMPLETE_AMOUNT_SUFFIX : '') : formatAmountToLocalizedNumeralsWithCurrency(DISPLAY_HIDDEN_AMOUNT, userStore.currentUserDefaultCurrency),
+        hideSign: !showAmount || amount.isZero()
+    };
+}
 
 function clickMonthlyIncomeOrExpense(e: MonthlyIncomeAndExpenseCardClickEvent): void {
     const minTime = e.monthStartTime;

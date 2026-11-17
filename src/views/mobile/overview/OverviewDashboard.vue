@@ -1,21 +1,23 @@
 <template>
     <div class="mobile-overview-dashboard">
-        <div class="mobile-overview-dashboard-item" :key="widget.id" v-for="widget in layout.widgets">
+        <div class="mobile-overview-dashboard-item ebk-animate-reveal" :style="getStaggerStyle(index)"
+             :key="widget.id" v-for="(widget, index) in layout.widgets">
             <overview-widget :widget="widget" :loading="loading" @navigate="onNavigate" />
         </div>
 
-        <f7-block class="text-align-center text-color-gray padding-vertical" v-if="!layout.widgets.length">
-            {{ tt('No widgets') }}
-        </f7-block>
+        <state-panel type="empty" :title="tt('No widgets')" v-if="!layout.widgets.length" />
     </div>
 </template>
 
 <script setup lang="ts">
 import OverviewWidget from './OverviewWidget.vue';
+import StatePanel from '@/components/common/StatePanel.vue';
 
 import { useI18n } from '@/locales/helpers.ts';
 
 import { type MobileOverviewLayout, MobileOverviewWidgetNavigationType } from '@/core/overview_layout.ts';
+
+import { getStaggerStyle } from '@/lib/motion.ts';
 
 defineProps<{
     layout: MobileOverviewLayout;
@@ -34,12 +36,20 @@ function onNavigate(type: MobileOverviewWidgetNavigationType, path?: string): vo
 </script>
 
 <style>
-.mobile-overview-dashboard-item:empty {
-    display: none;
+.mobile-overview-dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ebk-space-4);
+    padding-block: var(--ebk-space-3) var(--ebk-space-4);
+    padding-inline: calc(var(--ebk-space-3) + var(--f7-safe-area-left)) calc(var(--ebk-space-3) + var(--f7-safe-area-right));
 }
 
-.mobile-overview-dashboard-item:not(:empty) ~ .mobile-overview-dashboard-item:not(:empty) {
-    margin-block-start: 16px;
+.mobile-overview-dashboard-item {
+    min-width: 0;
+}
+
+.mobile-overview-dashboard-item:empty {
+    display: none;
 }
 
 .mobile-overview-dashboard-item > .card,

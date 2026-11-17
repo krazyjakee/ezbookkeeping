@@ -20,7 +20,9 @@
                      href="/transaction/add"
                      :aria-label="tt('Add Transaction')"
                      @taphold="openTransactionTemplatePopover">
-                <f7-icon f7="plus_square" class="ebk-tarbar-big-icon" aria-hidden="true"></f7-icon>
+                <span class="ebk-tabbar-add-key" aria-hidden="true">
+                    <f7-icon f7="plus"></f7-icon>
+                </span>
             </f7-link>
             <f7-link class="link" href="/statistic/transaction" :aria-label="tt('Statistics')">
                 <f7-icon f7="chart_pie" aria-hidden="true"></f7-icon>
@@ -428,13 +430,6 @@ init();
 
 .tabbar.main-tabbar .link i + span.tabbar-label {
     margin-top: var(--ebk-icon-text-margin);
-}
-
-.tabbar.main-tabbar .link i.ebk-tarbar-big-icon {
-    font-size: var(--ebk-big-icon-button-size);
-    width: var(--ebk-big-icon-button-size);
-    height: var(--ebk-big-icon-button-size);
-    line-height: var(--ebk-big-icon-button-size);
 }
 
 .template-popover-menu .popover-inner {

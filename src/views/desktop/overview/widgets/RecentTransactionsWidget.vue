@@ -1,47 +1,49 @@
 <template>
-    <v-card class="overview-widget overview-widget--list h-100" :class="{ disabled: loading }">
-        <template #title>
-            <overview-widget-header :title="title || tt('Recent Transactions')" :icon="mdiHistory" />
-        </template>
+    <overview-widget-panel class="overview-widget--list recent-transactions-widget"
+                           :title="title || tt('Recent Transactions')"
+                           :loading="loading" :empty="!transactions.length">
+        <v-list class="overview-widget__list py-0" density="compact" v-if="transactions.length">
+            <v-list-item class="overview-widget__list-item" :key="transaction.id"
+                         :title="getTransactionCategoryName(transaction)"
+                         v-for="transaction in transactions"
+                         @click="showTransaction(transaction)">
+                <template #prepend>
+                    <span class="overview-widget__item-icon">
+                        <ItemIcon size="22px" :icon-type="getCategoryIconType(getTransactionCategory(transaction)?.iconType)"
+                                  :icon-id="getTransactionCategory(transaction)?.icon ?? ''"
+                                  :color="getTransactionCategory(transaction)?.color"
+                                  v-if="getTransactionCategory(transaction) && getTransactionCategory(transaction)?.color" />
+                        <v-icon size="22" :icon="mdiPencilBoxOutline" v-else-if="!getTransactionCategory(transaction) || !getTransactionCategory(transaction)?.color" />
+                    </span>
+                </template>
 
-        <v-card-text class="overview-widget__body overview-widget__list-body">
-            <v-list class="py-0" density="compact" v-if="transactions.length">
-                <v-list-item class="overview-widget__list-item" :key="transaction.id"
-                             :title="getTransactionCategoryName(transaction)"
-                             v-for="transaction in transactions"
-                             @click="showTransaction(transaction)">
-                    <template #prepend>
-                        <span class="overview-widget__item-icon">
-                            <ItemIcon size="24px" :icon-type="getCategoryIconType(getTransactionCategory(transaction)?.iconType)"
-                                      :icon-id="getTransactionCategory(transaction)?.icon ?? ''"
-                                      :color="getTransactionCategory(transaction)?.color"
-                                      v-if="getTransactionCategory(transaction) && getTransactionCategory(transaction)?.color" />
-                            <v-icon size="24" :icon="mdiPencilBoxOutline" v-else-if="!getTransactionCategory(transaction) || !getTransactionCategory(transaction)?.color" />
-                        </span>
-                    </template>
+                <template #append>
+                    <signed-amount class="overview-widget__list-amount" show-type-label
+                                   :type="getAmountType(transaction)"
+                                   :text="getDisplayTransactionAmount(transaction)"
+                                   :hide-sign="isAmountHidden(transaction)" />
+                </template>
 
-                    <template #append>
-                        <div class="overview-widget__list-amount overview-widget__amount" :class="getAmountClass(transaction)">{{ getDisplayTransactionAmount(transaction) }}</div>
-                    </template>
-
-                    <div class="text-truncate overview-widget__caption text-body-small mt-h1" :title="getDisplayDescription(transaction)">{{ getDisplayDescription(transaction) }}</div>
-                </v-list-item>
-            </v-list>
-            <div v-if="loading && !transactions.length">
-                <v-skeleton-loader class="skeleton-no-margin mx-2 py-4 my-1" type="text" :key="idx" :loading="true" v-for="idx in props.itemCount"></v-skeleton-loader>
+                <div class="text-truncate overview-widget__caption mt-h1" :title="getDisplayDescription(transaction)">{{ getDisplayDescription(transaction) }}</div>
+            </v-list-item>
+        </v-list>
+        <div class="overview-widget__list" v-else-if="loading">
+            <div class="overview-widget__list-skeleton" :key="idx" v-for="idx in props.itemCount">
+                <v-skeleton-loader class="skeleton-no-margin" type="avatar" width="32px" height="32px" />
+                <div class="flex-grow-1">
+                    <v-skeleton-loader class="skeleton-no-margin" type="text" />
+                    <v-skeleton-loader class="skeleton-no-margin" type="text" width="60%" />
+                </div>
             </div>
-            <div class="overview-widget__empty" v-else-if="!loading && !transactions.length">
-                <v-icon :icon="mdiHistory" size="32" />
-                <span>{{ tt('No data') }}</span>
-            </div>
-        </v-card-text>
+        </div>
 
         <edit-dialog ref="editDialog" :type="TransactionEditPageType.Transaction" />
-    </v-card>
+    </overview-widget-panel>
 </template>
 
 <script setup lang="ts">
-import OverviewWidgetHeader from './OverviewWidgetHeader.vue';
+import OverviewWidgetPanel from './OverviewWidgetPanel.vue';
+import SignedAmount from '@/components/common/SignedAmount.vue';
 
 import EditDialog from '@/views/desktop/transactions/list/dialogs/EditDialog.vue';
 
@@ -56,6 +58,7 @@ import { useTransactionCategoriesStore } from '@/stores/transactionCategory.ts';
 import { useOverviewStore } from '@/stores/overview.ts';
 import { useDesktopPageStore } from '@/stores/desktopPage.ts';
 
+import type { BigDecimal, HiddenAmount } from '@/core/numeral.ts';
 import { TransactionType } from '@/core/transaction.ts';
 import { DISPLAY_HIDDEN_AMOUNT } from '@/consts/numeral.ts';
 import type { OverviewRecentTransactionsQuery } from '@/core/overview_layout.ts';
@@ -69,7 +72,6 @@ import { getCategoryIconType } from '@/lib/icon.ts';
 import { getOverviewRecentTransactionsQuery } from '@/lib/overview_layout.ts';
 
 import {
-    mdiHistory,
     mdiPencilBoxOutline
 } from '@mdi/js';
 
@@ -113,12 +115,24 @@ const recentTransactionsQuery = computed<OverviewRecentTransactionsQuery>(() => 
 const transactions = computed<TransactionInfoResponse[]>(() => overviewStore.getRecentTransactions(recentTransactionsQuery.value).slice(0, props.itemCount));
 
 function getDisplayDescription(transaction: TransactionInfoResponse): string {
-    const accountName = accountsStore.allAccountsMap[transaction.sourceAccountId]?.name ?? '';
+    const sourceAccountName = accountsStore.allAccountsMap[transaction.sourceAccountId]?.name ?? '';
+    const destinationAccountName = transaction.type === TransactionType.Transfer && transaction.destinationAccountId !== transaction.sourceAccountId ? (accountsStore.allAccountsMap[transaction.destinationAccountId]?.name ?? '') : '';
+    const accountName = destinationAccountName ? `${sourceAccountName} → ${destinationAccountName}` : sourceAccountName;
     return `${formatDateTimeToShortDateTime(parseDateTimeFromUnixTime(transaction.time))}${accountName ? ` · ${accountName}` : ''}${transaction.comment ? ` · ${transaction.comment}` : ''}`;
 }
 
+function isAmountHidden(transaction: TransactionInfoResponse): boolean {
+    return !showAmountInHomePage.value || transaction.hideAmount;
+}
+
 function getDisplayTransactionAmount(transaction: TransactionInfoResponse): string {
-    const amount = !showAmountInHomePage.value || transaction.hideAmount ? DISPLAY_HIDDEN_AMOUNT : parseBigDecimal(transaction.sourceAmount);
+    let amount: BigDecimal | HiddenAmount = DISPLAY_HIDDEN_AMOUNT;
+
+    if (!isAmountHidden(transaction)) {
+        // the sign comes from the transaction type (design guidelines D1), balance modifications keep their natural sign
+        amount = transaction.type === TransactionType.ModifyBalance ? parseBigDecimal(transaction.sourceAmount) : parseBigDecimal(transaction.sourceAmount).abs();
+    }
+
     return formatAmountToLocalizedNumeralsWithCurrency(amount, accountsStore.allAccountsMap[transaction.sourceAccountId]?.currency ?? '');
 }
 
@@ -150,13 +164,15 @@ function getTransactionCategoryName(transaction: TransactionInfoResponse): strin
     }
 }
 
-function getAmountClass(transaction: TransactionInfoResponse): string {
+function getAmountType(transaction: TransactionInfoResponse): 'income' | 'expense' | 'transfer' | 'none' {
     if (transaction.type === TransactionType.Income) {
-        return 'text-income';
+        return 'income';
     } else if (transaction.type === TransactionType.Expense) {
-        return 'text-expense';
+        return 'expense';
+    } else if (transaction.type === TransactionType.Transfer) {
+        return 'transfer';
     } else {
-        return '';
+        return 'none';
     }
 }
 

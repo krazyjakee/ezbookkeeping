@@ -120,6 +120,7 @@
             "720p": "720p (approx. {size} KiB)"
         },
         "misc": {
+            "categoryAccountsForPercentOfExpense": "{name} accounts for {percent} of expenses",
             "nextOccurrence": "Next: {date}",
             "occurrencesLeft": "{count} left",
             "nHour": "{n} Hour",
@@ -1824,6 +1825,10 @@
     "Change Language": "Change Language",
     "Date is too early": "Date is too early",
     "Invalid date/time format": "Invalid date/time format",
+    "Monthly Position": "Monthly Position",
+    "Period Summary": "Period Summary",
+    "Move Up": "Move Up",
+    "Move Down": "Move Down",
     "Filters": "Filters",
     "Reset Filters": "Reset Filters",
     "Retry": "Retry",
