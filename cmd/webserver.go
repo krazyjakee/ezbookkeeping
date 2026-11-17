@@ -31,11 +31,11 @@ import (
 // WebServer represents the server command
 var WebServer = &cli.Command{
 	Name:  "server",
-	Usage: "ezBookkeeping web server operation",
+	Usage: "ezbookkeeping2 web server operation",
 	Commands: []*cli.Command{
 		{
 			Name:   "run",
-			Usage:  "Run ezBookkeeping web server",
+			Usage:  "Run ezbookkeeping2 web server",
 			Action: bindAction(startWebServer),
 		},
 	},

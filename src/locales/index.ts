@@ -6,7 +6,7 @@ import type { LanguageInfo, LanguageMessages } from '@/core/language.ts';
 export const DEFAULT_LANGUAGE: string = 'en';
 export const DEFAULT_LANGUAGE_CONTENT: LanguageMessages = en;
 
-// To add new languages, please refer to https://ezbookkeeping.mayswind.net/translating
+// To add new languages, please refer to https://krazyjakee.github.io/ezbookkeeping/translating
 export const ALL_LANGUAGES: Record<string, LanguageInfo> = {
     'bn': {
         name: 'Bengali',

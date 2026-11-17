@@ -1,7 +1,7 @@
 {
     "global": {
         "app": {
-            "title": "ezBookkeeping"
+            "title": "ezbookkeeping2"
         }
     },
     "language": {
@@ -181,23 +181,23 @@
             "ruleCount": "{count} rules",
             "accountActivationAndResendValidationEmailTip": "アカウントの有効化リンクがメールアドレスに送信されました:{email}、メールが届かない場合はパスワードをもう一度入力して下のボタンをクリックして認証メールを再送信してください。",
             "resendValidationEmailTip": "メールが届かない場合は、パスワードをもう一度入力の上、以下のボタンをクリックして検証メールを再送信してください: {email}",
-            "oauth2bindTip": "{providerName} を使用して {userName} ユーザーにサインインしています。確認のため ezBookkeeping のパスワードを入力してください。"
+            "oauth2bindTip": "{providerName} を使用して {userName} ユーザーにサインインしています。確認のため ezbookkeeping2 のパスワードを入力してください。"
         }
     },
     "dataExport": {
-        "defaultExportFilename": "ezBookkeeping_エクスポートデータ",
-        "exportFilename": "ezBookkeeping_{nickname}_エクスポートデータ",
-        "defaultExportStatisticsFileName": "ezBookkeeping_統計データ",
-        "exportStatisticsFileName": "ezBookkeeping_{nickname}_統計データ",
-        "defaultExportReconciliationStatementsFileName": "ezBookkeeping_照合明細",
-        "exportReconciliationStatementsFileName": "ezBookkeeping_{nickname}_照合明細",
-        "defaultInsightsExplorerQueryFileName": "ezBookkeeping_インサイト探索クエリ",
-        "insightsExplorerQueryFileName": "ezBookkeeping_{nickname}_インサイト探索クエリ",
-        "defaultImportDataMappingFileName": "ezBookkeeping_インポートデータマッピング",
-        "defaultImportHandlingScript": "ezBookkeeping_インポート処理スクリプト",
-        "defaultImportReplaceRuleFileName": "ezBookkeeping_インポート置換ルール",
-        "defaultImportCheckResultFileName": "ezBookkeeping_インポートチェック結果",
-        "defaultOverviewLayoutFileName": "ezBookkeeping_overview_layout"
+        "defaultExportFilename": "ezbookkeeping2_エクスポートデータ",
+        "exportFilename": "ezbookkeeping2_{nickname}_エクスポートデータ",
+        "defaultExportStatisticsFileName": "ezbookkeeping2_統計データ",
+        "exportStatisticsFileName": "ezbookkeeping2_{nickname}_統計データ",
+        "defaultExportReconciliationStatementsFileName": "ezbookkeeping2_照合明細",
+        "exportReconciliationStatementsFileName": "ezbookkeeping2_{nickname}_照合明細",
+        "defaultInsightsExplorerQueryFileName": "ezbookkeeping2_インサイト探索クエリ",
+        "insightsExplorerQueryFileName": "ezbookkeeping2_{nickname}_インサイト探索クエリ",
+        "defaultImportDataMappingFileName": "ezbookkeeping2_インポートデータマッピング",
+        "defaultImportHandlingScript": "ezbookkeeping2_インポート処理スクリプト",
+        "defaultImportReplaceRuleFileName": "ezbookkeeping2_インポート置換ルール",
+        "defaultImportCheckResultFileName": "ezbookkeeping2_インポートチェック結果",
+        "defaultOverviewLayoutFileName": "ezbookkeeping2_overview_layout"
     },
     "calendar": {
         "Gregorian": "グレゴリオ暦",
@@ -1820,8 +1820,8 @@
     "Date is too early": "日付が早すぎます",
     "User Canceled": "ユーザーがキャンセルしました",
     "Unable to load language resources. Please try again.": "Unable to load language resources. Please try again.",
-    "Welcome to ezBookkeeping": "ezBookkeepingへようこそ",
-    "Please log in with your ezBookkeeping account": "ezBookkeepingアカウントにログインしてください",
+    "Welcome to ezbookkeeping2": "ezbookkeeping2へようこそ",
+    "Please log in with your ezbookkeeping2 account": "ezbookkeeping2アカウントにログインしてください",
     "Unlock Application": "アプリのロックを解除",
     "Please enter your PIN code or use WebAuthn to unlock application": "PINコードを入力するか、WebAuthnを使用してアプリのロックを解除してください",
     "Please enter your PIN code to unlock application": "アプリのロックを解除するにはPINコードを入力してください",

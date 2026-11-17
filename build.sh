@@ -29,7 +29,7 @@ check_dependency() {
 
 show_help() {
     cat <<-EOF
-ezBookkeeping build script
+ezbookkeeping2 build script
 
 Usage:
     build.sh type [options]
@@ -232,7 +232,7 @@ build_package() {
         package_file_name="$package_file_name-$BUILD_DATE"
     fi
 
-    package_file_name="ezbookkeeping-$package_file_name-$(arch).tar.gz"
+    package_file_name="ezbookkeeping2-$package_file_name-$(arch).tar.gz"
 
     if [ -n "$PACKAGE_FILENAME" ]; then
         package_file_name="$PACKAGE_FILENAME"
@@ -266,7 +266,7 @@ build_docker() {
         docker_tag="SNAPSHOT-$BUILD_DATE";
     fi
 
-    docker_tag="ezbookkeeping:$docker_tag"
+    docker_tag="ezbookkeeping2:$docker_tag"
 
     if [ -n "$DOCKER_TAG" ]; then
         docker_tag="$DOCKER_TAG"

@@ -1,4 +1,4 @@
-# ezBookkeeping
+# ezbookkeeping2
 
 > **A business-focused fork of [mayswind/ezbookkeeping](https://github.com/mayswind/ezbookkeeping).**
 > Upstream is moving toward personal life logging: experiences, memories and photographs. This fork sticks to bookkeeping and puts these first:
@@ -6,22 +6,20 @@
 > - **Maturity:** predictable releases and safe upgrades for long-running deployments
 > - **Business use:** features for small businesses and teams, not personal lifestyle tracking
 
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/mayswind/ezbookkeeping/blob/master/LICENSE)
-[![Latest Release](https://img.shields.io/github/release/mayswind/ezbookkeeping.svg?style=flat)](https://github.com/mayswind/ezbookkeeping/releases)
-[![Latest Build](https://img.shields.io/github/actions/workflow/status/mayswind/ezbookkeeping/build-snapshot.yml?branch=main)](https://github.com/mayswind/ezbookkeeping/actions)
-[![Latest Docker Image Size](https://img.shields.io/docker/image-size/mayswind/ezbookkeeping.svg?style=flat)](https://hub.docker.com/r/mayswind/ezbookkeeping)
-[![Docker Pulls](https://img.shields.io/docker/pulls/mayswind/ezbookkeeping)](https://hub.docker.com/r/mayswind/ezbookkeeping)
-[![Ask DeepWiki](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/icon/deepwiki.svg)](https://deepwiki.com/mayswind/ezbookkeeping)
-
-[![Recommend By HelloGitHub](https://api.hellogithub.com/v1/widgets/recommend.svg?rid=ded5af09da574ec1811ddb154f1b2093&claim_uid=LT7EZxeBukCnh0K)](https://hellogithub.com/en/repository/mayswind/ezbookkeeping)
-[![Trending](https://trendshift.io/api/badge/repositories/12917)](https://trendshift.io/repositories/12917)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/krazyjakee/ezbookkeeping/blob/main/LICENSE)
+[![Latest Release](https://img.shields.io/github/release/krazyjakee/ezbookkeeping.svg?style=flat)](https://github.com/krazyjakee/ezbookkeeping/releases)
+[![Latest Build](https://img.shields.io/github/actions/workflow/status/krazyjakee/ezbookkeeping/build-snapshot.yml?branch=main)](https://github.com/krazyjakee/ezbookkeeping/actions/workflows/build-snapshot.yml)
+[![Latest Docker Image Size](https://img.shields.io/docker/image-size/krazyjakee/ezbookkeeping2.svg?style=flat)](https://hub.docker.com/r/krazyjakee/ezbookkeeping2)
+[![Docker Pulls](https://img.shields.io/docker/pulls/krazyjakee/ezbookkeeping2)](https://hub.docker.com/r/krazyjakee/ezbookkeeping2)
+[![Documentation](https://img.shields.io/badge/docs-krazyjakee.github.io-blue.svg)](https://krazyjakee.github.io/ezbookkeeping/)
+[![Forked from mayswind/ezbookkeeping](https://img.shields.io/badge/forked%20from-mayswind%2Fezbookkeeping-lightgrey.svg?logo=github)](https://github.com/mayswind/ezbookkeeping)
 
 ## Introduction
-ezBookkeeping is an open source, powerful, self-hosted personal finance app that is easy to use. It helps you record daily transactions, import data from various sources, and quickly search and filter your bills. You can analyze historical data using built-in charts or perform custom queries with your own chart dimensions to better understand spending patterns and financial trends. ezBookkeeping is easy to deploy, and you can start it with just one single Docker command. Designed to be resource-efficient, it runs smoothly on devices such as home servers, NAS and Raspberry Pi.
+ezbookkeeping2 is an open source, powerful, self-hosted personal finance app that is easy to use. It helps you record daily transactions, import data from various sources, and quickly search and filter your bills. You can analyze historical data using built-in charts or perform custom queries with your own chart dimensions to better understand spending patterns and financial trends. ezbookkeeping2 is easy to deploy, and you can start it with just one single Docker command. Designed to be resource-efficient, it runs smoothly on devices such as home servers, NAS and Raspberry Pi.
 
-ezBookkeeping offers tailored interfaces for mobile and desktop devices. With PWA (Progressive Web Apps) support, you can [add it to your mobile home screen](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/mobile/add_to_home_screen.gif) and use it like a native app.
+ezbookkeeping2 offers tailored interfaces for mobile and desktop devices. With PWA (Progressive Web Apps) support, you can [add it to your mobile home screen](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/mobile/add_to_home_screen.gif) and use it like a native app.
 
-Live Demo: [https://ezbookkeeping-demo.mayswind.net](https://ezbookkeeping-demo.mayswind.net)
+Upstream ezBookkeeping live demo: [https://ezbookkeeping-demo.mayswind.net](https://ezbookkeeping-demo.mayswind.net)
 
 ## Features
 - **Open Source & Self-Hosted**
@@ -67,27 +65,34 @@ For a full list of features, visit the [Full Feature List](https://krazyjakee.gi
 
 ## Screenshots
 ### Desktop Version
-[![ezBookkeeping](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/desktop/en.png)](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/desktop/en.png)
+[![ezbookkeeping2](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/desktop/en.png)](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/desktop/en.png)
 
 ### Mobile Version
-[![ezBookkeeping](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/mobile/en.png)](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/mobile/en.png)
+[![ezbookkeeping2](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/mobile/en.png)](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/mobile/en.png)
 
 ## Installation
 ### Run with Docker
-Visit [Docker Hub](https://hub.docker.com/r/mayswind/ezbookkeeping) to see all images and tags.
+Visit [Docker Hub](https://hub.docker.com/r/krazyjakee/ezbookkeeping2) to see all images and tags.
 
 **Latest Release:**
 
-    $ docker run -p8080:8080 mayswind/ezbookkeeping
+    $ docker run -p8080:8080 krazyjakee/ezbookkeeping2
 
 **Latest Daily Build:**
 
-    $ docker run -p8080:8080 mayswind/ezbookkeeping:latest-snapshot
+    $ docker run -p8080:8080 krazyjakee/ezbookkeeping2:latest-snapshot
 
-For production use of ezBookkeeping, you need to mount a persistent volume when starting the container to prevent data loss. For more information, see [documentation](https://krazyjakee.github.io/ezbookkeeping/installation/installation-docker).
+For production use of ezbookkeeping2, you need to mount a persistent volume when starting the container to prevent data loss. For more information, see [documentation](https://krazyjakee.github.io/ezbookkeeping/installation/installation-docker).
+
+Image tags: `latest`, `X`, `X.Y` and `X.Y.Z` for releases; `latest-snapshot`, `SNAPSHOT-YYYYMMDD` and `sha-<commit>` for daily builds of `main`.
+
+#### Migrating from mayswind/ezbookkeeping
+Just change the image from `mayswind/ezbookkeeping` to `krazyjakee/ezbookkeeping2` and keep everything else: the same volumes (`/ezbookkeeping/data`, `/ezbookkeeping/storage`, `/ezbookkeeping/log`), the same UID/GID `1000`, the same configuration file (`/ezbookkeeping/conf/ezbookkeeping.ini`) and the same `EBK_` environment variables. No data migration is needed. Back up your data first, see [Migrating from ezBookkeeping](https://krazyjakee.github.io/ezbookkeeping/installation/migrating) for details.
 
 ### Install from Binary
-Download the latest release: [https://github.com/mayswind/ezbookkeeping/releases](https://github.com/mayswind/ezbookkeeping/releases)
+Download the latest release: [https://github.com/krazyjakee/ezbookkeeping/releases](https://github.com/krazyjakee/ezbookkeeping/releases)
+
+Release archives are named `ezbookkeeping2-<version>-<os>-<arch>`; the executable inside is still named `ezbookkeeping`.
 
 **Linux / macOS / FreeBSD**
 
@@ -97,26 +102,26 @@ Download the latest release: [https://github.com/mayswind/ezbookkeeping/releases
 
     > .\ezbookkeeping.exe server run
 
-By default, ezBookkeeping listens on port 8080. You can then visit `http://{YOUR_HOST_ADDRESS}:8080/` .
+By default, ezbookkeeping2 listens on port 8080. You can then visit `http://{YOUR_HOST_ADDRESS}:8080/` .
 
 ### Build from Source
 Make sure you have [Golang](https://golang.org/), [GCC](https://gcc.gnu.org/), [Node.js](https://nodejs.org/) and [NPM](https://www.npmjs.com/) installed. Then download the source code, and follow these steps:
 
 **Linux / macOS / FreeBSD**
 
-    $ ./build.sh package -o ezbookkeeping.tar.gz
+    $ ./build.sh package -o ezbookkeeping2.tar.gz
 
-All the files will be packaged in `ezbookkeeping.tar.gz`.
+All the files will be packaged in `ezbookkeeping2.tar.gz`.
 
 **Windows**
 
-    > .\build.bat package -o ezbookkeeping.zip
+    > .\build.bat package -o ezbookkeeping2.zip
 
 or
 
-    PS > .\build.ps1 package -Output ezbookkeeping.zip
+    PS > .\build.ps1 package -Output ezbookkeeping2.zip
 
-All the files will be packaged in `ezbookkeeping.zip`.
+All the files will be packaged in `ezbookkeeping2.zip`.
 
 You can also build a Docker image. Make sure you have [Docker](https://www.docker.com/) installed, then follow these steps:
 
@@ -127,16 +132,16 @@ You can also build a Docker image. Make sure you have [Docker](https://www.docke
 ## Contributing
 We welcome contributions of all kinds.
 
-If you find a bug, please [submit an issue](https://github.com/mayswind/ezbookkeeping/issues) on GitHub.
+If you find a bug, please [submit an issue](https://github.com/krazyjakee/ezbookkeeping/issues) on GitHub.
 
 If you would like to contribute code, you can fork the repository and open a pull request.
 
 Improvements to documentation, feature suggestions, and other forms of feedback are also appreciated.
 
-You can view existing contributors on the [Contributor Graph](https://github.com/mayswind/ezbookkeeping/graphs/contributors).
+You can view existing contributors on the [Contributor Graph](https://github.com/krazyjakee/ezbookkeeping/graphs/contributors). ezbookkeeping2 builds on the work of [MaysWind](https://github.com/mayswind) and all [upstream ezBookkeeping contributors](https://github.com/mayswind/ezbookkeeping/graphs/contributors).
 
 ## Translating
-Help make ezBookkeeping accessible to users around the world. We welcome help to improve existing translations or add new ones. If you would like to contribute a translation, please refer to the [translation guide](https://krazyjakee.github.io/ezbookkeeping/translating).
+Help make ezbookkeeping2 accessible to users around the world. We welcome help to improve existing translations or add new ones. If you would like to contribute a translation, please refer to the [translation guide](https://krazyjakee.github.io/ezbookkeeping/translating).
 
 Currently available translations:
 
@@ -171,5 +176,20 @@ Currently available translations:
 1. [English](https://krazyjakee.github.io/ezbookkeeping)
 1. [中文 (简体)](https://krazyjakee.github.io/ezbookkeeping/zh_Hans)
 
+## Compatibility
+ezbookkeeping2 only changes the product name, Docker image (`krazyjakee/ezbookkeeping2`) and release archive names (`ezbookkeeping2-<version>-<os>-<arch>`). The following identifiers are intentionally unchanged, so existing installations upgrade without data migration:
+
+- Executable name `ezbookkeeping` (inside release archives and the Docker image)
+- Configuration file `conf/ezbookkeeping.ini` and all of its keys, and the `EBK_` environment variable prefix
+- Data, storage and log directory layout and default database names (e.g. `data/ezbookkeeping.db`)
+- Docker container paths (`/ezbookkeeping/...`) and UID/GID `1000`
+- HTTP API, MCP and OAuth 2.0 callback paths, cookies and browser local storage keys
+- Import and export data formats
+- Go module path `github.com/mayswind/ezbookkeeping`
+
+See [Migrating from ezBookkeeping](https://krazyjakee.github.io/ezbookkeeping/installation/migrating) for the full list.
+
 ## License
-[MIT](https://github.com/mayswind/ezbookkeeping/blob/master/LICENSE)
+[MIT](https://github.com/krazyjakee/ezbookkeeping/blob/main/LICENSE)
+
+ezbookkeeping2 is based on [ezBookkeeping](https://github.com/mayswind/ezbookkeeping), Copyright (c) 2020-2026 MaysWind.

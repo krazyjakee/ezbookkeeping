@@ -4,7 +4,7 @@ package locales
 var DefaultLanguage = en
 
 // AllLanguages represents all the supported language
-// To add new languages, please refer to https://ezbookkeeping.mayswind.net/translating
+// To add new languages, please refer to https://krazyjakee.github.io/ezbookkeeping/translating
 var AllLanguages = map[string]*LocaleInfo{
 	"bn": {
 		Content: bn,

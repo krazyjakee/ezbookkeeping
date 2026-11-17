@@ -6,7 +6,7 @@ title: 开发
 
 ## 准备
 
-ezBookkeeping 使用 Golang 和 TypeScript 编写。在您开始开发前，你需要安装 [Git](https://git-scm.com/)、[Golang](https://golang.org/)、[GCC](https://gcc.gnu.org/)、[Node.js](https://nodejs.org/) 和 [NPM](https://www.npmjs.com/)。ezBookkeeping 的发布包和 Docker 镜像使用 Golang 1.27 和 Node.js 26.x 进行编译。ezBookkeeping 之前版本依赖的 Golang 版本可以在 [系统要求](/zh_Hans/installation/system_requirements) 中找到。
+ezbookkeeping2 使用 Golang 和 TypeScript 编写。在您开始开发前，你需要安装 [Git](https://git-scm.com/)、[Golang](https://golang.org/)、[GCC](https://gcc.gnu.org/)、[Node.js](https://nodejs.org/) 和 [NPM](https://www.npmjs.com/)。ezbookkeeping2 的发布包和 Docker 镜像使用 Golang 1.27 和 Node.js 26.x 进行编译。ezbookkeeping2 之前版本依赖的 Golang 版本可以在 [系统要求](/zh_Hans/installation/system_requirements) 中找到。
 
 ## 下载源代码
 
@@ -77,31 +77,31 @@ PS > .\build.ps1 backend
 **Linux / macOS**
 
 ```shell
-$ ./build.sh package -o ezbookkeeping.tar.gz
+$ ./build.sh package -o ezbookkeeping2.tar.gz
 ```
 
-所有文件将会构建并打包到 `ezbookkeeping.tar.gz`。
+所有文件将会构建并打包到 `ezbookkeeping2.tar.gz`。
 
 **Windows**
 
 ```shell
-> .\build.bat package -o ezbookkeeping.zip
+> .\build.bat package -o ezbookkeeping2.zip
 ```
 
 或
 
 ```powershell
-PS > .\build.ps1 package -Output ezbookkeeping.zip
+PS > .\build.ps1 package -Output ezbookkeeping2.zip
 ```
 
-所有文件将会构建并打包到 `ezbookkeeping.zip`。
+所有文件将会构建并打包到 `ezbookkeeping2.zip`。
 
 ### 构建 Docker 镜像
 
 **Linux**
 
 ```shell
-$ ./build.sh docker -t ezbookkeeping:release
+$ ./build.sh docker -t ezbookkeeping2:release
 ```
 
-Docker 镜像将会构建并设置标签为 `ezbookkeeping:release`。
+Docker 镜像将会构建并设置标签为 `ezbookkeeping2:release`。

@@ -4,7 +4,7 @@ title: 命令行
 
 # 命令行
 
-ezBookkeeping 的服务端程序同时也是一个命令行工具，提供了多种命令用于数据库维护、用户管理、定时任务管理以及其他工具。
+ezbookkeeping2 的服务端程序同时也是一个命令行工具，提供了多种命令用于数据库维护、用户管理、定时任务管理以及其他工具。
 
 ## 使用方法
 
@@ -22,19 +22,19 @@ ezbookkeeping [全局选项] 命令 [命令选项] [参数...]
 
 ### server
 
-ezBookkeeping Web 服务器操作。
+ezbookkeeping2 Web 服务器操作。
 
-* `run`：启动 ezBookkeeping Web 服务器。
+* `run`：启动 ezbookkeeping2 Web 服务器。
 
 ### database
 
-ezBookkeeping 数据维护操作。
+ezbookkeeping2 数据维护操作。
 
 * `update`：更新数据库结构。
 
 ### userdata
 
-ezBookkeeping 用户数据维护操作。
+ezbookkeeping2 用户数据维护操作。
 
 * `user-add`：添加新用户。
     * 选项：
@@ -120,7 +120,7 @@ ezBookkeeping 用户数据维护操作。
 
 ### cron
 
-ezBookkeeping 定时任务工具。
+ezbookkeeping2 定时任务工具。
 
 * `list`: 显示所有已启用的定时任务。
 * `run`: 执行指定的定时任务。
@@ -129,7 +129,7 @@ ezBookkeeping 定时任务工具。
 
 ### security
 
-ezBookkeeping 安全工具。
+ezbookkeeping2 安全工具。
 
 * `gen-secret-key`：生成随机安全 Key。
     * 选项：
@@ -137,7 +137,7 @@ ezBookkeeping 安全工具。
 
 ### utility
 
-ezBookkeeping 通用工具。
+ezbookkeeping2 通用工具。
 
 * `parse-default-request-id`：解析使用默认请求ID生成器生成的请求ID，并显示详情。
     * 选项：

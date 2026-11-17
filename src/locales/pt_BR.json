@@ -1,7 +1,7 @@
 {
     "global": {
         "app": {
-            "title": "ezBookkeeping"
+            "title": "ezbookkeeping2"
         }
     },
     "language": {
@@ -181,23 +181,23 @@
             "ruleCount": "{count} rules",
             "accountActivationAndResendValidationEmailTip": "O link de ativação da conta foi enviado para seu endereço de e-mail: {email}. Se você não receber o e-mail, por favor, insira a senha novamente e clique no botão abaixo para reenviar o e-mail de validação.",
             "resendValidationEmailTip": "Se você não receber o e-mail, por favor, insira a senha novamente e clique no botão abaixo para reenviar o e-mail de validação para: {email}",
-            "oauth2bindTip": "Você está fazendo login como {userName} usando {providerName}. Por favor, insira sua senha do ezBookkeeping para verificar."
+            "oauth2bindTip": "Você está fazendo login como {userName} usando {providerName}. Por favor, insira sua senha do ezbookkeeping2 para verificar."
         }
     },
     "dataExport": {
-        "defaultExportFilename": "ezBookkeeping_dados_exportados",
-        "exportFilename": "ezBookkeeping_{nickname}_dados_exportados",
-        "defaultExportStatisticsFileName": "ezBookkeeping_dados_estatisticos",
-        "exportStatisticsFileName": "ezBookkeeping_{nickname}_dados_estatisticos",
-        "defaultExportReconciliationStatementsFileName": "ezBookkeeping_extratos_de_reconciliacao",
-        "exportReconciliationStatementsFileName": "ezBookkeeping_{nickname}_extratos_de_reconciliacao",
-        "defaultInsightsExplorerQueryFileName": "ezBookkeeping_insights_explorer_query",
-        "insightsExplorerQueryFileName": "ezBookkeeping_{nickname}_insights_explorer_query",
-        "defaultImportDataMappingFileName": "ezBookkeeping_mapeamento_de_importacao_de_dados",
-        "defaultImportHandlingScript": "ezBookkeeping_script_de_tratamento_importacao",
-        "defaultImportReplaceRuleFileName": "ezBookkeeping_regra_de_substituicao_importacao",
-        "defaultImportCheckResultFileName": "ezBookkeeping_resultado_de_verificacao_importacao",
-        "defaultOverviewLayoutFileName": "ezBookkeeping_overview_layout"
+        "defaultExportFilename": "ezbookkeeping2_dados_exportados",
+        "exportFilename": "ezbookkeeping2_{nickname}_dados_exportados",
+        "defaultExportStatisticsFileName": "ezbookkeeping2_dados_estatisticos",
+        "exportStatisticsFileName": "ezbookkeeping2_{nickname}_dados_estatisticos",
+        "defaultExportReconciliationStatementsFileName": "ezbookkeeping2_extratos_de_reconciliacao",
+        "exportReconciliationStatementsFileName": "ezbookkeeping2_{nickname}_extratos_de_reconciliacao",
+        "defaultInsightsExplorerQueryFileName": "ezbookkeeping2_insights_explorer_query",
+        "insightsExplorerQueryFileName": "ezbookkeeping2_{nickname}_insights_explorer_query",
+        "defaultImportDataMappingFileName": "ezbookkeeping2_mapeamento_de_importacao_de_dados",
+        "defaultImportHandlingScript": "ezbookkeeping2_script_de_tratamento_importacao",
+        "defaultImportReplaceRuleFileName": "ezbookkeeping2_regra_de_substituicao_importacao",
+        "defaultImportCheckResultFileName": "ezbookkeeping2_resultado_de_verificacao_importacao",
+        "defaultOverviewLayoutFileName": "ezbookkeeping2_overview_layout"
     },
     "calendar": {
         "Gregorian": "Gregoriano",
@@ -1820,8 +1820,8 @@
     "Date is too early": "A data é muito antiga",
     "User Canceled": "Usuário cancelou",
     "Unable to load language resources. Please try again.": "Unable to load language resources. Please try again.",
-    "Welcome to ezBookkeeping": "Bem-vindo ao ezBookkeeping",
-    "Please log in with your ezBookkeeping account": "Por favor, faça login com sua conta ezBookkeeping",
+    "Welcome to ezbookkeeping2": "Bem-vindo ao ezbookkeeping2",
+    "Please log in with your ezbookkeeping2 account": "Por favor, faça login com sua conta ezbookkeeping2",
     "Unlock Application": "Desbloquear Aplicativo",
     "Please enter your PIN code or use WebAuthn to unlock application": "Por favor, digite seu código PIN ou use o WebAuthn para desbloquear o aplicativo",
     "Please enter your PIN code to unlock application": "Por favor, digite seu código PIN para desbloquear o aplicativo",

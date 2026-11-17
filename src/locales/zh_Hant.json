@@ -1,7 +1,7 @@
 {
     "global": {
         "app": {
-            "title": "ezBookkeeping"
+            "title": "ezbookkeeping2"
         }
     },
     "language": {
@@ -181,23 +181,23 @@
             "ruleCount": "{count} 條規則",
             "accountActivationAndResendValidationEmailTip": "帳號啟用連結已經傳送到您的信箱地址：{email}，如果您沒有收到郵件，請再次輸入密碼並點擊下方的按鈕重新發送驗證郵件。",
             "resendValidationEmailTip": "如果您沒有收到郵件，請再次輸入密碼並點擊下方的按鈕重新發送驗證郵件到：{email}",
-            "oauth2bindTip": "您正在使用 {providerName} 登入 \"{userName}\" 使用者，請輸入您的 ezBookkeeping 的密碼以進行驗證。"
+            "oauth2bindTip": "您正在使用 {providerName} 登入 \"{userName}\" 使用者，請輸入您的 ezbookkeeping2 的密碼以進行驗證。"
         }
     },
     "dataExport": {
-        "defaultExportFilename": "ezBookkeeping_匯出資料",
-        "exportFilename": "ezBookkeeping_{nickname}_匯出資料",
-        "defaultExportStatisticsFileName": "ezBookkeeping_統計資料",
-        "exportStatisticsFileName": "ezBookkeeping_{nickname}_統計資料",
-        "defaultExportReconciliationStatementsFileName": "ezBookkeeping_對帳單",
-        "exportReconciliationStatementsFileName": "ezBookkeeping_{nickname}_對帳單",
-        "defaultInsightsExplorerQueryFileName": "ezBookkeeping_洞察探索查詢",
-        "insightsExplorerQueryFileName": "ezBookkeeping_{nickname}_洞察探索查詢",
-        "defaultImportDataMappingFileName": "ezBookkeeping_匯入資料對應檔案",
-        "defaultImportHandlingScript": "ezBookkeeping_匯入處理腳本",
-        "defaultImportReplaceRuleFileName": "ezBookkeeping_匯入替換規則檔案",
-        "defaultImportCheckResultFileName": "ezBookkeeping_匯入檢查結果",
-        "defaultOverviewLayoutFileName": "ezBookkeeping_總覽佈局"
+        "defaultExportFilename": "ezbookkeeping2_匯出資料",
+        "exportFilename": "ezbookkeeping2_{nickname}_匯出資料",
+        "defaultExportStatisticsFileName": "ezbookkeeping2_統計資料",
+        "exportStatisticsFileName": "ezbookkeeping2_{nickname}_統計資料",
+        "defaultExportReconciliationStatementsFileName": "ezbookkeeping2_對帳單",
+        "exportReconciliationStatementsFileName": "ezbookkeeping2_{nickname}_對帳單",
+        "defaultInsightsExplorerQueryFileName": "ezbookkeeping2_洞察探索查詢",
+        "insightsExplorerQueryFileName": "ezbookkeeping2_{nickname}_洞察探索查詢",
+        "defaultImportDataMappingFileName": "ezbookkeeping2_匯入資料對應檔案",
+        "defaultImportHandlingScript": "ezbookkeeping2_匯入處理腳本",
+        "defaultImportReplaceRuleFileName": "ezbookkeeping2_匯入替換規則檔案",
+        "defaultImportCheckResultFileName": "ezbookkeeping2_匯入檢查結果",
+        "defaultOverviewLayoutFileName": "ezbookkeeping2_總覽佈局"
     },
     "calendar": {
         "Gregorian": "公曆",
@@ -1820,8 +1820,8 @@
     "Date is too early": "日期過早",
     "User Canceled": "使用者已取消",
     "Unable to load language resources. Please try again.": "無法載入語言資源，請重試。",
-    "Welcome to ezBookkeeping": "歡迎使用 ezBookkeeping",
-    "Please log in with your ezBookkeeping account": "請使用您的 ezBookkeeping 帳號登入",
+    "Welcome to ezbookkeeping2": "歡迎使用 ezbookkeeping2",
+    "Please log in with your ezbookkeeping2 account": "請使用您的 ezbookkeeping2 帳號登入",
     "Unlock Application": "解鎖應用程式",
     "Please enter your PIN code or use WebAuthn to unlock application": "請輸入您的 PIN 碼，或使用 WebAuthn 解鎖應用程式",
     "Please enter your PIN code to unlock application": "請輸入您的 PIN 碼解鎖應用程式",

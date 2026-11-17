@@ -8,126 +8,126 @@ title: 常见问题
 
 如果页面中没有您要找的问题，您可以访问 [GitHub Issues](https://github.com/krazyjakee/ezbookkeeping/issues) 查找更多内容。
 
-## ezBookkeeping 是免费的么
+## ezbookkeeping2 是免费的么
 
-ezBookkeeping 是一个基于 [MIT 许可证](https://github.com/krazyjakee/ezbookkeeping/blob/main/LICENSE) 的免费、开源、自托管的个人记账软件，你可以免费使用、修改和分发 ezBookkeeping，甚至可以将其用于商业用途。ezBookkeeping 的源代码托管在 [GitHub](https://github.com/krazyjakee/ezbookkeeping) 上，任何人都可以访问和下载。
+ezbookkeeping2 是一个基于 [MIT 许可证](https://github.com/krazyjakee/ezbookkeeping/blob/main/LICENSE) 的免费、开源、自托管的个人记账软件，你可以免费使用、修改和分发 ezbookkeeping2，甚至可以将其用于商业用途。ezbookkeeping2 的源代码托管在 [GitHub](https://github.com/krazyjakee/ezbookkeeping) 上，任何人都可以访问和下载。
 
-ezBookkeeping 不提供官方的托管服务，你需要在你自己的服务器或个人电脑上部署 ezBookkeeping 的服务端程序。你可以参考 [安装](/zh_Hans/installation/) 文档了解如何部署 ezBookkeeping。同时，ezBookkeeping 项目不接受用户的捐赠或赞助，也不提供任何付费功能。
+ezbookkeeping2 不提供官方的托管服务，你需要在你自己的服务器或个人电脑上部署 ezbookkeeping2 的服务端程序。你可以参考 [安装](/zh_Hans/installation/) 文档了解如何部署 ezbookkeeping2。同时，ezbookkeeping2 项目不接受用户的捐赠或赞助，也不提供任何付费功能。
 
-ezBookkeeping 项目不会收集用户的任何信息，用户的数据完全存储在用户自己部署的服务器或个人电脑上。你自托管的 ezBookkeeping 服务端程序不会将任何数据发送给 ezBookkeeping 项目。不过，ezBookkeeping 提供的部分功能会依赖第三方服务，ezBookkeeping 与这些第三方服务没有任何商业合作关系，这些服务可能会收集用户的信息，详情请参考 [ezBookkeeping 使用了哪些第三方服务，以及是否会使用我的个人数据](#ezbookkeeping-使用了哪些第三方服务-以及是否会使用我的个人数据)，你可以在配置文件中自由选择是否使用这些第三方提供的功能。
+ezbookkeeping2 项目不会收集用户的任何信息，用户的数据完全存储在用户自己部署的服务器或个人电脑上。你自托管的 ezbookkeeping2 服务端程序不会将任何数据发送给 ezbookkeeping2 项目。不过，ezbookkeeping2 提供的部分功能会依赖第三方服务，ezbookkeeping2 与这些第三方服务没有任何商业合作关系，这些服务可能会收集用户的信息，详情请参考 [ezbookkeeping2 使用了哪些第三方服务，以及是否会使用我的个人数据](#ezbookkeeping-使用了哪些第三方服务-以及是否会使用我的个人数据)，你可以在配置文件中自由选择是否使用这些第三方提供的功能。
 
-## ezBookkeeping 是否适合我
+## ezbookkeeping2 是否适合我
 
-ezBookkeeping 并不是万能的，你可以访问 [功能列表](/zh_Hans/features/) 查看 ezBookkeeping 的功能列表，也可以从 [功能对比](/zh_Hans/comparison/) 查看 ezBookkeeping 与其他类似软件的功能对比说明，并选择适合你的软件。
+ezbookkeeping2 并不是万能的，你可以访问 [功能列表](/zh_Hans/features/) 查看 ezbookkeeping2 的功能列表，也可以从 [功能对比](/zh_Hans/comparison/) 查看 ezbookkeeping2 与其他类似软件的功能对比说明，并选择适合你的软件。
 
-## ezBookkeeping 支持哪些操作系统
+## ezbookkeeping2 支持哪些操作系统
 
-ezBookkeeping 服务端程序支持的操作系统，以及可以打开 ezBookkeeping 界面的浏览器，请参考 [系统要求](/zh_Hans/installation/system_requirements)。
+ezbookkeeping2 服务端程序支持的操作系统，以及可以打开 ezbookkeeping2 界面的浏览器，请参考 [系统要求](/zh_Hans/installation/system_requirements)。
 
-## ezBookkeeping 需要使用多少系统资源
+## ezbookkeeping2 需要使用多少系统资源
 
-ezBookkeeping 是基于 Golang 编写的轻量软件，需要资源非常少。ezBookkeeping 的二进制文件及依赖的静态文件大约占用 80 MiB 左右的磁盘空间。在 Linux/amd64 平台运行且只有一个用户使用时，通常只需要使用约 40 MiB 左右内存。
+ezbookkeeping2 是基于 Golang 编写的轻量软件，需要资源非常少。ezbookkeeping2 的二进制文件及依赖的静态文件大约占用 80 MiB 左右的磁盘空间。在 Linux/amd64 平台运行且只有一个用户使用时，通常只需要使用约 40 MiB 左右内存。
 
 ## 为什么在 Windows 系统上双击 `ezbookkeeping.exe` 无法打开应用程序
 
-ezBookkeeping 并不是一个桌面应用，而是一个自托管的服务端程序，你可以参考 [安装](/zh_Hans/installation/) 文档中的步骤启动该服务端程序。当服务端程序运行后，你就可以使用你各种设备上的各种浏览器访问 ezBookkeeping。
+ezbookkeeping2 并不是一个桌面应用，而是一个自托管的服务端程序，你可以参考 [安装](/zh_Hans/installation/) 文档中的步骤启动该服务端程序。当服务端程序运行后，你就可以使用你各种设备上的各种浏览器访问 ezbookkeeping2。
 
-当然，如果你愿意，你也可以在个人电脑上运行 ezBookkeeping 的服务端程序，并使用本机的浏览器访问它。
+当然，如果你愿意，你也可以在个人电脑上运行 ezbookkeeping2 的服务端程序，并使用本机的浏览器访问它。
 
-## ezBookkeeping 有哪些必须要设置的设置项
+## ezbookkeeping2 有哪些必须要设置的设置项
 
-ezBookkeeping 是开箱即用的，无需设置任何额外的设置项即可启动运行。但是如果你正式使用它，还需要正确配置以下几个配置项：
+ezbookkeeping2 是开箱即用的，无需设置任何额外的设置项即可启动运行。但是如果你正式使用它，还需要正确配置以下几个配置项：
 
-1. `security` 节中的 `secret_key`（环境变量 `EBK_SECURITY_SECRET_KEY`）：需要设置为一个随机字符串，随机字符串可以使用 ezBookkeeping 命令行工具 `ezbookkeeping security gen-secret-key` 或 `openssl rand -base64 32` 生成
-2. `server` 节中的 `domain`（环境变量 `EBK_SERVER_DOMAIN`）：需要设置为用户访问的域名或者 IP 地址（例如 `ezbookkeeping-demo.mayswind.net` 或 `192.168.1.2`）。如果设置错误将会导致用户头像或交易图片无法显示，以及 ezBookkeeping 发送的邮件中的链接地址错误
+1. `security` 节中的 `secret_key`（环境变量 `EBK_SECURITY_SECRET_KEY`）：需要设置为一个随机字符串，随机字符串可以使用 ezbookkeeping2 命令行工具 `ezbookkeeping security gen-secret-key` 或 `openssl rand -base64 32` 生成
+2. `server` 节中的 `domain`（环境变量 `EBK_SERVER_DOMAIN`）：需要设置为用户访问的域名或者 IP 地址（例如 `ezbookkeeping-demo.mayswind.net` 或 `192.168.1.2`）。如果设置错误将会导致用户头像或交易图片无法显示，以及 ezbookkeeping2 发送的邮件中的链接地址错误
 
-如果你想使用 Nginx 等反向代理，并且暴露给用户的协议、端口号与 ezBookkeeping 的 Web 服务器设置不同，还需要设置 `server` 节中的 `root_url`（环境变量 `EBK_SERVER_ROOT_URL`），例如 `https://ezbookkeeping-demo.mayswind.net/`。
+如果你想使用 Nginx 等反向代理，并且暴露给用户的协议、端口号与 ezbookkeeping2 的 Web 服务器设置不同，还需要设置 `server` 节中的 `root_url`（环境变量 `EBK_SERVER_ROOT_URL`），例如 `https://ezbookkeeping-demo.mayswind.net/`。
 
 如果你想使用 MySQL 作为数据库，需要设置 `database` 节中的 `type`（环境变量 `EBK_DATABASE_TYPE`） 为 `mysql`，同时设置数据库主机 `host`（例如 `mysql.domain:3306` 或 `/var/run/mysqld/mysqld.sock`）、数据库名 `name`、数据库访问用户 `user`、数据库访问密码 `passwd`。
 
 如果你想使用 PostgreSQL 作为数据库，需要设置 `database` 节中的 `type`（环境变量 `EBK_DATABASE_TYPE`） 为 `postgres`，同时设置数据库主机 `host`（例如 `pg.domain:5432`，或 `/var/run/postgresql`）、数据库名 `name`、数据库访问用户 `user`、数据库访问密码 `passwd`。
 
-如果你想存储用户头像或交易图片，请检查或设置 [配置 - 对象存储](/zh_Hans/configuration/#对象存储) 中的设置。此外，ezBookkeeping 的汇率数据源、地图提供者、大语言模型（LLM）提供者等都可以自定义，具体请参考 [配置](/zh_Hans/configuration/)。
+如果你想存储用户头像或交易图片，请检查或设置 [配置 - 对象存储](/zh_Hans/configuration/#对象存储) 中的设置。此外，ezbookkeeping2 的汇率数据源、地图提供者、大语言模型（LLM）提供者等都可以自定义，具体请参考 [配置](/zh_Hans/configuration/)。
 
-## ezBookkeeping 启动时提示没有权限（“permission denied”）
+## ezbookkeeping2 启动时提示没有权限（“permission denied”）
 
-ezBookkeeping 的 `data` 目录（使用 SQLite 数据库时）、`storage` 目录（使用 `local_filesystem` 对象存储类型时）、`log` 目录都需要有运行 ezBookkeeping 进程用户的读写权限。以及 `conf/ezbookkeeping.ini` 文件需要有运行 ezBookkeeping 进程用户的读权限。
+ezbookkeeping2 的 `data` 目录（使用 SQLite 数据库时）、`storage` 目录（使用 `local_filesystem` 对象存储类型时）、`log` 目录都需要有运行 ezbookkeeping2 进程用户的读写权限。以及 `conf/ezbookkeeping.ini` 文件需要有运行 ezbookkeeping2 进程用户的读权限。
 
-如果你使用 Docker 镜像部署，运行 ezBookkeeping 进程的用户 UID 为 **1000**、组 GID 为 **1000**，如果你将外部目录挂载到 Docker 容器内，需要保证对应目录有该 UID/GID 的权限。
+如果你使用 Docker 镜像部署，运行 ezbookkeeping2 进程的用户 UID 为 **1000**、组 GID 为 **1000**，如果你将外部目录挂载到 Docker 容器内，需要保证对应目录有该 UID/GID 的权限。
 
-## ezBookkeeping 文件存储的位置
+## ezbookkeeping2 文件存储的位置
 
-ezBookkeeping 大部分数据都存储在数据库中，用户的头像、交易的图片文件存储在对象存储中。
+ezbookkeeping2 大部分数据都存储在数据库中，用户的头像、交易的图片文件存储在对象存储中。
 
 ### 数据库文件
 
-如果你使用 SQLite 作为数据库，则数据库文件的默认位置为 ezBookkeeping 可执行文件目录下的 `data/ezbookkeeping.db`，如果你使用 Docker 镜像部署，则数据库文件的默认路径为容器内的 `/ezbookkeeping/data/ezbookkeeping.db`。你可以通过配置文件修改这个路径，更多信息见 [配置 - 数据库](/zh_Hans/configuration/#数据库) 中的 `db_path`。
+如果你使用 SQLite 作为数据库，则数据库文件的默认位置为 ezbookkeeping2 可执行文件目录下的 `data/ezbookkeeping.db`，如果你使用 Docker 镜像部署，则数据库文件的默认路径为容器内的 `/ezbookkeeping/data/ezbookkeeping.db`。你可以通过配置文件修改这个路径，更多信息见 [配置 - 数据库](/zh_Hans/configuration/#数据库) 中的 `db_path`。
 
 如果你使用 MySQL 或 PostgreSQL，数据库文件通过数据库系统进行管理。
 
 ### 对象存储文件
 
-如果你使用 `local_filesystem` 对象存储类型，则对象存储文件的默认位置为 ezBookkeeping 可执行文件目录下的 `storage` 目录，如果你使用 Docker 镜像部署，则数据库文件的默认路径为容器内的 `/ezbookkeeping/storage/`。你可以通过配置文件修改这个路径，更多信息见 [配置 - 对象存储](/zh_Hans/configuration/#对象存储) 中的 `local_filesystem_path`。
+如果你使用 `local_filesystem` 对象存储类型，则对象存储文件的默认位置为 ezbookkeeping2 可执行文件目录下的 `storage` 目录，如果你使用 Docker 镜像部署，则数据库文件的默认路径为容器内的 `/ezbookkeeping/storage/`。你可以通过配置文件修改这个路径，更多信息见 [配置 - 对象存储](/zh_Hans/configuration/#对象存储) 中的 `local_filesystem_path`。
 
 如果你使用 `s3`、`minio` 或 `webdav` 对象存储类型，对象存储的文件通过对象存储系统进行管理。
 
 > 如何备份数据库和对象存储文件？
 >
-> 由于 ezBookkeeping 使用的数据库系统和对象存储服务已经非常成熟，各系统官方及第三方也提供了非常方便的实用工具，因此 ezBookkeeping 建议使用这些数据库实用工具及对象存储工具进行备份。例如，
+> 由于 ezbookkeeping2 使用的数据库系统和对象存储服务已经非常成熟，各系统官方及第三方也提供了非常方便的实用工具，因此 ezbookkeeping2 建议使用这些数据库实用工具及对象存储工具进行备份。例如，
 > 1. 使用 `mysqldump` Dump MySQL 数据库
 > 2. 使用 `mariadb-dump` Dump MariaDB 数据库
 > 3. 使用 `pg_dump` Dump PostgreSQL 数据库
 > 4. 使用 `rc` 复制 RustFS 对象存储中的文件
 > 5. 使用 `mc` 复制 MinIO 对象存储中的文件
 
-## 如何迁移 ezBookkeeping 的数据
+## 如何迁移 ezbookkeeping2 的数据
 
-若您使用 MySQL 或 PostgreSQL 作为数据库，同时使用 `s3`、`minio` 或 `webdav` 对象存储类型（或不存储用户头像或交易图片文件），则 ezBookkeeping 本身是无状态的，不需要迁移任何数据。
+若您使用 MySQL 或 PostgreSQL 作为数据库，同时使用 `s3`、`minio` 或 `webdav` 对象存储类型（或不存储用户头像或交易图片文件），则 ezbookkeeping2 本身是无状态的，不需要迁移任何数据。
 
 ### 迁移数据库
 
 1. SQLite → SQLite：只需要复制数据库目录下（默认为 `data`）下的 `.db` 文件即可
-2. 其他组合（例如 SQLite → MySQL / PostgreSQL，或相反）：请在使用 ezBookkeeping 初始化新的数据库后，使用第三方工具将之前数据库的数据迁移到新的数据库中
+2. 其他组合（例如 SQLite → MySQL / PostgreSQL，或相反）：请在使用 ezbookkeeping2 初始化新的数据库后，使用第三方工具将之前数据库的数据迁移到新的数据库中
 
-ezBookkeeping 建议仅测试时使用 SQLite 数据库。如果您确定使用 ezBookkeeping，最好使用 MySQL 或 PostgreSQL 数据库，以避免后续迁移的成本。
+ezbookkeeping2 建议仅测试时使用 SQLite 数据库。如果您确定使用 ezbookkeeping2，最好使用 MySQL 或 PostgreSQL 数据库，以避免后续迁移的成本。
 
 > 示例：如何使用 DBeaver 迁移 SQLite 数据库到 MySQL
 >
-> 1. 首先使用 ezBookkeeping 配置新的 MySQL 数据库，并启动一次 ezBookkeeping 以便对 MySQL 数据库进行初始化
+> 1. 首先使用 ezbookkeeping2 配置新的 MySQL 数据库，并启动一次 ezbookkeeping2 以便对 MySQL 数据库进行初始化
 > 2. 在 DBeaver 里创建两个连接，分别连接之前的 SQLite 数据库和新的 MySQL 数据库
 > 3. 在 DBeaver 中展开 SQLite 数据库，全选所有表，右键单击并在上下文菜单中选择 “导出数据”。在 “数据传送” 对话框中，设置 “导出目标” 为 “数据库”。点击 “下一步” 后，在 “目标容器” 选择 MySQL 数据库，继续点击 “下一步” 直到导入完成
 
 ### 迁移对象存储
 
 1.  `local_filesystem` → `local_filesystem`：只需要复制对象存储目录下（默认为 `storage`）下所有文件即可
-2. 其他组合（例如 `local_filesystem` → `s3` / `minio` / `webdav`，或相反），请在使用 ezBookkeeping 初始化新的对象存储目录后，使用第三方工具将存储的文件进行同步
+2. 其他组合（例如 `local_filesystem` → `s3` / `minio` / `webdav`，或相反），请在使用 ezbookkeeping2 初始化新的对象存储目录后，使用第三方工具将存储的文件进行同步
 
-## ezBookkeeping 如何升级
+## ezbookkeeping2 如何升级
 
-ezBookkeeping 的数据库设计是向前兼容的，当你升级 ezBookkeeping 的服务端程序时，数据库结构并不会产生破坏性的变化。同样的，新版本的 ezBookkeeping 服务端程序更新后的数据库结构也是向后兼容的，你可以随时回滚到之前的版本。
+ezbookkeeping2 的数据库设计是向前兼容的，当你升级 ezbookkeeping2 的服务端程序时，数据库结构并不会产生破坏性的变化。同样的，新版本的 ezbookkeeping2 服务端程序更新后的数据库结构也是向后兼容的，你可以随时回滚到之前的版本。
 
-如果你需要升级 ezBookkeeping，只需要下载新的二进制文件替换旧的二进制文件，然后重新启动 ezBookkeeping 服务端程序即可。如果你使用 Docker 镜像部署 ezBookkeeping，只需要拉取新的 Docker 镜像并重新创建容器即可。
+如果你需要升级 ezbookkeeping2，只需要下载新的二进制文件替换旧的二进制文件，然后重新启动 ezbookkeeping2 服务端程序即可。如果你使用 Docker 镜像部署 ezbookkeeping2，只需要拉取新的 Docker 镜像并重新创建容器即可。
 
 > [!WARNING] 注意
 > 如果可能，始终建议在升级前使用数据库工具备份数据库中的数据。
 
-## ezBookkeeping 是否提供电脑桌面应用或手机 App
+## ezbookkeeping2 是否提供电脑桌面应用或手机 App
 
-ezBookkeeping 是一个自托管的软件，通过你的浏览器进行访问，并不提供独立的桌面应用或手机 App。ezBookkeeping 为移动设备和电脑桌面提供了两套原生的用户界面，在手机上你可以将 ezBookkeeping 添加到主屏幕，使用体验如同手机原生应用。
+ezbookkeeping2 是一个自托管的软件，通过你的浏览器进行访问，并不提供独立的桌面应用或手机 App。ezbookkeeping2 为移动设备和电脑桌面提供了两套原生的用户界面，在手机上你可以将 ezbookkeeping2 添加到主屏幕，使用体验如同手机原生应用。
 
-## 如何将 ezBookkeeping 添加到手机主屏幕
+## 如何将 ezbookkeeping2 添加到手机主屏幕
 
-ezBookkeeping 支持 PWA（Progressive Web Apps），你可以使用系统浏览器将其添加到手机屏幕，系统会自动缓存必须的静态文件。从手机主屏幕直接打开 ezBookkeeping 时会像手机原生应用一样。
+ezbookkeeping2 支持 PWA（Progressive Web Apps），你可以使用系统浏览器将其添加到手机屏幕，系统会自动缓存必须的静态文件。从手机主屏幕直接打开 ezbookkeeping2 时会像手机原生应用一样。
 
 详细步骤，参考 [教程](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/mobile/add_to_home_screen.gif)。
 
-## ezBookkeeping 的默认用户是什么
+## ezbookkeeping2 的默认用户是什么
 
-在你第一次启动 ezBookkeeping 服务端后，ezBookkeeping 的数据库是空的，你需要新注册一个账号。ezBookkeeping 没有默认账号。
+在你第一次启动 ezbookkeeping2 服务端后，ezbookkeeping2 的数据库是空的，你需要新注册一个账号。ezbookkeeping2 没有默认账号。
 
-## ezBookkeeping 中如何计算资产和负债
+## ezbookkeeping2 中如何计算资产和负债
 
-ezBookkeeping 中资产账户与负债账户根据账户分类进行划分，其中 现金、借记账户、储蓄账户、虚拟账户、应收款项、定期存款、投资账户 为资产账户，余额记入资产。信用卡、负债账户 为负债账户，未清余额记入负债。
+ezbookkeeping2 中资产账户与负债账户根据账户分类进行划分，其中 现金、借记账户、储蓄账户、虚拟账户、应收款项、定期存款、投资账户 为资产账户，余额记入资产。信用卡、负债账户 为负债账户，未清余额记入负债。
 
 ## 创建账户时的余额和未清余额分别是什么含义
 
@@ -137,7 +137,7 @@ ezBookkeeping 中资产账户与负债账户根据账户分类进行划分，其
 
 ## 创建账户时的余额时间的用途是什么
 
-ezBookkeeping 中的每一笔交易都需要有交易的时间。如果创建账户时设置了余额或未清余额，需要设置这笔余额设置交易的时间。后续添加交易到该账户时，交易时间不能早于该时间。
+ezbookkeeping2 中的每一笔交易都需要有交易的时间。如果创建账户时设置了余额或未清余额，需要设置这笔余额设置交易的时间。后续添加交易到该账户时，交易时间不能早于该时间。
 
 ## 创建信用卡账户时设置的账单日的用途是什么
 
@@ -145,7 +145,7 @@ ezBookkeeping 中的每一笔交易都需要有交易的时间。如果创建账
 
 ## 为什么无法添加交易
 
-ezBookkeeping 中的每一笔交易都需要包含账户和交易分类，并且交易分类是按交易类型分为支出分类、收入分类和转账分类，每一笔交易都需要设置一个分类的二级分类。如果你还没有创建账户和对应交易类型的二级分类，则无法创建新的交易。
+ezbookkeeping2 中的每一笔交易都需要包含账户和交易分类，并且交易分类是按交易类型分为支出分类、收入分类和转账分类，每一笔交易都需要设置一个分类的二级分类。如果你还没有创建账户和对应交易类型的二级分类，则无法创建新的交易。
 
 ## 如何记录退款
 
@@ -157,15 +157,15 @@ ezBookkeeping 中的每一笔交易都需要包含账户和交易分类，并且
 
 ## 如何记录别人借我的钱
 
-你可以创建一个账户分类为 “应收款项” 的账户，然后创建一笔从你支出账户到该应收款项账户的转账交易。如果你在 ezBookkeeping 创建了默认的交易分类，你可以选择 “贷款债务 > 借出” 交易类型。
+你可以创建一个账户分类为 “应收款项” 的账户，然后创建一笔从你支出账户到该应收款项账户的转账交易。如果你在 ezbookkeeping2 创建了默认的交易分类，你可以选择 “贷款债务 > 借出” 交易类型。
 
 ## 如何记录商户、付款人、收款人、项目等信息
 
-ezBookkeeping 采用交易标签来记录商户、付款人、收款人、项目等信息。你可以为每笔交易添加一个或多个标签来记录这些信息。同时，ezBookkeeping 支持标签组，你可以创建不同的标签组来区分不同类型的标签。
+ezbookkeeping2 采用交易标签来记录商户、付款人、收款人、项目等信息。你可以为每笔交易添加一个或多个标签来记录这些信息。同时，ezbookkeeping2 支持标签组，你可以创建不同的标签组来区分不同类型的标签。
 
 ## 如何使用最后对账时间
 
-ezBookkeeping 允许用户在用户个人信息设置中开启 “使用最后对账时间” 功能，开启后你可以在账户编辑页面更新或取消最后对账时间，也可以在对账单页面中将账户最后对账时间更新为对账单的结束时间，或在账户列表界面将对最后对账时间更新为当前时间。
+ezbookkeeping2 允许用户在用户个人信息设置中开启 “使用最后对账时间” 功能，开启后你可以在账户编辑页面更新或取消最后对账时间，也可以在对账单页面中将账户最后对账时间更新为对账单的结束时间，或在账户列表界面将对最后对账时间更新为当前时间。
 
 你可以搭配 “可编辑交易范围” 功能使用最后对账时间，例如将 “可编辑交易范围” 设置为 “最后对账时间或更晚”，这样最后对账时间之前的交易将无法被修改。
 
@@ -175,21 +175,21 @@ ezBookkeeping 允许用户在用户个人信息设置中开启 “使用最后�
 
 ## 为什么添加新交易时提示 “不能添加早于修改余额的交易”
 
-出于语义清晰的原因，ezBookkeeping 对于每个账户只允许一个 “修改余额” 交易，同时这个交易必须是这个账户的第一笔交易，所以不能在 “修改余额” 交易之前创建交易。
+出于语义清晰的原因，ezbookkeeping2 对于每个账户只允许一个 “修改余额” 交易，同时这个交易必须是这个账户的第一笔交易，所以不能在 “修改余额” 交易之前创建交易。
 
 ## 如何修改账户余额
 
-ezBookkeeping 只允许用户创建新账户时设置期初余额。在账户创建后，用户不能直接修改其余额。如果需要调整账户的余额，你需要记录一笔支出或收入交易。
+ezbookkeeping2 只允许用户创建新账户时设置期初余额。在账户创建后，用户不能直接修改其余额。如果需要调整账户的余额，你需要记录一笔支出或收入交易。
 
 当然，你可以在对账单页面中更新期末余额，系统会自动计算预期期末余额与实际余额的差异，并将金额填写到创建新交易的页面中。
 
 ## 添加交易时无法设置货币信息
 
-ezBookkeeping 的货币信息不与每笔交易所关联，而是与账户所关联，每一个账户有且只能有一个货币。如果你现实中的账户支持多种货币，你可以将该账户的账户类型设置为 “多个子账户”，然后为每个货币设置一个子账户。
+ezbookkeeping2 的货币信息不与每笔交易所关联，而是与账户所关联，每一个账户有且只能有一个货币。如果你现实中的账户支持多种货币，你可以将该账户的账户类型设置为 “多个子账户”，然后为每个货币设置一个子账户。
 
 ## 移动版编辑交易时如何从剪贴板中粘贴交易金额
 
-在 ezBookkeeping 的金额输入框中轻触金额，即可弹出粘贴按钮（如下图），点击即可粘贴。此外，非 iOS 系统在交易编辑页面的菜单中也可以轻触粘贴项进行粘贴。
+在 ezbookkeeping2 的金额输入框中轻触金额，即可弹出粘贴按钮（如下图），点击即可粘贴。此外，非 iOS 系统在交易编辑页面的菜单中也可以轻触粘贴项进行粘贴。
 
 [![如何粘贴金额](/images/zh_Hans/number_pad_paste.png)](/images/zh_Hans/number_pad_paste.png){target=_blank}
 
@@ -207,13 +207,13 @@ ezBookkeeping 的货币信息不与每笔交易所关联，而是与账户所关
 
 ## 移动版交易列表月份后的支出、收入金额后边的 “+” 是什么含义
 
-在移动版中，交易列表默认是按需加载的，月份后的月度支出、收入金额使用已加载的数据进行计算。当该月交易数据加载不完全时，会显示 “+” 表示计算的数据不完整。如果需要查询月度总支出和收入金额，可以在日期筛选中选择一个完整月。在交易列表中查询一个完整月的数据时，ezBookkeeping 总是会加载该月的所有交易数据。
+在移动版中，交易列表默认是按需加载的，月份后的月度支出、收入金额使用已加载的数据进行计算。当该月交易数据加载不完全时，会显示 “+” 表示计算的数据不完整。如果需要查询月度总支出和收入金额，可以在日期筛选中选择一个完整月。在交易列表中查询一个完整月的数据时，ezbookkeeping2 总是会加载该月的所有交易数据。
 
 另外，不论在桌面版还是移动版中，如果汇率数据中缺少你账户的货币与你的默认货币的汇率数据，该账户的金额也无法合并到总金额中，也会显示 “+”。
 
 ## 如何按默认时区查看交易的时间
 
-ezBookkeeping 的交易列表和交易详情页默认都是按交易时区显示交易时间。
+ezbookkeeping2 的交易列表和交易详情页默认都是按交易时区显示交易时间。
 
 在移动版中，你可以轻触交易详情页中的交易时间，在交易时区和默认时区间切换。
 
@@ -221,13 +221,13 @@ ezBookkeeping 的交易列表和交易详情页默认都是按交易时区显示
 
 ## 移动版如何编辑、删除交易、账户
 
-在 ezBookkeeping 移动版中，你可以在交易、账户的列表页面的每项内容左滑，即会出现 “编辑”、“删除” 按钮，轻触 “编辑” 即可进入编辑页面。
+在 ezbookkeeping2 移动版中，你可以在交易、账户的列表页面的每项内容左滑，即会出现 “编辑”、“删除” 按钮，轻触 “编辑” 即可进入编辑页面。
 
 [![如何修改交易](/images/zh_Hans/how_to_edit_transaction.png)](/images/zh_Hans/how_to_edit_transaction.png){target=_blank}
 
 ## 移动版如何快速隐藏账户、分类、标签
 
-在 ezBookkeeping 移动版中，你可以在账户、分类、标签的列表页面的每项长按，然后在该项右滑即可快速切换隐藏状态。
+在 ezbookkeeping2 移动版中，你可以在账户、分类、标签的列表页面的每项长按，然后在该项右滑即可快速切换隐藏状态。
 
 ## 如何使用交易模板创建交易
 
@@ -264,54 +264,54 @@ ezBookkeeping 的交易列表和交易详情页默认都是按交易时区显示
 
 ## 如何显示按标签分类的图表
 
-由于每个交易可以包含零个到多个标签，所以标签本身并没有统计学上的意义。ezBookkeeping 提供了洞察探索功能，允许用户自由地构建不同条件的查询，并以此构建可视化的图表。你可以创建一个新的探索，并使用不同标签创建多个查询，然后即可以将 “查询” 作为 “轴 / 分类” 创建图表。
+由于每个交易可以包含零个到多个标签，所以标签本身并没有统计学上的意义。ezbookkeeping2 提供了洞察探索功能，允许用户自由地构建不同条件的查询，并以此构建可视化的图表。你可以创建一个新的探索，并使用不同标签创建多个查询，然后即可以将 “查询” 作为 “轴 / 分类” 创建图表。
 
 ## 定时交易没有自动创建新的交易
 
-ezBookkeeping 的定时交易当到达预定日期时会自动创建一笔交易，这笔生成的交易与用户自己创建的交易完全相同。在预定日期到达之前，没有交易会被创建。你需要保持 ezBookkeeping 的服务端一直运行。
+ezbookkeeping2 的定时交易当到达预定日期时会自动创建一笔交易，这笔生成的交易与用户自己创建的交易完全相同。在预定日期到达之前，没有交易会被创建。你需要保持 ezbookkeeping2 的服务端一直运行。
 
 ## 为什么上传的用户头像和交易图片无法显示
 
-请确保配置中的 `domain` 设置正确，如果你使用了 Nginx 等反向代理，并且访问协议或端口号与 ezBookkeeping 服务端提供的不同，还需要修改 `root_url`，具体请参考 [配置 - Web 服务器](/zh_Hans/configuration/#web-服务器)。ezBookkeeping 中用户上传的用户头像、交易图片的地址均依赖上述地址。
+请确保配置中的 `domain` 设置正确，如果你使用了 Nginx 等反向代理，并且访问协议或端口号与 ezbookkeeping2 服务端提供的不同，还需要修改 `root_url`，具体请参考 [配置 - Web 服务器](/zh_Hans/configuration/#web-服务器)。ezbookkeeping2 中用户上传的用户头像、交易图片的地址均依赖上述地址。
 
-如果完成了上述设置，但图片依然无法显示，你可以通过浏览器的开发者工具检查图片的地址是否与设置的地址相同。如果不同请检查 ezBookkeeping 启动时输出的配置文件的内容是否与预期的一致，如果不同请检查设置或重新启动 ezBookkeeping。
+如果完成了上述设置，但图片依然无法显示，你可以通过浏览器的开发者工具检查图片的地址是否与设置的地址相同。如果不同请检查 ezbookkeeping2 启动时输出的配置文件的内容是否与预期的一致，如果不同请检查设置或重新启动 ezbookkeeping2。
 
 ## 为什么总金额不包含特定货币的金额
 
-ezBookkeeping 计算不同货币的总金额时依赖汇率数据，你需要确保当前用户的默认货币和所有参与计算总金额的货币均包含在当前汇率数据中。你可以参考 [汇率](/zh_Hans/exchange_rates/) 设置汇率数据源。
+ezbookkeeping2 计算不同货币的总金额时依赖汇率数据，你需要确保当前用户的默认货币和所有参与计算总金额的货币均包含在当前汇率数据中。你可以参考 [汇率](/zh_Hans/exchange_rates/) 设置汇率数据源。
 
 ## 为什么统计分析中缺少特定货币的金额
 
-在统计分析页面中，ezBookkeeping 将所有金额转换为你默认的货币进行计算。如果你账户的货币不在当前的汇率数据中，ezBookkeeping 无法转换这些交易，因此会将它们从结果中移除。你可以选择包含你所有账户货币的汇率数据源，参考 [汇率](/zh_Hans/exchange_rates/) 设置汇率数据源。
+在统计分析页面中，ezbookkeeping2 将所有金额转换为你默认的货币进行计算。如果你账户的货币不在当前的汇率数据中，ezbookkeeping2 无法转换这些交易，因此会将它们从结果中移除。你可以选择包含你所有账户货币的汇率数据源，参考 [汇率](/zh_Hans/exchange_rates/) 设置汇率数据源。
 
 ## 为什么删除交易后数据库里的记录没有删除
 
-为了尽可能减少误删除后数据恢复的难度，ezBookkeeping 中交易、账户、分类和标签的删除操作都是逻辑删除，删除后只会在数据库中标记为删除，并不会真实从数据库物理删除这条记录。
+为了尽可能减少误删除后数据恢复的难度，ezbookkeeping2 中交易、账户、分类和标签的删除操作都是逻辑删除，删除后只会在数据库中标记为删除，并不会真实从数据库物理删除这条记录。
 
 ## 为什么删除交易图片后对象存储里的图片文件没有删除
 
-为了尽可能减少误删除后数据恢复的难度，ezBookkeeping 中交易图片的删除操作都是逻辑删除，只会对数据库中的交易图片记录标记为删除，并不会从数据库中物理删除交易图片记录，也不会物理删除对象存储中的图片文件。
+为了尽可能减少误删除后数据恢复的难度，ezbookkeeping2 中交易图片的删除操作都是逻辑删除，只会对数据库中的交易图片记录标记为删除，并不会从数据库中物理删除交易图片记录，也不会物理删除对象存储中的图片文件。
 
 ## 如何修改验证邮件或密码重置邮件中的内容
 
-你可以直接修改 ezBookkeeping 目录中 `templates/email/` 目录下的 `.tmpl` 文件。如果使用 Docker 部署 ezBookkeeping，也可以直接将修改后的文件挂载到该目录下。需要保证该文件有权限被 ezBookkeeping 的进程启动用户读取。修改后需要重新启动 ezBookkeeping 服务端程序生效。
+你可以直接修改 ezbookkeeping2 目录中 `templates/email/` 目录下的 `.tmpl` 文件。如果使用 Docker 部署 ezbookkeeping2，也可以直接将修改后的文件挂载到该目录下。需要保证该文件有权限被 ezbookkeeping2 的进程启动用户读取。修改后需要重新启动 ezbookkeeping2 服务端程序生效。
 
 ## 如何修改 AI文本识别 / AI识图 / AI代码生成 等请求大语言模型（LLM）的提示词
 
-你可以直接修改 ezBookkeeping 目录中 `templates/prompt/` 目录下的 `.tmpl` 文件。如果使用 Docker 部署 ezBookkeeping，也可以直接将修改后的文件挂载到该目录下。需要保证该文件有权限被 ezBookkeeping 的进程启动用户读取。修改后需要重新启动 ezBookkeeping 服务端程序生效。
+你可以直接修改 ezbookkeeping2 目录中 `templates/prompt/` 目录下的 `.tmpl` 文件。如果使用 Docker 部署 ezbookkeeping2，也可以直接将修改后的文件挂载到该目录下。需要保证该文件有权限被 ezbookkeeping2 的进程启动用户读取。修改后需要重新启动 ezbookkeeping2 服务端程序生效。
 
 ## 为什么不能设置缓存地图数据
 
-ezBookkeeping 的地图缓存功能使用浏览器的 Service Worker 实现，受限于浏览器的安全策略，Service Worker 只能在 HTTPS 协议下使用，或者在 localhost 上使用。如果你在非 localhost 的环境下使用 HTTP 协议访问 ezBookkeeping，则无法启用地图缓存功能。
+ezbookkeeping2 的地图缓存功能使用浏览器的 Service Worker 实现，受限于浏览器的安全策略，Service Worker 只能在 HTTPS 协议下使用，或者在 localhost 上使用。如果你在非 localhost 的环境下使用 HTTP 协议访问 ezbookkeeping2，则无法启用地图缓存功能。
 
-此外，受限于浏览器的安全策略，ezBookkeeping 只能缓存开启了服务端转发地图数据请求（`map_data_fetch_proxy` 设置为 `true`）的地图数据，详情见 [配置 - 地图](/zh_Hans/configuration/#地图)。
+此外，受限于浏览器的安全策略，ezbookkeeping2 只能缓存开启了服务端转发地图数据请求（`map_data_fetch_proxy` 设置为 `true`）的地图数据，详情见 [配置 - 地图](/zh_Hans/configuration/#地图)。
 
-## ezBookkeeping 使用了哪些第三方服务，以及是否会使用我的个人数据
+## ezbookkeeping2 使用了哪些第三方服务，以及是否会使用我的个人数据
 
-ezBookkeeping 中的汇率数据、头像、地图以及大语言模型（LLM）服务依赖第三方服务，具体如下：
+ezbookkeeping2 中的汇率数据、头像、地图以及大语言模型（LLM）服务依赖第三方服务，具体如下：
 
-1. 汇率数据：当用户使用 ezBookkeeping 的汇率数据时，会通过 ezBookkeeping 的服务端程序获取你指定的汇率数据源数据，获取过程不包含当前用户或用户使用 ezBookkeeping 的设备和浏览器的任何信息
+1. 汇率数据：当用户使用 ezbookkeeping2 的汇率数据时，会通过 ezbookkeeping2 的服务端程序获取你指定的汇率数据源数据，获取过程不包含当前用户或用户使用 ezbookkeeping2 的设备和浏览器的任何信息
 2. 头像：当用户使用 `gravatar` 类型的头像提供方时，用户的浏览器会将用户的邮箱地址的 MD5 哈希值发送给 Gravatar 服务端以获取用户头像，获取过程中包含用户浏览器的 User-Agent，即会包含用户的设备和浏览器信息，详情请参考 Gravatar 的隐私策略。使用 `internal` 类型的头像提供方或禁用用户头像时，不会依赖第三方服务
-3. 地图：当用户使用 ezBookkeeping 中的地图功能查看交易位置时，用户的浏览器或 ezBookkeeping 的服务端程序会获取第三方的地图数据，获取过程中包含用户浏览器的 User-Agent，即会包含用户的设备和浏览器信息，但不包含具体的位置及 ezBookkeeping 用户信息。如果你的地图提供者设置为 Google 地图、百度地图或高德地图，ezBookkeeping 使用地图提供者的官方 JavaScript SDK，虽然 ezBookkeeping 本身不会与这些服务共享任何用户信息，但地图提供者可能会收集用户的浏览器、设备及位置数据，详情请参考地图提供方的隐私策略
-4. 大语言模型-AI剪贴板文本识别 / AI识图 / 导入 AI 文本内容识别结果 / 导入 AI 图片内容识别结果：当用户使用 ezBookkeeping 的这些功能时，ezBookkeeping 会将用户粘贴的文本或上传的收据图片以及用户所有的交易分类名称、账户名称和交易标签名称数据发送给大语言模型提供者。ezBookkeeping 默认不启用这些功能，同时 ezBookkeeping 建议使用自托管的大语言模型服务。如果你使用第三方的大语言模型服务，请注意潜在的隐私风险，并采取措施减少数据的泄露（例如，粘贴前去除文本中的敏感信息、上传收据图片前去除敏感信息，以及避免在交易分类名、账户名、交易标签名中存储敏感信息等）
-5. 大语言模型-AI自定义图表代码生成：ezBookkeeping 仅会将用户输入的提示词和当前图表代码发送给大语言模型提供者，不会发送当前用户任何交易数据、账户数据等敏感信息。大模型生成的代码仅在用户浏览器的沙箱中运行，但请检查代码是否安全，避免潜在的安全风险
+3. 地图：当用户使用 ezbookkeeping2 中的地图功能查看交易位置时，用户的浏览器或 ezbookkeeping2 的服务端程序会获取第三方的地图数据，获取过程中包含用户浏览器的 User-Agent，即会包含用户的设备和浏览器信息，但不包含具体的位置及 ezbookkeeping2 用户信息。如果你的地图提供者设置为 Google 地图、百度地图或高德地图，ezbookkeeping2 使用地图提供者的官方 JavaScript SDK，虽然 ezbookkeeping2 本身不会与这些服务共享任何用户信息，但地图提供者可能会收集用户的浏览器、设备及位置数据，详情请参考地图提供方的隐私策略
+4. 大语言模型-AI剪贴板文本识别 / AI识图 / 导入 AI 文本内容识别结果 / 导入 AI 图片内容识别结果：当用户使用 ezbookkeeping2 的这些功能时，ezbookkeeping2 会将用户粘贴的文本或上传的收据图片以及用户所有的交易分类名称、账户名称和交易标签名称数据发送给大语言模型提供者。ezbookkeeping2 默认不启用这些功能，同时 ezbookkeeping2 建议使用自托管的大语言模型服务。如果你使用第三方的大语言模型服务，请注意潜在的隐私风险，并采取措施减少数据的泄露（例如，粘贴前去除文本中的敏感信息、上传收据图片前去除敏感信息，以及避免在交易分类名、账户名、交易标签名中存储敏感信息等）
+5. 大语言模型-AI自定义图表代码生成：ezbookkeeping2 仅会将用户输入的提示词和当前图表代码发送给大语言模型提供者，不会发送当前用户任何交易数据、账户数据等敏感信息。大模型生成的代码仅在用户浏览器的沙箱中运行，但请检查代码是否安全，避免潜在的安全风险

@@ -1,7 +1,7 @@
 {
     "global": {
         "app": {
-            "title": "ezBookkeeping"
+            "title": "ezbookkeeping2"
         }
     },
     "language": {
@@ -181,23 +181,23 @@
             "ruleCount": "{count} reguł",
             "accountActivationAndResendValidationEmailTip": "Link aktywacyjny wysłano na adres {email}. Jeśli wiadomość nie dotarła, wpisz ponownie hasło i kliknij poniższy przycisk, aby wysłać ją ponownie.",
             "resendValidationEmailTip": "Jeśli wiadomość nie dotarła, wpisz ponownie hasło i kliknij poniższy przycisk, aby ponownie wysłać wiadomość na adres {email}.",
-            "oauth2bindTip": "Logujesz się do użytkownika {userName} za pomocą {providerName}. Wprowadź hasło ezBookkeeping, aby potwierdzić."
+            "oauth2bindTip": "Logujesz się do użytkownika {userName} za pomocą {providerName}. Wprowadź hasło ezbookkeeping2, aby potwierdzić."
         }
     },
     "dataExport": {
-        "defaultExportFilename": "ezBookkeeping_export_data",
-        "exportFilename": "ezBookkeeping_{nickname}_export_data",
-        "defaultExportStatisticsFileName": "ezBookkeeping_statistics_data",
-        "exportStatisticsFileName": "ezBookkeeping_{nickname}_statistics_data",
-        "defaultExportReconciliationStatementsFileName": "ezBookkeeping_reconciliation_statements",
-        "exportReconciliationStatementsFileName": "ezBookkeeping_{nickname}_reconciliation_statements",
-        "defaultInsightsExplorerQueryFileName": "ezBookkeeping_insights_explorer_query",
-        "insightsExplorerQueryFileName": "ezBookkeeping_{nickname}_insights_explorer_query",
-        "defaultImportDataMappingFileName": "ezBookkeeping_import_data_mapping",
-        "defaultImportHandlingScript": "ezBookkeeping_handling_script",
-        "defaultImportReplaceRuleFileName": "ezBookkeeping_import_replace_rule",
-        "defaultImportCheckResultFileName": "ezBookkeeping_import_check_result",
-        "defaultOverviewLayoutFileName": "ezBookkeeping_overview_layout"
+        "defaultExportFilename": "ezbookkeeping2_export_data",
+        "exportFilename": "ezbookkeeping2_{nickname}_export_data",
+        "defaultExportStatisticsFileName": "ezbookkeeping2_statistics_data",
+        "exportStatisticsFileName": "ezbookkeeping2_{nickname}_statistics_data",
+        "defaultExportReconciliationStatementsFileName": "ezbookkeeping2_reconciliation_statements",
+        "exportReconciliationStatementsFileName": "ezbookkeeping2_{nickname}_reconciliation_statements",
+        "defaultInsightsExplorerQueryFileName": "ezbookkeeping2_insights_explorer_query",
+        "insightsExplorerQueryFileName": "ezbookkeeping2_{nickname}_insights_explorer_query",
+        "defaultImportDataMappingFileName": "ezbookkeeping2_import_data_mapping",
+        "defaultImportHandlingScript": "ezbookkeeping2_handling_script",
+        "defaultImportReplaceRuleFileName": "ezbookkeeping2_import_replace_rule",
+        "defaultImportCheckResultFileName": "ezbookkeeping2_import_check_result",
+        "defaultOverviewLayoutFileName": "ezbookkeeping2_overview_layout"
     },
     "calendar": {
         "Gregorian": "Gregoriański",
@@ -1820,8 +1820,8 @@
     "Date is too early": "Data jest zbyt wczesna",
     "User Canceled": "Anulowano przez użytkownika",
     "Unable to load language resources. Please try again.": "Unable to load language resources. Please try again.",
-    "Welcome to ezBookkeeping": "Witaj w ezBookkeeping",
-    "Please log in with your ezBookkeeping account": "Zaloguj się na swoje konto ezBookkeeping",
+    "Welcome to ezbookkeeping2": "Witaj w ezbookkeeping2",
+    "Please log in with your ezbookkeeping2 account": "Zaloguj się na swoje konto ezbookkeeping2",
     "Unlock Application": "Odblokuj aplikację",
     "Please enter your PIN code or use WebAuthn to unlock application": "Wprowadź kod PIN lub użyj WebAuthn, aby odblokować aplikację",
     "Please enter your PIN code to unlock application": "Wprowadź kod PIN, aby odblokować aplikację",

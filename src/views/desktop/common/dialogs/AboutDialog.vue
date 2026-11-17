@@ -41,8 +41,8 @@
                                         <span class="text-body-large">{{ tt('Official Website') }}</span>
                                     </v-col>
                                     <v-col cols="12" md="10" class="mb-6">
-                                        <a class="text-body-large link-no-color" href="https://github.com/mayswind/ezbookkeeping" target="_blank">
-                                            https://github.com/mayswind/ezbookkeeping
+                                        <a class="text-body-large link-no-color" href="https://github.com/krazyjakee/ezbookkeeping" target="_blank">
+                                            https://github.com/krazyjakee/ezbookkeeping
                                         </a>
                                     </v-col>
                                 </v-row>
@@ -51,8 +51,8 @@
                                         <span class="text-body-large">{{ tt('Report Issue') }}</span>
                                     </v-col>
                                     <v-col cols="12" md="10" class="mb-6">
-                                        <a class="text-body-large link-no-color" href="https://github.com/mayswind/ezbookkeeping/issues" target="_blank">
-                                            https://github.com/mayswind/ezbookkeeping/issues
+                                        <a class="text-body-large link-no-color" href="https://github.com/krazyjakee/ezbookkeeping/issues" target="_blank">
+                                            https://github.com/krazyjakee/ezbookkeeping/issues
                                         </a>
                                     </v-col>
                                 </v-row>
@@ -61,8 +61,8 @@
                                         <span class="text-body-large">{{ tt('Getting help') }}</span>
                                     </v-col>
                                     <v-col cols="12" md="10">
-                                        <a class="text-body-large link-no-color" href="https://ezbookkeeping.mayswind.net" target="_blank">
-                                            https://ezbookkeeping.mayswind.net
+                                        <a class="text-body-large link-no-color" href="https://krazyjakee.github.io/ezbookkeeping/" target="_blank">
+                                            https://krazyjakee.github.io/ezbookkeeping/
                                         </a>
                                     </v-col>
                                 </v-row>
@@ -118,10 +118,10 @@
                                         <v-divider/>
                                         <br/>
                                         <div>
-                                            <span>ezBookkeeping's codebase and localization translation rely on contributions from the community. The following people have contributed to ezBookkeeping:</span>
+                                            <span>ezbookkeeping2 is a fork of ezBookkeeping by MaysWind. ezBookkeeping's codebase and localization translation rely on contributions from the community. The following people have contributed to ezBookkeeping:</span>
                                         </div>
                                         <div class="mt-4">
-                                            <strong>Project Maintainer</strong>
+                                            <strong>Original Project Maintainer</strong>
                                             <div class="mt-2">
                                                 <a target="_blank" href="https://github.com/mayswind">@mayswind</a>
                                             </div>
@@ -175,7 +175,7 @@
                                         </table>
 
                                         <div class="my-4">
-                                            <span>ezBookkeeping also contains additional third party software and illustration.</span><br/>
+                                            <span>ezbookkeeping2 also contains additional third party software and illustration.</span><br/>
                                             <span>All the third party software / illustration included or linked is redistributed under the terms and conditions of their original licenses.</span>
                                         </div>
                                         <div class="py-2" :key="licenseInfo.name" v-for="licenseInfo in thirdPartyLicenses">

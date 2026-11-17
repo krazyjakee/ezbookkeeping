@@ -6,7 +6,7 @@ title: Export & Import
 
 ## Export Transactions {#export-transactions}
 
-ezBookkeeping supports exporting transaction data as CSV (Comma-Separated Values) or TSV (Tab-Separated Values) files, via the command line or from the user interface.
+ezbookkeeping2 supports exporting transaction data as CSV (Comma-Separated Values) or TSV (Tab-Separated Values) files, via the command line or from the user interface.
 
 ### Export Transactions via Command Line
 
@@ -26,7 +26,7 @@ If you want to export filtered transactions, go to the transaction list page, ho
 
 ## Import Transactions
 
-ezBookkeeping supports importing files exported by ezBookkeeping via the command line, as well as importing various types of transaction data files from the desktop user interface. The transaction data import tool in the desktop version allows you to preview the imported data and perform batch modifications.
+ezbookkeeping2 supports importing files exported by ezbookkeeping2 via the command line, as well as importing various types of transaction data files from the desktop user interface. The transaction data import tool in the desktop version allows you to preview the imported data and perform batch modifications.
 
 ### Import Transactions via Command Line
 
@@ -71,7 +71,7 @@ The following table lists all supported file types and the data contents that ca
 
 ### How to import Delimiter-separated Values (DSV) File or Data {#how-to-import-delimiter-separated-values-dsv-file-or-data}
 
-ezBookkeeping supports importing custom data formatted with delimiters. You can separate your data using commas, tabs or semicolons, then save it as a CSV, TSV or SSV file, or paste it directly into the text box, or save it as an Excel workbook file.
+ezbookkeeping2 supports importing custom data formatted with delimiters. You can separate your data using commas, tabs or semicolons, then save it as a CSV, TSV or SSV file, or paste it directly into the text box, or save it as an Excel workbook file.
 
 1. Click "Import" in "Transaction Details" page
 2. Select "Delimiter-separated Values (DSV) File", "Delimiter-separated Values (DSV) Data" or "Excel Workbook File" as the file type
@@ -81,14 +81,14 @@ ezBookkeeping supports importing custom data formatted with delimiters. You can 
     4. Then, for "Delimiter-separated Values (DSV) File" and "Delimiter-separated Values (DSV) Data, select the format: "CSV (Comma-Separated Values) File", "TSV (Tab-Separated Values) File" or "SSV (Semicolon-separated values) File". For "Excel Workbook File", select the format: "Excel Workbook File (.xlsx)" or "Excel 97-2003 Workbook File (.xls)".
     5. Then, choose either "Column Mapping" or "Custom Script" as the hanlding method, and click the "Next" button
 
-If "Column Mapping" is selected as the hanlding method, ezBookkeeping will display the data in a table. You can click the header of each column to set the corresponding mapping. The imported data must include at least three columns: "Transaction Time", "Transaction Type" and "Amount"
-1. After setting the "Transaction Type" column, click "Transaction Type Mapping" to match each type with the corresponding transaction type in ezBookkeeping
-2. After setting the "Transaction Time" column, ezBookkeeping will automatically detects the transaction time format. If it shows as "Unknown", click "Time Format" and select the correct format or modify the transaction time in the import file
-3. After setting the "Amount" column, ezBookkeeping will automatically detects the amount format. If it shows as "Unknown", click "Amount Format" and select the correct format or modify the amount in the import file
+If "Column Mapping" is selected as the hanlding method, ezbookkeeping2 will display the data in a table. You can click the header of each column to set the corresponding mapping. The imported data must include at least three columns: "Transaction Time", "Transaction Type" and "Amount"
+1. After setting the "Transaction Type" column, click "Transaction Type Mapping" to match each type with the corresponding transaction type in ezbookkeeping2
+2. After setting the "Transaction Time" column, ezbookkeeping2 will automatically detects the transaction time format. If it shows as "Unknown", click "Time Format" and select the correct format or modify the transaction time in the import file
+3. After setting the "Amount" column, ezbookkeeping2 will automatically detects the amount format. If it shows as "Unknown", click "Amount Format" and select the correct format or modify the amount in the import file
 4. If you set "Transaction Timezone", "Geographic Location", or "Tags" column, you also need to specify the format for transaction timezone and the delimiters for geographic location and transaction tags
 5. Once all columns are set completely, click the "Next" button
 
-If "Custom Script" is selected as the hanlding method, the next page allows you to handle the import data by writing JavaScript code. You can define a `parse` function, and ezBookkeeping will pass each parsed row of data along with its index into that function. As shown in the examples, you can return an object to include the data or return `null` to skip it. When finished, click "Execute Custom Script", and then click "Next" button
+If "Custom Script" is selected as the hanlding method, the next page allows you to handle the import data by writing JavaScript code. You can define a `parse` function, and ezbookkeeping2 will pass each parsed row of data along with its index into that function. As shown in the examples, you can return an object to include the data or return `null` to skip it. When finished, click "Execute Custom Script", and then click "Next" button
 
 At last, you should check if the imported transactions are mapped to existing transaction categories, accounts, and tags. Invalid data will be highlighted in red. You can click the pen icon on the left side of each record to modify the transaction category, account or tag of this transaction. You can also click the menu in the upper right corner to batch replace transaction categories, accounts or tags. Finally, select the transactions you want to import by checking the box on the left side, then click the "Import" button
 

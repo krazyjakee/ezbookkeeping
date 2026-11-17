@@ -1,7 +1,7 @@
 {
     "global": {
         "app": {
-            "title": "ezBookkeeping"
+            "title": "ezbookkeeping2"
         }
     },
     "language": {
@@ -181,23 +181,23 @@
             "ruleCount": "{count} rules",
             "accountActivationAndResendValidationEmailTip": "ಖಾತೆ ಸಕ್ರಿಯಗೊಳಿಸುವ ಲಿಂಕ್ ಅನ್ನು ನಿಮ್ಮ ಈಮೇಲ್‌ಗೆ ಕಳುಹಿಸಲಾಗಿದೆ: {email}. ನೀವು ಇಮೇಲ್ ಪಡೆಯದಿದ್ದರೆ, ದಯವಿಟ್ಟು ಪಾಸ್‌ವರ್ಡ್ ಮರು ನಮೂದಿಸಿ ಮತ್ತು ಕೆಳಗಿನ ಬಟನ್ ಒತ್ತಿ ಸರೀಕರಿಸುವ ಇಮೇಲ್ ಮರು ಕಳುಹಿಸಿ.",
             "resendValidationEmailTip": "ನೀವು ಇಮೇಲ್ ಪಡೆಯದಿದ್ದರೆ, ದಯವಿಟ್ಟು ಪಾಸ್‌ವರ್ಡ್ ಮರು ನಮೂದಿಸಿ ಮತ್ತು ಕೆಳಗಿನ ಬಟನ್ ಒತ್ತಿ ಮರು ಸರೀಕರಿಸುವ ಇಮೇಲ್ ಕಳುಹಿಸಲಾಗುವುದು: {email}",
-            "oauth2bindTip": "ನೀವು {providerName} ಬಳಸಿ {userName} ಬಳಕೆದಾರರಾಗಿ ಲಾಗಿನ್ ಆಗುತ್ತಿದ್ದೀರಿ. ದೃಢೀಕರಿಸಲು ದಯವಿಟ್ಟು ನಿಮ್ಮ ezBookkeeping ಪಾಸ್‌ವರ್ಡ್ ನಮೂದಿಸಿ."
+            "oauth2bindTip": "ನೀವು {providerName} ಬಳಸಿ {userName} ಬಳಕೆದಾರರಾಗಿ ಲಾಗಿನ್ ಆಗುತ್ತಿದ್ದೀರಿ. ದೃಢೀಕರಿಸಲು ದಯವಿಟ್ಟು ನಿಮ್ಮ ezbookkeeping2 ಪಾಸ್‌ವರ್ಡ್ ನಮೂದಿಸಿ."
         }
     },
     "dataExport": {
-        "defaultExportFilename": "ezBookkeeping_export_data",
-        "exportFilename": "ezBookkeeping_{nickname}_export_data",
-        "defaultExportStatisticsFileName": "ezBookkeeping_statistics_data",
-        "exportStatisticsFileName": "ezBookkeeping_{nickname}_statistics_data",
-        "defaultExportReconciliationStatementsFileName": "ezBookkeeping_reconciliation_statements",
-        "exportReconciliationStatementsFileName": "ezBookkeeping_{nickname}_reconciliation_statements",
-        "defaultInsightsExplorerQueryFileName": "ezBookkeeping_insights_explorer_query",
-        "insightsExplorerQueryFileName": "ezBookkeeping_{nickname}_insights_explorer_query",
-        "defaultImportDataMappingFileName": "ezBookkeeping_import_data_mapping",
-        "defaultImportHandlingScript": "ezBookkeeping_handling_script",
-        "defaultImportReplaceRuleFileName": "ezBookkeeping_import_replace_rule",
-        "defaultImportCheckResultFileName": "ezBookkeeping_import_check_result",
-        "defaultOverviewLayoutFileName": "ezBookkeeping_overview_layout"
+        "defaultExportFilename": "ezbookkeeping2_export_data",
+        "exportFilename": "ezbookkeeping2_{nickname}_export_data",
+        "defaultExportStatisticsFileName": "ezbookkeeping2_statistics_data",
+        "exportStatisticsFileName": "ezbookkeeping2_{nickname}_statistics_data",
+        "defaultExportReconciliationStatementsFileName": "ezbookkeeping2_reconciliation_statements",
+        "exportReconciliationStatementsFileName": "ezbookkeeping2_{nickname}_reconciliation_statements",
+        "defaultInsightsExplorerQueryFileName": "ezbookkeeping2_insights_explorer_query",
+        "insightsExplorerQueryFileName": "ezbookkeeping2_{nickname}_insights_explorer_query",
+        "defaultImportDataMappingFileName": "ezbookkeeping2_import_data_mapping",
+        "defaultImportHandlingScript": "ezbookkeeping2_handling_script",
+        "defaultImportReplaceRuleFileName": "ezbookkeeping2_import_replace_rule",
+        "defaultImportCheckResultFileName": "ezbookkeeping2_import_check_result",
+        "defaultOverviewLayoutFileName": "ezbookkeeping2_overview_layout"
     },
     "calendar": {
         "Gregorian": "ಗ್ರೆಗೋರಿಯನ್",
@@ -1820,8 +1820,8 @@
     "Date is too early": "ದಿನಾಂಕ ಬಹಳ ಬೇಗಿದೆ",
     "User Canceled": "ಬಳಕೆದಾರನು ರದ್ದುಗೊಳಿಸಿದ್ದಾರೆ",
     "Unable to load language resources. Please try again.": "Unable to load language resources. Please try again.",
-    "Welcome to ezBookkeeping": "ezBookkeeping ಗೆ ಸ್ವಾಗತ",
-    "Please log in with your ezBookkeeping account": "ದಯವಿಟ್ಟು ನಿಮ್ಮ ezBookkeeping ಖಾತೆಯಿಂದ ಲಾಗಿನ್ ಆಗಿ",
+    "Welcome to ezbookkeeping2": "ezbookkeeping2 ಗೆ ಸ್ವಾಗತ",
+    "Please log in with your ezbookkeeping2 account": "ದಯವಿಟ್ಟು ನಿಮ್ಮ ezbookkeeping2 ಖಾತೆಯಿಂದ ಲಾಗಿನ್ ಆಗಿ",
     "Unlock Application": "ಅನ್ವಯವನ್ನು ಅನ್‌ಲಾಕ್ ಮಾಡಿ",
     "Please enter your PIN code or use WebAuthn to unlock application": "PIN ನಮೂದಿಸಿ ಅಥವಾ WebAuthn ಬಳಸಿ ಅನ್ವಯವನ್ನು ಅನ್‌ಲಾಕ್ ಮಾಡಿ",
     "Please enter your PIN code to unlock application": "ಅನ್ವಯವನ್ನು ಅನ್‌ಲಾಕ್ ಮಾಡಲು PIN ನಮೂದಿಸಿ",

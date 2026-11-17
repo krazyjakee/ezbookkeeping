@@ -4,11 +4,11 @@ title: Configuration
 
 # Configuration
 
-ezBookkeeping uses a ini file as configuration file.
+ezbookkeeping2 uses a ini file as configuration file.
 The default configuration file path is `%WORKING_DIR%/conf/ezbookkeeping.ini`.
-You can use `--conf-path` parameter to specify a custom configuration path when use ezBookkeeping command line.
+You can use `--conf-path` parameter to specify a custom configuration path when use ezbookkeeping2 command line.
 
-In addition, ezBookkeeping also supports setting configuration via environment variables.
+In addition, ezbookkeeping2 also supports setting configuration via environment variables.
 
 1. If you want to set configuration options directly through environment variables and override the values in the configuration file, use the following format (environment variable names must be in uppercase): `EBK_{SECTION_NAME}_{OPTION_NAME}`. For example, to set the database type to `mysql`, you can define the environment variable `EBK_DATABASE_TYPE=mysql`
 2. If you want to load a configuration option value from a specific file via environment variables and override the value in the configuration file, use the following format (environment variable names must be in uppercase): `EBKCFP_{SECTION_NAME}_{OPTION_NAME}`. For example, to load the database password from a file, you can define the environment variable: `EBKCFP_DATABASE_PASSWD=/run/secrets/database_password` and place the database password inside the `/run/secrets/database_password` file
@@ -32,8 +32,8 @@ Note that if the same configuration option is set using all three methods above,
 | `protocol` | `http` | The protocol that web server provides, supports `http`, `https` or `socket`. |
 | `http_addr` | `0.0.0.0` | The ip address to bind to for `http` or `https` protocol. `0.0.0.0` will bind to all interfaces. |
 | `http_port` | `8080` | The http port to bind to for `http` or `https` protocol. |
-| `domain` | `localhost` | The domain name used to access ezBookkeeping (e.g. `ezbookkeeping-demo.mayswind.net`). |
-| `root_url` | `%(protocol)s://%(domain)s:%(http_port)s/` | The full url used to access ezBookkeeping in browser (e.g. `https://ezbookkeeping-demo.mayswind.net/`), supports placeholders: `%(protocol)s`, `%(domain)s` and `%(http_port)s`. If the protocol and port used to access ezBookkeeping in the browser are the same as the settings above (`protocol` and `http_port`), this option can remain at its default value. |
+| `domain` | `localhost` | The domain name used to access ezbookkeeping2 (e.g. `ezbookkeeping.example.com`). |
+| `root_url` | `%(protocol)s://%(domain)s:%(http_port)s/` | The full url used to access ezbookkeeping2 in browser (e.g. `https://ezbookkeeping.example.com/`), supports placeholders: `%(protocol)s`, `%(domain)s` and `%(http_port)s`. If the protocol and port used to access ezbookkeeping2 in the browser are the same as the settings above (`protocol` and `http_port`), this option can remain at its default value. |
 | `cert_file` |  | The cert file path used for `https` protocol. |
 | `cert_key_file` |  | The cert key file path used for `https` protocol. |
 | `unix_socket` |  | The unix socket path for `unix` protocol. |
@@ -149,7 +149,7 @@ Note that if the same configuration option is set using all three methods above,
 
 | Option Name | Default Value | Description |
 | --- | --- | --- |
-| `llm_provider` |  | Large Language Model (LLM) provider for transaction text recognition, supports `openai`, `openai_compatible`, `openai_responses_compatible`, `anthropic`, `anthropic_compatible`, `openrouter`, `ollama`, `lm_studio` and `google_ai`. When using a third-party LLM provider, please be aware of potential privacy risks. For more details, see [FAQ - What third-party services does ezBookkeeping use, and does it access my personal data](/faq/#what-third-party-services-does-ezbookkeeping-use-and-does-it-access-my-personal-data). |
+| `llm_provider` |  | Large Language Model (LLM) provider for transaction text recognition, supports `openai`, `openai_compatible`, `openai_responses_compatible`, `anthropic`, `anthropic_compatible`, `openrouter`, `ollama`, `lm_studio` and `google_ai`. When using a third-party LLM provider, please be aware of potential privacy risks. For more details, see [FAQ - What third-party services does ezbookkeeping2 use, and does it access my personal data](/faq/#what-third-party-services-does-ezbookkeeping-use-and-does-it-access-my-personal-data). |
 | `enable_thinking` |  | Whether to enable thinking for the large language model, supports the following levels:<br/>`off`: disable thinking (supports all providers).<br/>`low` / `medium` / `high` / `xhigh`: enable thinking with the corresponding reasoning effort (supports `openai`, `openai_compatible`, `openai_responses_compatible`, `openrouter`, `ollama`, `lm_studio` and `google_ai` providers).<br/>`on`: enable thinking with the default reasoning effort (supports `anthropic`, `anthropic_compatible`, `ollama` and `lm_studio` providers).<br/>Leave blank to use the default setting of the LLM provider |
 | `openai_api_key` |  | OpenAI API Secret Key for `openai` LLM provider, please visit [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys) for more information. |
 | `openai_model_id` |  | Model ID for the `openai` LLM provider, used for transaction text recognition and transaction creation. |
@@ -185,7 +185,7 @@ Note that if the same configuration option is set using all three methods above,
 
 | Option Name | Default Value | Description |
 | --- | --- | --- |
-| `llm_provider` |  | Large Language Model (LLM) provider for receipt image recognition, supports `openai`, `openai_compatible`, `openai_responses_compatible`, `anthropic`, `anthropic_compatible`, `openrouter`, `ollama`, `lm_studio` and `google_ai`. The used LLM provider and model must support vision language model (VLM) capabilities. When using a third-party LLM provider, please be aware of potential privacy risks. For more details, see [FAQ - What third-party services does ezBookkeeping use, and does it access my personal data](/faq/#what-third-party-services-does-ezbookkeeping-use-and-does-it-access-my-personal-data). |
+| `llm_provider` |  | Large Language Model (LLM) provider for receipt image recognition, supports `openai`, `openai_compatible`, `openai_responses_compatible`, `anthropic`, `anthropic_compatible`, `openrouter`, `ollama`, `lm_studio` and `google_ai`. The used LLM provider and model must support vision language model (VLM) capabilities. When using a third-party LLM provider, please be aware of potential privacy risks. For more details, see [FAQ - What third-party services does ezbookkeeping2 use, and does it access my personal data](/faq/#what-third-party-services-does-ezbookkeeping-use-and-does-it-access-my-personal-data). |
 | `enable_thinking` |  | Whether to enable thinking for the large language model, supports the following levels:<br/>`off`: disable thinking (supports all providers).<br/>`low` / `medium` / `high` / `xhigh`: enable thinking with the corresponding reasoning effort (supports `openai`, `openai_compatible`, `openai_responses_compatible`, `openrouter`, `ollama`, `lm_studio` and `google_ai` providers).<br/>`on`: enable thinking with the default reasoning effort (supports `anthropic`, `anthropic_compatible`, `ollama` and `lm_studio` providers).<br/>Leave blank to use the default setting of the LLM provider |
 | `openai_api_key` |  | OpenAI API Secret Key for `openai` LLM provider, please visit [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys) for more information. |
 | `openai_model_id` |  | Model ID for the `openai` LLM provider, used for receipt image recognition and transaction creation. |
@@ -221,7 +221,7 @@ Note that if the same configuration option is set using all three methods above,
 
 | Option Name | Default Value | Description |
 | --- | --- | --- |
-| `llm_provider` |  | Large Language Model (LLM) provider for code generation, supports `openai`, `openai_compatible`, `openai_responses_compatible`, `anthropic`, `anthropic_compatible`, `openrouter`, `ollama`, `lm_studio` and `google_ai`. When using a third-party LLM provider, please be aware of potential privacy risks. For more details, see [FAQ - What third-party services does ezBookkeeping use, and does it access my personal data](/faq/#what-third-party-services-does-ezbookkeeping-use-and-does-it-access-my-personal-data). |
+| `llm_provider` |  | Large Language Model (LLM) provider for code generation, supports `openai`, `openai_compatible`, `openai_responses_compatible`, `anthropic`, `anthropic_compatible`, `openrouter`, `ollama`, `lm_studio` and `google_ai`. When using a third-party LLM provider, please be aware of potential privacy risks. For more details, see [FAQ - What third-party services does ezbookkeeping2 use, and does it access my personal data](/faq/#what-third-party-services-does-ezbookkeeping-use-and-does-it-access-my-personal-data). |
 | `enable_thinking` |  | Whether to enable thinking for the large language model, supports the following levels:<br/>`off`: disable thinking (supports all providers).<br/>`low` / `medium` / `high` / `xhigh`: enable thinking with the corresponding reasoning effort (supports `openai`, `openai_compatible`, `openai_responses_compatible`, `openrouter`, `ollama`, `lm_studio` and `google_ai` providers).<br/>`on`: enable thinking with the default reasoning effort (supports `anthropic`, `anthropic_compatible`, `ollama` and `lm_studio` providers).<br/>Leave blank to use the default setting of the LLM provider |
 | `openai_api_key` |  | OpenAI API Secret Key for `openai` LLM provider, please visit [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys) for more information. |
 | `openai_model_id` |  | Model ID for the `openai` LLM provider, used for code generation. |
@@ -285,7 +285,7 @@ Note that if the same configuration option is set using all three methods above,
 
 | Option Name | Default Value | Description |
 | --- | --- | --- |
-| `secret_key` |  | Used for encryption key, **you must change it to keep your user data safe before you first run ezBookkeeping**. You can get a random secret key by executing `ezbookkeeping security gen-secret-key` or `openssl rand -base64 32`. |
+| `secret_key` |  | Used for encryption key, **you must change it to keep your user data safe before you first run ezbookkeeping2**. You can get a random secret key by executing `ezbookkeeping security gen-secret-key` or `openssl rand -base64 32`. |
 | `trusted_proxy_ips` | `10.0.0.0/8, 169.254.0.0/16, 127.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16` | Trusted proxy IPs (CIDR format), a comma-separated list of trusted proxy IPs. The user's real IP address or port will only be obtained from headers such as `X-Forwarded-For`, `X-Real-IP` or `X-Real-Port` when the remote address is included in this list. |
 | `token_expired_time` | `2592000` | Token expired time (60 – 4294967295 seconds). |
 | `token_min_refresh_interval` | `86400` | Token minimum refresh interval (0 – 4294967295 seconds), the value should be less than token expired time. Set to `0` to refresh the token every time when refreshing the front end. |
@@ -312,14 +312,14 @@ Note that if the same configuration option is set using all three methods above,
 | Option Name | Default Value | Description |
 | --- | --- | --- |
 | `enable_internal_auth` | `true` | Whether to enable internal username and password login. |
-| `enable_oauth2_auth` | `false` | Whether to enable external OAuth 2.0 login. The OAuth 2.0 callback path for ezBookkeeping is `/oauth2/callback`. For example, if your ezBookkeeping instance is hosted at [`https://ezbookkeeping-demo.mayswind.net/`](https://ezbookkeeping-demo.mayswind.net/), the callback URL would be [`https://ezbookkeeping-demo.mayswind.net/oauth2/callback`](https://ezbookkeeping-demo.mayswind.net/oauth2/callback). |
+| `enable_oauth2_auth` | `false` | Whether to enable external OAuth 2.0 login. The OAuth 2.0 callback path for ezbookkeeping2 is `/oauth2/callback`. For example, if your ezbookkeeping2 instance is hosted at [`https://ezbookkeeping.example.com/`](https://ezbookkeeping.example.com/), the callback URL would be [`https://ezbookkeeping.example.com/oauth2/callback`](https://ezbookkeeping.example.com/oauth2/callback). |
 | `enable_two_factor` | `true` | Whether to enable two factor authorization for `internal` authentication. |
 | `enable_forget_password` | `true` | Whether to enable user password reset for `internal` authentication. (SMTP server must be configured) |
 | `forget_password_require_email_verify` | `true` | Whether to require user email must be verified when use forget password for `internal` authentication. |
 | `oauth2_provider` |  | OAuth 2.0 provider for `oauth2` authentication, supports `oidc`, `nextcloud` and `github`. |
 | `oauth2_client_id` |  | OAuth 2.0 client ID for `oauth2` authentication. |
 | `oauth2_client_secret` |  | OAuth 2.0 client secret for `oauth2` authentication. |
-| `oauth2_user_identifier` | `email` | For `oauth2` authentication, the field used to match the user returned by OAuth 2.0 with an existing user in ezBookkeeping, supports `email` and `username`. |
+| `oauth2_user_identifier` | `email` | For `oauth2` authentication, the field used to match the user returned by OAuth 2.0 with an existing user in ezbookkeeping2, supports `email` and `username`. |
 | `oauth2_use_pkce` | `false` | For `oauth2` authentication, whether to use PKCE. |
 | `oauth2_auto_register` | `true` | For `oauth2` authentication, automatically create a new user if the user returned by OAuth 2.0 is not registered. (requires `enable_register` to be set to `true`) |
 | `oauth2_state_expired_time` | `300` | For `oauth2` authentication, Timeout duration for the OAuth 2.0 authentication process (60 – 4294967295 seconds). |

@@ -6,6 +6,9 @@ title: "Install with 1Panel (Community Supported)"
 
 > For 1Panel installation instructions, see [https://1panel.cn/docs/v2/installation/online_installation/](https://1panel.cn/docs/v2/installation/online_installation/).
 
+> [!WARNING] Upstream image
+> The 1Panel App Store entry is maintained by the 1Panel community and installs the upstream ezBookkeeping image (`mayswind/ezbookkeeping`), not ezbookkeeping2. To run ezbookkeeping2, use [Docker](/installation/installation-docker) with the `krazyjakee/ezbookkeeping2` image, or change the image of the installed app to `krazyjakee/ezbookkeeping2`. See [Migrating from ezBookkeeping](/installation/migrating) for details.
+
 ## Install ezBookkeeping
 
 Log in to 1Panel, go to the "App Store:", search for "ezBookkeeping", and click "Install".

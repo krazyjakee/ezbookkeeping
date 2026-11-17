@@ -1,7 +1,7 @@
 {
     "global": {
         "app": {
-            "title": "ezBookkeeping"
+            "title": "ezbookkeeping2"
         }
     },
     "language": {
@@ -183,23 +183,23 @@
             "ruleCount": "{count}টি নিয়ম",
             "accountActivationAndResendValidationEmailTip": "অ্যাকাউন্ট সক্রিয়করণের লিঙ্ক আপনার ইমেল ঠিকানায় পাঠানো হয়েছে: {email}। আপনি যদি ইমেলটি না পান, তাহলে অনুগ্রহ করে আবার পাসওয়ার্ড লিখুন এবং যাচাইকরণ ইমেল পুনরায় পাঠাতে নিচের বোতামে ক্লিক করুন।",
             "resendValidationEmailTip": "আপনি যদি ইমেলটি না পান, তাহলে অনুগ্রহ করে আবার পাসওয়ার্ড লিখুন এবং এই ঠিকানায় যাচাইকরণ ইমেল পুনরায় পাঠাতে নিচের বোতামে ক্লিক করুন: {email}",
-            "oauth2bindTip": "আপনি {providerName} ব্যবহার করে {userName} ব্যবহারকারী হিসেবে সাইন ইন করছেন। যাচাই করতে অনুগ্রহ করে আপনার ezBookkeeping পাসওয়ার্ড লিখুন।"
+            "oauth2bindTip": "আপনি {providerName} ব্যবহার করে {userName} ব্যবহারকারী হিসেবে সাইন ইন করছেন। যাচাই করতে অনুগ্রহ করে আপনার ezbookkeeping2 পাসওয়ার্ড লিখুন।"
         }
     },
     "dataExport": {
-        "defaultExportFilename": "ezBookkeeping_export_data",
-        "exportFilename": "ezBookkeeping_{nickname}_export_data",
-        "defaultExportStatisticsFileName": "ezBookkeeping_statistics_data",
-        "exportStatisticsFileName": "ezBookkeeping_{nickname}_statistics_data",
-        "defaultExportReconciliationStatementsFileName": "ezBookkeeping_reconciliation_statements",
-        "exportReconciliationStatementsFileName": "ezBookkeeping_{nickname}_reconciliation_statements",
-        "defaultInsightsExplorerQueryFileName": "ezBookkeeping_insights_explorer_query",
-        "insightsExplorerQueryFileName": "ezBookkeeping_{nickname}_insights_explorer_query",
-        "defaultImportDataMappingFileName": "ezBookkeeping_import_data_mapping",
-        "defaultImportHandlingScript": "ezBookkeeping_handling_script",
-        "defaultImportReplaceRuleFileName": "ezBookkeeping_import_replace_rule",
-        "defaultImportCheckResultFileName": "ezBookkeeping_import_check_result",
-        "defaultOverviewLayoutFileName": "ezBookkeeping_overview_layout"
+        "defaultExportFilename": "ezbookkeeping2_export_data",
+        "exportFilename": "ezbookkeeping2_{nickname}_export_data",
+        "defaultExportStatisticsFileName": "ezbookkeeping2_statistics_data",
+        "exportStatisticsFileName": "ezbookkeeping2_{nickname}_statistics_data",
+        "defaultExportReconciliationStatementsFileName": "ezbookkeeping2_reconciliation_statements",
+        "exportReconciliationStatementsFileName": "ezbookkeeping2_{nickname}_reconciliation_statements",
+        "defaultInsightsExplorerQueryFileName": "ezbookkeeping2_insights_explorer_query",
+        "insightsExplorerQueryFileName": "ezbookkeeping2_{nickname}_insights_explorer_query",
+        "defaultImportDataMappingFileName": "ezbookkeeping2_import_data_mapping",
+        "defaultImportHandlingScript": "ezbookkeeping2_handling_script",
+        "defaultImportReplaceRuleFileName": "ezbookkeeping2_import_replace_rule",
+        "defaultImportCheckResultFileName": "ezbookkeeping2_import_check_result",
+        "defaultOverviewLayoutFileName": "ezbookkeeping2_overview_layout"
     },
     "calendar": {
         "Gregorian": "গ্রেগরিয়ান",
@@ -1835,8 +1835,8 @@
     "No upcoming occurrences": "কোনো আসন্ন পুনরাবৃত্তি নেই",
     "User Canceled": "ব্যবহারকারী বাতিল করেছেন",
     "Unable to load language resources. Please try again.": "ভাষার রিসোর্স লোড করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
-    "Welcome to ezBookkeeping": "ezBookkeeping-এ স্বাগতম",
-    "Please log in with your ezBookkeeping account": "অনুগ্রহ করে আপনার ezBookkeeping অ্যাকাউন্ট দিয়ে লগ ইন করুন",
+    "Welcome to ezbookkeeping2": "ezbookkeeping2-এ স্বাগতম",
+    "Please log in with your ezbookkeeping2 account": "অনুগ্রহ করে আপনার ezbookkeeping2 অ্যাকাউন্ট দিয়ে লগ ইন করুন",
     "Unlock Application": "অ্যাপ্লিকেশন আনলক করুন",
     "Please enter your PIN code or use WebAuthn to unlock application": "অ্যাপ্লিকেশন আনলক করতে অনুগ্রহ করে আপনার PIN কোড লিখুন অথবা WebAuthn ব্যবহার করুন",
     "Please enter your PIN code to unlock application": "অ্যাপ্লিকেশন আনলক করতে অনুগ্রহ করে আপনার PIN কোড লিখুন",

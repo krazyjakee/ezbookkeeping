@@ -1,7 +1,7 @@
 {
     "global": {
         "app": {
-            "title": "ezBookkeeping"
+            "title": "ezbookkeeping2"
         }
     },
     "language": {
@@ -181,23 +181,23 @@
             "ruleCount": "{count} rules",
             "accountActivationAndResendValidationEmailTip": "ลิงก์สำหรับเปิดใช้งานบัญชีได้ถูกส่งไปยังอีเมลของคุณแล้ว: {email} หากคุณไม่ได้รับอีเมล โปรดกรอกรหัสผ่านอีกครั้งแล้วกดปุ่มด้านล่างเพื่อส่งอีเมลยืนยันอีกครั้ง",
             "resendValidationEmailTip": "หากคุณไม่ได้รับอีเมล โปรดกรอกรหัสผ่านอีกครั้งแล้วกดปุ่มด้านล่างเพื่อส่งอีเมลยืนยันไปยัง: {email}",
-            "oauth2bindTip": "You're signing in to the {userName} user using {providerName}. Please enter your ezBookkeeping password to verify."
+            "oauth2bindTip": "You're signing in to the {userName} user using {providerName}. Please enter your ezbookkeeping2 password to verify."
         }
     },
     "dataExport": {
-        "defaultExportFilename": "ezBookkeeping_export_data",
-        "exportFilename": "ezBookkeeping_{nickname}_export_data",
-        "defaultExportStatisticsFileName": "ezBookkeeping_statistics_data",
-        "exportStatisticsFileName": "ezBookkeeping_{nickname}_statistics_data",
-        "defaultExportReconciliationStatementsFileName": "ezBookkeeping_reconciliation_statements",
-        "exportReconciliationStatementsFileName": "ezBookkeeping_{nickname}_reconciliation_statements",
-        "defaultInsightsExplorerQueryFileName": "ezBookkeeping_insights_explorer_query",
-        "insightsExplorerQueryFileName": "ezBookkeeping_{nickname}_insights_explorer_query",
-        "defaultImportDataMappingFileName": "ezBookkeeping_import_data_mapping",
-        "defaultImportHandlingScript": "ezBookkeeping_handling_script",
-        "defaultImportReplaceRuleFileName": "ezBookkeeping_import_replace_rule",
-        "defaultImportCheckResultFileName": "ezBookkeeping_import_check_result",
-        "defaultOverviewLayoutFileName": "ezBookkeeping_overview_layout"
+        "defaultExportFilename": "ezbookkeeping2_export_data",
+        "exportFilename": "ezbookkeeping2_{nickname}_export_data",
+        "defaultExportStatisticsFileName": "ezbookkeeping2_statistics_data",
+        "exportStatisticsFileName": "ezbookkeeping2_{nickname}_statistics_data",
+        "defaultExportReconciliationStatementsFileName": "ezbookkeeping2_reconciliation_statements",
+        "exportReconciliationStatementsFileName": "ezbookkeeping2_{nickname}_reconciliation_statements",
+        "defaultInsightsExplorerQueryFileName": "ezbookkeeping2_insights_explorer_query",
+        "insightsExplorerQueryFileName": "ezbookkeeping2_{nickname}_insights_explorer_query",
+        "defaultImportDataMappingFileName": "ezbookkeeping2_import_data_mapping",
+        "defaultImportHandlingScript": "ezbookkeeping2_handling_script",
+        "defaultImportReplaceRuleFileName": "ezbookkeeping2_import_replace_rule",
+        "defaultImportCheckResultFileName": "ezbookkeeping2_import_check_result",
+        "defaultOverviewLayoutFileName": "ezbookkeeping2_overview_layout"
     },
     "calendar": {
         "Gregorian": "เกรกอเรียน",
@@ -1820,8 +1820,8 @@
     "Date is too early": "วันที่เร็วเกินไป",
     "User Canceled": "User Canceled",
     "Unable to load language resources. Please try again.": "Unable to load language resources. Please try again.",
-    "Welcome to ezBookkeeping": "ยินดีต้อนรับสู่ ezBookkeeping",
-    "Please log in with your ezBookkeeping account": "กรุณาเข้าสู่ระบบด้วยบัญชี ezBookkeeping ของคุณ",
+    "Welcome to ezbookkeeping2": "ยินดีต้อนรับสู่ ezbookkeeping2",
+    "Please log in with your ezbookkeeping2 account": "กรุณาเข้าสู่ระบบด้วยบัญชี ezbookkeeping2 ของคุณ",
     "Unlock Application": "ปลดล็อกแอปพลิเคชัน",
     "Please enter your PIN code or use WebAuthn to unlock application": "กรุณาใส่รหัส PIN หรือใช้ WebAuthn เพื่อปลดล็อกแอปพลิเคชัน",
     "Please enter your PIN code to unlock application": "กรุณาใส่รหัส PIN เพื่อปลดล็อกแอปพลิเคชัน",

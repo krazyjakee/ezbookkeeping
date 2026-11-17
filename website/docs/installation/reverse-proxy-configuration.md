@@ -6,7 +6,7 @@ title: "Reverse proxy configuration"
 
 If you want to use Nginx as the reverse proxy, you can refer to the following configuration. For more information about Nginx, please refer to [Nginx documentation](https://nginx.org/en/docs/).
 
-## ezBookkeeping in the ROOT path of domain
+## ezbookkeeping2 in the ROOT path of domain
 
 ```text:line-numbers
 upstream ezbookkeeping-upstream {
@@ -38,7 +38,7 @@ server {
 }
 ```
 
-## ezBookkeeping in the sub path of domain (e.g. `/ezbookkeeping`)
+## ezbookkeeping2 in the sub path of domain (e.g. `/ezbookkeeping`)
 
 ```text:line-numbers
 upstream ezbookkeeping-upstream {
@@ -81,4 +81,4 @@ server {
 }
 ```
 
-In addition, if you want to access ezBookkeeping via sub path, you also need to set the `root_url` option in the [configuration](/configuration/), for example, it needs to be set to `https://%(domain)s:{your_nginx_port}/ezbookkeeping/`.
+In addition, if you want to access ezbookkeeping2 via sub path, you also need to set the `root_url` option in the [configuration](/configuration/), for example, it needs to be set to `https://%(domain)s:{your_nginx_port}/ezbookkeeping/`.

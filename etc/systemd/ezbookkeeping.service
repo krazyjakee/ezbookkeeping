@@ -1,5 +1,5 @@
 [Unit]
-Description=ezBookkeeping is an open source, powerful, self-hosted personal finance app that is easy to use.
+Description=ezbookkeeping2, a business-focused fork of ezBookkeeping, an open source, self-hosted bookkeeping app
 After=syslog.target
 After=network.target
 After=mariadb.service mysqld.service postgresql.service

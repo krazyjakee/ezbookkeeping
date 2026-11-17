@@ -52,6 +52,9 @@ inputs:
   package-file-name-prefix:
     required: true
     description: "The prefix for the linux package file name."
+  trivy-scan:
+    required: false
+    description: "Whether to scan the built image filesystem with Trivy. If set to 'true', the job fails on fixable CRITICAL vulnerabilities."
 
 runs:
   using: "composite"
@@ -84,6 +87,8 @@ runs:
           cwd://${{ inputs.docker-bake-meta-file-path }}
         source: .
         targets: image
+        provenance: mode=max
+        sbom: ${{ inputs.docker-push == 'true' }}
         set: |
           *.tags=${{ inputs.docker-image-name }}
           *.platform=${{ inputs.platform }}
@@ -123,3 +128,15 @@ runs:
         archive: false
         path: ${{ runner.temp }}/${{ inputs.package-file-name-prefix }}-${{ inputs.platform-name }}.tar.gz
         if-no-files-found: error
+
+    - name: Scan ${{ inputs.platform-name }} image filesystem with Trivy
+      if: ${{ inputs.trivy-scan == 'true' }}
+      uses: aquasecurity/trivy-action@v0.36.0
+      with:
+        scan-type: rootfs
+        scan-ref: ${{ runner.temp }}/package
+        scanners: vuln
+        severity: CRITICAL
+        ignore-unfixed: true
+        exit-code: "1"
+        format: table

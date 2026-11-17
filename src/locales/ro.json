@@ -1,7 +1,7 @@
 {
     "global": {
         "app": {
-            "title": "ezBookkeeping"
+            "title": "ezbookkeeping2"
         }
     },
     "language": {
@@ -181,23 +181,23 @@
             "ruleCount": "{count} rules",
             "accountActivationAndResendValidationEmailTip": "Linkul de activare a contului a fost trimis la adresa ta de email: {email}. Dacă nu primești mesajul, te rugăm să introduci din nou parola și să faci clic pe butonul de mai jos pentru a retrimite emailul de validare.",
             "resendValidationEmailTip": "Dacă nu primești mesajul, te rugăm să introduci din nou parola și să faci clic pe butonul de mai jos pentru a retrimite emailul de validare la: {email}",
-            "oauth2bindTip": "Te autentifici în contul de utilizator {userName} folosind {providerName}. Te rugăm să introduci parola ezBookkeeping pentru verificare."
+            "oauth2bindTip": "Te autentifici în contul de utilizator {userName} folosind {providerName}. Te rugăm să introduci parola ezbookkeeping2 pentru verificare."
         }
     },
     "dataExport": {
-        "defaultExportFilename": "ezBookkeeping_export_date",
-        "exportFilename": "ezBookkeeping_{nickname}_export_date",
-        "defaultExportStatisticsFileName": "ezBookkeeping_date_statistici",
-        "exportStatisticsFileName": "ezBookkeeping_{nickname}_date_statistici",
-        "defaultExportReconciliationStatementsFileName": "ezBookkeeping_situatii_reconciliere",
-        "exportReconciliationStatementsFileName": "ezBookkeeping_{nickname}_situatii_reconciliere",
-        "defaultInsightsExplorerQueryFileName": "ezBookkeeping_insights_explorer_query",
-        "insightsExplorerQueryFileName": "ezBookkeeping_{nickname}_insights_explorer_query",
-        "defaultImportDataMappingFileName": "ezBookkeeping_asociere_date_import",
-        "defaultImportHandlingScript": "ezBookkeeping_script_procesare",
-        "defaultImportReplaceRuleFileName": "ezBookkeeping_regula_inlocuire_import",
-        "defaultImportCheckResultFileName": "ezBookkeeping_rezultat_verificare_import",
-        "defaultOverviewLayoutFileName": "ezBookkeeping_overview_layout"
+        "defaultExportFilename": "ezbookkeeping2_export_date",
+        "exportFilename": "ezbookkeeping2_{nickname}_export_date",
+        "defaultExportStatisticsFileName": "ezbookkeeping2_date_statistici",
+        "exportStatisticsFileName": "ezbookkeeping2_{nickname}_date_statistici",
+        "defaultExportReconciliationStatementsFileName": "ezbookkeeping2_situatii_reconciliere",
+        "exportReconciliationStatementsFileName": "ezbookkeeping2_{nickname}_situatii_reconciliere",
+        "defaultInsightsExplorerQueryFileName": "ezbookkeeping2_insights_explorer_query",
+        "insightsExplorerQueryFileName": "ezbookkeeping2_{nickname}_insights_explorer_query",
+        "defaultImportDataMappingFileName": "ezbookkeeping2_asociere_date_import",
+        "defaultImportHandlingScript": "ezbookkeeping2_script_procesare",
+        "defaultImportReplaceRuleFileName": "ezbookkeeping2_regula_inlocuire_import",
+        "defaultImportCheckResultFileName": "ezbookkeeping2_rezultat_verificare_import",
+        "defaultOverviewLayoutFileName": "ezbookkeeping2_overview_layout"
     },
     "calendar": {
         "Gregorian": "Gregorian",
@@ -1820,8 +1820,8 @@
     "Date is too early": "Data este prea timpurie",
     "User Canceled": "Anulat de utilizator",
     "Unable to load language resources. Please try again.": "Unable to load language resources. Please try again.",
-    "Welcome to ezBookkeeping": "Bun venit la ezBookkeeping",
-    "Please log in with your ezBookkeeping account": "Te rugăm să te autentifici cu contul ezBookkeeping",
+    "Welcome to ezbookkeeping2": "Bun venit la ezbookkeeping2",
+    "Please log in with your ezbookkeeping2 account": "Te rugăm să te autentifici cu contul ezbookkeeping2",
     "Unlock Application": "Deblochează aplicația",
     "Please enter your PIN code or use WebAuthn to unlock application": "Te rugăm să introduci codul PIN sau să folosești WebAuthn pentru a debloca aplicația",
     "Please enter your PIN code to unlock application": "Te rugăm să introduci codul PIN pentru a debloca aplicația",

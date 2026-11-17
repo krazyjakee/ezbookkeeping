@@ -1,7 +1,7 @@
 {
     "global": {
         "app": {
-            "title": "ezBookkeeping"
+            "title": "ezbookkeeping2"
         }
     },
     "language": {
@@ -181,23 +181,23 @@
             "ruleCount": "{count} kural",
             "accountActivationAndResendValidationEmailTip": "Hesap aktivasyon bağlantısı e-posta adresinize ({email}) gönderildi. Eğer e-postayı almadıysanız, lütfen şifrenizi tekrar girin ve doğrulama postasını yeniden göndermek için aşağıdaki butona tıklayın.",
             "resendValidationEmailTip": "Eğer e-postayı almadıysanız, lütfen şifrenizi tekrar girin ve doğrulama postasını şu adrese yeniden göndermek için aşağıdaki butona tıklayın: {email}",
-            "oauth2bindTip": "{providerName} kullanarak {userName} hesabına giriş yapıyorsunuz. Doğrulamak için lütfen ezBookkeeping şifrenizi girin."
+            "oauth2bindTip": "{providerName} kullanarak {userName} hesabına giriş yapıyorsunuz. Doğrulamak için lütfen ezbookkeeping2 şifrenizi girin."
         }
     },
     "dataExport": {
-        "defaultExportFilename": "ezBookkeeping_disa_aktarim_verisi",
-        "exportFilename": "ezBookkeeping_{nickname}_disa_aktarim_verisi",
-        "defaultExportStatisticsFileName": "ezBookkeeping_istatistik_verisi",
-        "exportStatisticsFileName": "ezBookkeeping_{nickname}_istatistik_verisi",
-        "defaultExportReconciliationStatementsFileName": "ezBookkeeping_mutabakat_ekstreleri",
-        "exportReconciliationStatementsFileName": "ezBookkeeping_{nickname}_mutabakat_ekstreleri",
-        "defaultInsightsExplorerQueryFileName": "ezBookkeeping_analiz_gezgini_sorgusu",
-        "insightsExplorerQueryFileName": "ezBookkeeping_{nickname}_analiz_gezgini_sorgusu",
-        "defaultImportDataMappingFileName": "ezBookkeeping_ice_aktarim_eslemesi",
-        "defaultImportHandlingScript": "ezBookkeeping_isleme_betigi",
-        "defaultImportReplaceRuleFileName": "ezBookkeeping_ice_aktarim_degistirme_kurali",
-        "defaultImportCheckResultFileName": "ezBookkeeping_import_kontrol_sonucu",
-        "defaultOverviewLayoutFileName": "ezBookkeeping_genel_bakis_duzeni"
+        "defaultExportFilename": "ezbookkeeping2_disa_aktarim_verisi",
+        "exportFilename": "ezbookkeeping2_{nickname}_disa_aktarim_verisi",
+        "defaultExportStatisticsFileName": "ezbookkeeping2_istatistik_verisi",
+        "exportStatisticsFileName": "ezbookkeeping2_{nickname}_istatistik_verisi",
+        "defaultExportReconciliationStatementsFileName": "ezbookkeeping2_mutabakat_ekstreleri",
+        "exportReconciliationStatementsFileName": "ezbookkeeping2_{nickname}_mutabakat_ekstreleri",
+        "defaultInsightsExplorerQueryFileName": "ezbookkeeping2_analiz_gezgini_sorgusu",
+        "insightsExplorerQueryFileName": "ezbookkeeping2_{nickname}_analiz_gezgini_sorgusu",
+        "defaultImportDataMappingFileName": "ezbookkeeping2_ice_aktarim_eslemesi",
+        "defaultImportHandlingScript": "ezbookkeeping2_isleme_betigi",
+        "defaultImportReplaceRuleFileName": "ezbookkeeping2_ice_aktarim_degistirme_kurali",
+        "defaultImportCheckResultFileName": "ezbookkeeping2_import_kontrol_sonucu",
+        "defaultOverviewLayoutFileName": "ezbookkeeping2_genel_bakis_duzeni"
     },
     "calendar": {
         "Gregorian": "Miladi",
@@ -1820,8 +1820,8 @@
     "Date is too early": "Tarih çok erken",
     "User Canceled": "Kullanıcı İptal Etti",
     "Unable to load language resources. Please try again.": "Unable to load language resources. Please try again.",
-    "Welcome to ezBookkeeping": "ezBookkeeping'e Hoş Geldiniz",
-    "Please log in with your ezBookkeeping account": "Lütfen ezBookkeeping hesabınızla giriş yapın",
+    "Welcome to ezbookkeeping2": "ezbookkeeping2'e Hoş Geldiniz",
+    "Please log in with your ezbookkeeping2 account": "Lütfen ezbookkeeping2 hesabınızla giriş yapın",
     "Unlock Application": "Uygulamanın Kilidini Aç",
     "Please enter your PIN code or use WebAuthn to unlock application": "Uygulamanın kilidini açmak için PIN kodunuzu girin veya WebAuthn kullanın",
     "Please enter your PIN code to unlock application": "Uygulamanın kilidini açmak için PIN kodunuzu girin",

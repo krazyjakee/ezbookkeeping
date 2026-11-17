@@ -4,7 +4,7 @@ title: Translating
 
 # Translating
 
-ezBookkeeping supports multiple languages and localization settings, with separate language files for the frontend and backend. The frontend language files are located in `/src/locales/`, and the backend language files are in `/pkg/locales/`. All language files should be named using language tags (either a single language subtag or a language subtag with a script subtag, such as `en`, `fr`, `zh-Hans` or `zh-Hant`).
+ezbookkeeping2 supports multiple languages and localization settings, with separate language files for the frontend and backend. The frontend language files are located in `/src/locales/`, and the backend language files are in `/pkg/locales/`. All language files should be named using language tags (either a single language subtag or a language subtag with a script subtag, such as `en`, `fr`, `zh-Hans` or `zh-Hant`).
 
 For more information about language tags, please refer to [RFC5646](https://www.rfc-editor.org/rfc/rfc5646.html). All available language tags can be found in [IANA registry language-subtag-registry](https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry).
 
@@ -27,13 +27,13 @@ For more information about language tags, please refer to [RFC5646](https://www.
 
 ## Check untranslated entries
 
-The ezBookkeeping repository automatically calculates translation progress and identifies untranslated entries for each language whenever text entries are updated. This information is recorded in the [ezBookkeeping-i18n-badge](https://github.com/mayswind/ezBookkeeping-i18n-badge) repository.
+The upstream ezBookkeeping repository automatically calculates translation progress and identifies untranslated entries for each language whenever text entries are updated. This information is recorded in the [ezBookkeeping-i18n-badge](https://github.com/mayswind/ezBookkeeping-i18n-badge) repository.
 
 You can open the [untranslated](https://github.com/mayswind/ezBookkeeping-i18n-badge/tree/main/untranslated) folder in that repository and locate the JSON file for your target language. It lists all untranslated entries, including the source file, key path, and original English text, which you can use to complete the translations.
 
 ## Internationalization
 
-ezBookkeeping allows users to change multiple regional settings, such as date, time, numeral, and currency formats. If the user does not change these settings, the default values configured in the language files will be used. These default values are in the `default` object of the language file.
+ezbookkeeping2 allows users to change multiple regional settings, such as date, time, numeral, and currency formats. If the user does not change these settings, the default values configured in the language files will be used. These default values are in the `default` object of the language file.
 
 Here are all the settings that require default values and their descriptions:
 
@@ -100,7 +100,7 @@ In addition, the timezone data is sourced from [nodatime](https://github.com/nod
 
 ## Preview frontend translations
 
-You can preview frontend language files directly in the desktop version without rebuilding the application. This feature is disabled by default. You can enable it by following [Configuration -  Developer Tools](/configuration/#developer-tools), or use it in the [Live Demo](https://ezbookkeeping-demo.mayswind.net).
+You can preview frontend language files directly in the desktop version without rebuilding the application. This feature is disabled by default. You can enable it by following [Configuration -  Developer Tools](/configuration/#developer-tools), or use it in the upstream ezBookkeeping [Live Demo](https://ezbookkeeping-demo.mayswind.net).
 
 Open "Settings" -> "Developer Tools" -> "Preview Language Configuration" in the desktop version:
 

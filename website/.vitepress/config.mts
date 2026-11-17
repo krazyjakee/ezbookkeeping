@@ -1,13 +1,13 @@
 import { type HeadConfig, defineConfig, resolveSiteDataByRoute } from 'vitepress';
 
-const websiteName: string = 'ezBookkeeping';
+const websiteName: string = 'ezbookkeeping2';
 const websiteBasePath: string = '/ezbookkeeping/';
 const websiteUrlRootUrl: string = 'https://krazyjakee.github.io/ezbookkeeping';
 const repositoryUrl: string = 'https://github.com/krazyjakee/ezbookkeeping';
-const titleEn: string = 'ezBookkeeping - stable, self-hosted bookkeeping for businesses';
-const titleZhHans: string = 'ezBookkeeping - 稳定、面向企业的自托管 (self-hosted) 记账应用';
-const descriptionEn: string = 'ezBookkeeping is a stable, business-focused, self-hosted bookkeeping app. A fork of mayswind/ezbookkeeping focused on maturity and business use.';
-const descriptionZhHans: string = 'ezBookkeeping 是一款稳定、面向企业的自托管 (self-hosted) 记账应用，是 mayswind/ezbookkeeping 的分支，专注于成熟度与商业用途。';
+const titleEn: string = 'ezbookkeeping2 - stable, self-hosted bookkeeping for businesses';
+const titleZhHans: string = 'ezbookkeeping2 - 稳定、面向企业的自托管 (self-hosted) 记账应用';
+const descriptionEn: string = 'ezbookkeeping2 is a stable, business-focused, self-hosted bookkeeping app. A fork of mayswind/ezbookkeeping focused on maturity and business use.';
+const descriptionZhHans: string = 'ezbookkeeping2 是一款稳定、面向企业的自托管 (self-hosted) 记账应用，是 mayswind/ezbookkeeping 的分支，专注于成熟度与商业用途。';
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
@@ -92,9 +92,9 @@ export default defineConfig({
                     {
                         text: 'Download',
                         items: [
-                            { text: 'Release Notes', link: 'https://github.com/mayswind/ezbookkeeping/releases' },
-                            { text: 'Packaged Files', link: 'https://github.com/mayswind/ezbookkeeping/releases' },
-                            { text: 'Docker Images', link: 'https://hub.docker.com/r/mayswind/ezbookkeeping' }
+                            { text: 'Release Notes', link: `${repositoryUrl}/releases` },
+                            { text: 'Packaged Files', link: `${repositoryUrl}/releases` },
+                            { text: 'Docker Images', link: 'https://hub.docker.com/r/krazyjakee/ezbookkeeping2' }
                         ]
                     },
                     { text: 'FAQ', link: '/faq/' }
@@ -110,7 +110,8 @@ export default defineConfig({
                             { text: 'Run on Kubernetes', link: '/installation/installation-kubernetes' },
                             { text: 'Install from binary', link: '/installation/installation-binary' },
                             { text: 'Install with 1Panel (Community Supported)', link: '/installation/installation-1panel' },
-                            { text: 'Reverse proxy configuration', link: '/installation/reverse-proxy-configuration' }
+                            { text: 'Reverse proxy configuration', link: '/installation/reverse-proxy-configuration' },
+                            { text: 'Migrating from ezBookkeeping', link: '/installation/migrating' }
                         ]
                     },
                     {
@@ -186,9 +187,9 @@ export default defineConfig({
                     {
                         text: '下载',
                         items: [
-                            { text: '更新日志', link: 'https://github.com/mayswind/ezbookkeeping/releases' },
-                            { text: '打包文件', link: 'https://github.com/mayswind/ezbookkeeping/releases' },
-                            { text: 'Docker 镜像', link: 'https://hub.docker.com/r/mayswind/ezbookkeeping' }
+                            { text: '更新日志', link: `${repositoryUrl}/releases` },
+                            { text: '打包文件', link: `${repositoryUrl}/releases` },
+                            { text: 'Docker 镜像', link: 'https://hub.docker.com/r/krazyjakee/ezbookkeeping2' }
                         ]
                     },
                     { text: '常见问题', link: '/zh_Hans/faq/' }

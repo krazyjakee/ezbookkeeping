@@ -8,126 +8,126 @@ This page lists some frequently asked questions and their answers.
 
 If you don't find what you're looking for here, you can check out [GitHub Issues](https://github.com/krazyjakee/ezbookkeeping/issues) for more information.
 
-## Is ezBookkeeping Free
+## Is ezbookkeeping2 Free
 
-ezBookkeeping is a free, open-source, self-hosted personal finance application released under the [MIT License](https://github.com/krazyjakee/ezbookkeeping/blob/main/LICENSE). You are free to use, modify and distribute ezBookkeeping, and you may even use it for commercial purposes. The source code is hosted on [GitHub](https://github.com/krazyjakee/ezbookkeeping), where it is publicly accessible to anyone.
+ezbookkeeping2 is a free, open-source, self-hosted personal finance application released under the [MIT License](https://github.com/krazyjakee/ezbookkeeping/blob/main/LICENSE). You are free to use, modify and distribute ezbookkeeping2, and you may even use it for commercial purposes. The source code is hosted on [GitHub](https://github.com/krazyjakee/ezbookkeeping), where it is publicly accessible to anyone.
 
-ezBookkeeping does not provide an official hosted service. You need to deploy the ezBookkeeping server on your own server or personal computer. You can refer to the [Installation](/installation/) documentation for deployment instructions. The ezBookkeeping project does not accept user donations or sponsorships and does not offer any paid features.
+ezbookkeeping2 does not provide an official hosted service. You need to deploy the ezbookkeeping2 server on your own server or personal computer. You can refer to the [Installation](/installation/) documentation for deployment instructions. The ezbookkeeping2 project does not accept user donations or sponsorships and does not offer any paid features.
 
-The ezBookkeeping project does not collect any user information. All user data is stored entirely on the server or personal computer that you deploy yourself. Your self-hosted ezBookkeeping server does not send any data to the ezBookkeeping project. However, some features provided by ezBookkeeping may rely on third-party services. ezBookkeeping has no commercial partnerships with these services, and they may collect user data. For details, please refer to [What third-party services does ezBookkeeping use, and does it access my personal data](#what-third-party-services-does-ezbookkeeping-use-and-does-it-access-my-personal-data). You can freely choose whether to enable these features provided by third-party in the configuration file.
+The ezbookkeeping2 project does not collect any user information. All user data is stored entirely on the server or personal computer that you deploy yourself. Your self-hosted ezbookkeeping2 server does not send any data to the ezbookkeeping2 project. However, some features provided by ezbookkeeping2 may rely on third-party services. ezbookkeeping2 has no commercial partnerships with these services, and they may collect user data. For details, please refer to [What third-party services does ezbookkeeping2 use, and does it access my personal data](#what-third-party-services-does-ezbookkeeping-use-and-does-it-access-my-personal-data). You can freely choose whether to enable these features provided by third-party in the configuration file.
 
-## Is ezBookkeeping right for me
+## Is ezbookkeeping2 right for me
 
-ezBookkeeping does not cover every possible need. You can visit the [Feature List](/features/) to review all available features, or check [Feature Comparison](/comparison/) to see how ezBookkeeping compares with other similar software and choose the one that best fits your needs.
+ezbookkeeping2 does not cover every possible need. You can visit the [Feature List](/features/) to review all available features, or check [Feature Comparison](/comparison/) to see how ezbookkeeping2 compares with other similar software and choose the one that best fits your needs.
 
-## Which operating systems does ezBookkeeping support
+## Which operating systems does ezbookkeeping2 support
 
-For the operating systems supported by the ezBookkeeping server and the browsers that can be used to access the ezBookkeeping interface, please refer to [System Requirements](/installation/system_requirements).
+For the operating systems supported by the ezbookkeeping2 server and the browsers that can be used to access the ezbookkeeping2 interface, please refer to [System Requirements](/installation/system_requirements).
 
-## How much system resources does ezBookkeeping use
+## How much system resources does ezbookkeeping2 use
 
-ezBookkeeping is a lightweight software written in Golang that needs very few resources. The ezBookkeeping binary file and its dependent static files take up about 80 MiB of disk space. When running on the Linux/amd64 platform with a single user, typically only around 40 MiB of memory is required.
+ezbookkeeping2 is a lightweight software written in Golang that needs very few resources. The ezbookkeeping2 binary file and its dependent static files take up about 80 MiB of disk space. When running on the Linux/amd64 platform with a single user, typically only around 40 MiB of memory is required.
 
 ## Why double-clicking `ezbookkeeping.exe` on Windows doesn't launch the application
 
-ezBookkeeping is not a desktop application, and its's a self-hosted server program. You can start the server program by following the steps in the [Installation](/installation/) Guide. Once the server is running, you can access ezBookkeeping through any web browsers on any of your devices.
+ezbookkeeping2 is not a desktop application, and its's a self-hosted server program. You can start the server program by following the steps in the [Installation](/installation/) Guide. Once the server is running, you can access ezbookkeeping2 through any web browsers on any of your devices.
 
-Of course, if you prefer, you can also run the ezBookkeeping server program on your personal computer and access it locally through your web browser.
+Of course, if you prefer, you can also run the ezbookkeeping2 server program on your personal computer and access it locally through your web browser.
 
-## What configuration settings are required for ezBookkeeping
+## What configuration settings are required for ezbookkeeping2
 
-ezBookkeeping is ready to use out of the box, so it can run without any additional configuration. However, for production use, you should properly configure the following key settings:
+ezbookkeeping2 is ready to use out of the box, so it can run without any additional configuration. However, for production use, you should properly configure the following key settings:
 
-1. `secret_key` in `security` section (environment variable `EBK_SECURITY_SECRET_KEY`): Set this to a random string. You can generate one using the ezBookkeeping CLI command `ezbookkeeping security gen-secret-key` or `openssl rand -base64 32`
-2. `domain` in `server` section (environment variable `EBK_SERVER_DOMAIN`): Set this to the domain name or IP address users will use to access (e.g. `ezbookkeeping-demo.mayswind.net` or `192.168.1.2`). If this setting is incorrect, user avatars and transaction pictures may fail to display, and links in ezBookkeeping's outgoing emails may be incorrect
+1. `secret_key` in `security` section (environment variable `EBK_SECURITY_SECRET_KEY`): Set this to a random string. You can generate one using the ezbookkeeping2 CLI command `ezbookkeeping security gen-secret-key` or `openssl rand -base64 32`
+2. `domain` in `server` section (environment variable `EBK_SERVER_DOMAIN`): Set this to the domain name or IP address users will use to access (e.g. `ezbookkeeping.example.com` or `192.168.1.2`). If this setting is incorrect, user avatars and transaction pictures may fail to display, and links in ezbookkeeping2's outgoing emails may be incorrect
 
-If you plan to use a reverse proxy such as Nginx, and the protocol or port exposed to users differs from the ezBookkeeping web server's settings, also configure `root_url` in `server` section (environment variable `EBK_SERVER_ROOT_URL`), e.g. `https://ezbookkeeping-demo.mayswind.net/`.
+If you plan to use a reverse proxy such as Nginx, and the protocol or port exposed to users differs from the ezbookkeeping2 web server's settings, also configure `root_url` in `server` section (environment variable `EBK_SERVER_ROOT_URL`), e.g. `https://ezbookkeeping.example.com/`.
 
 If you plan to use MySQL as the database, set `type` in `database` section (environment variable `EBK_DATABASE_TYPE`) to `mysql`, and set database host `host` (e.g. `mysql.domain:3306` or `/var/run/mysqld/mysqld.sock`), database name `name`, database user `user` and user password `passwd`.
 
 If you plan to use PostgreSQL as the database, set `type` in `database` section (environment variable `EBK_DATABASE_TYPE`) to `postgres`, and set database host `host` (e.g. `pg.domain:5432` or `/var/run/postgresql`), database name `name`, database user `user` and user password `passwd`.
 
-If you plan to store user avatars or transaction pictures, make sure to configure the settings under [Configuration - Object Storage](/configuration/#object-storage). Additionally, ezBookkeeping allows customization of the exchange rate source, map provider, and LLM (Large Language Model) provider. For more details, see [Configuration](/configuration/).
+If you plan to store user avatars or transaction pictures, make sure to configure the settings under [Configuration - Object Storage](/configuration/#object-storage). Additionally, ezbookkeeping2 allows customization of the exchange rate source, map provider, and LLM (Large Language Model) provider. For more details, see [Configuration](/configuration/).
 
-## ezBookkeeping reports "permission denied" on startup
+## ezbookkeeping2 reports "permission denied" on startup
 
-The `data` directory (when using the SQLite database), the `storage` directory (when using the `local_filesystem` object storage type), and the `log` directory must all be readable and writable by the user running the ezBookkeeping process. Additionally, the `conf/ezbookkeeping.ini` file must be readable by that same user.
+The `data` directory (when using the SQLite database), the `storage` directory (when using the `local_filesystem` object storage type), and the `log` directory must all be readable and writable by the user running the ezbookkeeping2 process. Additionally, the `conf/ezbookkeeping.ini` file must be readable by that same user.
 
-When running via a Docker image, the ezBookkeeping process inside the container runs as a user with UID **1000** and GID **1000**. When mounting external directories into the container, make sure those directories grant access permissions to this UID/GID.
+When running via a Docker image, the ezbookkeeping2 process inside the container runs as a user with UID **1000** and GID **1000**. When mounting external directories into the container, make sure those directories grant access permissions to this UID/GID.
 
-## Where ezBookkeeping stores its files
+## Where ezbookkeeping2 stores its files
 
-Most of ezBookkeeping's data is stored in the database, while user avatars and transaction pictures are stored in object storage.
+Most of ezbookkeeping2's data is stored in the database, while user avatars and transaction pictures are stored in object storage.
 
 ### Database Files
 
-If you're using SQLite as the database, the default database file is located at `data/ezbookkeeping.db` in the same directory as the ezBookkeeping executable file. When running via a Docker image, the default database path inside the container is `/ezbookkeeping/data/ezbookkeeping.db`. You can change this path in the configuration file. For details, see `db_path` in [Configuration - Database](/configuration/#database).
+If you're using SQLite as the database, the default database file is located at `data/ezbookkeeping.db` in the same directory as the ezbookkeeping2 executable file. When running via a Docker image, the default database path inside the container is `/ezbookkeeping/data/ezbookkeeping.db`. You can change this path in the configuration file. For details, see `db_path` in [Configuration - Database](/configuration/#database).
 
 If you're using MySQL or PostgreSQL, database files are managed by the database system itself.
 
 ### Object Storage Files
 
-If you're using `local_filesystem` object storage type, object storage files are stored by default in the `storage` directory next to the ezBookkeeping executable file. When running via a Docker image, the default path inside the container is `/ezbookkeeping/storage/`. You can change this path in the configuration file. For details, see `local_filesystem_path` in [Configuration - Object Storage](/configuration/#object-storage).
+If you're using `local_filesystem` object storage type, object storage files are stored by default in the `storage` directory next to the ezbookkeeping2 executable file. When running via a Docker image, the default path inside the container is `/ezbookkeeping/storage/`. You can change this path in the configuration file. For details, see `local_filesystem_path` in [Configuration - Object Storage](/configuration/#object-storage).
 
 If you're using `s3`, `minio` or `webdav` object storage type, files are managed by the object storage system.
 
 > How to backup the database and object storage files?
 >
-> Since the database systems and object storage services used by ezBookkeeping are mature and well-supported, with convenient official and third-party tools available, ezBookkeeping recommends using these database and object storage utilities for backups. For example:
+> Since the database systems and object storage services used by ezbookkeeping2 are mature and well-supported, with convenient official and third-party tools available, ezbookkeeping2 recommends using these database and object storage utilities for backups. For example:
 > 1. Use `mysqldump` to dump a MySQL database
 > 2. Use `mariadb-dump` to dump a MariaDB database
 > 3. Use `pg_dump` to dump a PostgreSQL database
 > 4. Use `rc` to copy files from RustFS object storage
 > 5. Use `mc` to copy files from MinIO object storage
 
-## How to migrate ezBookkeeping data
+## How to migrate ezbookkeeping2 data
 
-If you're using MySQL or PostgreSQL as database along with either the `s3`, `minio` or `webdav` object storage type (or if you're not storing user avatars or transaction pictures), then ezBookkeeping itself is stateless and requires no data migration.
+If you're using MySQL or PostgreSQL as database along with either the `s3`, `minio` or `webdav` object storage type (or if you're not storing user avatars or transaction pictures), then ezbookkeeping2 itself is stateless and requires no data migration.
 
 ### Migrating the Database
 
 1. SQLite → SQLite: Simply copy the `.db` file from the database directory (default: `data`) to the new location.
-2. Other combinations (e.g. SQLite → MySQL / PostgreSQL or vice versa): After initializing a new database with ezBookkeeping, use third-party tools to migrate the data from the old database to the new one.
+2. Other combinations (e.g. SQLite → MySQL / PostgreSQL or vice versa): After initializing a new database with ezbookkeeping2, use third-party tools to migrate the data from the old database to the new one.
 
-ezBookkeeping recommends using the SQLite database only for testing purposes. If you decide to use ezBookkeeping, it's best to use a MySQL or PostgreSQL database to avoid potential migration costs later.
+ezbookkeeping2 recommends using the SQLite database only for testing purposes. If you decide to use ezbookkeeping2, it's best to use a MySQL or PostgreSQL database to avoid potential migration costs later.
 
 > Example: Migrating a SQLite database to MySQL using DBeaver
 >
-> 1. First, configure ezBookkeeping with a new MySQL database, then start ezBookkeeping once to initialize the MySQL database
+> 1. First, configure ezbookkeeping2 with a new MySQL database, then start ezbookkeeping2 once to initialize the MySQL database
 > 2. In DBeaver, create two connections, one to the existing SQLite database and one to the new MySQL database
 > 3. In DBeaver, expand the SQLite database, select all tables, right-click and choose "Export Data" in the context menu. In the "Data Transfer" dialog, set "Export target" to "Database". Click "Next", select the MySQL database as the "Target container", and continue clicking "Next" until the migrating completes
 
 ### Migrating Object Storage
 
 1. `local_filesystem` → `local_filesystem`: Simply copy all files from the object storage directory (default: `storage`) to the new location.
-2. Other combinations (e.g. `local_filesystem` → `s3` / `minio` / `webdav` or vice versa): After initializing the new object storage with ezBookkeeping, use third-party tools to synchronize the stored files.
+2. Other combinations (e.g. `local_filesystem` → `s3` / `minio` / `webdav` or vice versa): After initializing the new object storage with ezbookkeeping2, use third-party tools to synchronize the stored files.
 
-## How to upgrade ezBookkeeping
+## How to upgrade ezbookkeeping2
 
-ezBookkeeping's database design is forward-compatible. When you upgrade the ezBookkeeping server application, the database schema will not undergo any breaking changes. Likewise, the database schema updated by a newer version of the ezBookkeeping server remains backward-compatible, so you can roll back to a previous version at any time.
+ezbookkeeping2's database design is forward-compatible. When you upgrade the ezbookkeeping2 server application, the database schema will not undergo any breaking changes. Likewise, the database schema updated by a newer version of the ezbookkeeping2 server remains backward-compatible, so you can roll back to a previous version at any time.
 
-To upgrade ezBookkeeping, simply download the new binary and replace the old one, then restart the ezBookkeeping server application. If you deploy ezBookkeeping using Docker images, just pull the latest Docker image and recreate the container.
+To upgrade ezbookkeeping2, simply download the new binary and replace the old one, then restart the ezbookkeeping2 server application. If you deploy ezbookkeeping2 using Docker images, just pull the latest Docker image and recreate the container.
 
 > [!WARNING] ATTENTION
 > If possible, it is always recommended to backup the database data using database tools before performing an upgrade.
 
-## Does ezBookkeeping provide a desktop or mobile app
+## Does ezbookkeeping2 provide a desktop or mobile app
 
-ezBookkeeping is a self-hosted software, accessed entirely through your browser. It doesn't offer a standalone desktop or mobile app. ezBookkeeping offers tailored user interfaces for mobile and desktop devices. On your phone, you can add ezBookkeeping to your home screen, and it works and feels just like a native mobile app.
+ezbookkeeping2 is a self-hosted software, accessed entirely through your browser. It doesn't offer a standalone desktop or mobile app. ezbookkeeping2 offers tailored user interfaces for mobile and desktop devices. On your phone, you can add ezbookkeeping2 to your home screen, and it works and feels just like a native mobile app.
 
-## How to add ezBookkeeping to home screen of mobile phone
+## How to add ezbookkeeping2 to home screen of mobile phone
 
-ezBookkeeping supports PWA (Progressive Web Apps). You can add it to your phone's screen using your system browser. The system will automatically cache the necessary static files. When you open ezBookkeeping directly from your phone's home screen, it will behave like a native app.
+ezbookkeeping2 supports PWA (Progressive Web Apps). You can add it to your phone's screen using your system browser. The system will automatically cache the necessary static files. When you open ezbookkeeping2 directly from your phone's home screen, it will behave like a native app.
 
 For detailed steps, see the [guide](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/mobile/add_to_home_screen.gif).
 
-## What is the default user in ezBookkeeping
+## What is the default user in ezbookkeeping2
 
-When you launch ezBookkeeping server for the first time, the database of ezBookkeeping is empty, and you'll need to register a new user. ezBookkeeping does not have a default user.
+When you launch ezbookkeeping2 server for the first time, the database of ezbookkeeping2 is empty, and you'll need to register a new user. ezbookkeeping2 does not have a default user.
 
-## How assets and liabilities are calculated in ezBookkeeping
+## How assets and liabilities are calculated in ezbookkeeping2
 
-In ezBookkeeping, asset and liability accounts are categorized based on their account categories. Cash, Checking Account, Savings Account, Virtual Account, Receivables, Certificate of Deposit, and Investment Account are treated as asset accounts, with their balances counted as assets. Credit Card and Debt Account are treated as liability accounts, with their outstanding balances counted as liabilities.
+In ezbookkeeping2, asset and liability accounts are categorized based on their account categories. Cash, Checking Account, Savings Account, Virtual Account, Receivables, Certificate of Deposit, and Investment Account are treated as asset accounts, with their balances counted as assets. Credit Card and Debt Account are treated as liability accounts, with their outstanding balances counted as liabilities.
 
 ## What do "Balance" and "Outstanding Balance" mean when creating an account
 
@@ -137,7 +137,7 @@ When creating a liability account, you can set its outstanding balance, which re
 
 ## What is the purpose of the "Balance Time" when creating an account
 
-In ezBookkeeping, every transaction must have a transaction time. If you set an balance or outstanding balance when creating an account, you also need to specify the time of that balance modification transaction. Any future transactions added to the account cannot have a transaction time earlier than this time.
+In ezbookkeeping2, every transaction must have a transaction time. If you set an balance or outstanding balance when creating an account, you also need to specify the time of that balance modification transaction. Any future transactions added to the account cannot have a transaction time earlier than this time.
 
 ## What is the purpose of the "Statement Date" when creating a credit card account
 
@@ -145,7 +145,7 @@ If a statement date is set for a credit card account, you can filter transaction
 
 ## Why can't add a transaction
 
-In ezBookkeeping, every transaction must set an account and a transaction category. Transaction categories are organized by transaction type, including expense category, income category and transfer category, and each transaction must be assigned a secondary category under one of these types. If you haven't yet created any accounts or secondary categories for the relevant transaction type, you won't be able to create a new transaction.
+In ezbookkeeping2, every transaction must set an account and a transaction category. Transaction categories are organized by transaction type, including expense category, income category and transfer category, and each transaction must be assigned a secondary category under one of these types. If you haven't yet created any accounts or secondary categories for the relevant transaction type, you won't be able to create a new transaction.
 
 ## How to record a refund
 
@@ -157,15 +157,15 @@ You can create a separate expense transaction with the amount equal to the trans
 
 ## How to record money lent to others
 
-You can create an account which account category is "Receivables", then create a transfer transaction from your expense account to this receivables account. If you've created the default transaction categories in ezBookkeeping, you can select the transaction type "Loan & Debt > Lending Money".
+You can create an account which account category is "Receivables", then create a transfer transaction from your expense account to this receivables account. If you've created the default transaction categories in ezbookkeeping2, you can select the transaction type "Loan & Debt > Lending Money".
 
 ## How to record merchants, payers, payees and projects
 
-ezBookkeeping uses transaction tags to record information such as merchants, payers, payees and projects. You can add one or more tags to each transaction to capture this information. In addition, ezBookkeeping supports tag groups, allowing you to create different groups to distinguish between different types of tags.
+ezbookkeeping2 uses transaction tags to record information such as merchants, payers, payees and projects. You can add one or more tags to each transaction to capture this information. In addition, ezbookkeeping2 supports tag groups, allowing you to create different groups to distinguish between different types of tags.
 
 ## How to use the last reconciled time
 
-ezBookkeeping allows users to enable the "Use Last Reconciled Time" feature in user profile settings. After enabling it, you can update or clear the last reconciled time on the account edit page. You can also update the account's last reconciled time to the statement end date on the reconciliation statement page, or update it to the current time from the account list page.
+ezbookkeeping2 allows users to enable the "Use Last Reconciled Time" feature in user profile settings. After enabling it, you can update or clear the last reconciled time on the account edit page. You can also update the account's last reconciled time to the statement end date on the reconciliation statement page, or update it to the current time from the account list page.
 
 You can combine this feature with the "Editable Transaction Range" setting. For example, if you set the editable transaction range to "Last reconciled time or later", transactions before the last reconciled time cannot be modified.
 
@@ -175,21 +175,21 @@ If you have configured the "Editable Transaction Range" in your user profile, yo
 
 ## Why you see "You cannot add transaction before the balance modification transaction" when adding new transaction
 
-For clarity and consistency, ezBookkeeping allows only one "Modify Balance" transaction per account, and this transaction must be the first transaction for that account. Therefore, transactions cannot be created with a date earlier than the "Modify Balance" transaction.
+For clarity and consistency, ezbookkeeping2 allows only one "Modify Balance" transaction per account, and this transaction must be the first transaction for that account. Therefore, transactions cannot be created with a date earlier than the "Modify Balance" transaction.
 
 ## How to modify an account balance
 
-ezBookkeeping only allows users to set an initial balance when creating a new account. Once the account is created, users cannot directly modify its balance. To adjust an account's balance, you need to record an expense or income transaction.
+ezbookkeeping2 only allows users to set an initial balance when creating a new account. Once the account is created, users cannot directly modify its balance. To adjust an account's balance, you need to record an expense or income transaction.
 
 Alternatively, you can update the closing balance in the Reconciliation Statement page. The system will automatically calculate the difference between the expected ending balance and the actual balance, then populate the amount for you on the new transaction page.
 
 ## Unable to set currency when adding a transaction
 
-In ezBookkeeping, currency is associated with accounts, not with individual transactions. Each account has exactly one currency. If your account in the real-world supports multiple currencies, you can set its account type to "Multiple Sub-accounts", and create a separate sub-account for each currency.
+In ezbookkeeping2, currency is associated with accounts, not with individual transactions. Each account has exactly one currency. If your account in the real-world supports multiple currencies, you can set its account type to "Multiple Sub-accounts", and create a separate sub-account for each currency.
 
 ## How to paste the transaction amount from the clipboard when editing a transaction on mobile version
 
-Tap the amount on the amount input pad of ezBookkeeping, then a paste button will be displayed (as shown below), so you can tap to paste the value. In addition, on non-iOS systems, you can also paste the value by tapping paste in the menu on the transaction edit page.
+Tap the amount on the amount input pad of ezbookkeeping2, then a paste button will be displayed (as shown below), so you can tap to paste the value. In addition, on non-iOS systems, you can also paste the value by tapping paste in the menu on the transaction edit page.
 
 [![How to paste an amount](/images/en/number_pad_paste.png)](/images/en/number_pad_paste.png){target=_blank}
 
@@ -207,13 +207,13 @@ In the mobile version, tap the three-dot icon in the bottom-right corner on the 
 
 ## What does the "+" sign after the monthly expense and income amounts mean in the mobile transaction list
 
-In the mobile version, the transaction list loads data on demand by default. The monthly expense and income amounts displayed after each month are calculated based on the transactions that have been loaded so far. When the data for that month hasn't been fully loaded, a "+" sign appears to indicate that the displayed totals are incomplete. If you want to view the full monthly total expense and income amounts, you can select a full month in the date filter. When filter a full month in transaction list, ezBookkeeping always loads all transactions data for that month.
+In the mobile version, the transaction list loads data on demand by default. The monthly expense and income amounts displayed after each month are calculated based on the transactions that have been loaded so far. When the data for that month hasn't been fully loaded, a "+" sign appears to indicate that the displayed totals are incomplete. If you want to view the full monthly total expense and income amounts, you can select a full month in the date filter. When filter a full month in transaction list, ezbookkeeping2 always loads all transactions data for that month.
 
 In addition, on both the desktop and mobile versions, if the exchange rate data does not include a rate between an account's currency and your default currency, the amount for that account cannot be aggregated into the total and will be displayed with a "+" sign.
 
 ## How to view transaction time in the default time zone
 
-In ezBookkeeping, both the transaction list and the transaction detail page display transaction times in the transaction's time zone by default.
+In ezbookkeeping2, both the transaction list and the transaction detail page display transaction times in the transaction's time zone by default.
 
 In the mobile version, you can tap the transaction time on the transaction detail page to switch between the transaction's time zone and the default time zone.
 
@@ -221,13 +221,13 @@ In the desktop version, you can hover over the transaction time on the transacti
 
 ## How to edit or delete transactions and accounts in mobile version
 
-In the mobile version of ezBookkeeping, you can swipe left on any item in the transaction or account list page to reveal the "Edit" and "Delete" buttons. Tap "Edit" to open the editing page.
+In the mobile version of ezbookkeeping2, you can swipe left on any item in the transaction or account list page to reveal the "Edit" and "Delete" buttons. Tap "Edit" to open the editing page.
 
 [![How to edit transaction](/images/en/how_to_edit_transaction.png)](/images/en/how_to_edit_transaction.png){target=_blank}
 
 ## How to quickly hide accounts, categories, or tags in mobile version
 
-In the mobile version of ezBookkeeping, you can long-press on any item in the account, category or tag list page, and swipe right on this item to quickly toggle the hidden status.
+In the mobile version of ezbookkeeping2, you can long-press on any item in the account, category or tag list page, and swipe right on this item to quickly toggle the hidden status.
 
 ## How to create a transaction using a template
 
@@ -264,54 +264,54 @@ After setting up the large language model configuration:
 
 ## How to display charts grouped by tags
 
-Because each transaction can have zero or multiple tags, tags themselves do not have inherent statistical meaning. ezBookkeeping provides the Insights Explorer feature, which allows users to freely build queries with different conditions and use them to create visual charts. You can create a new explorer, define multiple queries with different tags, and then build charts by using "Query" as the "Axis / Category".
+Because each transaction can have zero or multiple tags, tags themselves do not have inherent statistical meaning. ezbookkeeping2 provides the Insights Explorer feature, which allows users to freely build queries with different conditions and use them to create visual charts. You can create a new explorer, define multiple queries with different tags, and then build charts by using "Query" as the "Axis / Category".
 
 ## Scheduled transaction does not create transaction automatically
 
-In ezBookkeeping, a scheduled transaction will automatically create a new transaction when its scheduled date arrives. The generated transaction is identical to the one created by the user. No transaction is created before the scheduled date. To ensure this works properly, make sure the ezBookkeeping server is running continuously.
+In ezbookkeeping2, a scheduled transaction will automatically create a new transaction when its scheduled date arrives. The generated transaction is identical to the one created by the user. No transaction is created before the scheduled date. To ensure this works properly, make sure the ezbookkeeping2 server is running continuously.
 
 ## Why can't display the uploaded user avatar or transaction picture
 
-Make sure the `domain` setting in your configuration is correct. If you're using a reverse proxy such as Nginx, and the access protocol or port number differs from what the ezBookkeeping server provides, you also need to update the `root_url` setting. For details, see [Configuration - Web Server](/configuration/#web-server). ezBookkeeping uses these settings to generate URLs for uploaded user avatars and transaction images.
+Make sure the `domain` setting in your configuration is correct. If you're using a reverse proxy such as Nginx, and the access protocol or port number differs from what the ezbookkeeping2 server provides, you also need to update the `root_url` setting. For details, see [Configuration - Web Server](/configuration/#web-server). ezbookkeeping2 uses these settings to generate URLs for uploaded user avatars and transaction images.
 
-If the images still don't appear after verifying these settings, you can use the developer tool in your browser to check whether the image URLs match the configured addresses. If they don't, review the configuration values shown in ezBookkeeping's startup logs to ensure they match your expected settings. If not, adjust the configuration or restart ezBookkeeping.
+If the images still don't appear after verifying these settings, you can use the developer tool in your browser to check whether the image URLs match the configured addresses. If they don't, review the configuration values shown in ezbookkeeping2's startup logs to ensure they match your expected settings. If not, adjust the configuration or restart ezbookkeeping2.
 
 ## Why doesn't the total amount include the amount in a specific currency
 
-When calculating the total amount across different currencies, ezBookkeeping relies on exchange rate data. Make sure that the user's default currency and all currencies involved in the calculation are included in the current exchange rate data. For details on configuring exchange rate sources, see [Exchange Rates](/exchange_rates/).
+When calculating the total amount across different currencies, ezbookkeeping2 relies on exchange rate data. Make sure that the user's default currency and all currencies involved in the calculation are included in the current exchange rate data. For details on configuring exchange rate sources, see [Exchange Rates](/exchange_rates/).
 
 ## Why amounts in certain currencies are missing from Statistics & Analysis
 
-On the Statistics & Analysis page, ezBookkeeping converts all amounts into your default currency for calculation. If an account's currency is not included in your current exchange rate data, ezBookkeeping cannot convert those transactions and therefore excludes them from the result. You can choose an exchange rate data source that includes all the currencies used by your accounts, and refer to [Exchange Rates](/exchange_rates/) for details on configuring exchange rate sources.
+On the Statistics & Analysis page, ezbookkeeping2 converts all amounts into your default currency for calculation. If an account's currency is not included in your current exchange rate data, ezbookkeeping2 cannot convert those transactions and therefore excludes them from the result. You can choose an exchange rate data source that includes all the currencies used by your accounts, and refer to [Exchange Rates](/exchange_rates/) for details on configuring exchange rate sources.
 
 ## Why isn't the record removed from the database after deleting a transaction
 
-To make it easier to recover from accidental deletions, ezBookkeeping uses logical deletion for transactions, accounts, categories, and tags. When an item is deleted, it's only marked as deleted in the database, and the record itself is not physically removed.
+To make it easier to recover from accidental deletions, ezbookkeeping2 uses logical deletion for transactions, accounts, categories, and tags. When an item is deleted, it's only marked as deleted in the database, and the record itself is not physically removed.
 
 ## Why isn't the picture file removed from object storage after deleting a transaction picture
 
-To make it easier to recover from accidental deletions, ezBookkeeping uses logical deletion for transaction pictures. When a transaction picture is deleted, its record in the database is only marked as deleted, and the record itself is not physically removed. Additionally, the transaction picture file in object storage is also retained.
+To make it easier to recover from accidental deletions, ezbookkeeping2 uses logical deletion for transaction pictures. When a transaction picture is deleted, its record in the database is only marked as deleted, and the record itself is not physically removed. Additionally, the transaction picture file in object storage is also retained.
 
 ## How to modify the content of verification or password reset emails
 
-You can directly edit the `.tmpl` files located in the `templates/email/` directory of the ezBookkeeping. If you're deploying ezBookkeeping with Docker, you can mount your modified files to this directory instead. Make sure the files are readable by the user running the ezBookkeeping process. Changes will take effect after restarting ezBookkeeping server program.
+You can directly edit the `.tmpl` files located in the `templates/email/` directory of the ezbookkeeping2. If you're deploying ezbookkeeping2 with Docker, you can mount your modified files to this directory instead. Make sure the files are readable by the user running the ezbookkeeping2 process. Changes will take effect after restarting ezbookkeeping2 server program.
 
 ## How to modify prompts of AI text recognition / AI image recognition / AI coding generation and other LLM (Large Language Model) requests
 
-You can directly edit the `.tmpl` files located in the `templates/prompt/` directory of the ezBookkeeping. If you're deploying ezBookkeeping with Docker, you can mount your modified files to this directory instead. Make sure the files are readable by the user running the ezBookkeeping process. Changes will take effect after restarting ezBookkeeping server program.
+You can directly edit the `.tmpl` files located in the `templates/prompt/` directory of the ezbookkeeping2. If you're deploying ezbookkeeping2 with Docker, you can mount your modified files to this directory instead. Make sure the files are readable by the user running the ezbookkeeping2 process. Changes will take effect after restarting ezbookkeeping2 server program.
 
 ## Why map data caching cannot be enabled
 
-The map data caching feature in ezBookkeeping is implemented using the browser's Service Worker. Due to browser security restrictions, Service Workers can only be used over HTTPS or on localhost. If you are accessing ezBookkeeping over HTTP in a non-localhost environment, the map data caching feature cannot be enabled.
+The map data caching feature in ezbookkeeping2 is implemented using the browser's Service Worker. Due to browser security restrictions, Service Workers can only be used over HTTPS or on localhost. If you are accessing ezbookkeeping2 over HTTP in a non-localhost environment, the map data caching feature cannot be enabled.
 
-In addition, due to browser security restrictions, ezBookkeeping can only cache map data when server-side forwarding map data requests is enabled (`map_data_fetch_proxy` set to `true`). See [Configuration - Map](/configuration/#map) for details.
+In addition, due to browser security restrictions, ezbookkeeping2 can only cache map data when server-side forwarding map data requests is enabled (`map_data_fetch_proxy` set to `true`). See [Configuration - Map](/configuration/#map) for details.
 
-## What third-party services does ezBookkeeping use, and does it access my personal data
+## What third-party services does ezbookkeeping2 use, and does it access my personal data
 
-ezBookkeeping relies on third-party services for features such as exchange rates, avatar, maps and LLM (Large Language Model) service. Details are as follows:
+ezbookkeeping2 relies on third-party services for features such as exchange rates, avatar, maps and LLM (Large Language Model) service. Details are as follows:
 
-1. Exchange rate data: When user uses exchange rate data in ezBookkeeping, the ezBookkeeping server program retrieves data from the exchange rate data provider you've configured. This process does not include any information about the current user, user's device or user's browser
+1. Exchange rate data: When user uses exchange rate data in ezbookkeeping2, the ezbookkeeping2 server program retrieves data from the exchange rate data provider you've configured. This process does not include any information about the current user, user's device or user's browser
 2. Avatar: When using `gravatar` as the avatar provider, user's browser sends the MD5 hash of the user's email address to the Gravatar server to retrieve the avatar. The request includes the User-Agent of user's browser, which contains information about user's device and browser. For details, please refer to Gravatar's privacy policy. When using `internal` avatar provider or disabling user avatars, no third-party services are relied
-3. Maps: When user uses the map feature in ezBookkeeping to view transaction locations, user's browser or ezBookkeeping server program will retrieves map data from the third-party provider. During this process, the User-Agent of user's browser is included, which contains information about user's device and browser, but does not include specific location or any ezBookkeeping user data. If your map provider is set to Google Maps, Baidu Map or Amap, ezBookkeeping uses the provider's official JavaScript SDK. While ezBookkeeping itself does not share any user information with these services, the map providers may collect data about user's browser, device and location. For details, please refer to the map provider's privacy policy
-4. Large Language Model - AI Clipboard Text Recognition / AI Image Recognition / Import AI Text Content Recognition Result / Import AI Image Content Recognition Result: When user uses these features in ezBookkeeping, ezBookkeeping sends the pasted text or uploaded receipt image along with all the user's transaction category names, account names and transaction tag names to the LLM provider. By default, these features in ezBookkeeping are disabled, and ezBookkeeping recommends using a self-hosted LLM service. If you choose to use a third-party LLM provider, please be aware of potential privacy risks and take steps to minimize data exposure (e.g. by removing sensitive information from the text before pasting, removing sensitive information from receipt images before uploading and avoiding storing sensitive data in transaction category names, account names or transaction tag names)
-5. Large Language Model - AI Custom Chart Code Generation: ezBookkeeping only sends the user's input prompt and the current chart code to the LLM provider, but does not send any of the user's transaction data, account data, or other sensitive information. The code generated by the LLM runs only in a sandbox in the user's browser, but please review it for safety to avoid potential security risks
+3. Maps: When user uses the map feature in ezbookkeeping2 to view transaction locations, user's browser or ezbookkeeping2 server program will retrieves map data from the third-party provider. During this process, the User-Agent of user's browser is included, which contains information about user's device and browser, but does not include specific location or any ezbookkeeping2 user data. If your map provider is set to Google Maps, Baidu Map or Amap, ezbookkeeping2 uses the provider's official JavaScript SDK. While ezbookkeeping2 itself does not share any user information with these services, the map providers may collect data about user's browser, device and location. For details, please refer to the map provider's privacy policy
+4. Large Language Model - AI Clipboard Text Recognition / AI Image Recognition / Import AI Text Content Recognition Result / Import AI Image Content Recognition Result: When user uses these features in ezbookkeeping2, ezbookkeeping2 sends the pasted text or uploaded receipt image along with all the user's transaction category names, account names and transaction tag names to the LLM provider. By default, these features in ezbookkeeping2 are disabled, and ezbookkeeping2 recommends using a self-hosted LLM service. If you choose to use a third-party LLM provider, please be aware of potential privacy risks and take steps to minimize data exposure (e.g. by removing sensitive information from the text before pasting, removing sensitive information from receipt images before uploading and avoiding storing sensitive data in transaction category names, account names or transaction tag names)
+5. Large Language Model - AI Custom Chart Code Generation: ezbookkeeping2 only sends the user's input prompt and the current chart code to the LLM provider, but does not send any of the user's transaction data, account data, or other sensitive information. The code generated by the LLM runs only in a sandbox in the user's browser, but please review it for safety to avoid potential security risks

@@ -38,7 +38,13 @@ RUN ./build.sh frontend
 
 # Package docker image
 FROM alpine:3.24.3
-LABEL maintainer="MaysWind <i@mayswind.net>"
+LABEL maintainer="krazyjakee (https://github.com/krazyjakee/ezbookkeeping)" \
+      org.opencontainers.image.title="ezbookkeeping2" \
+      org.opencontainers.image.description="ezbookkeeping2, a business-focused fork of ezBookkeeping, an open source, self-hosted bookkeeping app" \
+      org.opencontainers.image.source="https://github.com/krazyjakee/ezbookkeeping" \
+      org.opencontainers.image.url="https://github.com/krazyjakee/ezbookkeeping" \
+      org.opencontainers.image.documentation="https://krazyjakee.github.io/ezbookkeeping/" \
+      org.opencontainers.image.licenses="MIT"
 RUN addgroup -S -g 1000 ezbookkeeping && adduser -S -G ezbookkeeping -u 1000 ezbookkeeping
 RUN apk --no-cache add tzdata
 COPY docker/docker-entrypoint.sh /docker-entrypoint.sh
