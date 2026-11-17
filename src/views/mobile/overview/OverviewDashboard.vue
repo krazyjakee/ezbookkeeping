@@ -1,7 +1,7 @@
 <template>
     <div class="mobile-overview-dashboard">
-        <state-panel class="mobile-overview-dashboard-error" type="error" compact
-                     :title="tt('Unable to retrieve transaction overview')"
+        <state-panel class="mobile-overview-dashboard-error" :type="isOffline ? 'offline' : 'error'" compact
+                     :title="isOffline ? tt('You are offline. Changes cannot be saved until the connection is restored.') : tt('Unable to retrieve transaction overview')"
                      v-if="loadFailed && !loading">
             <template #actions>
                 <f7-button tonal small :text="tt('Retry')" @click="emit('retry')"></f7-button>
@@ -18,6 +18,8 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted, onBeforeUnmount } from 'vue';
+
 import OverviewWidget from './OverviewWidget.vue';
 import StatePanel from '@/components/common/StatePanel.vue';
 
@@ -39,6 +41,22 @@ const emit = defineEmits<{
 }>();
 
 const { tt } = useI18n();
+
+const isOffline = ref<boolean>(typeof navigator !== 'undefined' && navigator.onLine === false);
+
+function updateOnlineState(): void {
+    isOffline.value = navigator.onLine === false;
+}
+
+onMounted(() => {
+    window.addEventListener('online', updateOnlineState);
+    window.addEventListener('offline', updateOnlineState);
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener('online', updateOnlineState);
+    window.removeEventListener('offline', updateOnlineState);
+});
 
 function onNavigate(type: MobileOverviewWidgetNavigationType, path?: string): void {
     emit('navigate', type, path);
