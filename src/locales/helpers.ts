@@ -1143,19 +1143,6 @@ export function useI18n() {
         return t('format.misc.startEndRange', { start: start, end: end });
     }
 
-    function formatTypeAndNames(...typeAndName: TypeAndName[]): TypeAndDisplayName[] {
-        const ret: TypeAndDisplayName[] = [];
-
-        for (const item of typeAndName) {
-            ret.push({
-                type: item.type,
-                displayName: t(item.name)
-            });
-        }
-
-        return ret;
-    }
-
     function getServerMultiLanguageConfigContent(multiLanguageConfig: Record<string, string>): string {
         if (!multiLanguageConfig) {
             return '';
@@ -1902,10 +1889,6 @@ export function useI18n() {
         return languageInfo;
     }
 
-    function getMonthShortName(monthName: string): string {
-        return t(`datetime.${monthName}.short`);
-    }
-
     function getMonthLongName(monthName: string): string {
         return t(`datetime.${monthName}.long`);
     }
@@ -2173,25 +2156,12 @@ export function useI18n() {
         return order === DateFormatOrder.YMD;
     }
 
-    function isShortDateMonthAfterYear(): boolean {
-        const order: DateFormatOrder = getShortDateFormatOrder();
-        return order === DateFormatOrder.YMD;
-    }
-
     function isLongTime24HourFormat(): boolean {
         return getLocalizedDateTimeType(LongTimeFormat.all(), LongTimeFormat.values(), userStore.currentUserLongTimeFormat, 'longTimeFormat', LongTimeFormat.Default).is24HourFormat;
     }
 
     function isLongTimeMeridiemIndicatorFirst(): boolean {
         return getLocalizedDateTimeType(LongTimeFormat.all(), LongTimeFormat.values(), userStore.currentUserLongTimeFormat, 'longTimeFormat', LongTimeFormat.Default).isMeridiemIndicatorFirst || false;
-    }
-
-    function isShortTime24HourFormat(): boolean {
-        return getLocalizedDateTimeType(ShortTimeFormat.all(), ShortTimeFormat.values(), userStore.currentUserShortTimeFormat, 'shortTimeFormat', ShortTimeFormat.Default).is24HourFormat;
-    }
-
-    function isShortTimeMeridiemIndicatorFirst(): boolean {
-        return getLocalizedDateTimeType(ShortTimeFormat.all(), ShortTimeFormat.values(), userStore.currentUserShortTimeFormat, 'shortTimeFormat', ShortTimeFormat.Default).isMeridiemIndicatorFirst || false;
     }
 
     function isLongTimeHourTwoDigits(): boolean {
@@ -3022,7 +2992,6 @@ function parse(row, index) {
         te: translateError,
         joinMultiText,
         formatRange,
-        formatTypeAndNames,
         getServerMultiLanguageConfigContent,
         // get current language info
         getCurrentLanguageTag,
@@ -3098,7 +3067,6 @@ function parse(row, index) {
         // get localized info
         getLanguageInfo,
         getEnableDisableOption: (value: boolean) => t(value ? 'Enabled' : 'Disabled'),
-        getMonthShortName,
         getMonthLongName,
         getMonthdayOrdinal,
         getMonthdayShortName,
@@ -3129,11 +3097,8 @@ function parse(row, index) {
         getLongDateFormatOrder,
         getShortDateFormatOrder,
         isLongDateMonthAfterYear,
-        isShortDateMonthAfterYear,
         isLongTime24HourFormat,
         isLongTimeMeridiemIndicatorFirst,
-        isShortTime24HourFormat,
-        isShortTimeMeridiemIndicatorFirst,
         isLongTimeHourTwoDigits,
         isLongTimeMinuteTwoDigits,
         isLongTimeSecondTwoDigits,
@@ -3150,7 +3115,6 @@ function parse(row, index) {
         formatDateTimeToLongDate: (dateTime: DateTime) => formatDateTime(dateTime, getLocalizedLongDateFormat(), getDateTimeFormatOptions()),
         formatDateTimeToShortDate: (dateTime: DateTime) => formatDateTime(dateTime, getLocalizedShortDateFormat(), getDateTimeFormatOptions()),
         formatDateTimeToLongMonthDay: (dateTime: DateTime) => formatDateTime(dateTime, getLocalizedLongMonthDayFormat(), getDateTimeFormatOptions()),
-        formatDateTimeToShortMonthDay: (dateTime: DateTime) => formatDateTime(dateTime, getLocalizedShortMonthDayFormat(), getDateTimeFormatOptions()),
         formatDateTimeToLongTime: (dateTime: DateTime) => formatDateTime(dateTime, getLocalizedLongTimeFormat(), getDateTimeFormatOptions()),
         formatDateTimeToShortTime: (dateTime: DateTime) => formatDateTime(dateTime, getLocalizedShortTimeFormat(), getDateTimeFormatOptions()),
         formatGregorianTextualYearMonthDayToLongDate: (date: TextualYearMonthDay) => formatGregorianCalendarYearDashMonthDashDay(date, getLocalizedLongDateFormat(), getDateTimeFormatOptions()),
@@ -3178,20 +3142,15 @@ function parse(row, index) {
         parseAmountFromLocalizedNumerals: (value: string) => getParsedAmountNumber(value),
         parseAmountFromWesternArabicNumerals: (value: string) => getParsedAmountNumber(value, NumeralSystem.WesternArabicNumerals),
         formatAmountToLocalizedNumerals: (value: BigDecimal, currencyCode?: string) => getFormattedAmount(value, undefined, undefined, currencyCode),
-        formatAmountToWesternArabicNumerals: (value: BigDecimal, currencyCode?: string) => getFormattedAmount(value, NumeralSystem.WesternArabicNumerals, undefined, currencyCode),
         formatAmountToLocalizedNumeralsWithoutDigitGrouping: (value: BigDecimal, currencyCode?: string) => getFormattedAmount(value, undefined, DigitGroupingType.None, currencyCode),
         formatAmountToWesternArabicNumeralsWithoutDigitGrouping: (value: BigDecimal, currencyCode?: string) => getFormattedAmount(value, NumeralSystem.WesternArabicNumerals, DigitGroupingType.None, currencyCode),
         formatAmountToLocalizedNumeralsWithCurrency: (value: BigDecimal | HiddenAmount | BigDecimalWithSuffix, currencyCode?: string | false, currencyDisplayType?: CurrencyDisplayType) => getFormattedAmountWithCurrency(value, currencyCode, currencyDisplayType),
-        formatAmountToWesternArabicNumeralsWithCurrency: (value: BigDecimal | HiddenAmount | BigDecimalWithSuffix, currencyCode?: string | false, currencyDisplayType?: CurrencyDisplayType) => getFormattedAmountWithCurrency(value, currencyCode, currencyDisplayType, NumeralSystem.WesternArabicNumerals),
         formatBigDecimalToLocalizedNumerals: (value: BigDecimal, precision?: number) => getFormattedBigDecimal(value, undefined, undefined, precision),
-        formatBigDecimalToLocalizedNumeralsWithoutDigitGrouping: (value: BigDecimal, precision?: number) => getFormattedBigDecimal(value, undefined, DigitGroupingType.None, precision),
-        formatBigDecimalToWesternArabicNumerals: (value: BigDecimal, precision?: number) => getFormattedBigDecimal(value, NumeralSystem.WesternArabicNumerals, undefined, precision),
         formatBigDecimalToWesternArabicNumeralsWithoutDigitGrouping: (value: BigDecimal, precision?: number) => getFormattedBigDecimal(value, NumeralSystem.WesternArabicNumerals, DigitGroupingType.None, precision),
         formatNumberToLocalizedNumerals: (value: number, precision?: number) => getFormattedNumber(value, undefined, undefined, precision),
         formatNumberToLocalizedNumeralsWithoutDigitGrouping: (value: number, precision?: number) => getFormattedNumber(value, undefined, DigitGroupingType.None, precision),
         formatNumberToWesternArabicNumeralsWithoutDigitGrouping: (value: number, precision?: number) => getFormattedNumber(value, NumeralSystem.WesternArabicNumerals, DigitGroupingType.None, precision),
         formatPercentToLocalizedNumerals: (value: number, precision: number, lowPrecisionValue: string) => getFormattedPercentValue(value, precision, lowPrecisionValue),
-        formatPercentToWesternArabicNumerals: (value: number, precision: number, lowPrecisionValue: string) => getFormattedPercentValue(value, precision, lowPrecisionValue, NumeralSystem.WesternArabicNumerals),
         formatChartValueToLocalizedNumerals: getFormattedChartValue,
         formatVolumeToLocalizedNumerals: getFormattedVolume,
         formatExchangeRateAmountToWesternArabicNumerals: (value: BigDecimal) => getFormattedExchangeRateAmount(value, NumeralSystem.WesternArabicNumerals),

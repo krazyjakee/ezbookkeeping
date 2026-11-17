@@ -3,6 +3,7 @@ package services
 import (
 	"io"
 	"mime/multipart"
+	"slices"
 	"time"
 
 	"github.com/mayswind/ezbookkeeping/pkg/core"
@@ -10,6 +11,7 @@ import (
 	"github.com/mayswind/ezbookkeeping/pkg/errs"
 	"github.com/mayswind/ezbookkeeping/pkg/models"
 	"github.com/mayswind/ezbookkeeping/pkg/storage"
+	"github.com/mayswind/ezbookkeeping/pkg/utils"
 	"github.com/mayswind/ezbookkeeping/pkg/uuid"
 )
 
@@ -119,14 +121,19 @@ func (s *TransactionPictureService) GetPictureInfosByTransactionIds(c core.Conte
 	}
 
 	var pictureInfos []*models.TransactionPictureInfo
-	err := s.UserDataDB(uid).NewSession(c).Where("uid=? AND deleted=?", uid, false).In("transaction_id", transactionIds).OrderBy("picture_id asc").Find(&pictureInfos)
 
-	if err != nil {
-		return nil, err
+	for chunk := range slices.Chunk(utils.ToUniqueInt64Slice(transactionIds), transactionIdsQueryChunkSize) {
+		var chunkPictureInfos []*models.TransactionPictureInfo
+		err := s.UserDataDB(uid).NewSession(c).Where("uid=? AND deleted=?", uid, false).In("transaction_id", chunk).OrderBy("picture_id asc").Find(&chunkPictureInfos)
+
+		if err != nil {
+			return nil, err
+		}
+
+		pictureInfos = append(pictureInfos, chunkPictureInfos...)
 	}
 
-	pictureInfoMap := s.GetPictureInfoListMapByList(pictureInfos)
-	return pictureInfoMap, err
+	return s.GetPictureInfoListMapByList(pictureInfos), nil
 }
 
 // GetAllPictureInfosOfAllTransactions returns all transaction picture info models

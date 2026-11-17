@@ -23,9 +23,22 @@ import {
 import { getTimezoneOffsetMinutes } from '@/lib/datetime.ts';
 import { transactionTypeToCategoryType } from '@/lib/category.ts';
 
+interface DescriptionCondition {
+    readonly text: string;
+    readonly regex: RegExp | null; // null unless the operator is a regex match and the pattern compiles
+}
+
+interface PreparedRule {
+    readonly rule: ImportTransactionReplaceRule;
+    readonly description?: DescriptionCondition;
+}
+
 export function applyImportTransactionReplaceRules(transactions: ImportTransaction[], rules: ImportTransactionReplaceRule[], scope: ImportTransactionReplaceRuleApplyScope, context: ImportTransactionReplaceRuleContext): ImportTransactionReplaceRuleApplyResult {
     let matchedTransactionCount = 0;
     let updatedTransactionCount = 0;
+    const preparedRules: PreparedRule[] = rules
+        .filter(rule => rule.isValid() && isRuleTargetValid(rule, context))
+        .map(rule => ({ rule: rule, description: getDescriptionCondition(rule) }));
 
     for (const transaction of transactions) {
         if (scope === 'selected' && !transaction.selected) {
@@ -37,13 +50,13 @@ export function applyImportTransactionReplaceRules(transactions: ImportTransacti
         let matched = false;
         let updated = false;
 
-        for (const rule of rules) {
+        for (const { rule, description } of preparedRules) {
             if (shouldUpdateMatchData) {
                 matchData = getTransactionMatchData(transaction, context);
                 shouldUpdateMatchData = false;
             }
 
-            if (!rule.isValid() || !isRuleTargetValid(rule, context) || !isRuleMatched(rule, matchData)) {
+            if (!isRuleMatched(rule, description, matchData)) {
                 continue;
             }
 
@@ -129,7 +142,46 @@ function isRuleTargetValid(rule: ImportTransactionReplaceRule, context: ImportTr
     return false;
 }
 
-function isRuleMatched(rule: ImportTransactionReplaceRule, transaction: ImportTransactionReplaceRuleMatchData): boolean {
+function isDescriptionField(field: ImportTransactionReplaceRuleConditionFieldType): boolean {
+    return field === ImportTransactionReplaceRuleConditionFieldType.Description
+        || field === ImportTransactionReplaceRuleConditionFieldType.DescriptionCaseInsensitive
+        || field === ImportTransactionReplaceRuleConditionFieldType.DescriptionNormalized;
+}
+
+function getDescriptionCondition(rule: ImportTransactionReplaceRule): DescriptionCondition | undefined {
+    const field = rule.conditionField;
+    const operator = rule.conditionOperator;
+
+    if (!isDescriptionField(field) || typeof rule.conditionValue !== 'string') {
+        return undefined;
+    }
+
+    const normalizedValue = NormalizedText.of(rule.conditionValue);
+    let text: string;
+
+    if (field === ImportTransactionReplaceRuleConditionFieldType.DescriptionCaseInsensitive) {
+        text = normalizedValue.lowerCaseText;
+    } else if (field === ImportTransactionReplaceRuleConditionFieldType.DescriptionNormalized) {
+        text = normalizedValue.normalizedText;
+    } else {
+        text = normalizedValue.originalText;
+    }
+
+    let regex: RegExp | null = null;
+
+    if (operator === ImportTransactionReplaceRuleConditionOperatorType.RegexMatch || operator === ImportTransactionReplaceRuleConditionOperatorType.NotRegexMatch) {
+        try {
+            const flags = (field === ImportTransactionReplaceRuleConditionFieldType.DescriptionCaseInsensitive || field === ImportTransactionReplaceRuleConditionFieldType.DescriptionNormalized) ? 'i' : undefined;
+            regex = new RegExp(text, flags);
+        } catch {
+            regex = null;
+        }
+    }
+
+    return { text: text, regex: regex };
+}
+
+function isRuleMatched(rule: ImportTransactionReplaceRule, description: DescriptionCondition | undefined, transaction: ImportTransactionReplaceRuleMatchData): boolean {
     const value = rule.conditionValue;
 
     if (rule.conditionField === ImportTransactionReplaceRuleConditionFieldType.ExpenseCategory) {
@@ -148,8 +200,8 @@ function isRuleMatched(rule: ImportTransactionReplaceRule, transaction: ImportTr
         return matchAmount(transaction.sourceAmount, rule.conditionOperator, value);
     } else if (rule.conditionField === ImportTransactionReplaceRuleConditionFieldType.TransferInAmount) {
         return transaction.type === TransactionType.Transfer && matchAmount(transaction.destinationAmount, rule.conditionOperator, value);
-    } else if (rule.conditionField === ImportTransactionReplaceRuleConditionFieldType.Description || rule.conditionField === ImportTransactionReplaceRuleConditionFieldType.DescriptionCaseInsensitive || rule.conditionField === ImportTransactionReplaceRuleConditionFieldType.DescriptionNormalized) {
-        return typeof value === 'string' && matchDescription(transaction.description, rule.conditionField, rule.conditionOperator, value);
+    } else if (isDescriptionField(rule.conditionField)) {
+        return !!description && matchDescription(transaction.description, rule.conditionField, rule.conditionOperator, description);
     }
 
     return false;
@@ -177,20 +229,16 @@ function matchAmount(amount: number, operator: ImportTransactionReplaceRuleCondi
     return false;
 }
 
-function matchDescription(description: NormalizedText, field: ImportTransactionReplaceRuleConditionFieldType, operator: ImportTransactionReplaceRuleConditionOperatorType, value: string): boolean {
-    const normalizedValue = NormalizedText.of(value);
+function matchDescription(description: NormalizedText, field: ImportTransactionReplaceRuleConditionFieldType, operator: ImportTransactionReplaceRuleConditionOperatorType, condition: DescriptionCondition): boolean {
+    const conditionText = condition.text;
     let descriptionText: string;
-    let conditionText: string;
 
     if (field === ImportTransactionReplaceRuleConditionFieldType.DescriptionCaseInsensitive) {
         descriptionText = description.lowerCaseText;
-        conditionText = normalizedValue.lowerCaseText;
     } else if (field === ImportTransactionReplaceRuleConditionFieldType.DescriptionNormalized) {
         descriptionText = description.normalizedText;
-        conditionText = normalizedValue.normalizedText;
     } else {
         descriptionText = description.originalText;
-        conditionText = normalizedValue.originalText;
     }
 
     if (operator === ImportTransactionReplaceRuleConditionOperatorType.IsEmpty) {
@@ -214,15 +262,7 @@ function matchDescription(description: NormalizedText, field: ImportTransactionR
     } else if (operator === ImportTransactionReplaceRuleConditionOperatorType.NotEndsWith) {
         return !descriptionText.endsWith(conditionText);
     } else if (operator === ImportTransactionReplaceRuleConditionOperatorType.RegexMatch || operator === ImportTransactionReplaceRuleConditionOperatorType.NotRegexMatch) {
-        let matched = false;
-
-        try {
-            const flags = (field === ImportTransactionReplaceRuleConditionFieldType.DescriptionCaseInsensitive || field === ImportTransactionReplaceRuleConditionFieldType.DescriptionNormalized) ? 'i' : undefined;
-            matched = new RegExp(conditionText, flags).test(descriptionText);
-        } catch {
-            matched = false;
-        }
-
+        const matched = !!condition.regex && condition.regex.test(descriptionText);
         return operator === ImportTransactionReplaceRuleConditionOperatorType.RegexMatch ? matched : !matched;
     }
 

@@ -212,7 +212,7 @@ func (a *TwoFactorAuthorizationsApi) TwoFactorEnableConfirmHandler(c *core.WebCo
 
 	log.Infof(c, "[twofactor_authorizations.TwoFactorEnableConfirmHandler] user \"uid:%d\" token refreshed, new token will be expired at %d", user.Uid, claims.ExpiresAt)
 
-	mapProxyToken, err := a.generateMapProxyToken(c, user.Uid, claims, tokenRecord)
+	mapProxyToken, err := a.generateMapProxyToken(c, a.tokens, claims, tokenRecord)
 
 	if err != nil {
 		return nil, errs.Or(err, errs.ErrOperationFailed)
@@ -343,27 +343,4 @@ func (a *TwoFactorAuthorizationsApi) TwoFactorRecoveryCodeRegenerateHandler(c *c
 	log.Infof(c, "[twofactor_authorizations.TwoFactorRecoveryCodeRegenerateHandler] user \"uid:%d\" has regenerated two-factor recovery codes", uid)
 
 	return recoveryCodesResp, nil
-}
-
-func (a *TwoFactorAuthorizationsApi) generateMapProxyToken(c *core.WebContext, uid int64, claims *core.UserTokenClaims, tokenRecord core.TokenRecord) (string, error) {
-	if claims == nil || claims.Type != core.USER_TOKEN_TYPE_NORMAL {
-		return "", nil
-	}
-
-	mapProxyEnabled := a.CurrentConfig().EnableMapDataFetchProxy && a.CurrentConfig().SupportMapDataFetchProxy
-	amapInternalProxyEnabled := a.CurrentConfig().MapProvider == settings.AmapProvider && a.CurrentConfig().AmapSecurityVerificationMethod == settings.AmapSecurityVerificationInternalProxyMethod
-
-	if !mapProxyEnabled && !amapInternalProxyEnabled {
-		return "", nil
-	}
-
-	token, _, err := a.tokens.DeriveMapProxyToken(c, claims, tokenRecord)
-
-	if err != nil {
-		log.Errorf(c, "[twofactor_authorizations.generateMapProxyToken] failed to derive map proxy token for user \"uid:%d\", because %s", uid, err.Error())
-		return "", errs.Or(err, errs.ErrOperationFailed)
-	}
-
-	c.SetTextualMapProxyToken(token)
-	return token, nil
 }

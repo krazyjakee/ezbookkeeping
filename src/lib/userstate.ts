@@ -188,7 +188,6 @@ export function getCurrentToken(): string | null {
             return sessionStorage.getItem(tokenSessionStorageKey);
         }
 
-        // re-decrypt token
         logger.warn(`encrypted token in local storage does not equal to the one in session storage, need to re-decrypt`);
 
         const appLockState = getUserAppLockState();
@@ -263,7 +262,6 @@ export function getCurrentUserInfo(): UserBasicInfo | null {
 
 export function updateCurrentUserInfo(user: UserBasicInfo): void {
     if (isObject(user)) {
-        // trim token in the user avatar url
         const storedUser = { ...user };
 
         if (storedUser.avatar && isString(storedUser.avatar)) {

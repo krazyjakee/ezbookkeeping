@@ -21,9 +21,6 @@ type ApiHandlerFunc func(*WebContext) (any, *errs.Error)
 // JSONRPCApiHandlerFunc represents the api handler function
 type JSONRPCApiHandlerFunc func(*WebContext, *JSONRPCRequest) (any, *errs.Error)
 
-// EventStreamApiHandlerFunc represents the event stream api handler function
-type EventStreamApiHandlerFunc func(*WebContext) *errs.Error
-
 // DataHandlerFunc represents the handler function that returns file data byte array and file name
 type DataHandlerFunc func(*WebContext) ([]byte, string, *errs.Error)
 

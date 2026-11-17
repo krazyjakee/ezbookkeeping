@@ -60,7 +60,6 @@ func toPostfixExprTokens(ctx core.Context, expr string) ([]string, error) {
 	for i := 0; i < len(expr); i++ {
 		ch := rune(expr[i])
 
-		// number
 		if '0' <= ch && ch <= '9' || ch == '.' {
 			currentNumberBuilder.WriteRune(ch)
 			continue
@@ -69,7 +68,6 @@ func toPostfixExprTokens(ctx core.Context, expr string) ([]string, error) {
 			continue
 		}
 
-		// operator or parenthesis
 		if currentNumberBuilder.Len() > 0 {
 			finalTokens = append(finalTokens, currentNumberBuilder.String())
 			currentNumberBuilder.Reset()
@@ -162,14 +160,12 @@ func evaluatePostfixExpr(ctx core.Context, tokens []string) (*big.Rat, error) {
 				return nil, errs.ErrInvalidAmountExpression
 			}
 
-			// pop the top two operands
 			b := stack[len(stack)-1]
 			stack = stack[:len(stack)-1]
 
 			a := stack[len(stack)-1]
 			stack = stack[:len(stack)-1]
 
-			// evaluate the operation
 			result := new(big.Rat)
 			switch token {
 			case "+":
@@ -186,7 +182,6 @@ func evaluatePostfixExpr(ctx core.Context, tokens []string) (*big.Rat, error) {
 				result.Quo(a, b)
 			}
 
-			// push the result back to the stack
 			stack = append(stack, result)
 		default: // operands
 			num, err := parseNumber(token)

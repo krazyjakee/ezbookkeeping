@@ -262,7 +262,6 @@ func (s *TransactionTemplateService) DeleteAllTemplates(c core.Context, uid int6
 }
 
 func (s *TransactionTemplateService) isTemplateValid(sess datastore.DatabaseSession, template *models.TransactionTemplate) error {
-	// check accounts are valid
 	sourceAccount := &models.Account{}
 	destinationAccount := &models.Account{}
 	has, err := sess.ID(template.AccountId).Where("uid=? AND deleted=?", template.Uid, false).Get(sourceAccount)
@@ -299,7 +298,6 @@ func (s *TransactionTemplateService) isTemplateValid(sess datastore.DatabaseSess
 		return errs.ErrCannotAddTransactionToParentAccount
 	}
 
-	// check category is valid
 	category := &models.TransactionCategory{}
 	has, err = sess.ID(template.CategoryId).Where("uid=? AND deleted=?", template.Uid, false).Get(category)
 
@@ -323,7 +321,6 @@ func (s *TransactionTemplateService) isTemplateValid(sess datastore.DatabaseSess
 		return errs.ErrTransactionCategoryTypeInvalid
 	}
 
-	// check tags are valid
 	tagIds := template.GetTagIds()
 	var tags []*models.TransactionTag
 	err = sess.Where("uid=? AND deleted=?", template.Uid, false).In("tag_id", tagIds).Find(&tags)

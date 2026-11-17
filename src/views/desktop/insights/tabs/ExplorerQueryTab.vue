@@ -532,10 +532,9 @@ import {
 
 import {
     type TransactionExplorerConditionWithRelation,
-    type TransactionExplorerCondition,
-    TransactionExplorerQuery,
-    TransactionExplorerGeoLocationCondition
+    TransactionExplorerQuery
 } from '@/models/explorer.ts';
+import { type TransactionExplorerCondition, TransactionExplorerGeoLocationCondition } from '@/models/explorer_condition.ts';
 
 import {
     isArray,

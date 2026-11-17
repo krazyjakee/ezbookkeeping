@@ -883,10 +883,6 @@ export interface TransactionStatisticAssetTrendsResponseDataItem {
     readonly accountClosingBalance: string;
 }
 
-export interface YearMonthDataItem extends Year1BasedMonth, Record<string, unknown> {}
-
-export interface YearMonthDayDataItem extends YearMonthDay, Record<string, unknown> {}
-
 export interface YearMonthItems<T extends Year1BasedMonth> extends Record<string, unknown> {
     readonly items: T[];
 }

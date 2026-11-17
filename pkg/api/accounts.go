@@ -119,24 +119,10 @@ func (a *AccountsApi) AccountGetHandler(c *core.WebContext) (any, *errs.Error) {
 		return nil, errs.Or(err, errs.ErrOperationFailed)
 	}
 
-	accountRespMap := make(map[int64]*models.AccountInfoResponse)
+	accountResp := getAccountInfoResponseWithSubAccounts(accountAndSubAccounts, accountGetReq.Id)
 
-	for i := 0; i < len(accountAndSubAccounts); i++ {
-		accountResp := accountAndSubAccounts[i].ToAccountInfoResponse()
-		accountRespMap[accountResp.Id] = accountResp
-	}
-
-	accountResp, exists := accountRespMap[accountGetReq.Id]
-
-	if !exists {
+	if accountResp == nil {
 		return nil, errs.ErrAccountNotFound
-	}
-
-	for i := 0; i < len(accountAndSubAccounts); i++ {
-		if accountAndSubAccounts[i].ParentAccountId == accountResp.Id {
-			subAccountResp := accountAndSubAccounts[i].ToAccountInfoResponse()
-			accountResp.SubAccounts = append(accountResp.SubAccounts, subAccountResp)
-		}
 	}
 
 	sort.Sort(accountResp.SubAccounts)
@@ -317,20 +303,10 @@ func (a *AccountsApi) AccountCreateHandler(c *core.WebContext) (any, *errs.Error
 					return nil, errs.Or(err, errs.ErrOperationFailed)
 				}
 
-				accountMap := a.accounts.GetAccountMapByList(accountAndSubAccounts)
-				mainAccount, exists := accountMap[accountId]
+				accountInfoResp := getAccountInfoResponseWithSubAccounts(accountAndSubAccounts, accountId)
 
-				if !exists {
+				if accountInfoResp == nil {
 					return nil, errs.ErrOperationFailed
-				}
-
-				accountInfoResp := mainAccount.ToAccountInfoResponse()
-
-				for i := 0; i < len(accountAndSubAccounts); i++ {
-					if accountAndSubAccounts[i].ParentAccountId == mainAccount.AccountId {
-						subAccountResp := accountAndSubAccounts[i].ToAccountInfoResponse()
-						accountInfoResp.SubAccounts = append(accountInfoResp.SubAccounts, subAccountResp)
-					}
 				}
 
 				return accountInfoResp, nil
@@ -641,20 +617,10 @@ func (a *AccountsApi) AccountModifyHandler(c *core.WebContext) (any, *errs.Error
 					return nil, errs.Or(err, errs.ErrOperationFailed)
 				}
 
-				accountMap := a.accounts.GetAccountMapByList(accountAndSubAccounts)
-				mainAccount, exists := accountMap[accountId]
+				accountInfoResp := getAccountInfoResponseWithSubAccounts(accountAndSubAccounts, accountId)
 
-				if !exists {
+				if accountInfoResp == nil {
 					return nil, errs.ErrOperationFailed
-				}
-
-				accountInfoResp := mainAccount.ToAccountInfoResponse()
-
-				for i := 0; i < len(accountAndSubAccounts); i++ {
-					if accountAndSubAccounts[i].ParentAccountId == mainAccount.AccountId {
-						subAccountResp := accountAndSubAccounts[i].ToAccountInfoResponse()
-						accountInfoResp.SubAccounts = append(accountInfoResp.SubAccounts, subAccountResp)
-					}
 				}
 
 				return accountInfoResp, nil
@@ -898,6 +864,28 @@ func (a *AccountsApi) SubAccountDeleteHandler(c *core.WebContext) (any, *errs.Er
 
 	log.Infof(c, "[accounts.SubAccountDeleteHandler] user \"uid:%d\" has deleted sub-account \"id:%d\"", uid, accountDeleteReq.Id)
 	return true, nil
+}
+
+// getAccountInfoResponseWithSubAccounts returns the view-object of the specified account with its sub-accounts,
+// or nil if the specified account is not in the list
+func getAccountInfoResponseWithSubAccounts(accountAndSubAccounts []*models.Account, accountId int64) *models.AccountInfoResponse {
+	for _, account := range accountAndSubAccounts {
+		if account.AccountId != accountId {
+			continue
+		}
+
+		accountResp := account.ToAccountInfoResponse()
+
+		for _, subAccount := range accountAndSubAccounts {
+			if subAccount.ParentAccountId == accountId {
+				accountResp.SubAccounts = append(accountResp.SubAccounts, subAccount.ToAccountInfoResponse())
+			}
+		}
+
+		return accountResp
+	}
+
+	return nil
 }
 
 func (a *AccountsApi) createNewAccountModel(uid int64, accountCreateReq *models.AccountCreateRequest, balance int64, creditLimitForCreditCard *int64, isSubAccount bool, order int32) *models.Account {

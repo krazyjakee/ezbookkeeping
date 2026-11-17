@@ -139,7 +139,7 @@ func (s *TokenService) CreateAPIToken(c *core.WebContext, user *models.User, exp
 	if expiresInSeconds > 0 {
 		tokenExpiredTimeDuration = time.Duration(expiresInSeconds) * time.Second
 	} else {
-		tokenExpiredTimeDuration = time.Unix(tokenMaxExpiredAtUnixTime, 0).Sub(time.Now())
+		tokenExpiredTimeDuration = time.Until(time.Unix(tokenMaxExpiredAtUnixTime, 0))
 	}
 
 	token, claims, _, err := s.createToken(c, user, core.USER_TOKEN_TYPE_API, s.getUserAgent(c), "", tokenExpiredTimeDuration)
@@ -153,7 +153,7 @@ func (s *TokenService) CreateAPITokenViaCli(c *core.CliContext, user *models.Use
 	if expiresInSeconds > 0 {
 		tokenExpiredTimeDuration = time.Duration(expiresInSeconds) * time.Second
 	} else {
-		tokenExpiredTimeDuration = time.Unix(tokenMaxExpiredAtUnixTime, 0).Sub(time.Now())
+		tokenExpiredTimeDuration = time.Until(time.Unix(tokenMaxExpiredAtUnixTime, 0))
 	}
 
 	token, _, tokenRecord, err := s.createToken(c, user, core.USER_TOKEN_TYPE_API, core.TokenUserAgentCreatedViaCli, "", tokenExpiredTimeDuration)
@@ -167,7 +167,7 @@ func (s *TokenService) CreateMCPToken(c *core.WebContext, user *models.User, exp
 	if expiresInSeconds > 0 {
 		tokenExpiredTimeDuration = time.Duration(expiresInSeconds) * time.Second
 	} else {
-		tokenExpiredTimeDuration = time.Unix(tokenMaxExpiredAtUnixTime, 0).Sub(time.Now())
+		tokenExpiredTimeDuration = time.Until(time.Unix(tokenMaxExpiredAtUnixTime, 0))
 	}
 
 	context := ""
@@ -195,7 +195,7 @@ func (s *TokenService) CreateMCPTokenViaCli(c *core.CliContext, user *models.Use
 	if expiresInSeconds > 0 {
 		tokenExpiredTimeDuration = time.Duration(expiresInSeconds) * time.Second
 	} else {
-		tokenExpiredTimeDuration = time.Unix(tokenMaxExpiredAtUnixTime, 0).Sub(time.Now())
+		tokenExpiredTimeDuration = time.Until(time.Unix(tokenMaxExpiredAtUnixTime, 0))
 	}
 
 	token, _, tokenRecord, err := s.createToken(c, user, core.USER_TOKEN_TYPE_MCP, core.TokenUserAgentCreatedViaCli, "", tokenExpiredTimeDuration)

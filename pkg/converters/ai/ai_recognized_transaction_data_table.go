@@ -98,7 +98,7 @@ func (t *aiRecognizedTransactionDataRowIterator) Next(ctx core.Context, user *mo
 	t.currentIndex++
 
 	data := t.dataTable.allData[t.currentIndex]
-	rowItems, err := t.parseTransaction(ctx, user, data)
+	rowItems, err := t.parseTransaction(data)
 
 	if err != nil {
 		log.Errorf(ctx, "[ai_recognized_transaction_data_table.Next] cannot parsing transaction in %s, because %s", t.CurrentRowId(), err.Error())
@@ -112,7 +112,7 @@ func (t *aiRecognizedTransactionDataRowIterator) Next(ctx core.Context, user *mo
 	}, nil
 }
 
-func (t *aiRecognizedTransactionDataRowIterator) parseTransaction(ctx core.Context, user *models.User, result *models.RecognizedTransactionResult) (map[datatable.TransactionDataTableColumn]string, error) {
+func (t *aiRecognizedTransactionDataRowIterator) parseTransaction(result *models.RecognizedTransactionResult) (map[datatable.TransactionDataTableColumn]string, error) {
 	data := make(map[datatable.TransactionDataTableColumn]string, len(aiTransactionSupportedColumns))
 	data[datatable.TRANSACTION_DATA_TABLE_TRANSACTION_TIME] = result.Time
 
@@ -140,24 +140,8 @@ func (t *aiRecognizedTransactionDataRowIterator) parseTransaction(ctx core.Conte
 	return data, nil
 }
 
-func (t *aiRecognizedTransactionDataRowIterator) getLongDateTime(dateTime string) string {
-	if utils.IsValidLongDateTimeFormat(dateTime) {
-		return dateTime
-	}
-
-	if utils.IsValidLongDateTimeWithoutSecondFormat(dateTime) {
-		return dateTime + ":00"
-	}
-
-	if utils.IsValidLongDateFormat(dateTime) {
-		return dateTime + " 00:00:00"
-	}
-
-	return dateTime
-}
-
 func createNewAIRecognizedTransactionDataTable(recognizedTransactions []*models.RecognizedTransactionResult) (*aiRecognizedTransactionDataTable, error) {
-	if recognizedTransactions == nil || len(recognizedTransactions) < 1 {
+	if len(recognizedTransactions) < 1 {
 		return nil, errs.ErrNotFoundTransactionDataInFile
 	}
 

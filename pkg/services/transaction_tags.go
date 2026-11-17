@@ -1,6 +1,7 @@
 package services
 
 import (
+	"slices"
 	"strings"
 	"time"
 
@@ -13,6 +14,9 @@ import (
 )
 
 const pageCountForLoadAllTransactionTagIndexes = 1000
+
+// transactionIdsQueryChunkSize is the maximum count of transaction ids in one "IN" condition, which keeps queries below the bound variable limits of databases
+const transactionIdsQueryChunkSize = 1000
 
 // TransactionTagService represents transaction tag service
 type TransactionTagService struct {
@@ -184,7 +188,17 @@ func (s *TransactionTagService) GetAllTagIdsOfTransactions(c core.Context, uid i
 	}
 
 	var tagIndexes []*models.TransactionTagIndex
-	err := s.UserDataDB(uid).NewSession(c).Where("uid=? AND deleted=?", uid, false).In("transaction_id", transactionIds).OrderBy("transaction_id asc, tag_index_id asc").Find(&tagIndexes)
+	var err error
+
+	for chunk := range slices.Chunk(utils.ToUniqueInt64Slice(transactionIds), transactionIdsQueryChunkSize) {
+		var chunkTagIndexes []*models.TransactionTagIndex
+		err = s.UserDataDB(uid).NewSession(c).Where("uid=? AND deleted=?", uid, false).In("transaction_id", chunk).OrderBy("transaction_id asc, tag_index_id asc").Find(&chunkTagIndexes)
+		tagIndexes = append(tagIndexes, chunkTagIndexes...)
+
+		if err != nil {
+			break
+		}
+	}
 
 	allTransactionTagIds := s.GetGroupedTransactionTagIds(tagIndexes)
 

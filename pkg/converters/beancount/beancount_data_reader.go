@@ -163,7 +163,7 @@ func (r *beancountDataReader) read(ctx core.Context) (*beancountData, error) {
 				directive == string(beancountDirectiveCompletedTransaction) ||
 				directive == string(beancountDirectiveInCompleteTransaction) ||
 				directive == string(beancountDirectivePaddingTransaction) {
-				currentTransactionEntry = r.readTransactionLine(ctx, recordId, items, firstItem, beancountDirective(directive), currentTags)
+				currentTransactionEntry = r.readTransactionLine(items, firstItem, beancountDirective(directive), currentTags)
 			} else if directive == string(beancountDirectiveCommodity) ||
 				directive == string(beancountDirectivePrice) ||
 				directive == string(beancountDirectiveNote) ||
@@ -233,22 +233,16 @@ func (r *beancountDataReader) readAndSetOption(ctx core.Context, recordId string
 	switch optionName {
 	case beancountOptionAssetsAccountTypeName:
 		r.setAccountTypeNameMap(beancountAssetsAccountType, optionValue)
-		break
 	case beancountOptionLiabilitiesAccountTypeName:
 		r.setAccountTypeNameMap(beancountLiabilitiesAccountType, optionValue)
-		break
 	case beancountOptionEquityAccountTypeName:
 		r.setAccountTypeNameMap(beancountEquityAccountType, optionValue)
-		break
 	case beancountOptionIncomeAccountTypeName:
 		r.setAccountTypeNameMap(beancountIncomeAccountType, optionValue)
-		break
 	case beancountOptionExpenseAccountTypeName:
 		r.setAccountTypeNameMap(beancountExpensesAccountType, optionValue)
-		break
 	default:
 		log.Warnf(ctx, "[beancount_data_reader.readAndSetOption] skip option %s \"%s\"", recordId, strings.Join(items, " "))
-		break
 	}
 }
 
@@ -444,7 +438,7 @@ func (r *beancountDataReader) createAccount(ctx core.Context, recordId string, d
 	return account, nil
 }
 
-func (r *beancountDataReader) readTransactionLine(ctx core.Context, recordId string, items []string, date string, directive beancountDirective, tags []string) *beancountTransactionEntry {
+func (r *beancountDataReader) readTransactionLine(items []string, date string, directive beancountDirective, tags []string) *beancountTransactionEntry {
 	transactionEntry := &beancountTransactionEntry{
 		Date:      date,
 		Directive: directive,
@@ -465,7 +459,6 @@ func (r *beancountDataReader) readTransactionLine(ctx core.Context, recordId str
 	payeeNarrationFirstIndex := 2
 	payeeNarrationLastIndex := len(items) - 1
 
-	// parse remain items
 	for i := payeeNarrationFirstIndex; i < len(items); i++ {
 		item := items[i]
 
@@ -573,7 +566,6 @@ func (r *beancountDataReader) readTransactionPostingLine(ctx core.Context, recor
 		return nil, errs.NewImportError(errs.ErrInvalidBeancountFile, recordId, transactionPositing.Commodity)
 	}
 
-	// parse remain items
 	if commodityActualIndex > 0 {
 		for i := commodityActualIndex + 1; i < len(items); i++ {
 			item := items[i]

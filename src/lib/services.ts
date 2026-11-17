@@ -238,6 +238,19 @@ interface ApiRequestConfig extends AxiosRequestConfig {
 
 export type ApiResponsePromise<T> = Promise<AxiosResponse<ApiResponse<T>>>;
 
+// the server error response if any, otherwise the fallback message (an i18n key) unless the error was already processed
+export function toStoreError(error: unknown, fallbackMessage: string): unknown {
+    const err = error as { response?: { data?: { errorMessage?: string } }, processed?: boolean };
+
+    if (err.response && err.response.data && err.response.data.errorMessage) {
+        return { error: err.response.data };
+    } else if (!err.processed) {
+        return { message: fallbackMessage };
+    } else {
+        return error;
+    }
+}
+
 let refreshingTokenPromise: ApiResponsePromise<TokenRefreshResponse> | null = null;
 const blockedRequests: ((token: string | null) => void)[] = [];
 const cancelableRequests: Record<string, boolean> = {};

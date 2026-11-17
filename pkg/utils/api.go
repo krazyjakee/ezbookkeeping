@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"encoding/json/v2"
 	"errors"
 	"net/http"
 	"reflect"
@@ -101,57 +100,6 @@ func PrintDataErrorResult(c *core.WebContext, contentType string, err *errs.Erro
 	c.SetResponseError(err)
 	c.Data(err.HttpStatusCode, contentType, []byte(GetDisplayErrorMessage(err)))
 	c.Abort()
-}
-
-// SetEventStreamHeader sets the headers for event stream response
-func SetEventStreamHeader(c *core.WebContext) {
-	c.Writer.Header().Set("Content-Type", "text/event-stream")
-	c.Writer.Header().Set("Cache-Control", "no-cache")
-	c.Writer.Header().Set("Connection", "keep-alive")
-}
-
-func WriteEventStreamJsonSuccessResult(c *core.WebContext, result any) {
-	data, err := json.Marshal(result)
-
-	if err != nil {
-		c.Abort()
-		return
-	}
-
-	_, err = c.Writer.WriteString("data: " + string(data) + "\n\n")
-
-	if err != nil {
-		c.Abort()
-		return
-	}
-
-	c.Writer.Flush()
-}
-
-func WriteEventStreamJsonErrorResult(c *core.WebContext, originalErr *errs.Error) {
-	c.SetResponseError(originalErr)
-
-	result := GetJsonErrorResult(originalErr, c.Request.URL.Path)
-
-	if originalErr.Context != nil {
-		result["context"] = originalErr.Context
-	}
-
-	data, err := json.Marshal(result)
-
-	if err != nil {
-		c.Abort()
-		return
-	}
-
-	_, err = c.Writer.WriteString("data: " + string(data) + "\n\n")
-
-	if err != nil {
-		c.Abort()
-		return
-	}
-
-	c.Writer.Flush()
 }
 
 func getValidationErrorText(err validator.FieldError) string {

@@ -40,7 +40,6 @@ func (t *SubBasicDataTable) DataRowIterator() BasicDataTableRowIterator {
 	innerIterator := t.baseTable.DataRowIterator()
 	currentIndex := -1
 
-	// skip rows until reaching the fromIndex
 	for currentIndex = -1; currentIndex < t.fromIndex-1 && innerIterator.HasNext(); currentIndex++ {
 		innerIterator.Next()
 	}

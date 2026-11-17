@@ -5,6 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/binary"
+	"encoding/hex"
 	"math"
 	"net/http/httptest"
 	"strings"
@@ -1054,8 +1055,9 @@ func TestParseToken_LegacyHexRejected(t *testing.T) {
 	_ = binary.Write(buf, binary.BigEndian, record.UserTokenId)
 	_ = binary.Write(buf, binary.BigEndian, record.CreatedUnixTime)
 	_ = binary.Write(buf, binary.BigEndian, record.TokenType)
-	ciphertext, err := utils.EncryptSecretToHex(buf.String(), service.CurrentConfig().SecretKey)
+	legacyCiphertext, err := utils.AESGCMEncrypt(utils.MD5Encode([]byte(service.CurrentConfig().SecretKey)), buf.Bytes())
 	assert.Equal(t, nil, err)
+	ciphertext := hex.EncodeToString(legacyCiphertext)
 
 	actualIdentity, actualSignature, encryptedData, err := service.parseEncryptedTokenId(c, []string{"ebk", "ak", ciphertext})
 	assert.Equal(t, errs.ErrCurrentInvalidToken, err)

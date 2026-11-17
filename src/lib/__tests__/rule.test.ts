@@ -220,4 +220,43 @@ describe('rule', () => {
         expect(selected.destinationAccountId).toBe('0');
         expect(unselected.type).toBe(TransactionType.Transfer);
     });
+
+    test('should match description regex with the case sensitivity of the field and treat invalid patterns as not matched', () => {
+        const cases: [ImportTransactionReplaceRuleConditionFieldType, ImportTransactionReplaceRuleConditionOperatorType, string, boolean][] = [
+            [ImportTransactionReplaceRuleConditionFieldType.Description, ImportTransactionReplaceRuleConditionOperatorType.RegexMatch, '^Café PAY', true],
+            [ImportTransactionReplaceRuleConditionFieldType.Description, ImportTransactionReplaceRuleConditionOperatorType.RegexMatch, '^café', false],
+            [ImportTransactionReplaceRuleConditionFieldType.Description, ImportTransactionReplaceRuleConditionOperatorType.NotRegexMatch, '^café', true],
+            [ImportTransactionReplaceRuleConditionFieldType.DescriptionCaseInsensitive, ImportTransactionReplaceRuleConditionOperatorType.RegexMatch, 'PAYMENT$', true],
+            [ImportTransactionReplaceRuleConditionFieldType.DescriptionCaseInsensitive, ImportTransactionReplaceRuleConditionOperatorType.RegexMatch, '^cafe', false],
+            [ImportTransactionReplaceRuleConditionFieldType.DescriptionNormalized, ImportTransactionReplaceRuleConditionOperatorType.RegexMatch, '^CAFE PAY', true],
+            [ImportTransactionReplaceRuleConditionFieldType.Description, ImportTransactionReplaceRuleConditionOperatorType.RegexMatch, '(', false],
+            [ImportTransactionReplaceRuleConditionFieldType.Description, ImportTransactionReplaceRuleConditionOperatorType.NotRegexMatch, '(', true],
+            [ImportTransactionReplaceRuleConditionFieldType.DescriptionNormalized, ImportTransactionReplaceRuleConditionOperatorType.NotRegexMatch, '[', true]
+        ];
+
+        for (const [field, operator, pattern, expected] of cases) {
+            const transactions = [createTransaction(TransactionType.Expense), createTransaction(TransactionType.Expense)];
+            const rule = createRule(field, operator, pattern, ImportTransactionReplaceRuleActionType.SetExpenseCategory, 'expense-category');
+
+            const result = applyImportTransactionReplaceRules(transactions, [rule], 'all', createContext());
+
+            expect(result.matchedTransactionCount, `${field} ${operator} ${pattern}`).toBe(expected ? 2 : 0);
+            expect(transactions[1]?.categoryId).toBe(expected ? 'expense-category' : 'old-category');
+        }
+    });
+
+    test('should skip rules whose target is invalid', () => {
+        const transaction = createTransaction(TransactionType.Expense);
+        const rules = [
+            createRule(ImportTransactionReplaceRuleConditionFieldType.Description, ImportTransactionReplaceRuleConditionOperatorType.Contains,
+                'PAYMENT', ImportTransactionReplaceRuleActionType.SetTimezone, 'Not/A_Timezone'),
+            createRule(ImportTransactionReplaceRuleConditionFieldType.Description, ImportTransactionReplaceRuleConditionOperatorType.Contains,
+                'PAYMENT', ImportTransactionReplaceRuleActionType.SetExpenseCategory, 'missing-category')
+        ];
+
+        const result = applyImportTransactionReplaceRules([transaction], rules, 'all', createContext());
+
+        expect(result.matchedTransactionCount).toBe(0);
+        expect(transaction.categoryId).toBe('old-category');
+    });
 });

@@ -221,7 +221,7 @@ func (t *iifTransactionDataRowIterator) Next(ctx core.Context, user *models.User
 		}
 	}
 
-	rowItems, err := t.parseTransaction(ctx, user, currentDataset, data, t.currentSplitDataIndex)
+	rowItems, err := t.parseTransaction(ctx, currentDataset, data, t.currentSplitDataIndex)
 
 	if err != nil {
 		log.Errorf(ctx, "[iif_transaction_data_table.Next] cannot parsing transaction in %s, because %s", t.CurrentRowId(), err.Error())
@@ -234,7 +234,7 @@ func (t *iifTransactionDataRowIterator) Next(ctx core.Context, user *models.User
 	}, nil
 }
 
-func (t *iifTransactionDataRowIterator) parseTransaction(ctx core.Context, user *models.User, dataset *iifTransactionDataset, transactionData *iifTransactionData, splitDataIndex int) (map[datatable.TransactionDataTableColumn]string, error) {
+func (t *iifTransactionDataRowIterator) parseTransaction(ctx core.Context, dataset *iifTransactionDataset, transactionData *iifTransactionData, splitDataIndex int) (map[datatable.TransactionDataTableColumn]string, error) {
 	var err error
 
 	data := make(map[datatable.TransactionDataTableColumn]string, len(iifTransactionSupportedColumns))
@@ -470,7 +470,7 @@ func (t *iifTransactionDataRowIterator) parseTransactionTime(dataset *iifTransac
 	return utils.FormatYearMonthDayToLongDateTime(year, month, day)
 }
 
-func createNewIIfTransactionDataTable(ctx core.Context, accountDatasets []*iifAccountDataset, transactionDatasets []*iifTransactionDataset) (*iifTransactionDataTable, error) {
+func createNewIIfTransactionDataTable(accountDatasets []*iifAccountDataset, transactionDatasets []*iifTransactionDataset) (*iifTransactionDataTable, error) {
 	if len(transactionDatasets) < 1 {
 		return nil, errs.ErrNotFoundTransactionDataInFile
 	}

@@ -35,7 +35,6 @@ func (p *fireflyIIITransactionDataRowParser) Parse(data map[datatable.Transactio
 		}
 	}
 
-	// parse long date time and timezone
 	if rowData[datatable.TRANSACTION_DATA_TABLE_TRANSACTION_TIME] != "" {
 		dateTime, err := utils.ParseFromLongDateTimeWithTimezoneRFC3339Format(rowData[datatable.TRANSACTION_DATA_TABLE_TRANSACTION_TIME])
 
@@ -47,7 +46,6 @@ func (p *fireflyIIITransactionDataRowParser) Parse(data map[datatable.Transactio
 		rowData[datatable.TRANSACTION_DATA_TABLE_TRANSACTION_TIMEZONE] = utils.FormatTimezoneOffset(dateTime.Unix(), dateTime.Location())
 	}
 
-	// trim trailing zero in decimal
 	if rowData[datatable.TRANSACTION_DATA_TABLE_AMOUNT] != "" {
 		rowData[datatable.TRANSACTION_DATA_TABLE_AMOUNT] = utils.TrimTrailingZerosInDecimal(rowData[datatable.TRANSACTION_DATA_TABLE_AMOUNT])
 		amount, err := utils.ParseAmount(rowData[datatable.TRANSACTION_DATA_TABLE_AMOUNT])

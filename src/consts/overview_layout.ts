@@ -8,6 +8,7 @@ import {
     type OverviewWidgetSwitchSettingItem,
     type OverviewWidgetColorSettingItem,
     type OverviewWidgetTextboxSettingItem,
+    type OverviewWidgetSettingItem,
     type DesktopOverviewLayout,
     type DesktopOverviewWidgetDefinition,
     type MobileOverviewLayout,
@@ -55,6 +56,186 @@ const WIDGET_BACKGROUND_COLOR_SETTINGS: OverviewWidgetColorSettingItem[] = [
     }
 ];
 
+const ACCOUNT_BALANCE_LIST_SORT_AND_DISPLAY_SETTINGS: OverviewWidgetSettingItem[] = [
+    {
+        settingType: 'customSelect',
+        settingName: 'sortBy',
+        displayName: 'Sort By',
+        selectValues: [
+            {
+                name: 'Display Order',
+                value: 'displayOrder'
+            },
+            {
+                name: 'Balance',
+                value: 'balance'
+            }
+        ]
+    },
+    {
+        settingType: 'switch',
+        settingName: 'alwaysShowAmount',
+        displayName: 'Always Show Amount'
+    },
+    {
+        settingType: 'switch',
+        settingName: 'showAvailableCreditForCreditCard',
+        displayName: 'Show Available Credit for Credit Cards'
+    }
+];
+
+const ACCOUNT_UNRECONCILED_TRANSACTIONS_SORT_SETTING: OverviewWidgetSettingItem = {
+    settingType: 'customSelect',
+    settingName: 'sortBy',
+    displayName: 'Sort By',
+    selectValues: [
+        {
+            name: 'Display Order',
+            value: 'displayOrder'
+        },
+        {
+            name: 'Transaction Count',
+            value: 'transactionCount'
+        }
+    ]
+};
+
+const PERIOD_NET_INCOME_AND_SAVINGS_RATE_DATE_RANGE_SETTING: OverviewWidgetSettingItem = {
+    settingType: 'customSelect',
+    settingName: 'dateRange',
+    displayName: 'Date Range',
+    selectValues: [
+        DateRange.Today,
+        DateRange.ThisWeek,
+        DateRange.ThisMonth,
+        DateRange.ThisYear
+    ].map(dateRange => ({
+        name: dateRange.name,
+        value: dateRange.type
+    }))
+};
+
+const EXPENSE_CATEGORY_RANKING_FILTER_SETTINGS: OverviewWidgetSettingItem[] = [
+    {
+        settingType: 'customSelect',
+        settingName: 'dateRange',
+        displayName: 'Date Range',
+        selectValues: [
+            DateRange.ThisMonth,
+            DateRange.ThisYear
+        ].map(dateRange => ({
+            name: dateRange.name,
+            value: dateRange.type
+        }))
+    },
+    {
+        settingType: 'customSelect',
+        settingName: 'categoryLevel',
+        displayName: 'Category Level',
+        selectValues: [
+            {
+                name: 'Primary Category',
+                value: 'primary'
+            },
+            {
+                name: 'Secondary Category',
+                value: 'secondary'
+            }
+        ]
+    }
+];
+
+const RECENT_TRANSACTIONS_FILTER_SETTINGS: OverviewWidgetSettingItem[] = [
+    {
+        settingType: 'accountSelect',
+        settingName: 'accountIds',
+        displayName: 'Account'
+    },
+    {
+        settingType: 'categorySelect',
+        settingName: 'categoryIds',
+        displayName: 'Category'
+    },
+    {
+        settingType: 'tagSelect',
+        settingName: 'tagFilter',
+        displayName: 'Tags'
+    },
+    {
+        settingType: 'amountFilter',
+        settingName: 'amountFilter',
+        displayName: 'Amount'
+    },
+    {
+        settingType: 'textbox',
+        settingName: 'keyword',
+        displayName: 'Description',
+        placeholder: 'Filter Description'
+    }
+];
+
+const TRANSACTION_CALENDAR_SETTINGS: OverviewWidgetSettingItem[] = [
+    {
+        settingType: 'customSelect',
+        settingName: 'totalAmountType',
+        displayName: 'Total Amount Calculation Method',
+        selectValues: [
+            { name: 'Inflows and Outflows', value: TransactionAmountType.InflowsAndOutflows },
+            { name: 'Income and Expense', value: TransactionAmountType.IncomeAndExpense }
+        ]
+    },
+    {
+        settingType: 'customSelect',
+        settingName: 'transactionTypes',
+        displayName: 'Transaction Type',
+        condition: (settings?: Record<string, OverviewWidgetSettingValue>) => {
+            return settings?.['totalAmountType'] === TransactionAmountType.InflowsAndOutflows;
+        },
+        selectValues: [
+            {
+                name: 'Inflow',
+                value: TransactionType.Income
+            },
+            {
+                name: 'Outflow',
+                value: TransactionType.Expense
+            }
+        ],
+        multiple: true,
+        minSelections: 1
+    },
+    {
+        settingType: 'customSelect',
+        settingName: 'transactionTypes',
+        displayName: 'Transaction Type',
+        condition: (settings?: Record<string, OverviewWidgetSettingValue>) => {
+            return settings?.['totalAmountType'] === TransactionAmountType.IncomeAndExpense;
+        },
+        selectValues: [
+            {
+                name: 'Income',
+                value: TransactionType.Income
+            },
+            {
+                name: 'Expense',
+                value: TransactionType.Expense
+            }
+        ],
+        multiple: true,
+        minSelections: 1
+    },
+    {
+        settingType: 'switch',
+        settingName: 'showAlternateDate',
+        displayName: 'Show Alternate Date'
+    },
+    {
+        settingType: 'switch',
+        settingName: 'showAmount',
+        displayName: 'Show Amount'
+    }
+];
+
 export const DESKTOP_OVERVIEW_WIDGET_DEFINITIONS: PartialRecord<OverviewWidgetType, DesktopOverviewWidgetDefinition> = {
     [OverviewWidgetType.AssetSummary]: {
         type: OverviewWidgetType.AssetSummary,
@@ -88,31 +269,7 @@ export const DESKTOP_OVERVIEW_WIDGET_DEFINITIONS: PartialRecord<OverviewWidgetTy
                 displayName: 'Item Count',
                 itemCountValues: [3, 4, 5, 6, 7, 8, 9, 10]
             },
-            {
-                settingType: 'customSelect',
-                settingName: 'sortBy',
-                displayName: 'Sort By',
-                selectValues: [
-                    {
-                        name: 'Display Order',
-                        value: 'displayOrder'
-                    },
-                    {
-                        name: 'Balance',
-                        value: 'balance'
-                    }
-                ]
-            },
-            {
-                settingType: 'switch',
-                settingName: 'alwaysShowAmount',
-                displayName: 'Always Show Amount'
-            },
-            {
-                settingType: 'switch',
-                settingName: 'showAvailableCreditForCreditCard',
-                displayName: 'Show Available Credit for Credit Cards'
-            }
+            ...ACCOUNT_BALANCE_LIST_SORT_AND_DISPLAY_SETTINGS
         ],
         defaultSettings: {
             accountIds: [],
@@ -146,21 +303,7 @@ export const DESKTOP_OVERVIEW_WIDGET_DEFINITIONS: PartialRecord<OverviewWidgetTy
                 displayName: 'Item Count',
                 itemCountValues: [3, 4, 5, 6, 7, 8, 9, 10]
             },
-            {
-                settingType: 'customSelect',
-                settingName: 'sortBy',
-                displayName: 'Sort By',
-                selectValues: [
-                    {
-                        name: 'Display Order',
-                        value: 'displayOrder'
-                    },
-                    {
-                        name: 'Transaction Count',
-                        value: 'transactionCount'
-                    }
-                ]
-            }
+            ACCOUNT_UNRECONCILED_TRANSACTIONS_SORT_SETTING
         ],
         defaultSettings: {
             accountIds: [],
@@ -240,20 +383,7 @@ export const DESKTOP_OVERVIEW_WIDGET_DEFINITIONS: PartialRecord<OverviewWidgetTy
         name: 'Period Net Income and Savings Rate',
         supportsSettings: [
             WIDGET_TITLE_SETTING,
-            {
-                settingType: 'customSelect',
-                settingName: 'dateRange',
-                displayName: 'Date Range',
-                selectValues: [
-                    DateRange.Today,
-                    DateRange.ThisWeek,
-                    DateRange.ThisMonth,
-                    DateRange.ThisYear
-                ].map(dateRange => ({
-                    name: dateRange.name,
-                    value: dateRange.type
-                }))
-            }
+            PERIOD_NET_INCOME_AND_SAVINGS_RATE_DATE_RANGE_SETTING
         ],
         defaultSettings: {
             dateRange: DateRange.ThisMonth.type
@@ -394,33 +524,7 @@ export const DESKTOP_OVERVIEW_WIDGET_DEFINITIONS: PartialRecord<OverviewWidgetTy
         name: 'Expense Category Ranking',
         supportsSettings: [
             WIDGET_TITLE_SETTING,
-            {
-                settingType: 'customSelect',
-                settingName: 'dateRange',
-                displayName: 'Date Range',
-                selectValues: [
-                    DateRange.ThisMonth,
-                    DateRange.ThisYear
-                ].map(dateRange => ({
-                    name: dateRange.name,
-                    value: dateRange.type
-                }))
-            },
-            {
-                settingType: 'customSelect',
-                settingName: 'categoryLevel',
-                displayName: 'Category Level',
-                selectValues: [
-                    {
-                        name: 'Primary Category',
-                        value: 'primary'
-                    },
-                    {
-                        name: 'Secondary Category',
-                        value: 'secondary'
-                    }
-                ]
-            },
+            ...EXPENSE_CATEGORY_RANKING_FILTER_SETTINGS,
             {
                 settingType: 'itemCountSelect',
                 settingName: 'itemCount',
@@ -454,33 +558,7 @@ export const DESKTOP_OVERVIEW_WIDGET_DEFINITIONS: PartialRecord<OverviewWidgetTy
                 displayName: 'Item Count',
                 itemCountValues: [3, 4, 5, 6, 7, 8, 9, 10]
             },
-            {
-
-                settingType: 'accountSelect',
-                settingName: 'accountIds',
-                displayName: 'Account'
-            },
-            {
-                settingType: 'categorySelect',
-                settingName: 'categoryIds',
-                displayName: 'Category'
-            },
-            {
-                settingType: 'tagSelect',
-                settingName: 'tagFilter',
-                displayName: 'Tags'
-            },
-            {
-                settingType: 'amountFilter',
-                settingName: 'amountFilter',
-                displayName: 'Amount'
-            },
-            {
-                settingType: 'textbox',
-                settingName: 'keyword',
-                displayName: 'Description',
-                placeholder: 'Filter Description'
-            }
+            ...RECENT_TRANSACTIONS_FILTER_SETTINGS
         ],
         defaultSettings: {
             itemCount: RECENT_TRANSACTIONS_WIDGET_DEFAULT_ITEM_COUNT,
@@ -503,65 +581,7 @@ export const DESKTOP_OVERVIEW_WIDGET_DEFINITIONS: PartialRecord<OverviewWidgetTy
         name: 'Transaction Calendar',
         supportsSettings: [
             WIDGET_TITLE_SETTING,
-            {
-                settingType: 'customSelect',
-                settingName: 'totalAmountType',
-                displayName: 'Total Amount Calculation Method',
-                selectValues: [
-                    { name: 'Inflows and Outflows', value: TransactionAmountType.InflowsAndOutflows },
-                    { name: 'Income and Expense', value: TransactionAmountType.IncomeAndExpense }
-                ]
-            },
-            {
-                settingType: 'customSelect',
-                settingName: 'transactionTypes',
-                displayName: 'Transaction Type',
-                condition: (settings?: Record<string, OverviewWidgetSettingValue>) => {
-                    return settings?.['totalAmountType'] === TransactionAmountType.InflowsAndOutflows;
-                },
-                selectValues: [
-                    {
-                        name: 'Inflow',
-                        value: TransactionType.Income
-                    },
-                    {
-                        name: 'Outflow',
-                        value: TransactionType.Expense
-                    }
-                ],
-                multiple: true,
-                minSelections: 1
-            },
-            {
-                settingType: 'customSelect',
-                settingName: 'transactionTypes',
-                displayName: 'Transaction Type',
-                condition: (settings?: Record<string, OverviewWidgetSettingValue>) => {
-                    return settings?.['totalAmountType'] === TransactionAmountType.IncomeAndExpense;
-                },
-                selectValues: [
-                    {
-                        name: 'Income',
-                        value: TransactionType.Income
-                    },
-                    {
-                        name: 'Expense',
-                        value: TransactionType.Expense
-                    }
-                ],
-                multiple: true,
-                minSelections: 1
-            },
-            {
-                settingType: 'switch',
-                settingName: 'showAlternateDate',
-                displayName: 'Show Alternate Date'
-            },
-            {
-                settingType: 'switch',
-                settingName: 'showAmount',
-                displayName: 'Show Amount'
-            }
+            ...TRANSACTION_CALENDAR_SETTINGS
         ],
         defaultSettings: {
             totalAmountType: TransactionAmountType.InflowsAndOutflows,
@@ -832,31 +852,7 @@ export const MOBILE_OVERVIEW_WIDGET_DEFINITIONS: PartialRecord<OverviewWidgetTyp
                 displayName: 'Item Count',
                 itemCountValues: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
             },
-            {
-                settingType: 'customSelect',
-                settingName: 'sortBy',
-                displayName: 'Sort By',
-                selectValues: [
-                    {
-                        name: 'Display Order',
-                        value: 'displayOrder'
-                    },
-                    {
-                        name: 'Balance',
-                        value: 'balance'
-                    }
-                ]
-            },
-            {
-                settingType: 'switch',
-                settingName: 'alwaysShowAmount',
-                displayName: 'Always Show Amount'
-            },
-            {
-                settingType: 'switch',
-                settingName: 'showAvailableCreditForCreditCard',
-                displayName: 'Show Available Credit for Credit Cards'
-            }
+            ...ACCOUNT_BALANCE_LIST_SORT_AND_DISPLAY_SETTINGS
         ],
         defaultSettings: {
             showTitle: false,
@@ -888,21 +884,7 @@ export const MOBILE_OVERVIEW_WIDGET_DEFINITIONS: PartialRecord<OverviewWidgetTyp
                 displayName: 'Item Count',
                 itemCountValues: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
             },
-            {
-                settingType: 'customSelect',
-                settingName: 'sortBy',
-                displayName: 'Sort By',
-                selectValues: [
-                    {
-                        name: 'Display Order',
-                        value: 'displayOrder'
-                    },
-                    {
-                        name: 'Transaction Count',
-                        value: 'transactionCount'
-                    }
-                ]
-            },
+            ACCOUNT_UNRECONCILED_TRANSACTIONS_SORT_SETTING,
             {
                 settingType: 'switch',
                 settingName: 'hideWhenEmpty',
@@ -998,17 +980,7 @@ export const MOBILE_OVERVIEW_WIDGET_DEFINITIONS: PartialRecord<OverviewWidgetTyp
         supportsSettings: [
             WIDGET_TITLE_SETTING,
             WIDGET_SHOW_TITLE_SETTING,
-            {
-                settingType: 'customSelect',
-                settingName: 'dateRange',
-                displayName: 'Date Range',
-                selectValues: [
-                    DateRange.Today,
-                    DateRange.ThisWeek,
-                    DateRange.ThisMonth,
-                    DateRange.ThisYear
-                ].map(dateRange => ({ name: dateRange.name, value: dateRange.type }))
-            }
+            PERIOD_NET_INCOME_AND_SAVINGS_RATE_DATE_RANGE_SETTING
         ],
         defaultSettings: {
             showTitle: false,
@@ -1024,33 +996,7 @@ export const MOBILE_OVERVIEW_WIDGET_DEFINITIONS: PartialRecord<OverviewWidgetTyp
         supportsSettings: [
             WIDGET_TITLE_SETTING,
             WIDGET_SHOW_TITLE_SETTING,
-            {
-                settingType: 'customSelect',
-                settingName: 'dateRange',
-                displayName: 'Date Range',
-                selectValues: [
-                    DateRange.ThisMonth,
-                    DateRange.ThisYear
-                ].map(dateRange => ({
-                    name: dateRange.name,
-                    value: dateRange.type
-                }))
-            },
-            {
-                settingType: 'customSelect',
-                settingName: 'categoryLevel',
-                displayName: 'Category Level',
-                selectValues: [
-                    {
-                        name: 'Primary Category',
-                        value: 'primary'
-                    },
-                    {
-                        name: 'Secondary Category',
-                        value: 'secondary'
-                    }
-                ]
-            },
+            ...EXPENSE_CATEGORY_RANKING_FILTER_SETTINGS,
             {
                 settingType: 'itemCountSelect',
                 settingName: 'itemCount',
@@ -1082,32 +1028,7 @@ export const MOBILE_OVERVIEW_WIDGET_DEFINITIONS: PartialRecord<OverviewWidgetTyp
                 displayName: 'Item Count',
                 itemCountValues: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
             },
-            {
-                settingType: 'accountSelect',
-                settingName: 'accountIds',
-                displayName: 'Account'
-            },
-            {
-                settingType: 'categorySelect',
-                settingName: 'categoryIds',
-                displayName: 'Category'
-            },
-            {
-                settingType: 'tagSelect',
-                settingName: 'tagFilter',
-                displayName: 'Tags'
-            },
-            {
-                settingType: 'amountFilter',
-                settingName: 'amountFilter',
-                displayName: 'Amount'
-            },
-            {
-                settingType: 'textbox',
-                settingName: 'keyword',
-                displayName: 'Description',
-                placeholder: 'Filter Description'
-            }
+            ...RECENT_TRANSACTIONS_FILTER_SETTINGS
         ],
         defaultSettings: {
             showTitle: false,
@@ -1126,65 +1047,7 @@ export const MOBILE_OVERVIEW_WIDGET_DEFINITIONS: PartialRecord<OverviewWidgetTyp
         type: OverviewWidgetType.TransactionCalendar,
         name: 'Transaction Calendar',
         supportsSettings: [
-            {
-                settingType: 'customSelect',
-                settingName: 'totalAmountType',
-                displayName: 'Total Amount Calculation Method',
-                selectValues: [
-                    { name: 'Inflows and Outflows', value: TransactionAmountType.InflowsAndOutflows },
-                    { name: 'Income and Expense', value: TransactionAmountType.IncomeAndExpense }
-                ]
-            },
-            {
-                settingType: 'customSelect',
-                settingName: 'transactionTypes',
-                displayName: 'Transaction Type',
-                condition: (settings?: Record<string, OverviewWidgetSettingValue>) => {
-                    return settings?.['totalAmountType'] === TransactionAmountType.InflowsAndOutflows;
-                },
-                selectValues: [
-                    {
-                        name: 'Inflow',
-                        value: TransactionType.Income
-                    },
-                    {
-                        name: 'Outflow',
-                        value: TransactionType.Expense
-                    }
-                ],
-                multiple: true,
-                minSelections: 1
-            },
-            {
-                settingType: 'customSelect',
-                settingName: 'transactionTypes',
-                displayName: 'Transaction Type',
-                condition: (settings?: Record<string, OverviewWidgetSettingValue>) => {
-                    return settings?.['totalAmountType'] === TransactionAmountType.IncomeAndExpense;
-                },
-                selectValues: [
-                    {
-                        name: 'Income',
-                        value: TransactionType.Income
-                    },
-                    {
-                        name: 'Expense',
-                        value: TransactionType.Expense
-                    }
-                ],
-                multiple: true,
-                minSelections: 1
-            },
-            {
-                settingType: 'switch',
-                settingName: 'showAlternateDate',
-                displayName: 'Show Alternate Date'
-            },
-            {
-                settingType: 'switch',
-                settingName: 'showAmount',
-                displayName: 'Show Amount'
-            }
+            ...TRANSACTION_CALENDAR_SETTINGS
         ],
         defaultSettings: {
             totalAmountType: TransactionAmountType.InflowsAndOutflows,

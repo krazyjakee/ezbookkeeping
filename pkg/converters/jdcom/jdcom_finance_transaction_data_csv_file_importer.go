@@ -15,10 +15,7 @@ import (
 )
 
 // jdComFinanceTransactionDataCsvFileImporter defines the structure of jd.com finance csv importer for transaction data
-type jdComFinanceTransactionDataCsvFileImporter struct {
-	fileHeaderLineBeginning         string
-	dataHeaderStartContentBeginning string
-}
+type jdComFinanceTransactionDataCsvFileImporter struct{}
 
 // Initialize a jd.com finance transaction data csv file importer singleton instance
 var (

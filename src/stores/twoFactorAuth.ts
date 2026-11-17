@@ -16,7 +16,7 @@ import { isBoolean } from '@/lib/common.ts';
 import { updateCurrentToken } from '@/lib/userstate.ts';
 
 import logger from '@/lib/logger.ts';
-import services from '@/lib/services.ts';
+import services, { toStoreError } from '@/lib/services.ts';
 
 export const useTwoFactorAuthStore = defineStore('twoFactorAuth', () => {
     const tokensStore = useTokensStore();
@@ -36,13 +36,7 @@ export const useTwoFactorAuthStore = defineStore('twoFactorAuth', () => {
             }).catch(error => {
                 logger.error('failed to retrieve 2fa status', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve current two-factor authentication status' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve current two-factor authentication status'));
             });
         });
     }
@@ -61,13 +55,7 @@ export const useTwoFactorAuthStore = defineStore('twoFactorAuth', () => {
             }).catch(error => {
                 logger.error('failed to request to enable 2fa', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to enable two-factor authentication' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to enable two-factor authentication'));
             });
         });
     }
@@ -95,13 +83,7 @@ export const useTwoFactorAuthStore = defineStore('twoFactorAuth', () => {
             }).catch(error => {
                 logger.error('failed to confirm to enable 2fa', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to enable two-factor authentication' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to enable two-factor authentication'));
             });
         });
     }
@@ -120,13 +102,7 @@ export const useTwoFactorAuthStore = defineStore('twoFactorAuth', () => {
             }).catch(error => {
                 logger.error('failed to disable 2fa', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to disable two-factor authentication' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to disable two-factor authentication'));
             });
         });
     }
@@ -145,13 +121,7 @@ export const useTwoFactorAuthStore = defineStore('twoFactorAuth', () => {
             }).catch(error => {
                 logger.error('failed to regenerate 2fa recovery code', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to regenerate two-factor authentication backup codes' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to regenerate two-factor authentication backup codes'));
             });
         });
     }

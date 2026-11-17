@@ -242,16 +242,6 @@ export function ofObject<T>(object: T): T {
     return object;
 }
 
-export function getNumberValue(value: unknown, defaultValue: number): number {
-    if (isString(value)) {
-        return parseInt(value, 10);
-    } else if (isNumber(value)) {
-        return value;
-    } else {
-        return defaultValue;
-    }
-}
-
 export function normalizeInteger(value: unknown, defaultValue: number, min: number, max: number): number {
     if (!isInteger(value)) {
         return defaultValue;
@@ -297,9 +287,7 @@ export function getObjectOwnFieldWithValueCount(object: object, value: unknown):
 }
 
 export function replaceAll(value: string, originalValue: string, targetValue: string): string {
-    // Escape special characters in originalValue to safely use it in a regex pattern.
-    // This ensures that characters like . (dot), * (asterisk), +, ?, etc. are treated literally,
-    // rather than as special regex symbols.
+    // escape regex metacharacters so originalValue matches literally
     const escapedOriginalValue = originalValue.replace(/([.*+?^=!:${}()|\-/\\])/g, '\\$1');
 
     return value.replace(new RegExp(escapedOriginalValue, 'g'), targetValue);
@@ -583,36 +571,6 @@ export function categorizedArrayToPlainArray<T>(object: Record<string, T[]>): T[
     }
 
     return ret;
-}
-
-export function selectAll(filterItemIds: Record<string, boolean>, allItemsMap: { [key: string]: { id: string } }): void {
-    for (const itemId of keys(filterItemIds)) {
-        const item = allItemsMap[itemId];
-
-        if (item) {
-            filterItemIds[item.id] = false;
-        }
-    }
-}
-
-export function selectNone(filterItemIds: Record<string, boolean>, allItemsMap: { [key: string]: { id: string } }): void {
-    for (const itemId of keys(filterItemIds)) {
-        const item = allItemsMap[itemId];
-
-        if (item) {
-            filterItemIds[item.id] = true;
-        }
-    }
-}
-
-export function selectInvert(filterItemIds: Record<string, boolean>, allItemsMap: { [key: string]: { id: string } }): void {
-    for (const itemId of keys(filterItemIds)) {
-        const item = allItemsMap[itemId];
-
-        if (item) {
-            filterItemIds[item.id] = !filterItemIds[item.id];
-        }
-    }
 }
 
 export function isPrimaryItemHasSecondaryValue(primaryItem: Record<string, Record<string, unknown>[]>, primarySubItemsField: string, secondaryValueField: string | undefined, secondaryHiddenField: string | undefined, secondaryValue: unknown): boolean {

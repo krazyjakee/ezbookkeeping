@@ -7,7 +7,7 @@ import type {
 } from '@/models/user_external_auth.ts';
 
 import logger from '@/lib/logger.ts';
-import services from '@/lib/services.ts';
+import services, { toStoreError } from '@/lib/services.ts';
 
 export const useUserExternalAuthStore = defineStore('userExternalAUth', () => {
     function getExternalAuths(): Promise<UserExternalAuthInfoResponse[]> {
@@ -24,13 +24,7 @@ export const useUserExternalAuthStore = defineStore('userExternalAUth', () => {
             }).catch(error => {
                 logger.error('failed to load third-party login list', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve third-party login list' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve third-party login list'));
             });
         });
     }
@@ -49,13 +43,7 @@ export const useUserExternalAuthStore = defineStore('userExternalAUth', () => {
             }).catch(error => {
                 logger.error('failed to revoke token', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to unlink third-party login' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to unlink third-party login'));
             });
         });
     }
@@ -74,13 +62,7 @@ export const useUserExternalAuthStore = defineStore('userExternalAUth', () => {
             }).catch(error => {
                 logger.error('failed to get external auth link url', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'An error occurred' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'An error occurred'));
             });
         });
     }

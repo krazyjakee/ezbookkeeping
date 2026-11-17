@@ -97,7 +97,7 @@ func (t *customPlainTextDataRowIterator) Next(ctx core.Context, user *models.Use
 		return nil, nil
 	}
 
-	rowData, isValid, err := t.parseTransaction(ctx, user, importedRow)
+	rowData, isValid, err := t.parseTransaction(ctx, importedRow)
 
 	if err != nil {
 		log.Errorf(ctx, "[custom_transaction_plain_text_data_table.Next] cannot parsing transaction in \"%s\", because %s", t.innerIterator.CurrentRowId(), err.Error())
@@ -111,7 +111,7 @@ func (t *customPlainTextDataRowIterator) Next(ctx core.Context, user *models.Use
 	}, nil
 }
 
-func (t *customPlainTextDataRowIterator) parseTransaction(ctx core.Context, user *models.User, row datatable.BasicDataTableRow) (map[datatable.TransactionDataTableColumn]string, bool, error) {
+func (t *customPlainTextDataRowIterator) parseTransaction(ctx core.Context, row datatable.BasicDataTableRow) (map[datatable.TransactionDataTableColumn]string, bool, error) {
 	rowData := make(map[datatable.TransactionDataTableColumn]string, len(t.transactionDataTable.columnIndexMapping))
 	var transactionTime *time.Time = nil
 
@@ -124,7 +124,6 @@ func (t *customPlainTextDataRowIterator) parseTransaction(ctx core.Context, user
 		rowData[column] = value
 	}
 
-	// parse transaction type
 	if rowData[datatable.TRANSACTION_DATA_TABLE_TRANSACTION_TYPE] != "" {
 		transactionType, exists := t.transactionDataTable.transactionTypeNameMapping[rowData[datatable.TRANSACTION_DATA_TABLE_TRANSACTION_TYPE]]
 
@@ -143,7 +142,6 @@ func (t *customPlainTextDataRowIterator) parseTransaction(ctx core.Context, user
 		rowData[datatable.TRANSACTION_DATA_TABLE_TRANSACTION_TYPE] = mappedTransactionType
 	}
 
-	// parse date time
 	if rowData[datatable.TRANSACTION_DATA_TABLE_TRANSACTION_TIME] != "" {
 		dateTime, err := time.Parse(t.transactionDataTable.timeFormat, rowData[datatable.TRANSACTION_DATA_TABLE_TRANSACTION_TIME])
 
@@ -159,7 +157,6 @@ func (t *customPlainTextDataRowIterator) parseTransaction(ctx core.Context, user
 		}
 	}
 
-	// parse timezone
 	if rowData[datatable.TRANSACTION_DATA_TABLE_TRANSACTION_TIMEZONE] != "" {
 		if t.transactionDataTable.timezoneFormat == "Z" || t.transactionDataTable.timezoneFormat == "" { // -HH:mm
 			// Do Nothing
@@ -197,7 +194,7 @@ func (t *customPlainTextDataRowIterator) parseTransaction(ctx core.Context, user
 
 	// trim trailing zero in decimal
 	if rowData[datatable.TRANSACTION_DATA_TABLE_AMOUNT] != "" {
-		amount, err := t.parseAmount(ctx, rowData[datatable.TRANSACTION_DATA_TABLE_AMOUNT])
+		amount, err := t.parseAmount(rowData[datatable.TRANSACTION_DATA_TABLE_AMOUNT])
 
 		if err != nil {
 			log.Errorf(ctx, "[custom_transaction_plain_text_data_table.parseTransaction] cannot parsing transaction amount \"%s\", because %s", rowData[datatable.TRANSACTION_DATA_TABLE_AMOUNT], err.Error())
@@ -208,7 +205,7 @@ func (t *customPlainTextDataRowIterator) parseTransaction(ctx core.Context, user
 	}
 
 	if rowData[datatable.TRANSACTION_DATA_TABLE_RELATED_AMOUNT] != "" {
-		amount, err := t.parseAmount(ctx, rowData[datatable.TRANSACTION_DATA_TABLE_RELATED_AMOUNT])
+		amount, err := t.parseAmount(rowData[datatable.TRANSACTION_DATA_TABLE_RELATED_AMOUNT])
 
 		if err != nil {
 			log.Errorf(ctx, "[custom_transaction_plain_text_data_table.parseTransaction] cannot parsing transaction related amount \"%s\", because %s", rowData[datatable.TRANSACTION_DATA_TABLE_RELATED_AMOUNT], err.Error())
@@ -230,7 +227,6 @@ func (t *customPlainTextDataRowIterator) parseTransaction(ctx core.Context, user
 		rowData[datatable.TRANSACTION_DATA_TABLE_RELATED_ACCOUNT_NAME] = ""
 	}
 
-	// parse geographic location
 	if rowData[datatable.TRANSACTION_DATA_TABLE_GEOGRAPHIC_LOCATION] != "" {
 		geoLocation := rowData[datatable.TRANSACTION_DATA_TABLE_GEOGRAPHIC_LOCATION]
 
@@ -267,7 +263,7 @@ func (t *customPlainTextDataRowIterator) parseTransaction(ctx core.Context, user
 	return rowData, true, nil
 }
 
-func (t *customPlainTextDataRowIterator) parseAmount(ctx core.Context, amountValue string) (string, error) {
+func (t *customPlainTextDataRowIterator) parseAmount(amountValue string) (string, error) {
 	if t.transactionDataTable.amountDigitGroupingSymbol != "" {
 		amountValue = strings.ReplaceAll(amountValue, t.transactionDataTable.amountDigitGroupingSymbol, "")
 

@@ -31,6 +31,32 @@ func (a *ApiUsingConfig) CurrentConfig() *settings.Config {
 	return a.container.GetCurrentConfig()
 }
 
+// generateMapProxyToken derives a map proxy token for a normal user session when the map data fetch proxy
+// or the amap internal proxy is enabled, and saves it to the web context
+func (a *ApiUsingConfig) generateMapProxyToken(c *core.WebContext, tokens *services.TokenService, claims *core.UserTokenClaims, tokenRecord core.TokenRecord) (string, error) {
+	if claims == nil || claims.Type != core.USER_TOKEN_TYPE_NORMAL {
+		return "", nil
+	}
+
+	config := a.CurrentConfig()
+	mapProxyEnabled := config.EnableMapDataFetchProxy && config.SupportMapDataFetchProxy
+	amapInternalProxyEnabled := config.MapProvider == settings.AmapProvider && config.AmapSecurityVerificationMethod == settings.AmapSecurityVerificationInternalProxyMethod
+
+	if !mapProxyEnabled && !amapInternalProxyEnabled {
+		return "", nil
+	}
+
+	token, _, err := tokens.DeriveMapProxyToken(c, claims, tokenRecord)
+
+	if err != nil {
+		log.Errorf(c, "[base.generateMapProxyToken] failed to derive map proxy token for user \"uid:%d\", because %s", claims.Uid, err.Error())
+		return "", errs.Or(err, errs.ErrOperationFailed)
+	}
+
+	c.SetTextualMapProxyToken(token)
+	return token, nil
+}
+
 // GetUserCustomIconInfoResponse returns the view-object of a user custom icon according to the icon model
 func (a *ApiUsingConfig) GetUserCustomIconInfoResponse(iconInfo *models.UserCustomIcon, iconToken string) *models.UserCustomIconInfoResponse {
 	originalUrl := fmt.Sprintf(internalUserCustomIconUrlFormat, a.CurrentConfig().RootUrl, iconInfo.IconId, models.UserCustomIconFileExtension)
@@ -144,13 +170,6 @@ func (a *ApiUsingDuplicateChecker) SetSubmissionRemarkIfEnable(checkerType dupli
 // RemoveSubmissionRemark removes the identification and remark by the current duplicate checker
 func (a *ApiUsingDuplicateChecker) RemoveSubmissionRemark(checkerType duplicatechecker.DuplicateCheckerType, uid int64, identification string) {
 	a.duplicateChecker.RemoveSubmissionRemark(checkerType, uid, identification)
-}
-
-// RemoveSubmissionRemarkIfEnable removes the identification and remark by the current duplicate checker if the duplicate submission check is enabled
-func (a *ApiUsingDuplicateChecker) RemoveSubmissionRemarkIfEnable(checkerType duplicatechecker.DuplicateCheckerType, uid int64, identification string) {
-	if a.CurrentConfig().EnableDuplicateSubmissionsCheck {
-		a.duplicateChecker.RemoveSubmissionRemark(checkerType, uid, identification)
-	}
 }
 
 // CheckFailureCount returns whether the failure count of the specified IP and user has reached the limit and increases the failure count

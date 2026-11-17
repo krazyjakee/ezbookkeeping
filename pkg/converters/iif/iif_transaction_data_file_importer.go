@@ -33,7 +33,7 @@ func (c *iifTransactionDataFileImporter) ParseImportedData(ctx core.Context, use
 		return nil, nil, nil, nil, nil, nil, err
 	}
 
-	transactionDataTable, err := createNewIIfTransactionDataTable(ctx, accountDatasets, transactionDatasets)
+	transactionDataTable, err := createNewIIfTransactionDataTable(accountDatasets, transactionDatasets)
 
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, err

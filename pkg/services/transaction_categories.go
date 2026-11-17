@@ -567,9 +567,7 @@ func (s *TransactionCategoryService) GetCategoryOrSubCategoryIds(c core.Context,
 				categoryIdsMap[subCategory.ParentCategoryId] = 1
 			}
 
-			if _, exists := categoryIdsMap[subCategory.CategoryId]; exists {
-				delete(categoryIdsMap, subCategory.CategoryId)
-			}
+			delete(categoryIdsMap, subCategory.CategoryId)
 
 			allCategoryIds = append(allCategoryIds, subCategory.CategoryId)
 		}
