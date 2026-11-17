@@ -73,12 +73,9 @@ ezrbookkeeping 大部分数据都存储在数据库中，用户的头像、交�
 
 > 如何备份数据库和对象存储文件？
 >
-> 由于 ezrbookkeeping 使用的数据库系统和对象存储服务已经非常成熟，各系统官方及第三方也提供了非常方便的实用工具，因此 ezrbookkeeping 建议使用这些数据库实用工具及对象存储工具进行备份。例如，
-> 1. 使用 `mysqldump` Dump MySQL 数据库
-> 2. 使用 `mariadb-dump` Dump MariaDB 数据库
-> 3. 使用 `pg_dump` Dump PostgreSQL 数据库
-> 4. 使用 `rc` 复制 RustFS 对象存储中的文件
-> 5. 使用 `mc` 复制 MinIO 对象存储中的文件
+> ezrbookkeeping 内置了完整实例备份功能，可以备份整个数据库、对象存储中的所有上传文件（头像、交易图片 / 附件和自定义图标）以及配置文件，支持所有数据库和对象存储类型。可以使用 `ezbookkeeping backup create` 手动创建备份，在 `[backup]` 配置节中启用 `enable_scheduled_backup` 来定时备份并自动清理旧备份，使用 `ezbookkeeping backup restore` 恢复到全新的实例。通过环境变量或密钥文件提供的配置项不会包含在备份中。详细信息请参见 [Backup and Restore](/backup/)。
+>
+> 你也可以同时使用数据库和对象存储的原生工具（例如 `mysqldump`、`mariadb-dump`、`pg_dump`、`rc`、`mc`）进行备份。
 
 ## 如何迁移 ezrbookkeeping 的数据
 

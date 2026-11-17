@@ -39,6 +39,7 @@ func main() {
 			cmd.Database,
 			cmd.UserData,
 			cmd.CronJobs,
+			cmd.Backup,
 			cmd.SecurityUtils,
 			cmd.Utilities,
 		},

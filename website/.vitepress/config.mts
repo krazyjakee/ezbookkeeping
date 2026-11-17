@@ -127,6 +127,7 @@ export default defineConfig({
                             { text: 'Configuration', link: '/configuration/' },
                             { text: 'Exchange Rates', link: '/exchange_rates/' },
                             { text: 'Command Line', link: '/command_line/' },
+                            { text: 'Backup and Restore', link: '/backup/' },
                             { text: 'Troubleshooting', link: '/troubleshooting/'}
                         ]
                     },

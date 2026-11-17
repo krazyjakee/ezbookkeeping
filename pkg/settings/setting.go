@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/robfig/cron/v3"
 	"gopkg.in/ini.v1"
 
 	"github.com/mayswind/ezbookkeeping/pkg/core"
@@ -215,6 +216,10 @@ const (
 	defaultImportFileMaxSize uint32 = 10485760 // 10MB
 
 	defaultExchangeRatesDataRequestTimeout uint32 = 10000 // 10 seconds
+
+	defaultBackupCron           string = "0 3 * * *" // every day at 03:00
+	defaultBackupPath           string = "data/backups"
+	defaultBackupRetentionCount uint32 = 7
 )
 
 // DatabaseConfig represents the database setting config
@@ -323,8 +328,9 @@ type MultiLanguageContentConfig struct {
 // Config represents the global setting config
 type Config struct {
 	// Global
-	Mode        SystemMode
-	WorkingPath string
+	Mode           SystemMode
+	WorkingPath    string
+	ConfigFilePath string
 
 	// Server
 	Protocol Scheme
@@ -409,6 +415,16 @@ type Config struct {
 	// Cron
 	EnableRemoveExpiredTokens        bool
 	EnableCreateScheduledTransaction bool
+
+	// Backup
+	EnableScheduledBackup bool
+	BackupCron            string
+	BackupPath            string
+	BackupIncludeConfig   bool
+	BackupEncrypt         bool
+	BackupPassphrase      string
+	BackupRetentionCount  uint32
+	BackupRetentionDays   uint32
 
 	// Secret
 	SecretKeyNoSet                             bool
@@ -533,6 +549,12 @@ func LoadConfiguration(configFilePath string) (*Config, error) {
 		return nil, err
 	}
 
+	if absoluteConfigFilePath, err := filepath.Abs(configFilePath); err == nil {
+		config.ConfigFilePath = absoluteConfigFilePath
+	} else {
+		config.ConfigFilePath = configFilePath
+	}
+
 	err = loadGlobalConfiguration(config, cfgFile, "global")
 
 	if err != nil {
@@ -612,6 +634,12 @@ func LoadConfiguration(configFilePath string) (*Config, error) {
 	}
 
 	err = loadCronConfiguration(config, cfgFile, "cron")
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = loadBackupConfiguration(config, cfgFile, "backup")
 
 	if err != nil {
 		return nil, err
@@ -1082,6 +1110,25 @@ func loadDuplicateCheckerConfiguration(config *Config, configFile *ini.File, sec
 func loadCronConfiguration(config *Config, configFile *ini.File, sectionName string) error {
 	config.EnableRemoveExpiredTokens = getConfigItemBoolValue(configFile, sectionName, "enable_remove_expired_tokens", false)
 	config.EnableCreateScheduledTransaction = getConfigItemBoolValue(configFile, sectionName, "enable_create_scheduled_transaction", false)
+
+	return nil
+}
+
+func loadBackupConfiguration(config *Config, configFile *ini.File, sectionName string) error {
+	config.EnableScheduledBackup = getConfigItemBoolValue(configFile, sectionName, "enable_scheduled_backup", false)
+	config.BackupCron = strings.TrimSpace(getConfigItemStringValue(configFile, sectionName, "backup_cron", defaultBackupCron))
+
+	if _, err := cron.ParseStandard(config.BackupCron); err != nil && config.EnableScheduledBackup {
+		return fmt.Errorf("invalid backup cron expression \"%s\": %w", config.BackupCron, err)
+	}
+
+	backupPath := strings.TrimSpace(getConfigItemStringValue(configFile, sectionName, "backup_path", defaultBackupPath))
+	config.BackupPath, _ = getFinalPath(config.WorkingPath, backupPath)
+	config.BackupIncludeConfig = getConfigItemBoolValue(configFile, sectionName, "backup_include_config", true)
+	config.BackupEncrypt = getConfigItemBoolValue(configFile, sectionName, "backup_encrypt", false)
+	config.BackupPassphrase = strings.TrimRight(getConfigItemStringValue(configFile, sectionName, "backup_passphrase"), "\r\n")
+	config.BackupRetentionCount = getConfigItemUint32Value(configFile, sectionName, "backup_retention_count", defaultBackupRetentionCount)
+	config.BackupRetentionDays = getConfigItemUint32Value(configFile, sectionName, "backup_retention_days", 0)
 
 	return nil
 }

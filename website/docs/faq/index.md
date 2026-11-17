@@ -73,12 +73,9 @@ If you're using `s3`, `minio` or `webdav` object storage type, files are managed
 
 > How to backup the database and object storage files?
 >
-> Since the database systems and object storage services used by ezrbookkeeping are mature and well-supported, with convenient official and third-party tools available, ezrbookkeeping recommends using these database and object storage utilities for backups. For example:
-> 1. Use `mysqldump` to dump a MySQL database
-> 2. Use `mariadb-dump` to dump a MariaDB database
-> 3. Use `pg_dump` to dump a PostgreSQL database
-> 4. Use `rc` to copy files from RustFS object storage
-> 5. Use `mc` to copy files from MinIO object storage
+> ezrbookkeeping provides built-in full-instance backups which capture the whole database, all uploaded files in object storage (avatars, transaction pictures / attachments and custom icons) and the configuration file, for every supported database and object storage type. Use `ezbookkeeping backup create` to create a backup manually, enable `enable_scheduled_backup` in the `[backup]` section for scheduled backups with retention, and `ezbookkeeping backup restore` to restore onto a clean installation. Configuration values supplied by environment variables or secret files are not included in backups. For details, see [Backup and Restore](/backup/).
+>
+> You can still use native database and object storage utilities (e.g. `mysqldump`, `mariadb-dump`, `pg_dump`, `rc`, `mc`) in addition to the built-in backups.
 
 ## How to migrate ezrbookkeeping data
 
@@ -109,7 +106,7 @@ ezrbookkeeping's database design is forward-compatible. When you upgrade the ezr
 To upgrade ezrbookkeeping, simply download the new binary and replace the old one, then restart the ezrbookkeeping server application. If you deploy ezrbookkeeping using Docker images, just pull the latest Docker image and recreate the container.
 
 > [!WARNING] ATTENTION
-> If possible, it is always recommended to backup the database data using database tools before performing an upgrade.
+> It is always recommended to create a backup with `ezbookkeeping backup create` (see [Backup and Restore](/backup/)) before performing an upgrade.
 
 ## Does ezrbookkeeping provide a desktop or mobile app
 

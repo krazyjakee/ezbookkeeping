@@ -279,6 +279,23 @@ Note that if the same configuration option is set using all three methods above,
 | `enable_remove_expired_tokens` | `true` | Whether to enable periodic cleanup of expired tokens. |
 | `enable_create_scheduled_transaction` | `true` | Whether to enable creating scheudled transactions based on the user's templates. |
 
+## Backup
+
+> Section name is `backup`
+
+Full-instance backups (database, uploaded files and optionally the configuration file). See [Backup and Restore](/backup/) for details, including what is not included in backups (configuration values supplied by environment variables or files), Docker / binary setups, and restore instructions.
+
+| Option Name | Default Value | Description |
+| --- | --- | --- |
+| `enable_scheduled_backup` | `false` | Whether to create full-instance backups periodically while the web server is running. |
+| `backup_cron` | `0 3 * * *` | Schedule of the scheduled backup in standard cron format (`minute hour day-of-month month day-of-week`), in the server local time zone. |
+| `backup_path` | `data/backups` | The directory where backups are written to (relative or absolute path). Also used by `backup create` and `backup list` when no directory is specified. |
+| `backup_include_config` | `true` | Whether to include the configuration file in backups. The configuration file may contain database / storage credentials and `secret_key`. |
+| `backup_encrypt` | `false` | Whether to encrypt backups (AES-256-GCM, key derived from `backup_passphrase` via scrypt). |
+| `backup_passphrase` | | The passphrase used to encrypt and decrypt backups. It is recommended to set it by `EBK_BACKUP_BACKUP_PASSPHRASE` or `EBKCFP_BACKUP_BACKUP_PASSPHRASE` environment variables instead of the configuration file, because the configuration file may be included in backups. |
+| `backup_retention_count` | `7` | The maximum count of backups to keep in `backup_path`, older backups are removed after a successful backup. Set to `0` for unlimited. |
+| `backup_retention_days` | `0` | The maximum age (in days) of backups to keep in `backup_path`, older backups are removed after a successful backup. Set to `0` for unlimited. The newest successful backup is never removed. |
+
 ## Security
 
 > Section name is `security`
