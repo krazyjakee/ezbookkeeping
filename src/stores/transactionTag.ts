@@ -19,7 +19,7 @@ import {
 import { isEquals } from '@/lib/common.ts';
 
 import logger from '@/lib/logger.ts';
-import services, { type ApiResponsePromise } from '@/lib/services.ts';
+import services, { type ApiResponsePromise, toStoreError } from '@/lib/services.ts';
 
 export const useTransactionTagsStore = defineStore('transactionTags', () => {
     let loadingPromise: Promise<TransactionTag[]> | null = null;
@@ -95,7 +95,6 @@ export const useTransactionTagsStore = defineStore('transactionTags', () => {
     }
 
     function updateTagInTransactionTagList(currentTag: TransactionTag, oldTagGroupId?: string): void {
-        // update in the main list
         for (const [transactionTag, index] of itemAndIndex(allTransactionTags.value)) {
             if (transactionTag.id === currentTag.id) {
                 if (oldTagGroupId && oldTagGroupId !== currentTag.groupId) {
@@ -120,10 +119,8 @@ export const useTransactionTagsStore = defineStore('transactionTags', () => {
             allTransactionTags.value.splice(insertIndex, 0, currentTag);
         }
 
-        // update in the map
         allTransactionTagsMap.value[currentTag.id] = currentTag;
 
-        // update in the group list
         for (const tags of values(allTransactionTagsByGroupMap.value)) {
             for (const [transactionTag, index] of itemAndIndex(tags)) {
                 if (transactionTag.id === currentTag.id) {
@@ -154,7 +151,6 @@ export const useTransactionTagsStore = defineStore('transactionTags', () => {
     }
 
     function sortTagDisplayOrderByTagName(groupId: string, desc: boolean): boolean {
-        // update in the group list
         const tagsInGroup = allTransactionTagsByGroupMap.value[groupId];
 
         if (!tagsInGroup) {
@@ -181,7 +177,6 @@ export const useTransactionTagsStore = defineStore('transactionTags', () => {
             return false;
         }
 
-        // update in the main list
         for (const [oldTag, oldIndex] of itemAndIndex(oldTagsInGroup)) {
             const newTag = tagsInGroup[oldIndex];
 
@@ -205,7 +200,6 @@ export const useTransactionTagsStore = defineStore('transactionTags', () => {
     }
 
     function updateTagDisplayOrderInTransactionTagList({ groupId, from, to }: { groupId: string, from: number, to: number }): void {
-        // update in the group list
         const tagsInGroup = allTransactionTagsByGroupMap.value[groupId];
 
         if (!tagsInGroup) {
@@ -226,7 +220,6 @@ export const useTransactionTagsStore = defineStore('transactionTags', () => {
 
         tagsInGroup.splice(to, 0, tagsInGroup.splice(from, 1)[0] as TransactionTag);
 
-        // update in the main list
         let mainListFromIndex = -1;
         let mainListToIndex = -1;
 
@@ -335,13 +328,7 @@ export const useTransactionTagsStore = defineStore('transactionTags', () => {
             }).catch(error => {
                 logger.error('failed to load tag group list', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve tag group list' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve tag group list'));
             });
         });
     }
@@ -423,13 +410,7 @@ export const useTransactionTagsStore = defineStore('transactionTags', () => {
                     logger.error('failed to load tag list', error);
                 }
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve tag list' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve tag list'));
             });
         });
 
@@ -470,17 +451,7 @@ export const useTransactionTagsStore = defineStore('transactionTags', () => {
             }).catch(error => {
                 logger.error('failed to save tag group', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    if (!tagGroup.id) {
-                        reject({ message: 'Unable to add tag group' });
-                    } else {
-                        reject({ message: 'Unable to save tag group' });
-                    }
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, !tagGroup.id ? 'Unable to add tag group' : 'Unable to save tag group'));
             });
         });
     }
@@ -542,13 +513,7 @@ export const useTransactionTagsStore = defineStore('transactionTags', () => {
             }).catch(error => {
                 logger.error('failed to save tag groups display order', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to move tag group' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to move tag group'));
             });
         });
     }
@@ -577,13 +542,7 @@ export const useTransactionTagsStore = defineStore('transactionTags', () => {
             }).catch(error => {
                 logger.error('failed to delete tag group', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to delete this tag group' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to delete this tag group'));
             });
         });
     }
@@ -634,17 +593,7 @@ export const useTransactionTagsStore = defineStore('transactionTags', () => {
             }).catch(error => {
                 logger.error('failed to save tag', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    if (!tag.id) {
-                        reject({ message: 'Unable to add tag' });
-                    } else {
-                        reject({ message: 'Unable to save tag' });
-                    }
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, !tag.id ? 'Unable to add tag' : 'Unable to save tag'));
             });
         });
     }
@@ -669,13 +618,7 @@ export const useTransactionTagsStore = defineStore('transactionTags', () => {
             }).catch(error => {
                 logger.error('failed to add tags', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to add tag' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to add tag'));
             });
         });
     }
@@ -740,13 +683,7 @@ export const useTransactionTagsStore = defineStore('transactionTags', () => {
             }).catch(error => {
                 logger.error('failed to save tags display order', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to move tag' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to move tag'));
             });
         });
     }
@@ -774,17 +711,7 @@ export const useTransactionTagsStore = defineStore('transactionTags', () => {
             }).catch(error => {
                 logger.error('failed to change tag visibility', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    if (hidden) {
-                        reject({ message: 'Unable to hide this tag' });
-                    } else {
-                        reject({ message: 'Unable to unhide this tag' });
-                    }
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, hidden ? 'Unable to hide this tag' : 'Unable to unhide this tag'));
             });
         });
     }
@@ -813,13 +740,7 @@ export const useTransactionTagsStore = defineStore('transactionTags', () => {
             }).catch(error => {
                 logger.error('failed to delete tag', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to delete this tag' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to delete this tag'));
             });
         });
     }

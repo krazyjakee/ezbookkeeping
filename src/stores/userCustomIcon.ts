@@ -9,7 +9,7 @@ import { getCurrentUnixTime } from '@/lib/datetime.ts';
 import { deleteCustomIconCacheEntry } from '@/lib/cache.ts';
 import { isUserCustomIconsEquals } from '@/lib/icon.ts';
 
-import services from '@/lib/services.ts';
+import services, { toStoreError } from '@/lib/services.ts';
 import logger from '@/lib/logger.ts';
 
 export const useUserCustomIconsStore = defineStore('userCustomIcons', () => {
@@ -103,13 +103,7 @@ export const useUserCustomIconsStore = defineStore('userCustomIcons', () => {
                     logger.error('failed to load custom icon list', error);
                 }
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve custom icon list' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve custom icon list'));
             });
         });
 
@@ -132,13 +126,7 @@ export const useUserCustomIconsStore = defineStore('userCustomIcons', () => {
             }).catch(error => {
                 logger.error('failed to upload custom icon', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to upload custom icon' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to upload custom icon'));
             });
         });
     }
@@ -200,13 +188,7 @@ export const useUserCustomIconsStore = defineStore('userCustomIcons', () => {
             }).catch(error => {
                 logger.error('failed to save custom icons display order', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to move custom icon' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to move custom icon'));
             });
         });
     }
@@ -228,13 +210,7 @@ export const useUserCustomIconsStore = defineStore('userCustomIcons', () => {
             }).catch(error => {
                 logger.error('failed to delete custom icon', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to delete custom icon' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to delete custom icon'));
             });
         });
     }

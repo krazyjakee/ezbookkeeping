@@ -3,7 +3,7 @@ import { defineStore } from 'pinia';
 import type { VersionInfo } from '@/core/version.ts';
 
 import logger from '@/lib/logger.ts';
-import services from '@/lib/services.ts';
+import services, { toStoreError } from '@/lib/services.ts';
 import { getClientVersionInfo } from '@/lib/version.ts';
 
 export const useSystemsStore = defineStore('systems', () => {
@@ -42,13 +42,7 @@ export const useSystemsStore = defineStore('systems', () => {
             }).catch(error => {
                 logger.error('failed to retrieve server version', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve server version' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve server version'));
             });
         });
     }

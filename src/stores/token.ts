@@ -16,7 +16,7 @@ import { isObject } from '@/lib/common.ts';
 import { updateCurrentToken } from '@/lib/userstate.ts';
 
 import logger from '@/lib/logger.ts';
-import services from '@/lib/services.ts';
+import services, { toStoreError } from '@/lib/services.ts';
 
 export const useTokensStore = defineStore('tokens', () => {
     const settingsStore = useSettingsStore();
@@ -53,13 +53,7 @@ export const useTokensStore = defineStore('tokens', () => {
             }).catch(error => {
                 logger.error('failed to load token list', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve session list' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve session list'));
             });
         });
     }
@@ -132,13 +126,7 @@ export const useTokensStore = defineStore('tokens', () => {
             }).catch(error => {
                 logger.error('failed to generate token', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to generate token' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to generate token'));
             });
         });
     }
@@ -157,13 +145,7 @@ export const useTokensStore = defineStore('tokens', () => {
             }).catch(error => {
                 logger.error('failed to revoke token', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to logout from this session' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to logout from this session'));
             });
         });
     }
@@ -182,13 +164,7 @@ export const useTokensStore = defineStore('tokens', () => {
             }).catch(error => {
                 logger.error('failed to revoke all tokens', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to logout all other sessions' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to logout all other sessions'));
             });
         });
     }

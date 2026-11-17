@@ -14,7 +14,7 @@ import {
 import { isDefined, isObject, isArray, isEquals } from '@/lib/common.ts';
 
 import logger from '@/lib/logger.ts';
-import services, { type ApiResponsePromise } from '@/lib/services.ts';
+import services, { type ApiResponsePromise, toStoreError } from '@/lib/services.ts';
 
 export const useTransactionTemplatesStore = defineStore('transactionTemplates', () =>{
     const allTransactionTemplates = ref<Record<number, TransactionTemplate[]>>({});
@@ -37,26 +37,6 @@ export const useTransactionTemplatesStore = defineStore('transactionTemplates', 
         }
 
         return allVisibleTemplates;
-    });
-
-    const allAvailableTemplatesCount = computed<Record<number, number>>(() => {
-        const allAvailableTemplateCounts: Record<number, number> = {};
-
-        for (const [templateType, allTemplates] of entries(allTransactionTemplates.value)) {
-            allAvailableTemplateCounts[parseInt(templateType)] = allTemplates.length;
-        }
-
-        return allAvailableTemplateCounts;
-    });
-
-    const allVisibleTemplatesCount = computed<Record<number, number>>(() => {
-        const allVisibleTemplateCounts: Record<number, number> = {};
-
-        for (const [templateType, allTemplates] of entries(allVisibleTemplates.value)) {
-            allVisibleTemplateCounts[parseInt(templateType)] = allTemplates.length;
-        }
-
-        return allVisibleTemplateCounts;
     });
 
     function loadTransactionTemplateList(templateType: number, templates: TransactionTemplate[]): void {
@@ -184,13 +164,7 @@ export const useTransactionTemplatesStore = defineStore('transactionTemplates', 
                     logger.error('failed to load template list', error);
                 }
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve template list' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve template list'));
             });
         });
     }
@@ -213,13 +187,7 @@ export const useTransactionTemplatesStore = defineStore('transactionTemplates', 
             }).catch(error => {
                 logger.error('failed to load template info', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve template' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve template'));
             });
         });
     }
@@ -265,17 +233,7 @@ export const useTransactionTemplatesStore = defineStore('transactionTemplates', 
             }).catch(error => {
                 logger.error('failed to save template', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    if (!isEdit) {
-                        reject({ message: 'Unable to add template' });
-                    } else {
-                        reject({ message: 'Unable to save template' });
-                    }
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, !isEdit ? 'Unable to add template' : 'Unable to save template'));
             });
         });
     }
@@ -344,13 +302,7 @@ export const useTransactionTemplatesStore = defineStore('transactionTemplates', 
             }).catch(error => {
                 logger.error('failed to save templates display order', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to move template' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to move template'));
             });
         });
     }
@@ -382,17 +334,7 @@ export const useTransactionTemplatesStore = defineStore('transactionTemplates', 
             }).catch(error => {
                 logger.error('failed to change template visibility', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    if (hidden) {
-                        reject({ message: 'Unable to hide this template' });
-                    } else {
-                        reject({ message: 'Unable to unhide this template' });
-                    }
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, hidden ? 'Unable to hide this template' : 'Unable to unhide this template'));
             });
         });
     }
@@ -421,13 +363,7 @@ export const useTransactionTemplatesStore = defineStore('transactionTemplates', 
             }).catch(error => {
                 logger.error('failed to delete template', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to delete this template' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to delete this template'));
             });
         });
     }
@@ -439,8 +375,6 @@ export const useTransactionTemplatesStore = defineStore('transactionTemplates', 
         transactionTemplateListStatesInvalid,
         // computed states
         allVisibleTemplates,
-        allAvailableTemplatesCount,
-        allVisibleTemplatesCount,
         // functions
         updateTransactionTemplateListInvalidState,
         resetTransactionTemplates,

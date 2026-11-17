@@ -40,7 +40,7 @@ import {
     clearCurrentSessionToken,
     clearCurrentTokenAndUserInfo
 } from '@/lib/userstate.ts';
-import services, { type ApiResponsePromise } from '@/lib/services.ts';
+import services, { type ApiResponsePromise, toStoreError } from '@/lib/services.ts';
 import logger from '@/lib/logger.ts';
 
 export const useRootStore = defineStore('root', () => {
@@ -85,6 +85,65 @@ export const useRootStore = defineStore('root', () => {
         }
     }
 
+    function applyAuthorizationResult(result: AuthResponse): void {
+        if (settingsStore.appSettings.applicationLock || hasUserAppLockState()) {
+            const appLockState = getUserAppLockState();
+
+            if (!appLockState || appLockState.username !== result.user?.username) {
+                clearCurrentTokenAndUserInfo(true);
+                settingsStore.setEnableApplicationLock(false);
+                settingsStore.setEnableApplicationLockWebAuthn(false);
+                clearWebAuthnConfig();
+            }
+        }
+
+        settingsStore.setApplicationSettingsFromCloudSettings(result.applicationCloudSettings);
+
+        updateCurrentToken(result.token);
+        tokensStore.updateMapProxyToken(result.mapProxyToken);
+
+        if (result.user && isObject(result.user)) {
+            userStore.storeUserBasicInfo(result.user);
+        }
+    }
+
+    function invalidateStatesAfterClearingData(allUserData: boolean): void {
+        if (!accountsStore.accountListStateInvalid) {
+            accountsStore.updateAccountListInvalidState(true);
+        }
+
+        if (allUserData) {
+            if (!transactionCategoriesStore.transactionCategoryListStateInvalid) {
+                transactionCategoriesStore.updateTransactionCategoryListInvalidState(true);
+            }
+
+            if (!transactionTagsStore.transactionTagListStateInvalid) {
+                transactionTagsStore.updateTransactionTagListInvalidState(true);
+            }
+        }
+
+        if (!overviewStore.transactionOverviewStateInvalid) {
+            overviewStore.updateTransactionOverviewInvalidState(true);
+        }
+
+        if (!statisticsStore.transactionStatisticsStateInvalid) {
+            statisticsStore.updateTransactionStatisticsInvalidState(true);
+        }
+
+        if (allUserData) {
+            userCustomIconsStore.resetCustomIcons();
+            importPresetsStore.resetImportPresets();
+
+            clearAllUserCaches().catch(error => {
+                logger.warn('failed to clear user caches', error);
+            });
+        } else {
+            clearTransactionPictureCache().catch(error => {
+                logger.warn('failed to clear transaction picture cache', error);
+            });
+        }
+    }
+
     function setNotificationContent(content: string | null): void {
         currentNotification.value = content;
     }
@@ -108,37 +167,12 @@ export const useRootStore = defineStore('root', () => {
                     return;
                 }
 
-                if (settingsStore.appSettings.applicationLock || hasUserAppLockState()) {
-                    const appLockState = getUserAppLockState();
-
-                    if (!appLockState || appLockState.username !== data.result.user?.username) {
-                        clearCurrentTokenAndUserInfo(true);
-                        settingsStore.setEnableApplicationLock(false);
-                        settingsStore.setEnableApplicationLockWebAuthn(false);
-                        clearWebAuthnConfig();
-                    }
-                }
-
-                settingsStore.setApplicationSettingsFromCloudSettings(data.result.applicationCloudSettings);
-
-                updateCurrentToken(data.result.token);
-                tokensStore.updateMapProxyToken(data.result.mapProxyToken);
-
-                if (data.result.user && isObject(data.result.user)) {
-                    userStore.storeUserBasicInfo(data.result.user);
-                }
-
+                applyAuthorizationResult(data.result);
                 resolve(data.result);
             }).catch(error => {
                 logger.error('failed to login', error);
 
-                if (error && error.processed) {
-                    reject(error);
-                } else if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else {
-                    reject({ message: 'Unable to log in' });
-                }
+                reject(toStoreError(error, 'Unable to log in'));
             });
         });
     }
@@ -170,37 +204,12 @@ export const useRootStore = defineStore('root', () => {
                     return;
                 }
 
-                if (settingsStore.appSettings.applicationLock || hasUserAppLockState()) {
-                    const appLockState = getUserAppLockState();
-
-                    if (!appLockState || appLockState.username !== data.result.user?.username) {
-                        clearCurrentTokenAndUserInfo(true);
-                        settingsStore.setEnableApplicationLock(false);
-                        settingsStore.setEnableApplicationLockWebAuthn(false);
-                        clearWebAuthnConfig();
-                    }
-                }
-
-                settingsStore.setApplicationSettingsFromCloudSettings(data.result.applicationCloudSettings);
-
-                updateCurrentToken(data.result.token);
-                tokensStore.updateMapProxyToken(data.result.mapProxyToken);
-
-                if (data.result.user && isObject(data.result.user)) {
-                    userStore.storeUserBasicInfo(data.result.user);
-                }
-
+                applyAuthorizationResult(data.result);
                 resolve(data.result);
             }).catch(error => {
                 logger.error('failed to verify 2fa', error);
 
-                if (error && error.processed) {
-                    reject(error);
-                } else if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else {
-                    reject({ message: 'Unable to verify' });
-                }
+                reject(toStoreError(error, 'Unable to verify'));
             });
         });
     }
@@ -219,37 +228,12 @@ export const useRootStore = defineStore('root', () => {
                     return;
                 }
 
-                if (settingsStore.appSettings.applicationLock || hasUserAppLockState()) {
-                    const appLockState = getUserAppLockState();
-
-                    if (!appLockState || appLockState.username !== data.result.user?.username) {
-                        clearCurrentTokenAndUserInfo(true);
-                        settingsStore.setEnableApplicationLock(false);
-                        settingsStore.setEnableApplicationLockWebAuthn(false);
-                        clearWebAuthnConfig();
-                    }
-                }
-
-                settingsStore.setApplicationSettingsFromCloudSettings(data.result.applicationCloudSettings);
-
-                updateCurrentToken(data.result.token);
-                tokensStore.updateMapProxyToken(data.result.mapProxyToken);
-
-                if (data.result.user && isObject(data.result.user)) {
-                    userStore.storeUserBasicInfo(data.result.user);
-                }
-
+                applyAuthorizationResult(data.result);
                 resolve(data.result);
             }).catch(error => {
                 logger.error('failed to login', error);
 
-                if (error && error.processed) {
-                    reject(error);
-                } else if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else {
-                    reject({ message: 'Unable to log in' });
-                }
+                reject(toStoreError(error, 'Unable to log in'));
             });
         });
     }
@@ -283,13 +267,7 @@ export const useRootStore = defineStore('root', () => {
             }).catch(error => {
                 logger.error('failed to sign up', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to sign up' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to sign up'));
             });
         });
     }
@@ -317,13 +295,7 @@ export const useRootStore = defineStore('root', () => {
             }).catch(error => {
                 logger.error('failed to log out', error);
 
-                if (error && error.processed) {
-                    reject(error);
-                } else if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else {
-                    reject({ message: 'Unable to logout' });
-                }
+                reject(toStoreError(error, 'Unable to logout'));
             });
         });
     }
@@ -348,13 +320,7 @@ export const useRootStore = defineStore('root', () => {
             }).catch(error => {
                 logger.error('failed to verify email', error);
 
-                if (error && error.processed) {
-                    reject(error);
-                } else if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else {
-                    reject({ message: 'Unable to verify email' });
-                }
+                reject(toStoreError(error, 'Unable to verify email'));
             });
         });
     }
@@ -373,13 +339,7 @@ export const useRootStore = defineStore('root', () => {
             }).catch(error => {
                 logger.error('failed to resend verify email', error);
 
-                if (error && error.processed) {
-                    reject(error);
-                } else if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else {
-                    reject({ message: 'Unable to resend validation email' });
-                }
+                reject(toStoreError(error, 'Unable to resend validation email'));
             });
         });
     }
@@ -398,13 +358,7 @@ export const useRootStore = defineStore('root', () => {
             }).catch(error => {
                 logger.error('failed to send password reset email', error);
 
-                if (error && error.processed) {
-                    reject(error);
-                } else if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else {
-                    reject({ message: 'Unable to send password reset email' });
-                }
+                reject(toStoreError(error, 'Unable to send password reset email'));
             });
         });
     }
@@ -427,13 +381,7 @@ export const useRootStore = defineStore('root', () => {
             }).catch(error => {
                 logger.error('failed to reset password', error);
 
-                if (error && error.processed) {
-                    reject(error);
-                } else if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else {
-                    reject({ message: 'Unable to reset password' });
-                }
+                reject(toStoreError(error, 'Unable to reset password'));
             });
         });
     }
@@ -483,13 +431,7 @@ export const useRootStore = defineStore('root', () => {
             }).catch(error => {
                 logger.error('failed to save user profile', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to update user profile' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to update user profile'));
             });
         });
     }
@@ -508,13 +450,7 @@ export const useRootStore = defineStore('root', () => {
             }).catch(error => {
                 logger.error('failed to resend verify email', error);
 
-                if (error && error.processed) {
-                    reject(error);
-                } else if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else {
-                    reject({ message: 'Unable to resend validation email' });
-                }
+                reject(toStoreError(error, 'Unable to resend validation email'));
             });
         });
     }
@@ -532,33 +468,12 @@ export const useRootStore = defineStore('root', () => {
                     return;
                 }
 
-                if (!accountsStore.accountListStateInvalid) {
-                    accountsStore.updateAccountListInvalidState(true);
-                }
-
-                if (!overviewStore.transactionOverviewStateInvalid) {
-                    overviewStore.updateTransactionOverviewInvalidState(true);
-                }
-
-                if (!statisticsStore.transactionStatisticsStateInvalid) {
-                    statisticsStore.updateTransactionStatisticsInvalidState(true);
-                }
-
-                clearTransactionPictureCache().catch(error => {
-                    logger.warn('failed to clear transaction picture cache', error);
-                });
-
+                invalidateStatesAfterClearingData(false);
                 resolve(data.result);
             }).catch(error => {
                 logger.error('failed to clear user data', error);
 
-                if (error && error.processed) {
-                    reject(error);
-                } else if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else {
-                    reject({ message: 'Unable to clear user data' });
-                }
+                reject(toStoreError(error, 'Unable to clear user data'));
             });
         });
     }
@@ -575,33 +490,12 @@ export const useRootStore = defineStore('root', () => {
                     return;
                 }
 
-                if (!accountsStore.accountListStateInvalid) {
-                    accountsStore.updateAccountListInvalidState(true);
-                }
-
-                if (!overviewStore.transactionOverviewStateInvalid) {
-                    overviewStore.updateTransactionOverviewInvalidState(true);
-                }
-
-                if (!statisticsStore.transactionStatisticsStateInvalid) {
-                    statisticsStore.updateTransactionStatisticsInvalidState(true);
-                }
-
-                clearTransactionPictureCache().catch(error => {
-                    logger.warn('failed to clear transaction picture cache', error);
-                });
-
+                invalidateStatesAfterClearingData(false);
                 resolve(data.result);
             }).catch(error => {
                 logger.error('failed to clear user data', error);
 
-                if (error && error.processed) {
-                    reject(error);
-                } else if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else {
-                    reject({ message: 'Unable to clear user data' });
-                }
+                reject(toStoreError(error, 'Unable to clear user data'));
             });
         });
     }
@@ -618,44 +512,12 @@ export const useRootStore = defineStore('root', () => {
                     return;
                 }
 
-                if (!accountsStore.accountListStateInvalid) {
-                    accountsStore.updateAccountListInvalidState(true);
-                }
-
-                if (!transactionCategoriesStore.transactionCategoryListStateInvalid) {
-                    transactionCategoriesStore.updateTransactionCategoryListInvalidState(true);
-                }
-
-                if (!transactionTagsStore.transactionTagListStateInvalid) {
-                    transactionTagsStore.updateTransactionTagListInvalidState(true);
-                }
-
-                if (!overviewStore.transactionOverviewStateInvalid) {
-                    overviewStore.updateTransactionOverviewInvalidState(true);
-                }
-
-                if (!statisticsStore.transactionStatisticsStateInvalid) {
-                    statisticsStore.updateTransactionStatisticsInvalidState(true);
-                }
-
-                userCustomIconsStore.resetCustomIcons();
-                importPresetsStore.resetImportPresets();
-
-                clearAllUserCaches().catch(error => {
-                    logger.warn('failed to clear user caches', error);
-                });
-
+                invalidateStatesAfterClearingData(true);
                 resolve(data.result);
             }).catch(error => {
                 logger.error('failed to clear user data', error);
 
-                if (error && error.processed) {
-                    reject(error);
-                } else if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else {
-                    reject({ message: 'Unable to clear user data' });
-                }
+                reject(toStoreError(error, 'Unable to clear user data'));
             });
         });
     }

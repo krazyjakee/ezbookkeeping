@@ -66,7 +66,7 @@ import { getCurrencyFraction } from '@/lib/currency.ts';
 import { getFirstVisibleCategoryId } from '@/lib/category.ts';
 import { clearTransactionPictureCache, deleteTransactionPictureCacheEntries } from '@/lib/cache.ts';
 import { isTransactionsEquals } from '@/lib/transaction.ts';
-import services, { type ApiResponsePromise } from '@/lib/services.ts';
+import services, { type ApiResponsePromise, toStoreError } from '@/lib/services.ts';
 import logger from '@/lib/logger.ts';
 
 export interface TransactionListPartialFilter {
@@ -1078,13 +1078,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
                     }
                 }
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve transaction list' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve transaction list'));
             });
         });
     }
@@ -1160,13 +1154,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
                     updateTransactionListInvalidState(true);
                 }
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve transaction list' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve transaction list'));
             });
         });
     }
@@ -1201,13 +1189,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
                     updateTransactionReconciliationStatementInvalidState(true);
                 }
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve reconciliation statements' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve reconciliation statements'));
             });
         });
     }
@@ -1235,13 +1217,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
             }).catch(error => {
                 logger.error('failed to load transaction info', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve transaction' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve transaction'));
             });
         });
     }
@@ -1303,17 +1279,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
             }).catch(error => {
                 logger.error('failed to save transaction', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    if (!isEdit) {
-                        reject({ message: 'Unable to add transaction' });
-                    } else {
-                        reject({ message: 'Unable to save transaction' });
-                    }
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, !isEdit ? 'Unable to add transaction' : 'Unable to save transaction'));
             });
         });
     }
@@ -1343,13 +1309,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
             }).catch(error => {
                 logger.error('Unable to add transactions', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to add transactions' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to add transactions'));
             });
         });
     }
@@ -1376,13 +1336,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
             }).catch(error => {
                 logger.error('failed to update categories for transactions', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to update categories for transactions' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to update categories for transactions'));
             });
         });
     }
@@ -1410,13 +1364,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
             }).catch(error => {
                 logger.error('failed to update accounts for transactions', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to update accounts for transactions' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to update accounts for transactions'));
             });
         });
     }
@@ -1441,13 +1389,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
             }).catch(error => {
                 logger.error('failed to update tags for transactions', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to update tags for transactions' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to update tags for transactions'));
             });
         });
     }
@@ -1472,13 +1414,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
             }).catch(error => {
                 logger.error('failed to update tags for transactions', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to update tags for transactions' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to update tags for transactions'));
             });
         });
     }
@@ -1503,13 +1439,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
             }).catch(error => {
                 logger.error('failed to update tags for transactions', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to update tags for transactions' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to update tags for transactions'));
             });
         });
     }
@@ -1537,13 +1467,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
             }).catch(error => {
                 logger.error('failed to move transactions', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to move transactions' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to move transactions'));
             });
         });
     }
@@ -1592,13 +1516,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
             }).catch(error => {
                 logger.error('failed to delete transaction', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to delete this transaction' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to delete this transaction'));
             });
         });
     }
@@ -1642,13 +1560,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
                     explorer: true
                 });
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to delete these transactions' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to delete these transactions'));
             });
         });
     }
@@ -1667,13 +1579,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
             }).catch(error => {
                 logger.error('failed to recognize text', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to recognize text' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to recognize text'));
             });
         });
     }
@@ -1696,13 +1602,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
 
                 logger.error('failed to recognize image', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to recognize image' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to recognize image'));
             });
         });
     }
@@ -1725,13 +1625,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
             }).catch(error => {
                 logger.error('Unable to parse import file', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to parse import file' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to parse import file'));
             });
         });
     }
@@ -1750,13 +1644,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
             }).catch(error => {
                 logger.error('Unable to parse import file', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to parse import file' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to parse import file'));
             });
         });
     }
@@ -1812,13 +1700,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
             }).catch(error => {
                 logger.error('Unable to get transactions import process', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to get transactions import process' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to get transactions import process'));
             });
         });
     }
@@ -1837,13 +1719,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
             }).catch(error => {
                 logger.error('Unable to upload transaction picture', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to upload transaction picture' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to upload transaction picture'));
             });
         });
     }
@@ -1870,13 +1746,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
                     logger.warn('failed to delete transaction picture cache entry', error);
                 });
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to remove transaction picture' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to remove transaction picture'));
             });
         });
     }

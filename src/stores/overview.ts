@@ -64,7 +64,7 @@ import {
 
 import { getFinalAccountIdsByFilteredAccountIds } from '@/lib/account.ts';
 import { getFinalCategoryIdsByFilteredCategoryIds } from '@/lib/category.ts';
-import services, { type ApiResponsePromise } from '@/lib/services.ts';
+import services, { type ApiResponsePromise, toStoreError } from '@/lib/services.ts';
 import logger from '@/lib/logger.ts';
 
 interface TransactionDataRange extends Record<TransactionAmountsRequestType, WritableStartEndTime> {
@@ -401,13 +401,7 @@ export const useOverviewStore = defineStore('overview', () => {
                     logger.error('failed to load transaction overview', error);
                 }
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve transaction overview' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve transaction overview'));
             });
         });
     }
@@ -453,13 +447,7 @@ export const useOverviewStore = defineStore('overview', () => {
                     transactionUnreconciledCountsAccountIds.value = requestedAccountIds;
                     transactionUnreconciledCountsStateInvalid.value = false;
                     resolve([]);
-                } else if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve unreconciled transaction counts' });
-                } else {
-                    reject(error);
-                }
+                } else reject(toStoreError(error, 'Unable to retrieve unreconciled transaction counts'));
             });
         });
     }
@@ -518,13 +506,7 @@ export const useOverviewStore = defineStore('overview', () => {
             }).catch(error => {
                 logger.error('failed to retrieve transaction statistics', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve transaction statistics' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve transaction statistics'));
             });
         });
     }
@@ -564,13 +546,7 @@ export const useOverviewStore = defineStore('overview', () => {
             }).catch(error => {
                 logger.error('failed to retrieve transaction statistics', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve transaction statistics' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve transaction statistics'));
             });
         });
     }
@@ -688,13 +664,7 @@ export const useOverviewStore = defineStore('overview', () => {
             }).catch(error => {
                 logger.error('failed to retrieve transaction list', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve transaction list' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve transaction list'));
             });
         });
     }
@@ -746,13 +716,7 @@ export const useOverviewStore = defineStore('overview', () => {
             }).catch(error => {
                 logger.error('failed to retrieve transaction overview', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve transaction overview' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve transaction overview'));
             });
         });
     }
@@ -829,13 +793,7 @@ export const useOverviewStore = defineStore('overview', () => {
                 }).catch(error => {
                     logger.error('failed to retrieve transaction list', error);
 
-                    if (error.response && error.response.data && error.response.data.errorMessage) {
-                        reject({ error: error.response.data });
-                    } else if (!error.processed) {
-                        reject({ message: 'Unable to retrieve transaction list' });
-                    } else {
-                        reject(error);
-                    }
+                    reject(toStoreError(error, 'Unable to retrieve transaction list'));
                 });
             }).catch(error => {
                 logger.error('failed to load accounts or categories', error);

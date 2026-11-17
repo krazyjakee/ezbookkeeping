@@ -90,7 +90,7 @@ import {
     isTransactionStatisticsAssetTrendsEquals
 } from '@/lib/statistics.ts';
 import logger from '@/lib/logger.ts';
-import services from '@/lib/services.ts';
+import services, { toStoreError } from '@/lib/services.ts';
 
 interface WritableTransactionCategoricalAnalysisData {
     value: BigDecimal;
@@ -896,7 +896,6 @@ export const useStatisticsStore = defineStore('statistics', () => {
             const missingDays: number = getDayDifference(lastAssetTrendItem, assetTrendItem) - 1;
             const lastAssetTrendItemDate: DateTime = getYearMonthDayDateTime(lastAssetTrendItem.year, lastAssetTrendItem.month, lastAssetTrendItem.day);
 
-            // fill in missing days with last known balance
             for (let i = 1; i <= missingDays; i++) {
                 const missingStatisticResponseItems: TransactionStatisticResponseItem[] = [];
                 const dateTime: DateTime = lastAssetTrendItemDate.add(i, 'days');
@@ -922,7 +921,6 @@ export const useStatisticsStore = defineStore('statistics', () => {
                 finalAssetTrendsData.push(finalAssetTrendItem);
             }
 
-            // fill in current day data
             for (const item of assetTrendItem.items) {
                 const statisticResponseItem: TransactionStatisticResponseItem = {
                     categoryId: '',
@@ -935,7 +933,6 @@ export const useStatisticsStore = defineStore('statistics', () => {
                 statisticResponseItems.push(statisticResponseItem);
             }
 
-            // fill in missing accounts with last known balance
             for (const item of values(lastAssetTrendItemMap)) {
                 if (existedAccountIds[item.accountId]) {
                     continue;
@@ -2010,13 +2007,7 @@ export const useStatisticsStore = defineStore('statistics', () => {
             }).catch(error => {
                 logger.error('failed to retrieve transaction statistics', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve transaction statistics' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve transaction statistics'));
             });
         });
     }
@@ -2053,13 +2044,7 @@ export const useStatisticsStore = defineStore('statistics', () => {
             }).catch(error => {
                 logger.error('failed to retrieve transaction statistics', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve transaction statistics' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve transaction statistics'));
             });
         });
     }
@@ -2092,13 +2077,7 @@ export const useStatisticsStore = defineStore('statistics', () => {
             }).catch(error => {
                 logger.error('failed to retrieve transaction statistics', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve transaction statistics' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve transaction statistics'));
             });
         });
     }

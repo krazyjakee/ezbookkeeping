@@ -83,7 +83,7 @@ import {
 } from '@/lib/datetime.ts';
 import { generateRandomUUID } from '@/lib/misc.ts';
 import { isTransactionsEquals } from '@/lib/transaction.ts';
-import services, { type ApiResponsePromise } from '@/lib/services.ts';
+import services, { type ApiResponsePromise, toStoreError } from '@/lib/services.ts';
 import logger from '@/lib/logger.ts';
 
 export enum TransactionExplorerDimensionType {
@@ -1692,13 +1692,7 @@ export const useExplorersStore = defineStore('explorers', () => {
             }).catch(error => {
                 logger.error('failed to load all transactions', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve all transactions' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve all transactions'));
             });
         });
     }
@@ -1740,13 +1734,7 @@ export const useExplorersStore = defineStore('explorers', () => {
                     logger.error('failed to load exploration list', error);
                 }
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve exploration list' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve exploration list'));
             });
         });
     }
@@ -1769,13 +1757,7 @@ export const useExplorersStore = defineStore('explorers', () => {
             }).catch(error => {
                 logger.error('failed to load exploration info', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve exploration' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve exploration'));
             });
         });
     }
@@ -1814,17 +1796,7 @@ export const useExplorersStore = defineStore('explorers', () => {
             }).catch(error => {
                 logger.error('failed to save exploration', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    if (!exploration.id) {
-                        reject({ message: 'Unable to add exploration' });
-                    } else {
-                        reject({ message: 'Unable to save exploration' });
-                    }
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, !exploration.id ? 'Unable to add exploration' : 'Unable to save exploration'));
             });
         });
     }
@@ -1886,13 +1858,7 @@ export const useExplorersStore = defineStore('explorers', () => {
             }).catch(error => {
                 logger.error('failed to save explorations display order', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to move exploration' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to move exploration'));
             });
         });
     }
@@ -1921,17 +1887,7 @@ export const useExplorersStore = defineStore('explorers', () => {
             }).catch(error => {
                 logger.error('failed to change exploration visibility', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    if (hidden) {
-                        reject({ message: 'Unable to hide this exploration' });
-                    } else {
-                        reject({ message: 'Unable to unhide this exploration' });
-                    }
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, hidden ? 'Unable to hide this exploration' : 'Unable to unhide this exploration'));
             });
         });
     }
@@ -1960,13 +1916,7 @@ export const useExplorersStore = defineStore('explorers', () => {
             }).catch(error => {
                 logger.error('failed to delete exploration', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to delete this exploration' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to delete this exploration'));
             });
         });
     }
@@ -1993,13 +1943,7 @@ export const useExplorersStore = defineStore('explorers', () => {
 
                 logger.error('failed to generate code', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to generate code' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to generate code'));
             });
         });
     }

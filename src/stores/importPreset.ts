@@ -11,7 +11,7 @@ import {
 } from '@/models/import_preset.ts';
 
 import { isEquals } from '@/lib/common.ts';
-import services, { type ApiResponsePromise } from '@/lib/services.ts';
+import services, { type ApiResponsePromise, toStoreError } from '@/lib/services.ts';
 import logger from '@/lib/logger.ts';
 
 export const useImportPresetsStore = defineStore('importPresets', () => {
@@ -94,13 +94,7 @@ export const useImportPresetsStore = defineStore('importPresets', () => {
                     logger.error('failed to load import preset list', error);
                 }
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve import preset list' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve import preset list'));
             });
         });
     }
@@ -123,13 +117,7 @@ export const useImportPresetsStore = defineStore('importPresets', () => {
             }).catch(error => {
                 logger.error('failed to load import preset', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve import preset' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve import preset'));
             });
         });
     }
@@ -168,17 +156,7 @@ export const useImportPresetsStore = defineStore('importPresets', () => {
             }).catch(error => {
                 logger.error('failed to save import preset', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    if (!preset.id) {
-                        reject({ message: 'Unable to add import preset' });
-                    } else {
-                        reject({ message: 'Unable to save import preset' });
-                    }
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, !preset.id ? 'Unable to add import preset' : 'Unable to save import preset'));
             });
         });
     }
@@ -240,13 +218,7 @@ export const useImportPresetsStore = defineStore('importPresets', () => {
             }).catch(error => {
                 logger.error('failed to save presets display order', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to move import preset' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to move import preset'));
             });
         });
     }
@@ -275,13 +247,7 @@ export const useImportPresetsStore = defineStore('importPresets', () => {
             }).catch(error => {
                 logger.error('failed to delete import preset', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to delete import preset' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to delete import preset'));
             });
         });
     }

@@ -15,7 +15,7 @@ import {
 
 import { isEquals } from '@/lib/common.ts';
 import { getFirstVisibleCategoryId } from '@/lib/category.ts';
-import services, { type ApiResponsePromise } from '@/lib/services.ts';
+import services, { type ApiResponsePromise, toStoreError } from '@/lib/services.ts';
 import logger from '@/lib/logger.ts';
 
 export const useTransactionCategoriesStore = defineStore('transactionCategories', () =>{
@@ -273,13 +273,7 @@ export const useTransactionCategoriesStore = defineStore('transactionCategories'
                     logger.error('failed to load category list', error);
                 }
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve category list' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve category list'));
             });
         });
 
@@ -304,13 +298,7 @@ export const useTransactionCategoriesStore = defineStore('transactionCategories'
             }).catch(error => {
                 logger.error('failed to load category info', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve category' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve category'));
             });
         });
     }
@@ -353,17 +341,7 @@ export const useTransactionCategoriesStore = defineStore('transactionCategories'
             }).catch(error => {
                 logger.error('failed to save category', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    if (!isEdit) {
-                        reject({ message: 'Unable to add category' });
-                    } else {
-                        reject({ message: 'Unable to save category' });
-                    }
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, !isEdit ? 'Unable to add category' : 'Unable to save category'));
             });
         });
     }
@@ -388,13 +366,7 @@ export const useTransactionCategoriesStore = defineStore('transactionCategories'
             }).catch(error => {
                 logger.error('failed to add categories', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to add category' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to add category'));
             });
         });
     }
@@ -419,13 +391,7 @@ export const useTransactionCategoriesStore = defineStore('transactionCategories'
             }).catch(error => {
                 logger.error('failed to add preset categories', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to add preset categories' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to add preset categories'));
             });
         });
     }
@@ -505,13 +471,7 @@ export const useTransactionCategoriesStore = defineStore('transactionCategories'
             }).catch(error => {
                 logger.error('failed to save categories display order', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to move category' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to move category'));
             });
         });
     }
@@ -540,17 +500,7 @@ export const useTransactionCategoriesStore = defineStore('transactionCategories'
             }).catch(error => {
                 logger.error('failed to change category visibility', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    if (hidden) {
-                        reject({ message: 'Unable to hide this category' });
-                    } else {
-                        reject({ message: 'Unable to unhide this category' });
-                    }
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, hidden ? 'Unable to hide this category' : 'Unable to unhide this category'));
             });
         });
     }
@@ -579,13 +529,7 @@ export const useTransactionCategoriesStore = defineStore('transactionCategories'
             }).catch(error => {
                 logger.error('failed to delete category', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to delete this category' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to delete this category'));
             });
         });
     }
