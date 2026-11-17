@@ -336,7 +336,7 @@ Recommended workflow: call `import_transactions` with `dry_run` omitted, review 
 | `action` | `string` | Optional | `create`, `update`, `delete`, `hide`, `reorder`, `upload`, `detach`, `import` or `reconcile` |
 | `entity_type` | `string` | Optional | `transaction`, `account`, `transaction_category`, `transaction_tag`, `transaction_tag_group`, `transaction_template` or `transaction_attachment` |
 | `entity_id` | `string` | Optional | Only changes which affected this ID |
-| `operation_id` | `string` | Optional | Only changes made with this client operation ID |
+| `filter_operation_id` | `string` | Optional | Only changes made with this client operation ID |
 | `count` / `page` | `number` | Optional | Pagination (default 50 per page, maximum 200) |
 
 **Response Parameters**

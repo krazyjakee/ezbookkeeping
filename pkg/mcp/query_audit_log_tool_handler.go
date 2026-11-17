@@ -27,7 +27,7 @@ type MCPQueryAuditLogRequest struct {
 	Action      string `json:"action,omitempty" jsonschema:"enum=create,enum=update,enum=delete,enum=hide,enum=reorder,enum=upload,enum=detach,enum=import,enum=reconcile" jsonschema_description:"Only return changes of this action (optional)"`
 	EntityType  string `json:"entity_type,omitempty" jsonschema:"enum=transaction,enum=account,enum=transaction_category,enum=transaction_tag,enum=transaction_tag_group,enum=transaction_template,enum=transaction_attachment" jsonschema_description:"Only return changes of this entity type (optional)"`
 	EntityId    string `json:"entity_id,omitempty" jsonschema_description:"Only return changes which affected the entity with this ID (optional)"`
-	OperationId string `json:"operation_id,omitempty" jsonschema_description:"Only return changes made with this client provided operation_id (optional)"`
+	OperationId string `json:"filter_operation_id,omitempty" jsonschema_description:"Only return changes made with this client provided operation_id (optional)"`
 	Count       int32  `json:"count,omitempty" jsonschema:"default=50" jsonschema_description:"Maximum number of results to return (optional, default: 50, maximum: 200)"`
 	Page        int32  `json:"page,omitempty" jsonschema:"default=1" jsonschema_description:"Page number for pagination (optional, default: 1)"`
 }
@@ -73,7 +73,7 @@ func (h *mcpQueryAuditLogToolHandler) Name() string {
 
 // Description returns the description of the MCP tool
 func (h *mcpQueryAuditLogToolHandler) Description() string {
-	return "Query the audit history of changes committed through MCP write tools (dry runs and reads are not recorded): tool, action, entity type and affected IDs, client operation_id, idempotency key, token ID, client IP and time. Supports filters by time range, tool, action, entity and operation_id, with pagination (newest first)."
+	return "Query the audit history of changes committed through MCP write tools (dry runs and reads are not recorded): tool, action, entity type and affected IDs, client operation_id, idempotency key, token ID, client IP and time. Supports filters by time range, tool, action, entity and operation ID (filter_operation_id), with pagination (newest first)."
 }
 
 // DataOperationType returns how the MCP tool operates on business records
