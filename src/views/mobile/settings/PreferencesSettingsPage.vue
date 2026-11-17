@@ -439,6 +439,14 @@
                     </f7-list>
                 </f7-popover>
             </f7-list-item>
+            <f7-list-item>
+                <template #after-title>
+                    {{ tt('Collapse Sub-accounts by Default') }}
+                </template>
+                <template #after>
+                    <f7-toggle :checked="collapseSubAccountsByDefault" @toggle:change="collapseSubAccountsByDefault = $event"></f7-toggle>
+                </template>
+            </f7-list-item>
             <f7-list-item
                 class="item-truncate-after-text"
                 link="#"
@@ -608,6 +616,11 @@ const alwaysShowTransactionPicturesInMobileTransactionEditPage = computed<boolea
 const defaultCreditCardAmountDisplayTypeInMobile = computed<number>({
     get: () => settingsStore.appSettings.defaultCreditCardAmountDisplayTypeInMobile,
     set: (value: number) => settingsStore.setDefaultCreditCardAmountDisplayTypeInMobile(value)
+});
+
+const collapseSubAccountsByDefault = computed<boolean>({
+    get: () => settingsStore.appSettings.collapseSubAccountsByDefault,
+    set: (value) => settingsStore.setCollapseSubAccountsByDefault(value)
 });
 
 const reconciliationStatementPageDefaultDateRangeTypeInMobile = computed<number>({

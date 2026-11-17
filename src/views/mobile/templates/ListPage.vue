@@ -30,6 +30,28 @@
             <f7-list-item :title="tt('No available template')" v-else></f7-list-item>
         </f7-list>
 
+        <f7-list strong inset dividers class="margin-top-half margin-bottom-half"
+                 v-if="!loading && !noAvailableTemplate && isScheduledTransaction && !sortable">
+            <f7-list-item link="#" popover-open=".schedule-status-filter-popover-menu"
+                          :title="tt('Status')" :after="statusFilterDisplayName">
+            </f7-list-item>
+        </f7-list>
+
+        <f7-popover class="schedule-status-filter-popover-menu">
+            <f7-list dividers>
+                <f7-list-item link="#" no-chevron popover-close
+                              :title="option.displayName"
+                              :class="{ 'list-item-selected': statusFilter === option.type }"
+                              :key="option.type"
+                              v-for="option in allStatusFilterTypes"
+                              @click="statusFilter = option.type">
+                    <template #after>
+                        <f7-icon class="list-item-checked-icon" f7="checkmark_alt" v-if="statusFilter === option.type"></f7-icon>
+                    </template>
+                </f7-list-item>
+            </f7-list>
+        </f7-popover>
+
         <f7-list strong inset dividers sortable class="margin-top-half template-list"
                  :sortable-enabled="sortable"
                  v-if="!loading"
@@ -38,10 +60,14 @@
                           :class="{ 'actual-first-child': template.id === firstShowingId, 'actual-last-child': template.id === lastShowingId }"
                           :id="getTemplateDomId(template)"
                           :title="template.name"
+                          :footer="isScheduledTransaction ? getScheduleOccurrenceDisplayText(template) : undefined"
                           :key="template.id"
                           v-for="template in templates"
-                          v-show="showHidden || !template.hidden"
+                          v-show="(showHidden || !template.hidden) && isShownByStatusFilter(template)"
                           @taphold="setSortable()">
+                <template #after v-if="isScheduledTransaction">
+                    <f7-badge :color="getStatusColor(template)">{{ getStatusDisplayName(template) }}</f7-badge>
+                </template>
                 <template #media>
                     <f7-icon :f7="templateType === TemplateType.Schedule.type ? 'clock' : 'doc_plaintext'">
                         <f7-badge color="gray" class="right-bottom-icon" v-if="template.hidden">
@@ -99,6 +125,7 @@ import type { Router } from 'framework7/types';
 
 import { useI18n } from '@/locales/helpers.ts';
 import { useI18nUIComponents, showLoading, hideLoading, onSwipeoutDeleted } from '@/lib/ui/mobile.ts';
+import { useScheduledTransactionListPageBase } from '@/views/base/templates/ScheduledTransactionListPageBase.ts';
 
 import { useTransactionTemplatesStore } from '@/stores/transactionTemplate.ts';
 
@@ -136,9 +163,34 @@ const displayOrderSaving = ref<boolean>(false);
 
 const textDirection = computed<TextDirection>(() => getCurrentLanguageTextDirection());
 const templates = computed<TransactionTemplate[]>(() => transactionTemplatesStore.allTransactionTemplates[templateType.value] || []);
-const firstShowingId = computed<string | null>(() => getFirstShowingId(templates.value, showHidden.value));
-const lastShowingId = computed<string | null>(() => getLastShowingId(templates.value, showHidden.value));
 const noAvailableTemplate = computed<boolean>(() => isNoAvailableTemplate(templates.value, showHidden.value));
+
+const {
+    statusFilter,
+    isScheduledTransaction,
+    allStatusFilterTypes,
+    statusFilterDisplayName,
+    getStatusDisplayName,
+    getStatusColor,
+    getNextOccurrenceDisplayText,
+    getRemainingOccurrencesDisplayText,
+    isShownByStatusFilter
+} = useScheduledTransactionListPageBase(templateType, templates);
+
+const statusFilteredTemplates = computed<TransactionTemplate[]>(() => templates.value.filter(template => isShownByStatusFilter(template)));
+const firstShowingId = computed<string | null>(() => getFirstShowingId(statusFilteredTemplates.value, showHidden.value));
+const lastShowingId = computed<string | null>(() => getLastShowingId(statusFilteredTemplates.value, showHidden.value));
+
+function getScheduleOccurrenceDisplayText(template: TransactionTemplate): string {
+    const nextOccurrence = getNextOccurrenceDisplayText(template);
+    const remainingOccurrences = getRemainingOccurrencesDisplayText(template);
+
+    if (nextOccurrence && remainingOccurrences) {
+        return `${nextOccurrence} (${remainingOccurrences})`;
+    }
+
+    return nextOccurrence || remainingOccurrences;
+}
 
 function getTemplateDomId(template: TransactionTemplate): string {
     return 'template_' + template.id;
@@ -261,6 +313,7 @@ function setSortable(): void {
     }
 
     showHidden.value = true;
+    statusFilter.value = 'all';
     sortable.value = true;
     displayOrderModified.value = false;
 }

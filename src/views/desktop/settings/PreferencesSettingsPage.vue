@@ -385,6 +385,12 @@
                         </div>
 
                         <div class="setting-item">
+                            <span>{{ tt('Collapse Sub-accounts by Default') }}</span>
+                            <v-spacer/>
+                            <v-switch class="ms-4" v-model="collapseSubAccountsByDefault"/>
+                        </div>
+
+                        <div class="setting-item">
                             <span>{{ tt('Default Date Range for Reconciliation Statement Button') }}</span>
                             <v-spacer/>
                             <v-select
@@ -593,6 +599,11 @@ const showTagInInsightsExplorerPage = computed<boolean>({
 const hideCategoriesWithoutAccounts = computed<boolean>({
     get: () => settingsStore.appSettings.hideCategoriesWithoutAccounts,
     set: (value) => settingsStore.setHideCategoriesWithoutAccounts(value)
+});
+
+const collapseSubAccountsByDefault = computed<boolean>({
+    get: () => settingsStore.appSettings.collapseSubAccountsByDefault,
+    set: (value) => settingsStore.setCollapseSubAccountsByDefault(value)
 });
 
 const reconciliationStatementButtonDefaultDateRangeTypeInDesktop = computed<number>({

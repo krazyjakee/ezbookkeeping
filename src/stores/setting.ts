@@ -399,6 +399,12 @@ export const useSettingsStore = defineStore('settings', () => {
         updateUserApplicationCloudSettingValue('hideCategoriesWithoutAccounts', value);
     }
 
+    function setCollapseSubAccountsByDefault(value: boolean): void {
+        updateApplicationSettingsValue('collapseSubAccountsByDefault', value);
+        appSettings.value.collapseSubAccountsByDefault = value;
+        updateUserApplicationCloudSettingValue('collapseSubAccountsByDefault', value);
+    }
+
     function setDefaultCreditCardAmountDisplayTypeInMobile(value: number): void {
         updateApplicationSettingsValue('defaultCreditCardAmountDisplayTypeInMobile', value);
         appSettings.value.defaultCreditCardAmountDisplayTypeInMobile = value;
@@ -697,6 +703,7 @@ export const useSettingsStore = defineStore('settings', () => {
         // -- Account List Page
         setTotalAmountExcludeAccountIds,
         setHideCategoriesWithoutAccounts,
+        setCollapseSubAccountsByDefault,
         setDefaultCreditCardAmountDisplayTypeInMobile,
         setReconciliationStatementButtonDefaultDateRangeTypeInDesktop,
         setReconciliationStatementPageDefaultDateRangeTypeInMobile,

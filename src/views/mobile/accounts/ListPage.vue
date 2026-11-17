@@ -69,7 +69,7 @@
                 <f7-list-item swipeout
                               class="nested-list-item"
                               :id="getAccountDomId(account)"
-                              :class="{ 'has-child-list-item': account.type === AccountType.MultiSubAccounts.type && hasVisibleSubAccount(account), 'actual-first-child': account.id === firstShowingIds.accounts[accountCategory.type], 'actual-last-child': account.id === lastShowingIds.accounts[accountCategory.type] }"
+                              :class="{ 'has-child-list-item': canShowSubAccounts(account), 'actual-first-child': account.id === firstShowingIds.accounts[accountCategory.type], 'actual-last-child': account.id === lastShowingIds.accounts[accountCategory.type] }"
                               :after="account.type === AccountType.SingleAccount.type ? accountBalanceOrAvailableCredit(account, undefined, showAvailableCreditForCreditCard, showAccountBalance) : ''"
                               :link="!sortable ? '/transaction/list?accountIds=' + account.id : null"
                               :key="account.id"
@@ -77,7 +77,7 @@
                               v-show="showHidden || !account.hidden"
                               @taphold="setSortable()"
                 >
-                    <template #media v-if="account.type !== AccountType.MultiSubAccounts.type || !hasVisibleSubAccount(account)">
+                    <template #media v-if="!canShowSubAccounts(account)">
                         <ItemIcon :icon-type="getAccountIconType(account.iconType)" :icon-id="account.icon" :color="account.color">
                             <f7-badge color="gray" class="right-bottom-icon" v-if="account.hidden">
                                 <f7-icon f7="eye_slash_fill"></f7-icon>
@@ -88,7 +88,7 @@
                     <template #title>
                         <div class="nested-list-item-inner display-flex padding-top-half padding-bottom-half">
                             <ItemIcon :icon-type="getAccountIconType(account.iconType)" :icon-id="account.icon" :color="account.color"
-                                      v-if="account.type === AccountType.MultiSubAccounts.type && hasVisibleSubAccount(account)">
+                                      v-if="canShowSubAccounts(account)">
                                 <f7-badge color="gray" class="right-bottom-icon" v-if="account.hidden">
                                     <f7-icon f7="eye_slash_fill"></f7-icon>
                                 </f7-badge>
@@ -99,9 +99,16 @@
                             </div>
                             <div class="nested-list-item-after" v-if="account.type === AccountType.MultiSubAccounts.type">
                                 <span>{{ accountBalanceOrAvailableCredit(account, undefined, showAvailableCreditForCreditCard, showAccountBalance) }}</span>
+                                <span class="account-list-sub-account-toggle" role="button"
+                                      :class="{ 'disabled': sortable }"
+                                      :aria-label="isSubAccountsExpanded(account) ? tt('Collapse Sub-accounts') : tt('Expand Sub-accounts')"
+                                      v-if="hasVisibleSubAccount(account)"
+                                      @click.stop.prevent="toggleSubAccounts(account)">
+                                    <f7-icon :f7="isSubAccountsExpanded(account) ? 'chevron_up' : 'chevron_down'"></f7-icon>
+                                </span>
                             </div>
                         </div>
-                        <li v-if="account.type === AccountType.MultiSubAccounts.type">
+                        <li v-if="account.type === AccountType.MultiSubAccounts.type && isSubAccountsExpanded(account)">
                             <ul class="no-padding">
                                 <f7-list-item class="no-sortable nested-list-item-child"
                                               :class="{ 'actual-first-child': subAccount.id === firstShowingIds.subAccounts[account.id], 'actual-last-child': subAccount.id === lastShowingIds.subAccounts[account.id] }"
@@ -290,6 +297,7 @@ const showMoreActionSheet = ref<boolean>(false);
 const showDeleteActionSheet = ref<boolean>(false);
 const showInputPasswordSheetForClearAllTransactions = ref<boolean>(false);
 const displayOrderSaving = ref<boolean>(false);
+const subAccountsExpandedStates = ref<Record<string, boolean>>({});
 
 const textDirection = computed<TextDirection>(() => getCurrentLanguageTextDirection());
 const showAvailableCreditForCreditCard = ref<boolean>(settingsStore.appSettings.defaultCreditCardAmountDisplayTypeInMobile === CreditCardAmountDisplayType.AvailableCredit.type);
@@ -310,6 +318,22 @@ function hasAccount(accountCategory: AccountCategory, visibleOnly: boolean): boo
 
 function hasVisibleSubAccount(account: Account): boolean {
     return accountsStore.hasVisibleSubAccount(showHidden.value, account);
+}
+
+function isSubAccountsExpanded(account: Account): boolean {
+    return subAccountsExpandedStates.value[account.id] ?? !settingsStore.appSettings.collapseSubAccountsByDefault;
+}
+
+function canShowSubAccounts(account: Account): boolean {
+    return account.type === AccountType.MultiSubAccounts.type && hasVisibleSubAccount(account) && isSubAccountsExpanded(account);
+}
+
+function toggleSubAccounts(account: Account): void {
+    if (sortable.value) {
+        return;
+    }
+
+    subAccountsExpandedStates.value[account.id] = !isSubAccountsExpanded(account);
 }
 
 function getAccountDomId(account: Account): string {
@@ -663,6 +687,18 @@ init();
 
 .account-list .item-footer {
     padding-top: 4px;
+}
+
+.account-list-sub-account-toggle {
+    display: flex;
+    align-items: center;
+    padding-inline-start: 8px;
+
+    > .icon {
+        font-size: var(--f7-list-chevron-icon-font-size, 14px);
+        font-weight: bold;
+        color: var(--f7-list-chevron-icon-color);
+    }
 }
 
 .account-list-credit-card-amount-link {

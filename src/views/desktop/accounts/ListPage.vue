@@ -175,6 +175,14 @@
                                                             {{ accountCurrency(element) }}
                                                         </small>
                                                         <v-spacer/>
+                                                        <v-btn class="me-2" density="compact" color="default" variant="text"
+                                                               :aria-label="isSubAccountsExpanded(element) ? tt('Collapse Sub-accounts') : tt('Expand Sub-accounts')"
+                                                               :icon="true" :disabled="loading"
+                                                               v-if="element.type === AccountType.MultiSubAccounts.type"
+                                                               @click="toggleSubAccounts(element)">
+                                                            <v-icon :icon="isSubAccountsExpanded(element) ? mdiChevronUp : mdiChevronDown" size="20" />
+                                                            <v-tooltip activator="parent">{{ isSubAccountsExpanded(element) ? tt('Collapse Sub-accounts') : tt('Expand Sub-accounts') }}</v-tooltip>
+                                                        </v-btn>
                                                         <span class="align-self-center">
                                                             <v-icon :class="!loading && activeAccountCategoryVisibleAccountCount > 1 ? 'drag-handle' : 'disabled'"
                                                                     :aria-label="tt('Drag to Reorder')" :icon="mdiDrag"/>
@@ -182,7 +190,7 @@
                                                         </span>
                                                     </div>
 
-                                                    <div class="mt-4" v-if="element.type === AccountType.MultiSubAccounts.type">
+                                                    <div class="mt-4" v-if="element.type === AccountType.MultiSubAccounts.type && isSubAccountsExpanded(element)">
                                                         <v-btn-toggle
                                                             class="account-subaccounts"
                                                             variant="outlined"
@@ -383,7 +391,9 @@ import {
     mdiListBoxOutline,
     mdiInvoiceListOutline,
     mdiDrag,
-    mdiDotsVertical
+    mdiDotsVertical,
+    mdiChevronUp,
+    mdiChevronDown
 } from '@mdi/js';
 
 type ConfirmDialogType = InstanceType<typeof ConfirmDialog>;
@@ -432,6 +442,7 @@ const clearAllTransactionsDialog = useTemplateRef<ClearAllTransactionsDialogType
 const activeAccountCategoryType = ref<number>(defaultAccountCategory.value.type);
 const activeTab = ref<string>('accountPage');
 const activeSubAccount = ref<Record<string, string>>({});
+const subAccountsExpandedStates = ref<Record<string, boolean>>({});
 const accountToShowReconciliationStatement = ref<Account | null>(null);
 const alwaysShowNav = ref<boolean>(lgAndUp.value);
 const showNav = ref<boolean>(lgAndUp.value);
@@ -505,6 +516,19 @@ function reload(force: boolean): void {
 
 function hasAccount(accountCategory: AccountCategory): boolean {
     return accountsStore.hasAccount(accountCategory, !showHidden.value);
+}
+
+function isSubAccountsExpanded(account: Account): boolean {
+    return subAccountsExpandedStates.value[account.id] ?? !settingsStore.appSettings.collapseSubAccountsByDefault;
+}
+
+function toggleSubAccounts(account: Account): void {
+    const expanded = !isSubAccountsExpanded(account);
+    subAccountsExpandedStates.value[account.id] = expanded;
+
+    if (!expanded) {
+        activeSubAccount.value[account.id] = '';
+    }
 }
 
 function accountCurrency(account: Account): string | null {

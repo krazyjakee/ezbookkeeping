@@ -20,6 +20,19 @@
                             <v-tooltip activator="parent">{{ tt('Refresh') }}</v-tooltip>
                         </v-btn>
                         <v-spacer/>
+                        <v-btn class="ms-3" color="default" variant="outlined"
+                               :disabled="loading || updating" v-if="isScheduledTransaction">
+                            {{ tt('Status') }}: {{ statusFilterDisplayName }}
+                            <v-menu activator="parent">
+                                <v-list>
+                                    <v-list-item :key="option.type"
+                                                 :active="statusFilter === option.type"
+                                                 :title="option.displayName"
+                                                 v-for="option in allStatusFilterTypes"
+                                                 @click="statusFilter = option.type"></v-list-item>
+                                </v-list>
+                            </v-menu>
+                        </v-btn>
                         <v-btn density="comfortable" color="default" variant="text" class="ms-2"
                                :aria-label="tt('More')" :disabled="loading || updating" :icon="true">
                             <v-icon :icon="mdiDotsVertical" />
@@ -70,11 +83,11 @@
                                     item-key="id"
                                     handle=".drag-handle"
                                     ghost-class="dragging-item"
-                                    :disabled="noAvailableTemplate"
+                                    :disabled="noAvailableTemplate || !canReorderByStatusFilter"
                                     v-model="templates"
                                     @change="onMove">
                         <template #item="{ element }">
-                            <tr class="transaction-templates-table-row" v-if="showHidden || !element.hidden"
+                            <tr class="transaction-templates-table-row" v-if="(showHidden || !element.hidden) && isShownByStatusFilter(element)"
                                 @mouseenter="hoveredTemplateId = element.id" @mouseleave="hoveredTemplateId = ''">
                                 <td>
                                     <div class="d-flex align-center">
@@ -87,6 +100,12 @@
                                             </v-badge>
                                             <v-icon size="20" start :icon="templateType === TemplateType.Schedule.type ? mdiClockTimeNineOutline : mdiTextBoxOutline" v-else-if="!element.hidden"/>
                                             <span class="transaction-template-name">{{ element.name }}</span>
+                                            <template v-if="isScheduledTransaction">
+                                                <v-chip class="ms-2" size="small" label variant="tonal"
+                                                        :color="getStatusColor(element)">{{ getStatusDisplayName(element) }}</v-chip>
+                                                <span class="ms-2 text-body-small text-medium-emphasis" v-if="getNextOccurrenceDisplayText(element)">{{ getNextOccurrenceDisplayText(element) }}</span>
+                                                <span class="ms-2 text-body-small text-medium-emphasis" v-if="getRemainingOccurrencesDisplayText(element)">({{ getRemainingOccurrencesDisplayText(element) }})</span>
+                                            </template>
                                         </div>
 
                                         <v-spacer/>
@@ -127,9 +146,9 @@
                                         </template>
 
                                         <span class="ms-2">
-                                            <v-icon :class="!loading && !updating && availableTemplateCount > 1 ? 'drag-handle' : 'disabled'"
+                                            <v-icon :class="!loading && !updating && canReorderByStatusFilter && availableTemplateCount > 1 ? 'drag-handle' : 'disabled'"
                                                     :aria-label="tt('Drag to Reorder')" :icon="mdiDrag"/>
-                                            <v-tooltip activator="parent" v-if="!loading && !updating && availableTemplateCount > 1 && hoveredTemplateId === element.id">{{ tt('Drag to Reorder') }}</v-tooltip>
+                                            <v-tooltip activator="parent" v-if="!loading && !updating && canReorderByStatusFilter && availableTemplateCount > 1 && hoveredTemplateId === element.id">{{ tt('Drag to Reorder') }}</v-tooltip>
                                         </span>
                                     </div>
                                 </td>
@@ -154,6 +173,7 @@ import { TransactionEditPageType } from '@/views/base/transactions/TransactionEd
 import { ref, computed, useTemplateRef } from 'vue';
 
 import { useI18n } from '@/locales/helpers.ts';
+import { useScheduledTransactionListPageBase } from '@/views/base/templates/ScheduledTransactionListPageBase.ts';
 
 import { useTransactionTemplatesStore } from '@/stores/transactionTemplate.ts';
 import { useDesktopPageStore } from '@/stores/desktopPage.ts';
@@ -205,6 +225,19 @@ const showHidden = ref<boolean>(false);
 const templates = computed<TransactionTemplate[]>(() => transactionTemplatesStore.allTransactionTemplates[templateType.value] || []);
 const noAvailableTemplate = computed<boolean>(() => isNoAvailableTemplate(templates.value, showHidden.value));
 const availableTemplateCount = computed<number>(() => getAvailableTemplateCount(templates.value, showHidden.value));
+
+const {
+    statusFilter,
+    isScheduledTransaction,
+    canReorderByStatusFilter,
+    allStatusFilterTypes,
+    statusFilterDisplayName,
+    getStatusDisplayName,
+    getStatusColor,
+    getNextOccurrenceDisplayText,
+    getRemainingOccurrencesDisplayText,
+    isShownByStatusFilter
+} = useScheduledTransactionListPageBase(templateType, templates);
 
 function init(): void {
     templateType.value = props.initType;

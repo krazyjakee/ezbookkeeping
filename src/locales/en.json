@@ -119,6 +119,8 @@
             "720p": "720p (approx. {size} KiB)"
         },
         "misc": {
+            "nextOccurrence": "Next: {date}",
+            "occurrencesLeft": "{count} left",
             "nHour": "{n} Hour",
             "nHours": "{n} Hours",
             "nDay": "{n} Day",
@@ -1822,6 +1824,14 @@
     "Date is too early": "Date is too early",
     "Invalid date/time format": "Invalid date/time format",
     "Transactions require a secondary category. Do you want to add a secondary category under this primary category now?": "Transactions require a secondary category. Do you want to add a secondary category under this primary category now?",
+    "Collapse Sub-accounts by Default": "Collapse Sub-accounts by Default",
+    "Collapse Sub-accounts": "Collapse Sub-accounts",
+    "Expand Sub-accounts": "Expand Sub-accounts",
+    "Active": "Active",
+    "Not Started": "Not Started",
+    "Expired": "Expired",
+    "Unlimited": "Unlimited",
+    "No upcoming occurrences": "No upcoming occurrences",
     "User Canceled": "User Canceled",
     "Unable to load language resources. Please try again.": "Unable to load language resources. Please try again.",
     "Welcome to ezBookkeeping": "Welcome to ezBookkeeping",
