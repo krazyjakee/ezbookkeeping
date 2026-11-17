@@ -1,4 +1,11 @@
 # ezBookkeeping
+
+> **A business-focused fork of [mayswind/ezbookkeeping](https://github.com/mayswind/ezbookkeeping).**
+> Upstream is moving toward personal life logging: experiences, memories and photographs. This fork sticks to bookkeeping and puts these first:
+> - **Stability:** conservative changes, correctness and data integrity before new features
+> - **Maturity:** predictable releases and safe upgrades for long-running deployments
+> - **Business use:** features for small businesses and teams, not personal lifestyle tracking
+
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/mayswind/ezbookkeeping/blob/master/LICENSE)
 [![Latest Release](https://img.shields.io/github/release/mayswind/ezbookkeeping.svg?style=flat)](https://github.com/mayswind/ezbookkeeping/releases)
 [![Latest Build](https://img.shields.io/github/actions/workflow/status/mayswind/ezbookkeeping/build-snapshot.yml?branch=main)](https://github.com/mayswind/ezbookkeeping/actions)
@@ -56,7 +63,7 @@ Live Demo: [https://ezbookkeeping-demo.mayswind.net](https://ezbookkeeping-demo.
     - Import CSV, Excel, OFX, QFX, QIF, IIF, Camt.052, Camt.053, MT940, GnuCash, Firefly III, Beancount and more
     - Custom column mapping, rules and scripts for CSV / Excel imports
 
-For a full list of features, visit the [Full Feature List](https://ezbookkeeping.mayswind.net/features/).
+For a full list of features, visit the [Full Feature List](https://krazyjakee.github.io/ezbookkeeping/features/).
 
 ## Screenshots
 ### Desktop Version
@@ -77,7 +84,7 @@ Visit [Docker Hub](https://hub.docker.com/r/mayswind/ezbookkeeping) to see all i
 
     $ docker run -p8080:8080 mayswind/ezbookkeeping:latest-snapshot
 
-For production use of ezBookkeeping, you need to mount a persistent volume when starting the container to prevent data loss. For more information, see [documentation](https://ezbookkeeping.mayswind.net/installation/installation-docker).
+For production use of ezBookkeeping, you need to mount a persistent volume when starting the container to prevent data loss. For more information, see [documentation](https://krazyjakee.github.io/ezbookkeeping/installation/installation-docker).
 
 ### Install from Binary
 Download the latest release: [https://github.com/mayswind/ezbookkeeping/releases](https://github.com/mayswind/ezbookkeeping/releases)
@@ -129,7 +136,7 @@ Improvements to documentation, feature suggestions, and other forms of feedback 
 You can view existing contributors on the [Contributor Graph](https://github.com/mayswind/ezbookkeeping/graphs/contributors).
 
 ## Translating
-Help make ezBookkeeping accessible to users around the world. We welcome help to improve existing translations or add new ones. If you would like to contribute a translation, please refer to the [translation guide](https://ezbookkeeping.mayswind.net/translating).
+Help make ezBookkeeping accessible to users around the world. We welcome help to improve existing translations or add new ones. If you would like to contribute a translation, please refer to the [translation guide](https://krazyjakee.github.io/ezbookkeeping/translating).
 
 Currently available translations:
 
@@ -161,8 +168,8 @@ Currently available translations:
 | zh-Hant | 中文 (繁體) | [![Translation Progress](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmayswind%2FezBookkeeping-i18n-badge%2Fmain%2Fbadges%2Fzh-Hant.json)](https://github.com/mayswind/ezBookkeeping-i18n-badge/blob/main/untranslated/zh-Hant.json) | / |
 
 ## Documentation
-1. [English](https://ezbookkeeping.mayswind.net)
-1. [中文 (简体)](https://ezbookkeeping.mayswind.net/zh_Hans)
+1. [English](https://krazyjakee.github.io/ezbookkeeping)
+1. [中文 (简体)](https://krazyjakee.github.io/ezbookkeeping/zh_Hans)
 
 ## License
 [MIT](https://github.com/mayswind/ezbookkeeping/blob/master/LICENSE)
