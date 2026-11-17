@@ -51,7 +51,7 @@ type TransactionTemplate struct {
 	RelatedAccountId           int64  `xorm:"NOT NULL"`
 	RelatedAccountAmount       int64  `xorm:"NOT NULL"`
 	HideAmount                 bool   `xorm:"NOT NULL"`
-	Comment                    string `xorm:"VARCHAR(255) NOT NULL"`
+	Comment                    string `xorm:"VARCHAR(1024) NOT NULL"`
 	DisplayOrder               int32  `xorm:"INDEX(IDX_transaction_template_uid_deleted_template_type_order) NOT NULL"`
 	Hidden                     bool   `xorm:"NOT NULL"`
 	CreatedUnixTime            int64
@@ -81,7 +81,7 @@ type TransactionTemplateCreateRequest struct {
 	DestinationAmount          int64                             `json:"destinationAmount" binding:"validTransactionAmount"`
 	HideAmount                 bool                              `json:"hideAmount"`
 	TagIds                     []string                          `json:"tagIds"`
-	Comment                    string                            `json:"comment" binding:"max=255"`
+	Comment                    string                            `json:"comment" binding:"max=1024"`
 	ScheduledFrequencyType     *TransactionScheduleFrequencyType `json:"scheduledFrequencyType" binding:"omitempty"`
 	ScheduledFrequency         *string                           `json:"scheduledFrequency" binding:"omitempty"`
 	ScheduledStartDate         *string                           `json:"scheduledStartDate" binding:"omitempty"`
@@ -109,7 +109,7 @@ type TransactionTemplateModifyRequest struct {
 	DestinationAmount          int64                             `json:"destinationAmount" binding:"validTransactionAmount"`
 	HideAmount                 bool                              `json:"hideAmount"`
 	TagIds                     []string                          `json:"tagIds"`
-	Comment                    string                            `json:"comment" binding:"max=255"`
+	Comment                    string                            `json:"comment" binding:"max=1024"`
 	ScheduledFrequencyType     *TransactionScheduleFrequencyType `json:"scheduledFrequencyType" binding:"omitempty"`
 	ScheduledFrequency         *string                           `json:"scheduledFrequency" binding:"omitempty"`
 	ScheduledStartDate         *string                           `json:"scheduledStartDate" binding:"omitempty"`
