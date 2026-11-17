@@ -847,10 +847,6 @@ export function getYearFirstDateTimeBySpecifiedDateTime(unixTime: number, utcOff
     return MomentDateTime.of(date.set({ hour: 0, minute: 0, second: 0, millisecond: 0 }).subtract(date.dayOfYear() - 1, 'days'));
 }
 
-export function getYearLastDateTimeBySpecifiedUnixTime(unixTime: number, utcOffset?: number): DateTime {
-    return getYearFirstDateTimeBySpecifiedDateTime(unixTime, utcOffset).add(1, 'years').subtract(1, 'seconds');
-}
-
 export function getQuarterFirstTimeTimeBySpecifiedUnixTime(unixTime: number, utcOffset?: number): DateTime {
     let date = moment.unix(unixTime);
 
@@ -862,10 +858,6 @@ export function getQuarterFirstTimeTimeBySpecifiedUnixTime(unixTime: number, utc
     const month = date.month();
     const quarterStartMonth = Math.floor(month / 3) * 3;
     return MomentDateTime.of(date.set({ month: quarterStartMonth, date: 1 }));
-}
-
-export function getQuarterLastTimeTimeBySpecifiedUnixTime(unixTime: number, utcOffset?: number): DateTime {
-    return getQuarterFirstTimeTimeBySpecifiedUnixTime(unixTime, utcOffset).add(3, 'months').subtract(1, 'seconds');
 }
 
 export function getMonthFirstDateTimeBySpecifiedUnixTime(unixTime: number, utcOffset?: number): DateTime {
@@ -1663,7 +1655,6 @@ export function getFiscalYearFromUnixTime(unixTime: number, fiscalYearStartValue
         return date.year();
     }
 
-    // Get date components
     const month = date.month() + 1; // 1-index
     const day = date.date();
     const year = date.year();
@@ -1753,11 +1744,6 @@ export function getFiscalYearEndUnixTime(unixTime: number, fiscalYearStart: numb
     return getFiscalYearEndDateTime(unixTime, fiscalYearStart, utcOffset).getUnixTime();
 }
 
-export function getCurrentFiscalYear(fiscalYearStart: number, utcOffset?: number): number {
-    const date = moment();
-    return getFiscalYearFromUnixTime(date.unix(), fiscalYearStart, utcOffset);
-}
-
 export function getFiscalYearTimeRangeFromUnixTime(unixTime: number, fiscalYearStart: number, utcOffset?: number): FiscalYearUnixTime {
     const start = getFiscalYearStartUnixTime(unixTime, fiscalYearStart, utcOffset);
     const end = getFiscalYearEndUnixTime(unixTime, fiscalYearStart, utcOffset);
@@ -1780,7 +1766,6 @@ export function getFiscalYearTimeRangeFromYear(year: number, fiscalYearStartValu
     // unless fiscal year starts on January 1
     const calendarStartYear = fiscalYearStartValue === FiscalYearStart.JanuaryFirstDay.value ? fiscalYear : fiscalYear - 1;
 
-    // Create the timestamp for the start of the fiscal year
     const fiscalYearStartUnixTime = moment().set({
         year: calendarStartYear,
         month: fiscalYearStart.month - 1, // 0-index
@@ -1791,7 +1776,6 @@ export function getFiscalYearTimeRangeFromYear(year: number, fiscalYearStartValu
         millisecond: 0,
     }).unix();
 
-    // Fiscal year end is one year after start minus 1 second
     const fiscalYearEndUnixTime = moment.unix(fiscalYearStartUnixTime).add(1, 'years').subtract(1, 'seconds').unix();
 
     return {

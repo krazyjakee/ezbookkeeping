@@ -41,7 +41,6 @@ function toPostfixExprTokens(expr: string): string[] | null {
     for (let i = 0; i < expr.length; i++) {
         const ch = expr[i] as string;
 
-        // number
         if ('0' <= ch && ch <= '9' || ch === '.') {
             currentNumberBuilder += ch;
             continue
@@ -50,7 +49,6 @@ function toPostfixExprTokens(expr: string): string[] | null {
             continue
         }
 
-        // operator or parenthesis
         if (currentNumberBuilder.length > 0) {
             finalTokens.push(currentNumberBuilder);
             currentNumberBuilder = '';
@@ -152,11 +150,9 @@ function evaluatePostfixExpr(tokens: string[]): BigDecimal | null {
                     return null;
                 }
 
-                // pop the top two operands
                 const b = stack.pop() as BigDecimal;
                 const a = stack.pop() as BigDecimal;
 
-                // evaluate the operation
                 let result: BigDecimal;
                 switch (token) {
                     case '+':
@@ -179,7 +175,6 @@ function evaluatePostfixExpr(tokens: string[]): BigDecimal | null {
                         return null;
                 }
 
-                // push the result back to the stack
                 stack.push(result);
                 break;
             default: // operands
