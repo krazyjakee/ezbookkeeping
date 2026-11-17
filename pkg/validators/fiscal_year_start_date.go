@@ -13,7 +13,6 @@ func ValidateFiscalYearStart(fl validator.FieldLevel) bool {
 		return false
 	}
 
-	// Use the core functionality to validate
 	_, _, err := date.GetMonthDay()
 	return err == nil
 }

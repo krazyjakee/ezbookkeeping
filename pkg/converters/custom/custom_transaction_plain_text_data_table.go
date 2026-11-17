@@ -124,7 +124,6 @@ func (t *customPlainTextDataRowIterator) parseTransaction(ctx core.Context, user
 		rowData[column] = value
 	}
 
-	// parse transaction type
 	if rowData[datatable.TRANSACTION_DATA_TABLE_TRANSACTION_TYPE] != "" {
 		transactionType, exists := t.transactionDataTable.transactionTypeNameMapping[rowData[datatable.TRANSACTION_DATA_TABLE_TRANSACTION_TYPE]]
 
@@ -143,7 +142,6 @@ func (t *customPlainTextDataRowIterator) parseTransaction(ctx core.Context, user
 		rowData[datatable.TRANSACTION_DATA_TABLE_TRANSACTION_TYPE] = mappedTransactionType
 	}
 
-	// parse date time
 	if rowData[datatable.TRANSACTION_DATA_TABLE_TRANSACTION_TIME] != "" {
 		dateTime, err := time.Parse(t.transactionDataTable.timeFormat, rowData[datatable.TRANSACTION_DATA_TABLE_TRANSACTION_TIME])
 
@@ -159,7 +157,6 @@ func (t *customPlainTextDataRowIterator) parseTransaction(ctx core.Context, user
 		}
 	}
 
-	// parse timezone
 	if rowData[datatable.TRANSACTION_DATA_TABLE_TRANSACTION_TIMEZONE] != "" {
 		if t.transactionDataTable.timezoneFormat == "Z" || t.transactionDataTable.timezoneFormat == "" { // -HH:mm
 			// Do Nothing
@@ -230,7 +227,6 @@ func (t *customPlainTextDataRowIterator) parseTransaction(ctx core.Context, user
 		rowData[datatable.TRANSACTION_DATA_TABLE_RELATED_ACCOUNT_NAME] = ""
 	}
 
-	// parse geographic location
 	if rowData[datatable.TRANSACTION_DATA_TABLE_GEOGRAPHIC_LOCATION] != "" {
 		geoLocation := rowData[datatable.TRANSACTION_DATA_TABLE_GEOGRAPHIC_LOCATION]
 

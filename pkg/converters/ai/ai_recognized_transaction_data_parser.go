@@ -64,7 +64,7 @@ func (p *aiTransactionDataParser) parseText(c core.Context, user *models.User, f
 	return p.parseRecognizedResult(c, user, llmResponse)
 }
 
-// parseText processes the input image data and returns the recognized transaction results using AI
+// parseImage processes the input image data and returns the recognized transaction results using AI
 func (p *aiTransactionDataParser) parseImage(c core.Context, user *models.User, imageData []byte, additionalPrompt string, additionalOptions converter.TransactionDataImporterOptions, defaultTimezone *time.Location, accountMap map[string]*models.Account, expenseCategoryMap map[string]map[string]*models.TransactionCategory, incomeCategoryMap map[string]map[string]*models.TransactionCategory, transferCategoryMap map[string]map[string]*models.TransactionCategory, tagMap map[string]*models.TransactionTag) ([]*models.RecognizedTransactionResult, error) {
 	if p.currentConfig == nil || p.currentConfig.ReceiptImageRecognitionLLMConfig == nil || p.currentConfig.ReceiptImageRecognitionLLMConfig.LLMProvider == "" || !p.currentConfig.TransactionFromAIImageRecognition {
 		return nil, errs.ErrLargeLanguageModelProviderNotEnabled

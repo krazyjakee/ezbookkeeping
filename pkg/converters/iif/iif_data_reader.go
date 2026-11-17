@@ -63,7 +63,6 @@ func (r *iifDataReader) read(ctx core.Context) ([]*iifAccountDataset, []*iifTran
 			return nil, nil, errs.NewImportError(errs.ErrInvalidIIFFile, recordId)
 		}
 
-		// read sample line
 		if items[0][0] == '!' {
 			if lastLineSign != "" {
 				log.Errorf(ctx, "[iif_data_reader.read] iif missing transaction end line")
@@ -105,7 +104,6 @@ func (r *iifDataReader) read(ctx core.Context) ([]*iifAccountDataset, []*iifTran
 			continue
 		}
 
-		// read data lines
 		if currentDatasetType == "" {
 			log.Errorf(ctx, "[iif_data_reader.read] cannot read data line before sample line")
 			return nil, nil, errs.NewImportError(errs.ErrInvalidIIFFile, recordId)

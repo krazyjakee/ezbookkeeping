@@ -100,7 +100,7 @@ func (p *feideeMymoneyTransactionDataRowParser) Parse(data map[datatable.Transac
 	return rowData, true, nil
 }
 
-// Parse returns the converted transaction data row
+// getLongDateTime returns the date time string in long date time format
 func (p *feideeMymoneyTransactionDataRowParser) getLongDateTime(str string) string {
 	if utils.IsValidLongDateTimeFormat(str) {
 		return str

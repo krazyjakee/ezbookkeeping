@@ -465,7 +465,6 @@ func (r *beancountDataReader) readTransactionLine(ctx core.Context, recordId str
 	payeeNarrationFirstIndex := 2
 	payeeNarrationLastIndex := len(items) - 1
 
-	// parse remain items
 	for i := payeeNarrationFirstIndex; i < len(items); i++ {
 		item := items[i]
 
@@ -573,7 +572,6 @@ func (r *beancountDataReader) readTransactionPostingLine(ctx core.Context, recor
 		return nil, errs.NewImportError(errs.ErrInvalidBeancountFile, recordId, transactionPositing.Commodity)
 	}
 
-	// parse remain items
 	if commodityActualIndex > 0 {
 		for i := commodityActualIndex + 1; i < len(items); i++ {
 			item := items[i]
