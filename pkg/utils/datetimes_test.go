@@ -287,9 +287,21 @@ func TestGetDateFirstTimeInTimezone_TimezoneWithMidnightDST(t *testing.T) {
 	assert.Equal(t, expectedValue, actualValue)
 }
 
+// skipIfHavanaDSTEndDiffers skips the test when the time zone database of the host does not end the daylight saving time
+// of America/Havana at midnight on November 1, 2026 (time zone databases of different versions and operating systems differ)
+func skipIfHavanaDSTEndDiffers(t *testing.T, havanaLocation *time.Location) {
+	_, offsetBefore := time.Date(2026, 10, 31, 12, 0, 0, 0, time.UTC).In(havanaLocation).Zone()
+	_, offsetAfter := time.Date(2026, 11, 2, 12, 0, 0, 0, time.UTC).In(havanaLocation).Zone()
+
+	if offsetBefore != -4*60*60 || offsetAfter != -5*60*60 {
+		t.Skipf("the time zone database of the host defines different daylight saving time rules for America/Havana in 2026 (offsets %d and %d)", offsetBefore, offsetAfter)
+	}
+}
+
 func TestGetDateFirstTimeInTimezone_AmbiguousMidnight(t *testing.T) {
 	havanaLocation, err := time.LoadLocation("America/Havana")
 	assert.Equal(t, nil, err)
+	skipIfHavanaDSTEndDiffers(t, havanaLocation)
 
 	// Select the first occurrence of midnight when it occurs twice.
 	expectedValue := "2026-11-01T00:00:00-04:00"
@@ -527,6 +539,7 @@ func TestParseFromLongDateLastTimeInTimezone_AmbiguousMidnight(t *testing.T) {
 	assert.Equal(t, nil, err)
 	cairoLocation, err := time.LoadLocation("Africa/Cairo")
 	assert.Equal(t, nil, err)
+	skipIfHavanaDSTEndDiffers(t, havanaLocation)
 
 	// The previous date ends before the first occurrence of repeated midnight.
 	expectedValue := "2026-10-31T23:59:59.999999999-04:00"
