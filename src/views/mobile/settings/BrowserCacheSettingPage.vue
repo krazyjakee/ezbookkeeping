@@ -46,7 +46,7 @@
             <f7-list-item :title="tt('Resource Files')" :after="fileCacheStatistics ? formatVolumeToLocalizedNumerals(fileCacheStatistics.assetsCacheSize, 2) : '-'"></f7-list-item>
             <f7-list-item :title="tt('Map Data')" :after="fileCacheStatistics ? formatVolumeToLocalizedNumerals(fileCacheStatistics.mapCacheSize, 2) : '-'"></f7-list-item>
             <f7-list-item :title="tt('User Avatars')" :after="fileCacheStatistics ? formatVolumeToLocalizedNumerals(fileCacheStatistics.userAvatarCacheSize, 2) : '-'"></f7-list-item>
-            <f7-list-item :title="tt('Transaction Pictures')" :after="fileCacheStatistics ? formatVolumeToLocalizedNumerals(fileCacheStatistics.transactionPictureCacheSize, 2) : '-'"></f7-list-item>
+            <f7-list-item :title="tt('Transaction Documents')" :after="fileCacheStatistics ? formatVolumeToLocalizedNumerals(fileCacheStatistics.transactionPictureCacheSize, 2) : '-'"></f7-list-item>
             <f7-list-item :title="tt('Custom Icons')" :after="fileCacheStatistics ? formatVolumeToLocalizedNumerals(fileCacheStatistics.customIconCacheSize, 2) : '-'"></f7-list-item>
         </f7-list>
 
@@ -84,14 +84,14 @@
             <f7-list-item
                 link="#"
                 :class="{ 'disabled': loading || !isSupportedFileCache || !fileCacheStatistics }"
-                :title="tt('Transaction Pictures')"
+                :title="tt('Transaction Documents')"
                 :after="findNameByValue(allTransactionPictureCacheExpirationOptions, transactionPictureCacheExpiration)"
                 @click="showTransactionPictureCacheExpirationPopup = true"
             >
                 <list-item-selection-popup value-type="item"
                                            key-field="value" value-field="value"
                                            title-field="name"
-                                           :title="tt('Cache Expiration for Transaction Pictures')"
+                                           :title="tt('Cache Expiration for Transaction Documents')"
                                            :enable-filter="true"
                                            :filter-placeholder="tt('Expiration Time')"
                                            :filter-no-items-text="tt('No results')"

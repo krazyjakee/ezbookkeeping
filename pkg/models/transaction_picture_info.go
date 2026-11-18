@@ -38,8 +38,9 @@ type TransactionPictureUnusedDeleteRequest struct {
 
 // TransactionPictureInfoBasicResponse represents a view-object of transaction picture basic info
 type TransactionPictureInfoBasicResponse struct {
-	PictureId   int64  `json:"pictureId,string"`
-	OriginalUrl string `json:"originalUrl"`
+	PictureId        int64  `json:"pictureId,string"`
+	OriginalUrl      string `json:"originalUrl"`
+	OriginalFileName string `json:"originalFileName,omitempty"`
 }
 
 // ToTransactionPictureInfoBasicResponse returns a view-object according to database model
@@ -55,8 +56,9 @@ func (p *TransactionPictureInfo) ToTransactionPictureInfoBasicResponse(originalU
 	}
 
 	return &TransactionPictureInfoBasicResponse{
-		PictureId:   p.PictureId,
-		OriginalUrl: originalUrl,
+		PictureId:        p.PictureId,
+		OriginalUrl:      originalUrl,
+		OriginalFileName: p.OriginalFileName,
 	}
 }
 

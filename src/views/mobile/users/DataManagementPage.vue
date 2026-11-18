@@ -17,7 +17,7 @@
 
         <f7-list strong inset dividers class="margin-vertical-half" v-else-if="!loading">
             <f7-list-item :title="tt('Transactions')" :after="displayDataStatistics ? displayDataStatistics.totalTransactionCount : '-'"></f7-list-item>
-            <f7-list-item :title="tt('Transaction Pictures')" :after="displayDataStatistics ? displayDataStatistics.totalTransactionPictureCount : '-'"></f7-list-item>
+            <f7-list-item :title="tt('Transaction Documents')" :after="displayDataStatistics ? displayDataStatistics.totalTransactionPictureCount : '-'"></f7-list-item>
             <f7-list-item :title="tt('Accounts')" :after="displayDataStatistics ? displayDataStatistics.totalAccountCount : '-'"></f7-list-item>
             <f7-list-item :title="tt('Explorations')" :after="displayDataStatistics ? displayDataStatistics.totalExplorationCount : '-'"></f7-list-item>
             <f7-list-item :title="tt('Transaction Categories')" :after="displayDataStatistics ? displayDataStatistics.totalTransactionCategoryCount : '-'"></f7-list-item>

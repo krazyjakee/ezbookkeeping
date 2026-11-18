@@ -17,6 +17,8 @@ COPY . .
 RUN docker/backend-build-pre-setup.sh
 RUN apk add git gcc g++ libc-dev
 RUN ./build.sh backend
+# the worker of the built-in "donut" receipt recognition provider loads the ONNX Runtime shared library, so it is linked dynamically
+RUN CGO_ENABLED=1 go build -trimpath -ldflags "-w -s" -o ezbookkeeping-donut ./tools/donut-worker
 
 # Build frontend files
 FROM --platform=$BUILDPLATFORM node:26.13.0-alpine3.24 AS fe-builder
@@ -46,7 +48,7 @@ LABEL maintainer="krazyjakee (https://github.com/krazyjakee/ezbookkeeping)" \
       org.opencontainers.image.documentation="https://krazyjakee.github.io/ezbookkeeping/" \
       org.opencontainers.image.licenses="MIT"
 RUN addgroup -S -g 1000 ezbookkeeping && adduser -S -G ezbookkeeping -u 1000 ezbookkeeping
-RUN apk --no-cache add tzdata
+RUN apk --no-cache add tzdata onnxruntime poppler-utils
 COPY docker/docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 RUN mkdir -p /ezbookkeeping && chown 1000:1000 /ezbookkeeping \
@@ -55,6 +57,7 @@ RUN mkdir -p /ezbookkeeping && chown 1000:1000 /ezbookkeeping \
   && mkdir -p /ezbookkeeping/storage && chown 1000:1000 /ezbookkeeping/storage
 WORKDIR /ezbookkeeping
 COPY --from=be-builder --chown=1000:1000 /go/src/github.com/mayswind/ezbookkeeping/ezbookkeeping /ezbookkeeping/ezbookkeeping
+COPY --from=be-builder --chown=1000:1000 /go/src/github.com/mayswind/ezbookkeeping/ezbookkeeping-donut /ezbookkeeping/ezbookkeeping-donut
 COPY --from=fe-builder --chown=1000:1000 /go/src/github.com/mayswind/ezbookkeeping/dist /ezbookkeeping/public
 COPY --chown=1000:1000 conf /ezbookkeeping/conf
 COPY --chown=1000:1000 templates /ezbookkeeping/templates

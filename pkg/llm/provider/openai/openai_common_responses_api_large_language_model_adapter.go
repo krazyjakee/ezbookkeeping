@@ -66,7 +66,9 @@ type OpenAIResponsesRequestInputMessage[T string | []*OpenAIResponsesRequestInpu
 // OpenAIResponsesRequestInputContent defines the structure of OpenAI responses input content
 type OpenAIResponsesRequestInputContent struct {
 	Type     string `json:"type"`
-	ImageURL string `json:"image_url"`
+	ImageURL string `json:"image_url,omitempty"`
+	FileName string `json:"filename,omitempty"`
+	FileData string `json:"file_data,omitempty"`
 }
 
 // OpenAIResponsesRequestTextConfig defines the text configuration of an OpenAI responses request
@@ -200,6 +202,18 @@ func (p *CommonOpenAIResponsesAPILargeLanguageModelAdapter) buildJsonRequestBody
 					{
 						Type:     "input_image",
 						ImageURL: imageBase64Data,
+					},
+				},
+			})
+		} else if request.UserPromptType == data.LARGE_LANGUAGE_MODEL_REQUEST_PROMPT_TYPE_DOCUMENT {
+			fileBase64Data := "data:" + request.UserPromptContentType + ";base64," + base64.StdEncoding.EncodeToString(request.UserPrompt)
+			responsesRequest.Input = append(responsesRequest.Input, &OpenAIResponsesRequestInputMessage[[]*OpenAIResponsesRequestInputContent]{
+				Role: OpenAIMessageRoleUser,
+				Content: []*OpenAIResponsesRequestInputContent{
+					{
+						Type:     "input_file",
+						FileName: request.UserPromptFileName,
+						FileData: fileBase64Data,
 					},
 				},
 			})

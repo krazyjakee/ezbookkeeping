@@ -1711,15 +1711,15 @@ export const useTransactionsStore = defineStore('transactions', () => {
                 const data = response.data;
 
                 if (!data || !data.success || !data.result) {
-                    reject({ message: 'Unable to upload transaction picture' });
+                    reject({ message: 'Unable to upload transaction document' });
                     return;
                 }
 
                 resolve(data.result);
             }).catch(error => {
-                logger.error('Unable to upload transaction picture', error);
+                logger.error('Unable to upload transaction document', error);
 
-                reject(toStoreError(error, 'Unable to upload transaction picture'));
+                reject(toStoreError(error, 'Unable to upload transaction document'));
             });
         });
     }
@@ -1730,7 +1730,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
                 const data = response.data;
 
                 if (!data || !data.success || !data.result) {
-                    reject({ message: 'Unable to remove transaction picture' });
+                    reject({ message: 'Unable to remove transaction document' });
                     return;
                 }
 
@@ -1746,7 +1746,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
                     logger.warn('failed to delete transaction picture cache entry', error);
                 });
 
-                reject(toStoreError(error, 'Unable to remove transaction picture'));
+                reject(toStoreError(error, 'Unable to remove transaction document'));
             });
         });
     }

@@ -257,9 +257,9 @@
                         </div>
 
                         <div class="setting-item">
-                            <span>{{ tt('Show Transaction Picture Indicator') }}</span>
+                            <span>{{ tt('Show Transaction Document Indicator') }}</span>
                             <v-spacer/>
-                            <v-switch :aria-label="tt('Show Transaction Picture Indicator')" class="ms-4" v-model="showPictureIndicatorInTransactionListPage"/>
+                            <v-switch :aria-label="tt('Show Transaction Document Indicator')" class="ms-4" v-model="showPictureIndicatorInTransactionListPage"/>
                         </div>
 
                         <div class="setting-item">
@@ -312,16 +312,16 @@
                         </div>
 
                         <div class="setting-item">
-                            <span>{{ tt('Transaction Picture Upload Quality') }}</span>
+                            <span>{{ tt('Transaction Image Upload Quality') }}</span>
                             <v-spacer/>
-                            <v-select :aria-label="tt('Transaction Picture Upload Quality')"
+                            <v-select :aria-label="tt('Transaction Image Upload Quality')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
                                 item-value="type"
                                 persistent-placeholder
                                 max-width="400px"
-                                :placeholder="tt('Transaction Picture Upload Quality')"
+                                :placeholder="tt('Transaction Image Upload Quality')"
                                 :items="allImageUploadQualityTypes"
                                 v-model="transactionPictureQuality"
                             />
@@ -356,9 +356,9 @@
                 <v-form>
                     <v-card-text class="pa-0 text-body-medium">
                         <div class="setting-item">
-                            <span>{{ tt('Auto Upload AI Recognition Image as Transaction Picture') }}</span>
+                            <span>{{ tt('Auto Upload AI Recognition Image as Transaction Document') }}</span>
                             <v-spacer/>
-                            <v-switch :aria-label="tt('Auto Upload AI Recognition Image as Transaction Picture')" class="ms-4" v-model="isAutoUploadTransactionPictureForAIRecognition"/>
+                            <v-switch :aria-label="tt('Auto Upload AI Recognition Image as Transaction Document')" class="ms-4" v-model="isAutoUploadTransactionPictureForAIRecognition"/>
                         </div>
                     </v-card-text>
                 </v-form>

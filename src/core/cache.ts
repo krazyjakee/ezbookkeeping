@@ -32,7 +32,7 @@ export class FileCacheType implements KeyAndName {
     public static readonly ResourceFiles = new FileCacheType('ezbookkeeping-assets-cache', 'Resource Files', ['workbox-precache-v2-']);
     public static readonly MapData = new FileCacheType('ezbookkeeping-map-cache', 'Map Data', []);
     public static readonly UserAvatars = new FileCacheType('ezbookkeeping-user-avatar-cache', 'User Avatars', []);
-    public static readonly TransactionPictures = new FileCacheType('ezbookkeeping-transaction-picture-cache', 'Transaction Pictures', []);
+    public static readonly TransactionPictures = new FileCacheType('ezbookkeeping-transaction-picture-cache', 'Transaction Documents', []);
     public static readonly CustomIcons = new FileCacheType('ezbookkeeping-custom-icon-cache', 'Custom Icons', []);
 
     public readonly key: string;

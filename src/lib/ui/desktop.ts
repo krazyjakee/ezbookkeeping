@@ -1,5 +1,17 @@
 import { nextTick } from 'vue';
 
+import {
+    mdiFilePdfBox,
+    mdiFileWordBox,
+    mdiFileExcelBox,
+    mdiFileDocumentOutline,
+    mdiFileDelimitedOutline,
+    mdiFileImageOutline,
+    mdiFileOutline
+} from '@mdi/js';
+
+import { getDocumentAttachmentType } from '@/lib/file.ts';
+
 export type ComponentDensity = 'default' | 'comfortable' | 'compact';
 export type InputVariant = 'filled' | 'underlined' | 'outlined' | 'plain' | 'solo' | 'solo-inverted' | 'solo-filled';
 export type SnackBarVariant = 'text' | 'flat' | 'elevated' | 'tonal' | 'outlined' | 'plain';
@@ -200,4 +212,24 @@ export function setTwoColumnItemFocusWhenKeydown(event: KeyboardEvent, currentCo
 
     event.preventDefault();
     focusTargetItem();
+}
+
+export function getTransactionAttachmentMdiIcon(extension: string | null | undefined): string {
+    switch (getDocumentAttachmentType(extension)) {
+        case 'pdf':
+            return mdiFilePdfBox;
+        case 'word':
+            return mdiFileWordBox;
+        case 'spreadsheet':
+            return mdiFileExcelBox;
+        case 'text_document':
+        case 'plain_text':
+            return mdiFileDocumentOutline;
+        case 'delimited_text':
+            return mdiFileDelimitedOutline;
+        case 'image':
+            return mdiFileImageOutline;
+        default:
+            return mdiFileOutline;
+    }
 }

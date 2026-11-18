@@ -145,6 +145,55 @@ func TestSetTransactionPictureResponseHeaders_PdfDownload(t *testing.T) {
 	assert.Contains(t, recorder.Header().Get("Content-Security-Policy"), "default-src 'none'")
 }
 
+func TestSetTransactionPictureResponseHeaders_PdfIsNotSandboxed(t *testing.T) {
+	c, recorder := createTransactionPictureTestWebContext(httptest.NewRequest(http.MethodGet, "/pictures/123.pdf", nil))
+
+	setTransactionPictureResponseHeaders(c, 123, "pdf", false)
+
+	assert.NotContains(t, recorder.Header().Get("Content-Security-Policy"), "sandbox")
+}
+
+func TestSetTransactionPictureResponseHeaders_DocumentsAlwaysDownloaded(t *testing.T) {
+	for _, extension := range []string{"docx", "xlsx", "odt", "ods", "txt", "csv", "heic", "heif"} {
+		c, recorder := createTransactionPictureTestWebContext(httptest.NewRequest(http.MethodGet, "/pictures/123."+extension, nil))
+
+		setTransactionPictureResponseHeaders(c, 123, extension, false)
+
+		assert.Equal(t, "nosniff", recorder.Header().Get("X-Content-Type-Options"), extension)
+		assert.Equal(t, "attachment; filename=\"123."+extension+"\"", recorder.Header().Get("Content-Disposition"), extension)
+		assert.Contains(t, recorder.Header().Get("Content-Security-Policy"), "default-src 'none'", extension)
+		assert.Contains(t, recorder.Header().Get("Content-Security-Policy"), "sandbox", extension)
+	}
+}
+
+func TestCheckTransactionPictureFileContent_Documents(t *testing.T) {
+	validFiles := map[string][]byte{
+		"docx": []byte("PK\x03\x04\x14\x00\x06\x00"),
+		"ods":  []byte("PK\x03\x04\x14\x00\x00\x08"),
+		"csv":  []byte("date,amount\n2026-10-01,20.00\n"),
+		"txt":  []byte("x"),
+		"heic": []byte("\x00\x00\x00\x18ftypheic\x00\x00\x00\x00mif1heic"),
+	}
+
+	for extension, content := range validFiles {
+		file := createTransactionPictureTestMultipartFile(t, "file."+extension, content)
+		assert.Nil(t, checkTransactionPictureFileContent(file, extension), extension)
+		file.Close()
+	}
+
+	invalidFiles := map[string][]byte{
+		"docx": []byte("%PDF-1.7"),
+		"csv":  []byte("a,b\x00\x00"),
+		"heic": []byte{0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 'J', 'F', 'I', 'F', 0x00, 0x01},
+	}
+
+	for extension, content := range invalidFiles {
+		file := createTransactionPictureTestMultipartFile(t, "file."+extension, content)
+		assert.Equal(t, errs.ErrTransactionPictureContentInvalid, checkTransactionPictureFileContent(file, extension), extension)
+		file.Close()
+	}
+}
+
 func TestTransactionPicturesApi_TransactionPictureGetHandler_UnsupportedType(t *testing.T) {
 	api := &TransactionPicturesApi{}
 	c, _ := createTransactionPictureTestWebContext(httptest.NewRequest(http.MethodGet, "/pictures/123.html", nil))
@@ -166,7 +215,7 @@ func TestTransactionPicturesApi_TransactionPictureUploadHandler_UnsupportedType(
 		},
 	}
 
-	body, contentType := createTransactionPictureTestMultipartBody(t, "document.docx", []byte("PK\x03\x04"))
+	body, contentType := createTransactionPictureTestMultipartBody(t, "setup.exe", []byte("MZ\x90\x00"))
 	request := httptest.NewRequest(http.MethodPost, "/api/v1/transaction/pictures/upload.json", body)
 	request.Header.Set("Content-Type", contentType)
 	c, _ := createTransactionPictureTestWebContext(request)

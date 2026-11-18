@@ -127,6 +127,7 @@ func InitializeMCPHandlers(config *settings.Config) error {
 	registerMCPTextContentToolHandler(container, MCPImportTransactionsToolHandler)
 	registerMCPTextContentToolHandler(container, MCPSetAccountReconciledTimeToolHandler)
 	registerMCPTextContentToolHandler(container, MCPExportTransactionsToolHandler)
+	registerMCPTextContentToolHandler(container, MCPAddTransactionFromDocumentToolHandler)
 
 	Container = container
 	return nil

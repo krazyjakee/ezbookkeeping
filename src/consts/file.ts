@@ -1,5 +1,10 @@
+// images which can be displayed inline by browsers
 export const SUPPORTED_IMAGE_EXTENSIONS: string = '.jpg,.jpeg,.png,.gif,.webp';
-export const SUPPORTED_DOCUMENT_EXTENSIONS: string = '.pdf';
+// pdf documents which can be displayed by the built-in pdf viewer of browsers
+export const SUPPORTED_PDF_DOCUMENT_EXTENSIONS: string = '.pdf';
+// documents which cannot be previewed and are always downloaded (heic / heif images are not supported by most browsers)
+export const SUPPORTED_DOWNLOAD_ONLY_DOCUMENT_EXTENSIONS: string = '.docx,.xlsx,.odt,.ods,.txt,.csv,.heic,.heif';
+export const SUPPORTED_DOCUMENT_EXTENSIONS: string = `${SUPPORTED_PDF_DOCUMENT_EXTENSIONS},${SUPPORTED_DOWNLOAD_ONLY_DOCUMENT_EXTENSIONS}`;
 export const SUPPORTED_TRANSACTION_PICTURE_EXTENSIONS: string = `${SUPPORTED_IMAGE_EXTENSIONS},${SUPPORTED_DOCUMENT_EXTENSIONS}`;
 export const CAMERA_CAPTURE_IMAGE_ACCEPT: string = 'image/*';
 

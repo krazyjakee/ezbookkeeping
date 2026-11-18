@@ -167,7 +167,7 @@ func (p *GoogleAILargeLanguageModelAdapter) buildJsonRequestBody(c core.Context,
 	}
 
 	if len(request.UserPrompt) > 0 {
-		if request.UserPromptType == data.LARGE_LANGUAGE_MODEL_REQUEST_PROMPT_TYPE_IMAGE_URL {
+		if request.UserPromptType == data.LARGE_LANGUAGE_MODEL_REQUEST_PROMPT_TYPE_IMAGE_URL || request.UserPromptType == data.LARGE_LANGUAGE_MODEL_REQUEST_PROMPT_TYPE_DOCUMENT {
 			imageBase64Data := base64.StdEncoding.EncodeToString(request.UserPrompt)
 			generateContentRequest.Contents[0].Parts = append(generateContentRequest.Contents[0].Parts, &GoogleAIGenerateContentRequestContentPart{
 				InlineData: &GoogleAIGenerateContentRequestInlineData{

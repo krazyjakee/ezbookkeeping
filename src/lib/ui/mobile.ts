@@ -9,6 +9,7 @@ import { TextDirection } from '@/core/text.ts';
 import { FontSize, FONT_SIZE_PREVIEW_CLASSNAME_PREFIX } from '@/core/font.ts';
 
 import { isEnableAnimate } from '../settings.ts';
+import { getDocumentAttachmentType } from '../file.ts';
 
 export interface Framework7Dom {
     length: number;
@@ -335,5 +336,24 @@ export function useI18nUIComponents() {
         showToast: showToast,
         openExternalUrl,
         routeBackOnError
+    }
+}
+
+export function getTransactionAttachmentF7Icon(extension: string | null | undefined): string {
+    switch (getDocumentAttachmentType(extension)) {
+        case 'pdf':
+            return 'doc_text';
+        case 'word':
+        case 'text_document':
+            return 'doc_richtext';
+        case 'spreadsheet':
+        case 'delimited_text':
+            return 'table';
+        case 'plain_text':
+            return 'doc_plaintext';
+        case 'image':
+            return 'photo';
+        default:
+            return 'doc';
     }
 }

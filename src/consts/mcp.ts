@@ -212,6 +212,10 @@ export const ALL_MCP_TOOLS: NameAndDisplayName[] = [
     {
         name: 'export_transactions',
         displayName:'Export Transactions'
+    },
+    {
+        name: 'add_transaction_from_document',
+        displayName:'Add Transaction From Document'
     }
 ];
 
@@ -225,6 +229,7 @@ export const DEFAULT_ENABLED_MCP_TOOL_NAMES: string[] = [
     'query_latest_exchange_rates',
     'query_transactions',
     'add_transaction',
+    'add_transaction_from_document',
     'get_server_capabilities',
     'list_accounts',
     'get_account',

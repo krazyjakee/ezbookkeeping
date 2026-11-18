@@ -292,7 +292,7 @@
                                         <div class="item-text">
                                             <div class="transaction-description" v-if="transaction.comment || (showPictureIndicatorInTransactionListPage && transaction.pictures?.length)">
                                                 <f7-icon class="transaction-picture-indicator" f7="photo" size="16"
-                                                         :aria-label="tt('Transaction Pictures')" role="img"
+                                                         :aria-label="tt('Transaction Documents')" role="img"
                                                          v-if="showPictureIndicatorInTransactionListPage && transaction.pictures?.length"/>
                                                 <span>{{ transaction.comment }}</span>
                                             </div>
@@ -350,9 +350,9 @@
                                          v-for="[transaction, pictureInfo] in allTransactionPictures(transactionMonthList.items)">
                                         <f7-link class="display-flex flex-direction-column justify-content-center align-items-center transaction-picture-img transaction-picture-document"
                                                  :href="`/transaction/detail?id=${transaction.id}&type=${transaction.type}`"
-                                                 v-if="isPdfFileUrl(getTransactionPictureUrl(pictureInfo))">
-                                            <f7-icon class="picture-document-icon" f7="doc_text"></f7-icon>
-                                            <span class="picture-document-text">{{ tt('PDF Document') }}</span>
+                                                 v-if="getAttachmentKindFromUrl(getTransactionPictureUrl(pictureInfo)) !== 'image'">
+                                            <f7-icon class="picture-document-icon" :f7="getTransactionAttachmentF7Icon(getFileExtensionFromUrl(getTransactionPictureUrl(pictureInfo)))"></f7-icon>
+                                            <span class="picture-document-text">{{ getTransactionAttachmentDisplayName(pictureInfo.originalFileName, getTransactionPictureUrl(pictureInfo), tt) }}</span>
                                         </f7-link>
                                         <image-box class="transaction-picture-img" alt="picture"
                                                    :link="`/transaction/detail?id=${transaction.id}&type=${transaction.type}`"
@@ -690,7 +690,8 @@ import {
     onSwipeoutDeleted,
     getElementActualHeights,
     getElementBoundingRect,
-    onInfiniteScrolling
+    onInfiniteScrolling,
+    getTransactionAttachmentF7Icon
 } from '@/lib/ui/mobile.ts';
 import { TransactionListPageType, useTransactionListPageBase } from '@/views/base/transactions/TransactionListPageBase.ts';
 
@@ -745,7 +746,7 @@ import {
     transactionTypeToCategoryType
 } from '@/lib/category.ts';
 import { allTransactionPictures } from '@/lib/transaction.ts';
-import { isPdfFileUrl } from '@/lib/file.ts';
+import { getAttachmentKindFromUrl, getFileExtensionFromUrl, getTransactionAttachmentDisplayName } from '@/lib/file.ts';
 
 const props = defineProps<{
     f7route: Router.Route;
@@ -1937,6 +1938,12 @@ html[dir="rtl"] .list.transaction-info-list li.transaction-info .transaction-foo
 
 .transaction-picture-document .picture-document-text {
     margin-top: 4px;
+    max-width: 100%;
+    padding: 0 4px;
+    box-sizing: border-box;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-size: var(--f7-list-item-footer-font-size);
     color: var(--f7-list-item-footer-text-color);
 }

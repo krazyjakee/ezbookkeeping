@@ -26,8 +26,9 @@ type mcpAuditToolActionAndEntityType struct {
 
 // mcpAuditToolExceptions contains the actions and entity types of MCP write tools which cannot be derived from the tool name
 var mcpAuditToolExceptions = map[string]*mcpAuditToolActionAndEntityType{
-	"set_account_reconciled_time": {action: "reconcile", entityType: "account"},
-	"import_transactions":         {action: "import", entityType: "transaction"},
+	"set_account_reconciled_time":   {action: "reconcile", entityType: "account"},
+	"import_transactions":           {action: "import", entityType: "transaction"},
+	"add_transaction_from_document": {action: "create", entityType: "transaction"},
 }
 
 // mcpAuditToolNameVerb represents a verb (tool name prefix) of MCP write tools and its audit action

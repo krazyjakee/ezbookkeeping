@@ -62,7 +62,7 @@ export class TransactionExplorerConditionField implements NameValue {
     public static readonly DestinationAmount = new TransactionExplorerConditionField('Transfer In Amount', TransactionExplorerConditionFieldType.DestinationAmount);
     public static readonly GeoLocation = new TransactionExplorerConditionField('Geographic Location', TransactionExplorerConditionFieldType.GeoLocation);
     public static readonly TransactionTag = new TransactionExplorerConditionField('Tags', TransactionExplorerConditionFieldType.TransactionTag);
-    public static readonly Pictures = new TransactionExplorerConditionField('Pictures', TransactionExplorerConditionFieldType.Pictures);
+    public static readonly Pictures = new TransactionExplorerConditionField('Documents', TransactionExplorerConditionFieldType.Pictures);
     public static readonly Description = new TransactionExplorerConditionField('Description (Exact)', TransactionExplorerConditionFieldType.Description);
     public static readonly DescriptionCaseInsensitive = new TransactionExplorerConditionField('Description (Ignore Case)', TransactionExplorerConditionFieldType.DescriptionCaseInsensitive);
     public static readonly DescriptionNormalized = new TransactionExplorerConditionField('Description (Normalized)', TransactionExplorerConditionFieldType.DescriptionNormalized);

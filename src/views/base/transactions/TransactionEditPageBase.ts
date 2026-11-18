@@ -14,6 +14,7 @@ import type { BigDecimal, NumeralSystem } from '@/core/numeral.ts';
 import type { WeekDayValue } from '@/core/datetime.ts';
 import type { LocalizedTimezoneInfo } from '@/core/timezone.ts';
 import { ImageUploadQualityType } from '@/core/image.ts';
+import { KnownFileType } from '@/core/file.ts';
 import { TransactionType, TransactionQuickAddButtonActionType } from '@/core/transaction.ts';
 import { TemplateType } from '@/core/template.ts';
 import { DISPLAY_HIDDEN_AMOUNT } from '@/consts/numeral.ts';
@@ -50,6 +51,17 @@ import {
     type SetTransactionOptions,
     setTransactionModelByTransaction
 } from '@/lib/transaction.ts';
+
+import {
+    type AttachmentKind,
+    getFileExtension,
+    getFileExtensionFromUrl,
+    getAttachmentKindFromUrl,
+    getAttachmentKindFromFile,
+    isSupportedTransactionAttachmentFile,
+    isTransactionAttachmentExtensionSupported
+} from '@/lib/file.ts';
+import { compressJpgImageByQuality } from '@/lib/ui/common.ts';
 
 export enum TransactionEditPageType {
     Transaction = 'transaction',
@@ -538,6 +550,36 @@ export function useTransactionEditPageBase(type: TransactionEditPageType, initMo
         return transactionsStore.getTransactionPictureUrl(pictureInfo);
     }
 
+    function getTransactionPictureKind(pictureInfo?: TransactionPictureInfoBasicResponse | null): AttachmentKind {
+        return getAttachmentKindFromUrl(getTransactionPictureUrl(pictureInfo));
+    }
+
+    function getTransactionPictureExtension(pictureInfo?: TransactionPictureInfoBasicResponse | null): string {
+        return getFileExtensionFromUrl(getTransactionPictureUrl(pictureInfo));
+    }
+
+    // returns the file which is uploaded as transaction document, images are compressed and converted to jpg, other documents are uploaded as is
+    function getTransactionPictureUploadFile(file: File): Promise<File> {
+        if (!isSupportedTransactionAttachmentFile(file)) {
+            return Promise.reject({ message: 'Unsupported file type' });
+        }
+
+        const kind = getAttachmentKindFromFile(file);
+        const fileName = file.name || '';
+        const fileExtension = fileName.indexOf('.') >= 0 ? getFileExtension(fileName) : '';
+        const fileBaseName = fileExtension ? fileName.substring(0, fileName.length - fileExtension.length - 1) : fileName;
+
+        if (kind === 'image') {
+            return compressJpgImageByQuality(file, imageUploadQualityType.value).then(blob => KnownFileType.JPG.createFileFromBlob(blob, fileBaseName || 'image'));
+        } else if (isTransactionAttachmentExtensionSupported(fileExtension)) {
+            return Promise.resolve(file);
+        } else if (kind === 'pdf') {
+            return Promise.resolve(KnownFileType.PDF.createFileFromBlob(file, fileName || 'document'));
+        } else {
+            return Promise.reject({ message: 'Unsupported file type' });
+        }
+    }
+
     watch(() => transaction.value.sourceAmount, (newValue, oldValue) => {
         if (mode.value === TransactionEditPageMode.View || loading.value) {
             return;
@@ -641,6 +683,9 @@ export function useTransactionEditPageBase(type: TransactionEditPageType, initMo
         updateTransactionTimezone,
         swapTransactionData,
         getDisplayAmount,
-        getTransactionPictureUrl
+        getTransactionPictureUrl,
+        getTransactionPictureKind,
+        getTransactionPictureExtension,
+        getTransactionPictureUploadFile
     }
 }

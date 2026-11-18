@@ -13,18 +13,19 @@ import (
 )
 
 // mcpCapabilitiesAttachmentExtensionCandidates is the list of file extensions which are checked against the server supported attachment types
-var mcpCapabilitiesAttachmentExtensionCandidates = []string{"jpg", "jpeg", "png", "gif", "webp", "pdf"}
+var mcpCapabilitiesAttachmentExtensionCandidates = []string{"jpg", "jpeg", "png", "gif", "webp", "heic", "heif", "pdf", "docx", "xlsx", "odt", "ods", "txt", "csv"}
 
 // MCPGetServerCapabilitiesResponse represents the response structure for getting server capabilities
 type MCPGetServerCapabilitiesResponse struct {
-	Server                *MCPServerCapabilitiesServerInfo        `json:"server" jsonschema_description:"Server information"`
-	Limits                *MCPServerCapabilitiesLimits            `json:"limits" jsonschema_description:"Limits applied to MCP tool inputs, dry runs enforce the same limits as actual writes"`
-	Attachments           *MCPServerCapabilitiesAttachments       `json:"attachments" jsonschema_description:"Transaction attachment (receipt picture / document) settings"`
-	ScheduledTransactions *MCPServerCapabilitiesScheduled         `json:"scheduled_transactions" jsonschema_description:"Scheduled transaction settings"`
-	CurrentUser           *MCPServerCapabilitiesCurrentUser       `json:"current_user" jsonschema_description:"Settings of the current user which affect MCP tools"`
-	Features              *MCPServerCapabilitiesFeatures          `json:"features" jsonschema_description:"Supported MCP tool features"`
-	SupportedCurrencies   []string                                `json:"supported_currencies" jsonschema_description:"Supported currency codes (ISO 4217)"`
-	Values                *MCPServerCapabilitiesEnumerationValues `json:"values" jsonschema_description:"Accepted textual enumeration values of MCP tool inputs"`
+	Server                *MCPServerCapabilitiesServerInfo          `json:"server" jsonschema_description:"Server information"`
+	Limits                *MCPServerCapabilitiesLimits              `json:"limits" jsonschema_description:"Limits applied to MCP tool inputs, dry runs enforce the same limits as actual writes"`
+	Attachments           *MCPServerCapabilitiesAttachments         `json:"attachments" jsonschema_description:"Transaction document (receipt, invoice, statement or other proof of the transaction) settings"`
+	DocumentRecognition   *MCPServerCapabilitiesDocumentRecognition `json:"document_recognition" jsonschema_description:"Whether add_transaction_from_document can read documents with the server's AI recognition model"`
+	ScheduledTransactions *MCPServerCapabilitiesScheduled           `json:"scheduled_transactions" jsonschema_description:"Scheduled transaction settings"`
+	CurrentUser           *MCPServerCapabilitiesCurrentUser         `json:"current_user" jsonschema_description:"Settings of the current user which affect MCP tools"`
+	Features              *MCPServerCapabilitiesFeatures            `json:"features" jsonschema_description:"Supported MCP tool features"`
+	SupportedCurrencies   []string                                  `json:"supported_currencies" jsonschema_description:"Supported currency codes (ISO 4217)"`
+	Values                *MCPServerCapabilitiesEnumerationValues   `json:"values" jsonschema_description:"Accepted textual enumeration values of MCP tool inputs"`
 }
 
 // MCPServerCapabilitiesServerInfo represents the server information
@@ -72,6 +73,13 @@ type MCPServerCapabilitiesAttachments struct {
 	MaxUploadBase64Length  int64                                  `json:"max_upload_base64_length" jsonschema_description:"Maximum length of the base64 encoded content in upload_transaction_attachment (derived from max_file_size_bytes)"`
 	ContentValidation      string                                 `json:"content_validation" jsonschema_description:"How uploaded content is validated"`
 	Metadata               string                                 `json:"metadata" jsonschema_description:"Which attachment metadata is stored and returned"`
+}
+
+// MCPServerCapabilitiesDocumentRecognition represents the AI document recognition settings used by add_transaction_from_document
+type MCPServerCapabilitiesDocumentRecognition struct {
+	Enabled        bool     `json:"enabled" jsonschema_description:"Whether any document type can be read by the server's AI recognition model"`
+	SupportedTypes []string `json:"supported_types" jsonschema_description:"File extensions which can be read by the AI recognition model of this server"`
+	Note           string   `json:"note" jsonschema_description:"How the documents are read"`
 }
 
 // MCPServerCapabilitiesAttachmentType represents a supported attachment file type
@@ -203,7 +211,7 @@ func (h *mcpGetServerCapabilitiesToolHandler) createNewMCPGetServerCapabilitiesR
 			SupportedTypes:         make([]*MCPServerCapabilitiesAttachmentType, 0, len(mcpCapabilitiesAttachmentExtensionCandidates)),
 			UploadViaMCP:           false,
 			UploadEncoding:         "base64 (RFC 4648 standard alphabet) in content_base64, a \"data:<mime>;base64,\" prefix is allowed. File names or local paths are never treated as uploads.",
-			ContentValidation:      "The file type is taken from file_extension or content_type, and the content must match it (magic bytes for PDF documents and detected type for images), otherwise the upload is rejected.",
+			ContentValidation:      "The file type is taken from file_extension or content_type, and the content must match it (detected type for images, magic bytes for PDF, HEIC / HEIF and office documents, no binary content for TXT / CSV), otherwise the upload is rejected.",
 			Metadata:               "Attachment ID, transaction association, stored file extension / MIME type, and the original file name (sanitized), byte size and SHA-256 checksum recorded at upload (pass file_name to upload_transaction_attachment). The SHA-256 checksum is also computed from the stored file when an attachment is read (integrity_verified compares both); attachments uploaded by older versions have no recorded metadata and use the computed checksum.",
 		},
 		ScheduledTransactions: &MCPServerCapabilitiesScheduled{},
@@ -241,6 +249,8 @@ func (h *mcpGetServerCapabilitiesToolHandler) createNewMCPGetServerCapabilitiesR
 			})
 		}
 	}
+
+	response.DocumentRecognition = h.getDocumentRecognitionCapabilities(currentConfig, user)
 
 	if currentConfig != nil {
 		response.Attachments.Enabled = currentConfig.EnableTransactionPictures
@@ -296,4 +306,45 @@ func getMCPTransactionEditScopeName(scope models.TransactionEditScope) string {
 	default:
 		return ""
 	}
+}
+
+// getDocumentRecognitionCapabilities returns which document types add_transaction_from_document can read with the configured AI recognition models
+func (h *mcpGetServerCapabilitiesToolHandler) getDocumentRecognitionCapabilities(currentConfig *settings.Config, user *models.User) *MCPServerCapabilitiesDocumentRecognition {
+	result := &MCPServerCapabilitiesDocumentRecognition{
+		SupportedTypes: make([]string, 0),
+		Note:           "Images and PDF documents are sent to the receipt image recognition model ([llm_image_recognition]); text is extracted from TXT, CSV, DOCX, XLSX, ODT and ODS files and sent to the receipt image recognition model, or to the text recognition model ([llm_text_recognition]) if only that one is enabled. With the built-in \"donut\" provider, the models run on the server itself and are downloaded when the server starts, so a call right after the first start may ask to retry after a few minutes.",
+	}
+
+	if currentConfig == nil || !currentConfig.EnableTransactionPictures {
+		return result
+	}
+
+	imageModelEnabled := currentConfig.TransactionFromAIImageRecognition && currentConfig.ReceiptImageRecognitionLLMConfig != nil && currentConfig.ReceiptImageRecognitionLLMConfig.LLMProvider != ""
+	textModelEnabled := currentConfig.TransactionFromAITextRecognition && currentConfig.TextRecognitionLLMConfig != nil && currentConfig.TextRecognitionLLMConfig.LLMProvider != ""
+
+	if user != nil {
+		imageModelEnabled = imageModelEnabled && !user.FeatureRestriction.Contains(core.USER_FEATURE_RESTRICTION_TYPE_CREATE_TRANSACTION_FROM_AI_IMAGE_RECOGNITION)
+		textModelEnabled = textModelEnabled && !user.FeatureRestriction.Contains(core.USER_FEATURE_RESTRICTION_TYPE_CREATE_TRANSACTION_FROM_AI_TEXT_RECOGNITION)
+	}
+
+	if imageModelEnabled {
+		provider := currentConfig.ReceiptImageRecognitionLLMConfig.LLMProvider
+		result.SupportedTypes = append(result.SupportedTypes, "jpg", "jpeg", "png", "gif", "webp")
+
+		if provider == settings.GoogleAILLMProvider {
+			result.SupportedTypes = append(result.SupportedTypes, "heic", "heif")
+		}
+
+		if provider != settings.OllamaLLMProvider && provider != settings.LMStudioLLMProvider {
+			result.SupportedTypes = append(result.SupportedTypes, "pdf")
+		}
+	}
+
+	if imageModelEnabled || textModelEnabled {
+		result.SupportedTypes = append(result.SupportedTypes, "docx", "xlsx", "odt", "ods", "txt", "csv")
+	}
+
+	result.Enabled = len(result.SupportedTypes) > 0
+
+	return result
 }

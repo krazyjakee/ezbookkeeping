@@ -75,6 +75,7 @@ const (
 	OllamaLLMProvider                    string = "ollama"
 	LMStudioLLMProvider                  string = "lm_studio"
 	GoogleAILLMProvider                  string = "google_ai"
+	DonutLLMProvider                     string = "donut"
 )
 
 // LLMThinkingLevel represents the thinking level of a large language model
@@ -183,6 +184,12 @@ const (
 	defaultAnthropicLargeLanguageModelAPIMaximumTokens uint32 = 1024
 	defaultAnthropicLargeLanguageModelThinkingBudget   uint32 = 1024
 	defaultLargeLanguageModelAPIRequestTimeout         uint32 = 60000 // 60 seconds
+
+	defaultDonutModelDownloadURL       string = "https://huggingface.co/krazyjakee/ezbookkeeping-donut-onnx/resolve/874b064ee4bfada52b45250e3f5507fc456d0a32/"
+	defaultDonutModelPath              string = "data/donut"
+	defaultDonutOnnxRuntimeLibraryPath string = "libonnxruntime.so.1"
+	defaultDonutThreads                uint32 = 4
+	defaultDonutWorkerIdleTimeout      uint32 = 600 // 10 minutes
 
 	defaultInMemoryDuplicateCheckerCleanupInterval uint32 = 60  // 1 minutes
 	defaultDuplicateSubmissionsInterval            uint32 = 300 // 5 minutes
@@ -307,6 +314,15 @@ type LLMConfig struct {
 	LMStudioModelID                         string
 	GoogleAIAPIKey                          string
 	GoogleAIModelID                         string
+	DonutModelDownloadURL                   string
+	DonutModelPath                          string
+	DonutWorkerPath                         string
+	DonutOnnxRuntimeLibraryPath             string
+	DonutThreads                            uint32
+	DonutLowMemory                          bool
+	DonutWorkerIdleTimeout                  uint32
+	DonutDateOrder                          string
+	DonutDefaultAccount                     string
 	LargeLanguageModelAPIRequestTimeout     uint32
 	LargeLanguageModelAPIProxy              string
 	LargeLanguageModelAPISkipTLSVerify      bool
@@ -562,15 +578,15 @@ func LoadConfiguration(configFilePath string) (*Config, error) {
 		{"storage", loadStorageConfiguration},
 		{"ai", loadAIConfiguration},
 		{"llm_text_recognition", func(config *Config, configFile *ini.File, sectionName string) (err error) {
-			config.TextRecognitionLLMConfig, err = loadLLMConfiguration(configFile, sectionName)
+			config.TextRecognitionLLMConfig, err = loadLLMConfiguration(configFile, sectionName, config.WorkingPath, "")
 			return err
 		}},
 		{"llm_image_recognition", func(config *Config, configFile *ini.File, sectionName string) (err error) {
-			config.ReceiptImageRecognitionLLMConfig, err = loadLLMConfiguration(configFile, sectionName)
+			config.ReceiptImageRecognitionLLMConfig, err = loadLLMConfiguration(configFile, sectionName, config.WorkingPath, DonutLLMProvider)
 			return err
 		}},
 		{"llm_coding_assistant", func(config *Config, configFile *ini.File, sectionName string) (err error) {
-			config.CodingAssistantLLMConfig, err = loadLLMConfiguration(configFile, sectionName)
+			config.CodingAssistantLLMConfig, err = loadLLMConfiguration(configFile, sectionName, config.WorkingPath, "")
 			return err
 		}},
 		{"uuid", loadUuidConfiguration},
