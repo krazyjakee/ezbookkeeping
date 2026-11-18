@@ -230,7 +230,7 @@ The redesign changes only the presentation. The releases in this milestone only 
 
 ### Docker
 
-1. Pin the previous image instead of `latest` or `latest-snapshot`. Use a release tag (for example `krazyjakee/ezrbookkeeping:<previous version>`) or a snapshot tag:
+1. Pin a previous image instead of `latest`. These older tags are still on Docker Hub, but new builds only publish `latest`:
    - `krazyjakee/ezrbookkeeping:sha-41b9241`: the rename, before the shells and most redesign screens
    - `krazyjakee/ezbookkeeping2:sha-f064815`: the last image before any redesign code, if your registry has it (published under the previous image name)
 2. `docker compose up -d` (or `docker run …`) with the **same volumes** (`/ezbookkeeping/data`, `/ezbookkeeping/storage`, `/ezbookkeeping/log`) and environment. The container paths, the binary name and the configuration keys are unchanged. Older versions ignore the `[backup]` section.

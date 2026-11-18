@@ -1,0 +1,137 @@
+name: Build
+
+# Pushes to main publish the Docker image as "latest" (linux/amd64 and linux/arm64).
+# Pull requests only build and test linux/amd64, nothing is pushed.
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+# Docker Hub target. Override with the DOCKER_IMAGE_NAME / DOCKER_USERNAME repository variables.
+# Images are only pushed from main when the DOCKER_PASSWORD secret (a Docker Hub access token) is set.
+env:
+  DOCKER_IMAGE_NAME: ${{ vars.DOCKER_IMAGE_NAME || 'krazyjakee/ezrbookkeeping' }}
+  DOCKER_USERNAME: ${{ vars.DOCKER_USERNAME || 'krazyjakee' }}
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      publish: ${{ steps.variable.outputs.publish }}
+      build-unix-time: ${{ steps.variable.outputs.build_unix_time }}
+      build-date: ${{ steps.variable.outputs.build_date }}
+      docker-tags: ${{ steps.meta.outputs.tags }}
+      bake-meta-file-path: ${{ steps.variable.outputs.bake_meta_file_path }}
+      bake-meta-artifact-name: ${{ steps.variable.outputs.bake_meta_artifact_name }}
+      digests-file-path: ${{ steps.variable.outputs.digests_file_path }}
+      digests-artifact-name-prefix: ${{ steps.variable.outputs.digests_artifact_name_prefix }}
+      package-file-name-prefix: ${{ steps.variable.outputs.package_file_name_prefix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: |
+            ${{ env.DOCKER_IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+          labels: |
+            org.opencontainers.image.title=ezrbookkeeping
+            org.opencontainers.image.description=ezrbookkeeping, a business-focused fork of ezBookkeeping, an open source, self-hosted bookkeeping app
+            org.opencontainers.image.documentation=https://krazyjakee.github.io/ezbookkeeping/
+            org.opencontainers.image.licenses=MIT
+            maintainer=krazyjakee (https://github.com/krazyjakee/ezbookkeeping)
+
+      - name: Set up variables
+        id: variable
+        run: |
+          echo "publish=${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.DOCKER_PASSWORD != '' }}" >> "$GITHUB_OUTPUT"
+          echo "build_unix_time=$(date '+%s')" >> "$GITHUB_OUTPUT"
+          echo "build_date=$(date '+%Y%m%d')" >> "$GITHUB_OUTPUT"
+          echo "bake_meta_file_path=${{ runner.temp }}/bake-meta.json" >> "$GITHUB_OUTPUT"
+          echo "bake_meta_artifact_name=docker-bake-meta-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
+          echo "digests_file_path=${{ runner.temp }}/digests" >> "$GITHUB_OUTPUT"
+          echo "digests_artifact_name_prefix=docker-digests-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
+          echo "package_file_name_prefix=ezrbookkeeping-package-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
+
+      - name: Rename docker bake meta file
+        run: |
+          mv "${{ steps.meta.outputs.bake-file }}" "${{ steps.variable.outputs.bake_meta_file_path }}"
+
+      - name: Upload docker bake meta artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.variable.outputs.bake_meta_artifact_name }}
+          path: ${{ steps.variable.outputs.bake_meta_file_path }}
+          if-no-files-found: error
+
+  build:
+    needs:
+      - setup
+    strategy:
+      matrix:
+        include:
+          - platform: linux/amd64
+            platform-name: linux-amd64
+            runner: ubuntu-24.04
+            main-only: false
+          - platform: linux/arm64/v8
+            platform-name: linux-arm64
+            runner: ubuntu-24.04-arm
+            main-only: true
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout
+        if: ${{ !matrix.main-only || needs.setup.outputs.publish == 'true' }}
+        uses: actions/checkout@v6
+
+      - uses: ./.github/actions/build-linux-docker-and-package
+        if: ${{ !matrix.main-only || needs.setup.outputs.publish == 'true' }}
+        with:
+          build-unix-time: ${{ needs.setup.outputs.build-unix-time }}
+          build-date: ${{ needs.setup.outputs.build-date }}
+          build-node-options: ${{ vars.BUILD_NODE_OPTIONS }}
+          check-3rd-api: ${{ vars.CHECK_3RD_API }}
+          skip-tests: ${{ vars.SKIP_TESTS }}
+          platform: ${{ matrix.platform }}
+          platform-name: ${{ matrix.platform-name }}
+          docker-push: ${{ needs.setup.outputs.publish }}
+          docker-image-name: ${{ env.DOCKER_IMAGE_NAME }}
+          docker-username: ${{ env.DOCKER_USERNAME }}
+          docker-password: ${{ secrets.DOCKER_PASSWORD }}
+          docker-bake-meta-file-path: ${{ needs.setup.outputs.bake-meta-file-path }}
+          docker-bake-meta-artifact-name: ${{ needs.setup.outputs.bake-meta-artifact-name }}
+          docker-bake-digests-file-path: ${{ needs.setup.outputs.digests-file-path }}
+          docker-bake-digests-artifact-name-prefix: ${{ needs.setup.outputs.digests-artifact-name-prefix }}
+          package-file-name-prefix: ${{ needs.setup.outputs.package-file-name-prefix }}
+          trivy-scan: ${{ matrix.platform-name == 'linux-amd64' }}
+
+  push:
+    if: ${{ needs.setup.outputs.publish == 'true' }}
+    needs:
+      - setup
+      - build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - uses: ./.github/actions/push-linux-docker
+        with:
+          docker-image-name: ${{ env.DOCKER_IMAGE_NAME }}
+          docker-username: ${{ env.DOCKER_USERNAME }}
+          docker-password: ${{ secrets.DOCKER_PASSWORD }}
+          docker-bake-meta-file-path: ${{ needs.setup.outputs.bake-meta-file-path }}
+          docker-bake-meta-artifact-name: ${{ needs.setup.outputs.bake-meta-artifact-name }}
+          docker-bake-digests-file-path: ${{ needs.setup.outputs.digests-file-path }}
+          docker-bake-digests-artifact-name-prefix: ${{ needs.setup.outputs.digests-artifact-name-prefix }}
+          docker-image-tags: ${{ needs.setup.outputs.docker-tags }}

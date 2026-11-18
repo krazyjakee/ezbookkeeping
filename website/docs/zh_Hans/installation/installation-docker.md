@@ -6,19 +6,9 @@ title: "通过 Docker 运行"
 
 访问 [Docker Hub](https://hub.docker.com/r/krazyjakee/ezrbookkeeping) 查看所有镜像和标签。
 
-**最近发布镜像**
-
-[![最近发布镜像](https://img.shields.io/docker/v/krazyjakee/ezrbookkeeping?sort=semver&style=flat-square)](https://hub.docker.com/r/krazyjakee/ezrbookkeeping)
+镜像在 `main` 分支每次变更后重新构建，只发布一个标签：
 
 `krazyjakee/ezrbookkeeping:latest`
-
-**指定版本的发布镜像**
-
-`krazyjakee/ezrbookkeeping:{version}`
-
-**最近每日构建镜像**
-
-`krazyjakee/ezrbookkeeping:latest-snapshot`
 
 ## 启动 Docker 镜像
 

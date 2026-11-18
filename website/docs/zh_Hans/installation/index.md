@@ -13,20 +13,12 @@ ezrbookkeeping 通过使用更轻量的技术栈和更高效的架构设计，�
 ## 使用 Docker 部署
 访问 [Docker Hub](https://hub.docker.com/r/krazyjakee/ezrbookkeeping) 查看所有镜像和标签。
 
-**最新发布版本：**
-
 ```shell
-$ docker run -p8080:8080 krazyjakee/ezrbookkeeping
-```
-
-**最新每日构建：**
-
-```shell
-$ docker run -p8080:8080 krazyjakee/ezrbookkeeping:latest-snapshot
+$ docker run -p8080:8080 krazyjakee/ezrbookkeeping:latest
 ```
 
 > [!NOTE] 提示
-> 上述命令仅适用于测试和评估目的。对于生产环境，建议使用特定版本的镜像，并使用持久化数据卷来存储数据，以避免数据丢失。
+> 上述命令仅适用于测试和评估目的。对于生产环境，建议使用持久化数据卷来存储数据，以避免数据丢失。
 
 ## 从二进制包安装
 下载最新发布版本：[https://github.com/krazyjakee/ezbookkeeping/releases](https://github.com/krazyjakee/ezbookkeeping/releases)

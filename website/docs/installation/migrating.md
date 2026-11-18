@@ -60,12 +60,7 @@ $ docker rm ezbookkeeping
 $ docker run -d -p8080:8080 --name ezbookkeeping -v /var/lib/ezbookkeeping/data:/ezbookkeeping/data -v /var/lib/ezbookkeeping/storage:/ezbookkeeping/storage krazyjakee/ezrbookkeeping
 ```
 
-If you use Docker Compose or Kubernetes, change the `image` field to `krazyjakee/ezrbookkeeping` (or a specific version such as `krazyjakee/ezrbookkeeping:1.2.3`) and redeploy.
-
-Available image tags:
-
-* `latest`, `X`, `X.Y` and `X.Y.Z`: release builds
-* `latest-snapshot`, `SNAPSHOT-YYYYMMDD` and `sha-<commit>`: daily builds of the `main` branch
+If you use Docker Compose or Kubernetes, change the `image` field to `krazyjakee/ezrbookkeeping` and redeploy. The only image tag is `latest`, rebuilt on every push to the `main` branch.
 
 ## Migrating a binary installation
 

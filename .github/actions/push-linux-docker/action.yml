@@ -1,4 +1,5 @@
 name: Push linux docker multi-arch image to registry
+description: "Combine the per-platform digests into one multi-arch image and push its tags"
 
 inputs:
   docker-image-name:

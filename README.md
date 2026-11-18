@@ -7,8 +7,7 @@
 > - **Business use:** features for small businesses and teams, not personal lifestyle tracking
 
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/krazyjakee/ezbookkeeping/blob/main/LICENSE)
-[![Latest Release](https://img.shields.io/github/release/krazyjakee/ezbookkeeping.svg?style=flat)](https://github.com/krazyjakee/ezbookkeeping/releases)
-[![Latest Build](https://img.shields.io/github/actions/workflow/status/krazyjakee/ezbookkeeping/build-snapshot.yml?branch=main)](https://github.com/krazyjakee/ezbookkeeping/actions/workflows/build-snapshot.yml)
+[![Build](https://img.shields.io/github/actions/workflow/status/krazyjakee/ezbookkeeping/build.yml?branch=main)](https://github.com/krazyjakee/ezbookkeeping/actions/workflows/build.yml)
 [![Latest Docker Image Size](https://img.shields.io/docker/image-size/krazyjakee/ezrbookkeeping.svg?style=flat)](https://hub.docker.com/r/krazyjakee/ezrbookkeeping)
 [![Docker Pulls](https://img.shields.io/docker/pulls/krazyjakee/ezrbookkeeping)](https://hub.docker.com/r/krazyjakee/ezrbookkeeping)
 [![Documentation](https://img.shields.io/badge/docs-krazyjakee.github.io-blue.svg)](https://krazyjakee.github.io/ezbookkeeping/)
@@ -91,17 +90,11 @@ Screenshots use the bundled demo data and follow your light / dark preference. S
 ### Run with Docker
 Visit [Docker Hub](https://hub.docker.com/r/krazyjakee/ezrbookkeeping) to see all images and tags.
 
-**Latest Release:**
-
-    $ docker run -p8080:8080 krazyjakee/ezrbookkeeping
-
-**Latest Daily Build:**
-
-    $ docker run -p8080:8080 krazyjakee/ezrbookkeeping:latest-snapshot
+    $ docker run -p8080:8080 krazyjakee/ezrbookkeeping:latest
 
 For production use of ezrbookkeeping, you need to mount a persistent volume when starting the container to prevent data loss. For more information, see [documentation](https://krazyjakee.github.io/ezbookkeeping/installation/installation-docker).
 
-Image tags: `latest`, `X`, `X.Y` and `X.Y.Z` for releases; `latest-snapshot`, `SNAPSHOT-YYYYMMDD` and `sha-<commit>` for daily builds of `main`.
+There is one image tag, `latest`, rebuilt on every push to `main`.
 
 #### Migrating from mayswind/ezbookkeeping
 Just change the image from `mayswind/ezbookkeeping` to `krazyjakee/ezrbookkeeping` and keep everything else: the same volumes (`/ezbookkeeping/data`, `/ezbookkeeping/storage`, `/ezbookkeeping/log`), the same UID/GID `1000`, the same configuration file (`/ezbookkeeping/conf/ezbookkeeping.ini`) and the same `EBK_` environment variables. No data migration is needed. Back up your data first, see [Migrating from ezBookkeeping](https://krazyjakee.github.io/ezbookkeeping/installation/migrating) for details.
