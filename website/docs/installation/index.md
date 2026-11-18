@@ -13,20 +13,12 @@ ezrbookkeeping uses a lightweight tech stack and an efficient architecture to ke
 ## Run with Docker
 Visit [Docker Hub](https://hub.docker.com/r/krazyjakee/ezrbookkeeping) to see all images and tags.
 
-**Latest Release:**
-
 ```shell
-$ docker run -p8080:8080 krazyjakee/ezrbookkeeping
-```
-
-**Latest Daily Build:**
-
-```shell
-$ docker run -p8080:8080 krazyjakee/ezrbookkeeping:latest-snapshot
+$ docker run -p8080:8080 krazyjakee/ezrbookkeeping:latest
 ```
 
 > [!NOTE] Note
-> The above commands are intended for testing and evaluation purposes only. For production environments, it is recommended to use a specific version of the image and to use a persistent data volume to store data to avoid data loss.
+> The above commands are intended for testing and evaluation purposes only. For production environments, it is recommended to use a persistent data volume to store data to avoid data loss.
 
 ## Install from Binary
 Download the latest release: [https://github.com/krazyjakee/ezbookkeeping/releases](https://github.com/krazyjakee/ezbookkeeping/releases)

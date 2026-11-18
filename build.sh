@@ -263,7 +263,7 @@ build_docker() {
     docker_tag="$VERSION"
 
     if [ "$RELEASE" = "0" ]; then
-        docker_tag="SNAPSHOT-$BUILD_DATE";
+        docker_tag="latest";
     fi
 
     docker_tag="ezrbookkeeping:$docker_tag"

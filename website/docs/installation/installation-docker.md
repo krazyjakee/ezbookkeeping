@@ -6,19 +6,9 @@ title: "Run with Docker"
 
 Visit [Docker Hub](https://hub.docker.com/r/krazyjakee/ezrbookkeeping) to see all images and tags.
 
-**Latest release image**
-
-[![Latest release image](https://img.shields.io/docker/v/krazyjakee/ezrbookkeeping?sort=semver&style=flat-square)](https://hub.docker.com/r/krazyjakee/ezrbookkeeping)
+The image is rebuilt from the `main` branch on every change and published with a single tag:
 
 `krazyjakee/ezrbookkeeping:latest`
-
-**Release image with specific version**
-
-`krazyjakee/ezrbookkeeping:{version}`
-
-**Latest daily build (snapshot) image**
-
-`krazyjakee/ezrbookkeeping:latest-snapshot`
 
 ## Run docker image
 
