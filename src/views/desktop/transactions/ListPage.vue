@@ -669,7 +669,7 @@
                                     <td class="transaction-table-column-description">
                                         <div class="transaction-table-description">
                                             <v-icon class="transaction-picture-indicator" size="16" :icon="mdiPaperclip"
-                                                    :aria-label="tt('Transaction Pictures')" role="img"
+                                                    :aria-label="tt('Transaction Documents')" role="img"
                                                     v-if="showPictureIndicatorInTransactionListPage && transaction.pictures?.length">
                                             </v-icon>
                                             <span class="text-truncate">{{ transaction.comment }}</span>
@@ -723,9 +723,9 @@
                                             :aria-label="getTransactionRowLabel(transaction)"
                                             v-for="[transaction, pictureInfo] in allTransactionPictures(transactions)"
                                             @click="show(transaction)">
-                                        <span class="transaction-gallery-tile-document" v-if="isPdfFileUrl(getTransactionPictureUrl(pictureInfo))">
-                                            <v-icon size="40" :icon="mdiFilePdfBox"/>
-                                            <span>{{ tt('PDF Document') }}</span>
+                                        <span class="transaction-gallery-tile-document" v-if="getAttachmentKindFromUrl(getTransactionPictureUrl(pictureInfo)) !== 'image'">
+                                            <v-icon size="40" :icon="getTransactionAttachmentMdiIcon(getFileExtensionFromUrl(getTransactionPictureUrl(pictureInfo)))"/>
+                                            <span class="transaction-gallery-tile-document-name">{{ getTransactionAttachmentDisplayName(pictureInfo.originalFileName, getTransactionPictureUrl(pictureInfo), tt) }}</span>
                                         </span>
                                         <v-img class="transaction-gallery-tile-image" cover :src="getTransactionPictureUrl(pictureInfo)" v-else>
                                             <template #placeholder>
@@ -881,7 +881,8 @@ import {
     transactionTypeToCategoryType
 } from '@/lib/category.ts';
 import { allTransactionPictures } from '@/lib/transaction.ts';
-import { isPdfFileUrl } from '@/lib/file.ts';
+import { getAttachmentKindFromUrl, getFileExtensionFromUrl, getTransactionAttachmentDisplayName } from '@/lib/file.ts';
+import { getTransactionAttachmentMdiIcon } from '@/lib/ui/desktop.ts';
 import {
     isDataExportingEnabled,
     isDataImportingEnabled,
@@ -912,7 +913,6 @@ import {
     mdiPlus,
     mdiTrayArrowDown,
     mdiFilterOffOutline,
-    mdiFilePdfBox,
     mdiImageBrokenVariant,
     mdiFormatListBulleted,
     mdiCalendarMonthOutline,
@@ -2519,6 +2519,13 @@ init(props);
 
 .transaction-gallery-tile-document > .v-icon {
     color: var(--ebk-color-primary-text);
+}
+
+.transaction-gallery-tile-document-name {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .transaction-gallery-tile-placeholder--error {

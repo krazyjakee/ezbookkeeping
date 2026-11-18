@@ -430,7 +430,7 @@
             <f7-list-item
                 link="#" no-chevron
                 class="transaction-edit-pictures"
-                :header="tt('Pictures')"
+                :header="tt('Documents')"
                 v-if="showTransactionPictures || (transaction.pictures && transaction.pictures.length > 0)"
             >
                 <template #footer>
@@ -447,13 +447,20 @@
                                 <div class="transaction-picture">
                                     <div class="display-flex justify-content-center align-items-center transaction-picture-control-backdrop"
                                          v-if="mode === TransactionEditPageMode.Add || mode === TransactionEditPageMode.Edit">
-                                        <f7-icon class="picture-control-icon picture-remove-icon" f7="trash" :aria-label="tt('Remove Picture')" v-if="pictureInfo.pictureId !== removingPictureId"></f7-icon>
+                                        <f7-icon class="picture-control-icon picture-remove-icon" f7="trash" :aria-label="tt('Remove Document')" v-if="pictureInfo.pictureId !== removingPictureId"></f7-icon>
                                         <f7-preloader color="white" :size="28" v-if="pictureInfo.pictureId === removingPictureId" />
                                     </div>
                                     <div class="display-flex flex-direction-column justify-content-center align-items-center transaction-picture-document"
-                                         v-if="isPdfFileUrl(getTransactionPictureUrl(pictureInfo))">
-                                        <f7-icon class="picture-document-icon" f7="doc_text"></f7-icon>
-                                        <span class="picture-document-text">{{ tt('PDF Document') }}</span>
+                                         v-if="getTransactionPictureKind(pictureInfo) !== 'image'">
+                                        <f7-icon class="picture-document-icon" :f7="getTransactionAttachmentF7Icon(getTransactionPictureExtension(pictureInfo))"></f7-icon>
+                                        <span class="picture-document-text">{{ getTransactionAttachmentDisplayName(pictureInfo.originalFileName, getTransactionPictureUrl(pictureInfo), tt) }}</span>
+                                        <span class="picture-document-download-button" role="button" tabindex="0"
+                                              :aria-label="tt('Download')"
+                                              @click.stop="downloadPicture(pictureInfo)"
+                                              @keydown.enter.stop="downloadPicture(pictureInfo)"
+                                              v-if="mode !== TransactionEditPageMode.Add && mode !== TransactionEditPageMode.Edit">
+                                            <f7-icon f7="arrow_down_circle"></f7-icon>
+                                        </span>
                                     </div>
                                     <image-box style="height: 100%" alt="picture" :src="getTransactionPictureUrl(pictureInfo)" v-else>
                                         <template #error>
@@ -464,7 +471,7 @@
                             </swiper-slide>
                             <swiper-slide @click="showOpenPictureDialog" v-if="canAddTransactionPicture">
                                 <div class="display-flex justify-content-center align-items-center transaction-picture transaction-picture-add">
-                                    <f7-icon class="picture-control-icon" f7="plus" :aria-label="tt('Add Picture or PDF Document')" v-if="!uploadingPicture"></f7-icon>
+                                    <f7-icon class="picture-control-icon" f7="plus" :aria-label="tt('Add Document')" v-if="!uploadingPicture"></f7-icon>
                                     <f7-preloader :size="28" v-if="uploadingPicture" />
                                 </div>
                             </swiper-slide>
@@ -474,9 +481,21 @@
             </f7-list-item>
 
             <f7-list-item
+                class="transaction-edit-pictures-empty"
+                :header="tt('Documents')"
+                :title="tt('No documents attached')"
+                :footer="tt('Attach receipts, invoices or statements as proof of this transaction.')"
+                :link="originalTransactionEditable ? '#' : undefined"
+                :after="originalTransactionEditable ? tt('Add Document') : undefined"
+                @click="editAndAddDocument"
+                v-if="pageTypeAndMode?.type === TransactionEditPageType.Transaction && mode === TransactionEditPageMode.View && isTransactionPicturesEnabled() && (!transaction.pictures || !transaction.pictures.length)"
+            >
+            </f7-list-item>
+
+            <f7-list-item
                 link="#"
                 class="transaction-edit-attach-receipt"
-                :title="tt('Attach receipt — PDF or image')"
+                :title="tt('Attach document — PDF, image, Office or text file')"
                 @click="showTransactionPictures = true; showOpenPictureDialog()"
                 v-if="pageTypeAndMode?.type === TransactionEditPageType.Transaction && isTransactionPicturesEnabled() && canAddTransactionPicture && !showTransactionPictures && (!transaction.pictures || !transaction.pictures.length)"
             >
@@ -505,7 +524,7 @@
         <f7-actions close-by-outside-click close-on-escape :opened="showAddPictureActionSheet" @actions:closed="showAddPictureActionSheet = false">
             <f7-actions-group>
                 <f7-actions-button @click="openPictureInput(true)">{{ tt('Take Photo') }}</f7-actions-button>
-                <f7-actions-button @click="openPictureInput(false)">{{ tt('Choose Picture or PDF Document') }}</f7-actions-button>
+                <f7-actions-button @click="openPictureInput(false)">{{ tt('Choose Document') }}</f7-actions-button>
             </f7-actions-group>
             <f7-actions-group>
                 <f7-actions-button bold close>{{ tt('Cancel') }}</f7-actions-button>
@@ -538,7 +557,7 @@
                 <f7-actions-button v-if="!transaction.hideAmount" @click="transaction.hideAmount = true">{{ tt('Hide Amount') }}</f7-actions-button>
             </f7-actions-group>
             <f7-actions-group v-if="pageTypeAndMode?.type === TransactionEditPageType.Transaction && (mode === TransactionEditPageMode.Add || mode === TransactionEditPageMode.Edit) && isTransactionPicturesEnabled() && !showTransactionPictures">
-                <f7-actions-button @click="showTransactionPictures = true">{{ tt('Add Picture') }}</f7-actions-button>
+                <f7-actions-button @click="showTransactionPictures = true">{{ tt('Add Document') }}</f7-actions-button>
             </f7-actions-group>
             <f7-actions-group v-if="pageTypeAndMode?.type === TransactionEditPageType.Transaction && mode === TransactionEditPageMode.View && transaction.type !== TransactionType.ModifyBalance">
                 <f7-actions-button @click="duplicate(false, false)">{{ tt('Duplicate') }}</f7-actions-button>
@@ -593,7 +612,7 @@ import { ref, computed, useTemplateRef } from 'vue';
 import type { PhotoBrowser, Router } from 'framework7/types';
 
 import { useI18n } from '@/locales/helpers.ts';
-import { useI18nUIComponents, isiOS, showLoading, hideLoading, closeAllDialog } from '@/lib/ui/mobile.ts';
+import { useI18nUIComponents, isiOS, showLoading, hideLoading, closeAllDialog, getTransactionAttachmentF7Icon } from '@/lib/ui/mobile.ts';
 import {
     TransactionEditPageMode,
     TransactionEditPageType,
@@ -618,7 +637,6 @@ import {
     TransactionQuickAddButtonActionType
 } from '@/core/transaction.ts';
 import { ScheduledTemplateFrequencyType, TemplateType } from '@/core/template.ts';
-import { KnownFileType } from '@/core/file.ts';
 
 import { TRANSACTION_MAX_AMOUNT, TRANSACTION_MIN_AMOUNT } from '@/consts/transaction.ts';
 import { KnownErrorCode } from '@/consts/api.ts';
@@ -644,8 +662,7 @@ import {
     isTransactionPicturesEnabled,
     getMapProvider
 } from '@/lib/server_settings.ts';
-import { isPdfFile, isPdfFileUrl, getFileDownloadUrl } from '@/lib/file.ts';
-import { compressJpgImageByQuality } from '@/lib/ui/common.ts';
+import { getAttachmentKindFromUrl, getFileDownloadUrl, getTransactionAttachmentDisplayName } from '@/lib/file.ts';
 import logger from '@/lib/logger.ts';
 
 const props = defineProps<{
@@ -690,7 +707,6 @@ const {
     currentTimezoneOffsetMinutes,
     defaultCurrency,
     firstDayOfWeek,
-    imageUploadQualityType,
     allTimezones,
     allVisibleAccounts,
     allVisibleCategorizedAccounts,
@@ -723,7 +739,10 @@ const {
     updateTransactionTimezone,
     swapTransactionData,
     getDisplayAmount,
-    getTransactionPictureUrl
+    getTransactionPictureUrl,
+    getTransactionPictureKind,
+    getTransactionPictureExtension,
+    getTransactionPictureUploadFile
 } = useTransactionEditPageBase(pageTypeAndMode?.type || TransactionEditPageType.Transaction, pageTypeAndMode?.mode, query['type'] ? parseInt(query['type']) : undefined);
 
 const isSupportClipboard = !!navigator.clipboard;
@@ -765,7 +784,8 @@ const showGeoLocationMapSheet = ref<boolean>(false);
 const showTransactionTagSheet = ref<boolean>(false);
 const showTransactionPictures = ref<boolean>(pageTypeAndMode?.type === TransactionEditPageType.Transaction
     && (pageTypeAndMode?.mode === TransactionEditPageMode.Add || pageTypeAndMode?.mode === TransactionEditPageMode.Edit)
-    && settingsStore.appSettings.alwaysShowTransactionPicturesInMobileTransactionEditPage);
+    && (settingsStore.appSettings.alwaysShowTransactionPicturesInMobileTransactionEditPage || query['showPictures'] === 'true'));
+const originalTransactionEditable = ref<boolean>(false);
 const showAITextRecognitionSheet = ref<boolean>(false);
 
 let pendingNewCategory: { type: CategoryType, parentId: string, existingCategoryIds: Record<string, boolean> } | null = null;
@@ -870,7 +890,7 @@ const transactionPictures = computed<Record<string, string | undefined>[]>(() =>
     for (const picture of transaction.value.pictures) {
         const pictureUrl = getTransactionPictureUrl(picture);
 
-        if (isPdfFileUrl(pictureUrl)) {
+        if (getAttachmentKindFromUrl(pictureUrl) !== 'image') {
             continue;
         }
 
@@ -892,7 +912,7 @@ const transactionThumbs = computed<(string | undefined)[]>(() => {
     for (const picture of transaction.value.pictures) {
         const pictureUrl = getTransactionPictureUrl(picture);
 
-        if (isPdfFileUrl(pictureUrl)) {
+        if (getAttachmentKindFromUrl(pictureUrl) !== 'image') {
             continue;
         }
 
@@ -1152,6 +1172,8 @@ function init(): void {
         );
 
         if (pageTypeAndMode.type === TransactionEditPageType.Transaction && query['id'] && responses[4] instanceof Transaction) {
+            originalTransactionEditable.value = responses[4].editable;
+
             if (fromTransaction && query['withTime'] && query['withTime'] === 'true') {
                 transaction.value.time = fromTransaction.time;
                 transaction.value.timeZone = fromTransaction.timeZone;
@@ -1509,6 +1531,24 @@ function openDocument(download: boolean): void {
     window.open(documentUrl, '_blank');
 }
 
+function downloadPicture(pictureInfo: TransactionPictureInfoBasicResponse): void {
+    const downloadUrl = getFileDownloadUrl(getTransactionPictureUrl(pictureInfo));
+
+    if (!downloadUrl) {
+        return;
+    }
+
+    window.open(downloadUrl, '_blank');
+}
+
+function editAndAddDocument(): void {
+    if (mode.value !== TransactionEditPageMode.View || !originalTransactionEditable.value || !transaction.value.id) {
+        return;
+    }
+
+    props.f7router.navigate(`/transaction/edit?id=${transaction.value.id}&type=${transaction.value.type}&showPictures=true`);
+}
+
 function uploadPicture(file: File): void {
     if (!file) {
         return;
@@ -1517,11 +1557,7 @@ function uploadPicture(file: File): void {
     uploadingPicture.value = true;
     submitting.value = true;
 
-    const pictureFilePromise: Promise<File> = isPdfFile(file)
-        ? Promise.resolve(KnownFileType.PDF.createFileFromBlob(file, 'document'))
-        : compressJpgImageByQuality(file, imageUploadQualityType.value).then(blob => KnownFileType.JPG.createFileFromBlob(blob, 'image'));
-
-    pictureFilePromise.then(pictureFile => {
+    getTransactionPictureUploadFile(file).then(pictureFile => {
         return transactionsStore.uploadTransactionPicture({
             pictureFile: pictureFile
         });
@@ -1541,9 +1577,15 @@ function uploadPicture(file: File): void {
 
 function viewOrRemovePicture(pictureInfo: TransactionPictureInfoBasicResponse): void {
     if (mode.value !== TransactionEditPageMode.Add && mode.value !== TransactionEditPageMode.Edit && transaction.value.pictures && transaction.value.pictures.length) {
-        if (isPdfFileUrl(getTransactionPictureUrl(pictureInfo))) {
+        const pictureKind = getTransactionPictureKind(pictureInfo);
+
+        if (pictureKind === 'pdf') {
             selectedDocumentPicture.value = pictureInfo;
             showDocumentActionSheet.value = true;
+            return;
+        } else if (pictureKind === 'document') {
+            // office files, text files and heic / heif images cannot be previewed by browsers
+            downloadPicture(pictureInfo);
             return;
         }
 
@@ -1554,7 +1596,7 @@ function viewOrRemovePicture(pictureInfo: TransactionPictureInfoBasicResponse): 
                 break;
             }
 
-            if (!isPdfFileUrl(getTransactionPictureUrl(picture))) {
+            if (getTransactionPictureKind(picture) === 'image') {
                 imageIndex++;
             }
         }
@@ -1563,7 +1605,7 @@ function viewOrRemovePicture(pictureInfo: TransactionPictureInfoBasicResponse): 
         return;
     }
 
-    showConfirm('Are you sure you want to remove this transaction picture?', () => {
+    showConfirm('Are you sure you want to remove this transaction document?', () => {
         removingPictureId.value = pictureInfo.pictureId;
         submitting.value = true;
 
@@ -1902,8 +1944,30 @@ init();
 
 .transaction-pictures .transaction-picture-container .transaction-picture .transaction-picture-document .picture-document-text {
     margin-top: 4px;
+    max-width: 100%;
+    padding: 0 4px;
+    box-sizing: border-box;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-size: var(--f7-list-item-footer-font-size);
     color: var(--f7-list-item-footer-text-color);
+}
+
+.transaction-pictures .transaction-picture-container .transaction-picture .transaction-picture-document .picture-document-download-button {
+    position: absolute;
+    top: 4px;
+    inset-inline-end: 4px;
+    line-height: 0;
+    color: var(--f7-theme-color);
+}
+
+.transaction-pictures .transaction-picture-container .transaction-picture .transaction-picture-document .picture-document-download-button .icon {
+    font-size: 20px;
+}
+
+.transaction-edit-pictures-empty .item-footer {
+    white-space: normal;
 }
 
 .transaction-pictures .transaction-picture-add {

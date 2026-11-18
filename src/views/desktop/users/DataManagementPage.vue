@@ -32,7 +32,7 @@
                             icon: mdiListBoxOutline
                         },
                         {
-                            title: 'Transaction Pictures',
+                            title: 'Transaction Documents',
                             count: displayDataStatistics ? displayDataStatistics.totalTransactionPictureCount : '-',
                             icon: mdiImage
                         },

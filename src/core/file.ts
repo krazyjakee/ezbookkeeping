@@ -10,8 +10,17 @@ export class KnownFileType {
     public static readonly MERMAID = new KnownFileType('mermaid', 'text/vnd.mermaid');
     public static readonly JS = new KnownFileType('js', 'application/javascript');
     public static readonly JPG = new KnownFileType('jpg', 'image/jpeg');
+    public static readonly JPEG = new KnownFileType('jpeg', 'image/jpeg');
     public static readonly PNG = new KnownFileType('png', 'image/png');
+    public static readonly GIF = new KnownFileType('gif', 'image/gif');
+    public static readonly WEBP = new KnownFileType('webp', 'image/webp');
+    public static readonly HEIC = new KnownFileType('heic', 'image/heic');
+    public static readonly HEIF = new KnownFileType('heif', 'image/heif');
     public static readonly PDF = new KnownFileType('pdf', 'application/pdf');
+    public static readonly DOCX = new KnownFileType('docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    public static readonly XLSX = new KnownFileType('xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    public static readonly ODT = new KnownFileType('odt', 'application/vnd.oasis.opendocument.text');
+    public static readonly ODS = new KnownFileType('ods', 'application/vnd.oasis.opendocument.spreadsheet');
 
     public readonly extension: string;
     public readonly contentType: string;

@@ -8,6 +8,7 @@ type LargeLanguageModelRequestPromptType byte
 const (
 	LARGE_LANGUAGE_MODEL_REQUEST_PROMPT_TYPE_TEXT      LargeLanguageModelRequestPromptType = 0
 	LARGE_LANGUAGE_MODEL_REQUEST_PROMPT_TYPE_IMAGE_URL LargeLanguageModelRequestPromptType = 1
+	LARGE_LANGUAGE_MODEL_REQUEST_PROMPT_TYPE_DOCUMENT  LargeLanguageModelRequestPromptType = 2
 )
 
 type LargeLanguageModelResponseFormat byte
@@ -25,6 +26,7 @@ type LargeLanguageModelRequest struct {
 	UserPrompt             []byte
 	UserPromptType         LargeLanguageModelRequestPromptType
 	UserPromptContentType  string
+	UserPromptFileName     string
 	ResponseJsonObjectType reflect.Type
 }
 

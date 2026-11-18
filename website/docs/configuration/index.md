@@ -139,7 +139,7 @@ Note that if the same configuration option is set using all three methods above,
 | Option Name | Default Value | Description |
 | --- | --- | --- |
 | `transaction_from_ai_text_recognition` | `false` | Whether to enable creating transactions from AI text recognition results, requires `llm_provider` and its related model id to be configured properly in `llm_text_recognition` section. |
-| `transaction_from_ai_image_recognition` | `false` | Whether to enable creating transactions from AI image recognition results, requires `llm_provider` and its related model id to be configured properly in `llm_image_recognition` section. |
+| `transaction_from_ai_image_recognition` | `true` | Whether to enable creating transactions from AI image recognition results, requires `llm_provider` and its related model id to be configured properly in `llm_image_recognition` section. It is enabled by default with the built-in `donut` provider, which needs no external service. |
 | `insights_explorer_coding_assistant` | `false` | Whether to enable AI custom chart code generation for Insights Explorer, requires `llm_provider` and its related model id to be configured properly in `llm_coding_assistant` section. |
 | `max_ai_recognition_picture_size` | `10485760` | Maximum allowed AI recognition picture file size (1 – 4294967295 bytes). |
 
@@ -185,7 +185,7 @@ Note that if the same configuration option is set using all three methods above,
 
 | Option Name | Default Value | Description |
 | --- | --- | --- |
-| `llm_provider` |  | Large Language Model (LLM) provider for receipt image recognition, supports `openai`, `openai_compatible`, `openai_responses_compatible`, `anthropic`, `anthropic_compatible`, `openrouter`, `ollama`, `lm_studio` and `google_ai`. The used LLM provider and model must support vision language model (VLM) capabilities. When using a third-party LLM provider, please be aware of potential privacy risks. For more details, see [FAQ - What third-party services does ezrbookkeeping use, and does it access my personal data](/faq/#what-third-party-services-does-ezbookkeeping-use-and-does-it-access-my-personal-data). |
+| `llm_provider` | `donut` | Large Language Model (LLM) provider for receipt image recognition, supports `donut`, `openai`, `openai_compatible`, `openai_responses_compatible`, `anthropic`, `anthropic_compatible`, `openrouter`, `ollama`, `lm_studio` and `google_ai`. `donut` (the default) is built in: it reads receipts and invoices on the server itself with two small Donut models (about 570 MB, downloaded from Hugging Face in the background when the server starts and verified by SHA-256) in a worker included in the Docker image, so no data leaves the server. It recognizes amount, currency, date, time and merchant and picks a category by merchant keywords, but does not follow instructions. Without the worker (e.g. the release binaries outside Docker) image recognition is disabled with a warning in the log. The used LLM provider and model must support vision language model (VLM) capabilities. When using a third-party LLM provider, please be aware of potential privacy risks. For more details, see [FAQ - What third-party services does ezrbookkeeping use, and does it access my personal data](/faq/#what-third-party-services-does-ezbookkeeping-use-and-does-it-access-my-personal-data). |
 | `enable_thinking` |  | Whether to enable thinking for the large language model, supports the following levels:<br/>`off`: disable thinking (supports all providers).<br/>`low` / `medium` / `high` / `xhigh`: enable thinking with the corresponding reasoning effort (supports `openai`, `openai_compatible`, `openai_responses_compatible`, `openrouter`, `ollama`, `lm_studio` and `google_ai` providers).<br/>`on`: enable thinking with the default reasoning effort (supports `anthropic`, `anthropic_compatible`, `ollama` and `lm_studio` providers).<br/>Leave blank to use the default setting of the LLM provider |
 | `openai_api_key` |  | OpenAI API Secret Key for `openai` LLM provider, please visit [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys) for more information. |
 | `openai_model_id` |  | Model ID for the `openai` LLM provider, used for receipt image recognition and transaction creation. |
@@ -211,6 +211,15 @@ Note that if the same configuration option is set using all three methods above,
 | `lm_studio_model_id` |  | Model ID for the `lm_studio` LLM provider, used for receipt image recognition and transaction creation. |
 | `google_ai_api_key` |  | Google AI API Key for `google_ai` LLM provider, please visit [https://aistudio.google.com/apikey](https://aistudio.google.com/apikey) for more information. |
 | `google_ai_model_id` |  | Model ID for the `google_ai` LLM provider, used for receipt image recognition and transaction creation. |
+| `donut_model_download_url` | `https://huggingface.co/krazyjakee/ezbookkeeping-donut-onnx/resolve/<revision>/` | For the `donut` provider, base URL which the model files are downloaded from (pinned to a revision, every file is verified by its SHA-256 checksum). |
+| `donut_model_path` | `data/donut` | For the `donut` provider, directory which the model files are stored in, keep it on a persistent volume so they are not downloaded again. |
+| `donut_worker_path` |  | For the `donut` provider, path of the worker binary, default is `ezbookkeeping-donut` next to the ezrbookkeeping binary. |
+| `donut_onnxruntime_library_path` | `libonnxruntime.so.1` | For the `donut` provider, path or name of the ONNX Runtime shared library. |
+| `donut_threads` | `4` | For the `donut` provider, number of CPU threads used to read a document. |
+| `donut_low_memory` | `false` | For the `donut` provider, use about 1.5 GB instead of about 2.2 GB of memory while reading documents, reading takes about twice as long. |
+| `donut_worker_idle_timeout` | `600` | For the `donut` provider, seconds after which the idle worker (and its memory) is released. |
+| `donut_date_order` | `DMY` | For the `donut` provider, order of day and month in numeric dates, `DMY` or `MDY`. |
+| `donut_default_account` |  | For the `donut` provider, account name which is filled in for recognized documents. Leave blank to only fill it in when there is one account. |
 | `request_timeout` | `60000` | Request timeout for LLM API (0 – 4294967295 milliseconds). Set to `0` to disable timeout for requesting LLM API. |
 | `proxy` | `system` | Proxy for requesting LLM API, supports `system` (use system proxy), `none` (do not use proxy), or proxy URL which starts with `http://`, `https://` or `socks5://`. |
 | `skip_tls_verify` | `false` | Whether to skip the server's certificate chain and host name verification when request LLM API. |

@@ -251,7 +251,7 @@
             </f7-list-item>
             <f7-list-item>
                 <template #after-title>
-                    {{ tt('Show Transaction Picture Indicator') }}
+                    {{ tt('Show Transaction Document Indicator') }}
                 </template>
                 <template #after>
                     <f7-toggle :checked="showPictureIndicatorInTransactionListPage" @toggle:change="showPictureIndicatorInTransactionListPage = $event"></f7-toggle>
@@ -397,7 +397,7 @@
 
             <f7-list-item>
                 <template #after-title>
-                    {{ tt('Always Show Transaction Pictures') }}
+                    {{ tt('Always Show Transaction Documents') }}
                 </template>
                 <template #after>
                     <f7-toggle :checked="alwaysShowTransactionPicturesInMobileTransactionEditPage" @toggle:change="alwaysShowTransactionPicturesInMobileTransactionEditPage = $event"></f7-toggle>
@@ -411,7 +411,7 @@
             >
                 <template #after-title>
                     <div class="item-actual-title">
-                        <span>{{ tt('Transaction Picture Upload Quality') }}</span>
+                        <span>{{ tt('Transaction Image Upload Quality') }}</span>
                     </div>
                 </template>
                 <template #after>
@@ -420,9 +420,9 @@
                 <list-item-selection-popup value-type="item"
                                            key-field="type" value-field="type"
                                            title-field="displayName"
-                                           :title="tt('Transaction Picture Upload Quality')"
+                                           :title="tt('Transaction Image Upload Quality')"
                                            :enable-filter="true"
-                                           :filter-placeholder="tt('Transaction Picture Upload Quality')"
+                                           :filter-placeholder="tt('Transaction Image Upload Quality')"
                                            :filter-no-items-text="tt('No results')"
                                            :items="allImageUploadQualityTypes"
                                            v-model:show="showTransactionPictureQualityPopup"
@@ -447,7 +447,7 @@
         <f7-list strong inset dividers class="settings-list">
             <f7-list-item>
                 <template #after-title>
-                    {{ tt('Auto Upload AI Recognition Image as Transaction Picture') }}
+                    {{ tt('Auto Upload AI Recognition Image as Transaction Document') }}
                 </template>
                 <template #after>
                     <f7-toggle :checked="isAutoUploadTransactionPictureForAIRecognition" @toggle:change="isAutoUploadTransactionPictureForAIRecognition = $event"></f7-toggle>

@@ -75,8 +75,8 @@
                         <v-tab value="map" :disabled="!transaction.geoLocation" v-if="type === TransactionEditPageType.Transaction && !!getMapProvider()">
                             <span>{{ tt('Location on Map') }}</span>
                         </v-tab>
-                        <v-tab value="pictures" :disabled="mode !== TransactionEditPageMode.Add && mode !== TransactionEditPageMode.Edit && (!transaction.pictures || !transaction.pictures.length)" v-if="type === TransactionEditPageType.Transaction && isTransactionPicturesEnabled()">
-                            <span>{{ tt('Pictures') }}</span>
+                        <v-tab value="pictures" v-if="type === TransactionEditPageType.Transaction && isTransactionPicturesEnabled()">
+                            <span>{{ tt('Documents') }}</span>
                         </v-tab>
                     </v-tabs>
                 </div>
@@ -390,13 +390,13 @@
                                                 @drop.prevent="onAttachDrop">
                                             <v-progress-circular indeterminate size="20" width="2" v-if="uploadingPicture" />
                                             <v-icon :icon="mdiPaperclip" size="20" v-else />
-                                            <span class="transaction-edit-attach-text">{{ tt('Attach receipt — PDF or image') }}</span>
+                                            <span class="transaction-edit-attach-text">{{ tt('Attach document — PDF, image, Office or text file') }}</span>
                                         </button>
-                                        <v-btn class="transaction-edit-attach-count" color="default" variant="text" :prepend-icon="mdiImageMultipleOutline"
+                                        <v-btn class="transaction-edit-attach-count" color="default" variant="text" :prepend-icon="mdiFileDocumentMultipleOutline"
                                                :disabled="loading || submitting || recognizing"
                                                v-if="transaction.pictures && transaction.pictures.length > 0"
                                                @click="activeTab = 'pictures'">
-                                            <span>{{ tt('Pictures') }}</span>
+                                            <span>{{ tt('Documents') }}</span>
                                             <span class="ms-1 ebk-numeric">({{ formatNumberToLocalizedNumerals(transaction.pictures.length) }})</span>
                                         </v-btn>
                                     </div>
@@ -420,17 +420,29 @@
                         </map-view>
                     </v-window-item>
                     <v-window-item value="pictures">
-                        <div class="transaction-pictures" :class="{ 'readonly': submitting || uploadingPicture || removingPictureId }">
+                        <div class="transaction-pictures transaction-pictures--empty"
+                             v-if="mode === TransactionEditPageMode.View && (!transaction.pictures || !transaction.pictures.length)">
+                            <v-icon class="transaction-pictures-empty-icon" size="48" :icon="mdiFileDocumentMultipleOutline"/>
+                            <div class="transaction-pictures-empty-title">{{ tt('No documents attached') }}</div>
+                            <div class="transaction-pictures-empty-hint">{{ tt('Attach receipts, invoices or statements as proof of this transaction.') }}</div>
+                            <v-btn class="mt-2" color="primary" variant="tonal" :prepend-icon="mdiFileDocumentPlusOutline"
+                                   :disabled="loading || submitting || recognizing"
+                                   v-if="originalTransactionEditable"
+                                   @click="editAndAddDocument">{{ tt('Add Document') }}</v-btn>
+                        </div>
+                        <div class="transaction-pictures" :class="{ 'readonly': submitting || uploadingPicture || removingPictureId }" v-else>
                             <div class="transaction-pictures-grid">
                                 <div class="transaction-picture-tile" :key="pictureInfo.pictureId || picIdx" v-for="(pictureInfo, picIdx) in transaction.pictures">
                                     <button type="button" class="transaction-picture-tile-preview"
-                                            :aria-label="(mode === TransactionEditPageMode.Add || mode === TransactionEditPageMode.Edit) ? tt('Remove Picture') : tt('View')"
+                                            :aria-label="getPictureTileActionLabel(pictureInfo)"
+                                            :title="getTransactionPictureKind(pictureInfo) !== 'image' ? getPictureDisplayName(pictureInfo) : undefined"
                                             :aria-busy="pictureInfo.pictureId === removingPictureId ? 'true' : 'false'"
                                             @click="viewOrRemovePicture(pictureInfo)">
                                         <span class="transaction-picture-tile-document"
-                                              v-if="isPdfFileUrl(getTransactionPictureUrl(pictureInfo))">
-                                            <v-icon size="48" :icon="mdiFilePdfBox"/>
-                                            <span>{{ tt('PDF Document') }}</span>
+                                              v-if="getTransactionPictureKind(pictureInfo) !== 'image'">
+                                            <v-icon size="48" :icon="getTransactionAttachmentMdiIcon(getTransactionPictureExtension(pictureInfo))"/>
+                                            <span class="transaction-picture-tile-document-name">{{ getPictureDisplayName(pictureInfo) }}</span>
+                                            <span class="transaction-picture-tile-document-type" v-if="pictureInfo.originalFileName && getTransactionPictureExtension(pictureInfo)">{{ getTransactionPictureExtension(pictureInfo).toUpperCase() }}</span>
                                         </span>
                                         <v-img class="transaction-picture-tile-image" cover :src="getTransactionPictureUrl(pictureInfo)" v-else>
                                             <template #placeholder>
@@ -448,19 +460,23 @@
                                         <span class="transaction-picture-tile-overlay" :class="{ 'transaction-picture-tile-overlay--visible': pictureInfo.pictureId === removingPictureId }" aria-hidden="true">
                                             <span class="transaction-picture-tile-action" v-if="(mode === TransactionEditPageMode.Add || mode === TransactionEditPageMode.Edit) && pictureInfo.pictureId !== removingPictureId">
                                                 <v-icon size="22" :icon="mdiTrashCanOutline"/>
-                                                <span>{{ tt('Remove Picture') }}</span>
+                                                <span>{{ tt('Remove Document') }}</span>
                                             </span>
                                             <v-progress-circular indeterminate size="32" v-if="(mode === TransactionEditPageMode.Add || mode === TransactionEditPageMode.Edit) && pictureInfo.pictureId === removingPictureId"></v-progress-circular>
-                                            <span class="transaction-picture-tile-action" v-if="mode !== TransactionEditPageMode.Add && mode !== TransactionEditPageMode.Edit">
+                                            <span class="transaction-picture-tile-action" v-if="mode !== TransactionEditPageMode.Add && mode !== TransactionEditPageMode.Edit && getTransactionPictureKind(pictureInfo) !== 'document'">
                                                 <v-icon size="22" :icon="mdiFullscreen"/>
                                                 <span>{{ tt('View') }}</span>
+                                            </span>
+                                            <span class="transaction-picture-tile-action" v-if="mode !== TransactionEditPageMode.Add && mode !== TransactionEditPageMode.Edit && getTransactionPictureKind(pictureInfo) === 'document'">
+                                                <v-icon size="22" :icon="mdiDownload"/>
+                                                <span>{{ tt('Download') }}</span>
                                             </span>
                                         </span>
                                     </button>
                                     <v-btn class="transaction-picture-download-button" density="comfortable" variant="flat" color="surface"
                                            :icon="mdiDownload" :aria-label="tt('Download')" :title="tt('Download')"
                                            @click.stop="downloadPicture(pictureInfo)"
-                                           v-if="mode !== TransactionEditPageMode.Add && mode !== TransactionEditPageMode.Edit && isPdfFileUrl(getTransactionPictureUrl(pictureInfo))"/>
+                                           v-if="mode !== TransactionEditPageMode.Add && mode !== TransactionEditPageMode.Edit && getTransactionPictureKind(pictureInfo) !== 'image'"/>
                                 </div>
                                 <button type="button" class="transaction-picture-tile transaction-picture-add"
                                         :class="{ 'transaction-picture-add--over': attachDragOver }"
@@ -473,8 +489,8 @@
                                         @dragleave="attachDragOver = false"
                                         @drop.prevent="onAttachDrop">
                                     <v-progress-circular indeterminate size="32" v-if="uploadingPicture"></v-progress-circular>
-                                    <v-icon class="transaction-picture-add-icon" size="32" :icon="mdiImagePlusOutline" v-else/>
-                                    <span>{{ tt('Add Picture or PDF Document') }}</span>
+                                    <v-icon class="transaction-picture-add-icon" size="32" :icon="mdiFileDocumentPlusOutline" v-else/>
+                                    <span>{{ tt('Add Document') }}</span>
                                 </button>
                             </div>
                         </div>
@@ -605,7 +621,6 @@ import type { Coordinate } from '@/core/coordinate.ts';
 import { CategoryType } from '@/core/category.ts';
 import { TransactionType, TransactionEditScopeType, TransactionQuickAddButtonActionType } from '@/core/transaction.ts';
 import { TemplateType, ScheduledTemplateFrequencyType } from '@/core/template.ts';
-import { KnownFileType } from '@/core/file.ts';
 
 import { KnownErrorCode } from '@/consts/api.ts';
 import { SUPPORTED_TRANSACTION_PICTURE_EXTENSIONS } from '@/consts/file.ts';
@@ -634,8 +649,8 @@ import {
 import {
     isSupportGetGeoLocationByClick
 } from '@/lib/map/index.ts';
-import { isPdfFile, isPdfFileUrl, getFileDownloadUrl } from '@/lib/file.ts';
-import { compressJpgImageByQuality } from '@/lib/ui/common.ts';
+import { getFileDownloadUrl, getTransactionAttachmentDisplayName, isSupportedTransactionAttachmentFile } from '@/lib/file.ts';
+import { getTransactionAttachmentMdiIcon } from '@/lib/ui/desktop.ts';
 import logger from '@/lib/logger.ts';
 
 import {
@@ -648,13 +663,12 @@ import {
     mdiMapMarkerOutline,
     mdiCheck,
     mdiMenuDown,
-    mdiImagePlusOutline,
     mdiTrashCanOutline,
     mdiFullscreen,
-    mdiFilePdfBox,
     mdiDownload,
     mdiPaperclip,
-    mdiImageMultipleOutline,
+    mdiFileDocumentMultipleOutline,
+    mdiFileDocumentPlusOutline,
     mdiImageBrokenVariant
 } from '@mdi/js';
 
@@ -701,7 +715,6 @@ const {
     setGeoLocationByClickMap,
     transaction,
     defaultCurrency,
-    imageUploadQualityType,
     allTimezones,
     allVisibleAccounts,
     allVisibleCategorizedAccounts,
@@ -735,7 +748,10 @@ const {
     updateTransactionTime,
     updateTransactionTimezone,
     swapTransactionData,
-    getTransactionPictureUrl
+    getTransactionPictureUrl,
+    getTransactionPictureKind,
+    getTransactionPictureExtension,
+    getTransactionPictureUploadFile
 } = useTransactionEditPageBase(props.type);
 
 const settingsStore = useSettingsStore();
@@ -1196,6 +1212,18 @@ function edit(): void {
     mode.value = TransactionEditPageMode.Edit;
 }
 
+function editAndAddDocument(): void {
+    if (!originalTransactionEditable.value) {
+        return;
+    }
+
+    edit();
+    activeTab.value = 'pictures';
+
+    // open the file picker synchronously so that the browser still treats it as part of the user click
+    showOpenPictureDialog();
+}
+
 function remove(): void {
     if (props.type !== TransactionEditPageType.Transaction || mode.value !== TransactionEditPageMode.View) {
         return;
@@ -1331,11 +1359,7 @@ function uploadPicture(file: File): void {
     uploadingPicture.value = true;
     submitting.value = true;
 
-    const pictureFilePromise: Promise<File> = isPdfFile(file)
-        ? Promise.resolve(KnownFileType.PDF.createFileFromBlob(file, 'document'))
-        : compressJpgImageByQuality(file, imageUploadQualityType.value).then(blob => KnownFileType.JPG.createFileFromBlob(blob, 'image'));
-
-    pictureFilePromise.then(pictureFile => {
+    getTransactionPictureUploadFile(file).then(pictureFile => {
         return transactionsStore.uploadTransactionPicture({
             pictureFile: pictureFile
         });
@@ -1353,13 +1377,35 @@ function uploadPicture(file: File): void {
     });
 }
 
+function getPictureDisplayName(pictureInfo: TransactionPictureInfoBasicResponse): string {
+    return getTransactionAttachmentDisplayName(pictureInfo.originalFileName, getTransactionPictureUrl(pictureInfo), tt);
+}
+
+function getPictureTileActionLabel(pictureInfo: TransactionPictureInfoBasicResponse): string {
+    const name = getTransactionPictureKind(pictureInfo) !== 'image' ? `: ${getPictureDisplayName(pictureInfo)}` : '';
+
+    if (mode.value === TransactionEditPageMode.Add || mode.value === TransactionEditPageMode.Edit) {
+        return tt('Remove Document') + name;
+    } else if (getTransactionPictureKind(pictureInfo) === 'document') {
+        return tt('Download') + name;
+    } else {
+        return tt('View') + name;
+    }
+}
+
 function viewOrRemovePicture(pictureInfo: TransactionPictureInfoBasicResponse): void {
     if (mode.value !== TransactionEditPageMode.Add && mode.value !== TransactionEditPageMode.Edit) {
-        window.open(getTransactionPictureUrl(pictureInfo), '_blank');
+        if (getTransactionPictureKind(pictureInfo) === 'document') {
+            // office files, text files and heic / heif images cannot be previewed by browsers
+            downloadPicture(pictureInfo);
+        } else {
+            window.open(getTransactionPictureUrl(pictureInfo), '_blank');
+        }
+
         return;
     }
 
-    confirmDialog.value?.open('Are you sure you want to remove this transaction picture?', { color: 'error' }).then(() => {
+    confirmDialog.value?.open('Are you sure you want to remove this transaction document?', { color: 'error' }).then(() => {
         removingPictureId.value = pictureInfo.pictureId;
         submitting.value = true;
 
@@ -1459,21 +1505,6 @@ function onUploadPicture(event: Event): void {
     uploadPicture(pictureFile);
 }
 
-function isSupportedPictureFile(file: File): boolean {
-    const fileName = file.name ? file.name.toLowerCase() : '';
-    const extensions = SUPPORTED_TRANSACTION_PICTURE_EXTENSIONS.split(',');
-
-    for (const extension of extensions) {
-        const ext = extension.trim().toLowerCase();
-
-        if (ext && fileName.endsWith(ext)) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
 function onAttachDragOver(event: DragEvent): void {
     if (!canAddTransactionPicture.value || submitting.value || uploadingPicture.value) {
         return;
@@ -1499,7 +1530,7 @@ function onAttachDrop(event: DragEvent): void {
         return;
     }
 
-    if (!isSupportedPictureFile(file)) {
+    if (!isSupportedTransactionAttachmentFile(file)) {
         desktopPageStore.addErrorToast('Unsupported file type');
         return;
     }
@@ -1680,10 +1711,35 @@ defineExpose({
     }
 }
 
-/* Pictures and PDF attachments */
+/* Transaction documents (images, pdf and other documents) */
 .transaction-pictures {
     width: 100%;
     padding-block: var(--ebk-space-4);
+}
+
+.transaction-pictures--empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ebk-space-2);
+    text-align: center;
+    color: var(--ebk-color-text-secondary);
+}
+
+.transaction-pictures-empty-icon {
+    opacity: 0.6;
+}
+
+.transaction-pictures-empty-title {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--ebk-color-text-primary);
+}
+
+.transaction-pictures-empty-hint {
+    max-width: 360px;
+    font-size: 0.875rem;
 }
 
 .transaction-pictures-grid {
@@ -1739,6 +1795,23 @@ defineExpose({
 
 .transaction-picture-tile-document > .v-icon {
     color: var(--ebk-color-primary-text);
+}
+
+.transaction-picture-tile-document-name {
+    display: -webkit-box;
+    max-width: 100%;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+}
+
+.transaction-picture-tile-document-type {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    opacity: 0.8;
 }
 
 .transaction-picture-tile-placeholder--error {

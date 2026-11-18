@@ -265,16 +265,16 @@ func loadStorageConfiguration(config *Config, configFile *ini.File, sectionName 
 
 func loadAIConfiguration(config *Config, configFile *ini.File, sectionName string) error {
 	config.TransactionFromAITextRecognition = getConfigItemBoolValue(configFile, sectionName, "transaction_from_ai_text_recognition", false)
-	config.TransactionFromAIImageRecognition = getConfigItemBoolValue(configFile, sectionName, "transaction_from_ai_image_recognition", false)
+	config.TransactionFromAIImageRecognition = getConfigItemBoolValue(configFile, sectionName, "transaction_from_ai_image_recognition", true)
 	config.InsightsExplorerCodingAssistant = getConfigItemBoolValue(configFile, sectionName, "insights_explorer_coding_assistant", false)
 	config.MaxAIRecognitionPictureFileSize = getConfigItemUint32Value(configFile, sectionName, "max_ai_recognition_picture_size", defaultAIRecognitionPictureMaxSize)
 
 	return nil
 }
 
-func loadLLMConfiguration(configFile *ini.File, sectionName string) (*LLMConfig, error) {
+func loadLLMConfiguration(configFile *ini.File, sectionName string, workingPath string, defaultProvider string) (*LLMConfig, error) {
 	llmConfig := &LLMConfig{}
-	llmProvider := getConfigItemStringValue(configFile, sectionName, "llm_provider")
+	llmProvider := getConfigItemStringValue(configFile, sectionName, "llm_provider", defaultProvider)
 
 	if llmProvider == "" {
 		llmConfig.LLMProvider = ""
@@ -296,6 +296,8 @@ func loadLLMConfiguration(configFile *ini.File, sectionName string) (*LLMConfig,
 		llmConfig.LLMProvider = LMStudioLLMProvider
 	} else if llmProvider == GoogleAILLMProvider {
 		llmConfig.LLMProvider = GoogleAILLMProvider
+	} else if llmProvider == DonutLLMProvider {
+		llmConfig.LLMProvider = DonutLLMProvider
 	} else {
 		return nil, errs.ErrInvalidLLMProvider
 	}
@@ -351,6 +353,24 @@ func loadLLMConfiguration(configFile *ini.File, sectionName string) (*LLMConfig,
 
 	llmConfig.GoogleAIAPIKey = getConfigItemStringValue(configFile, sectionName, "google_ai_api_key")
 	llmConfig.GoogleAIModelID = getConfigItemStringValue(configFile, sectionName, "google_ai_model_id")
+
+	llmConfig.DonutModelDownloadURL = getConfigItemStringValue(configFile, sectionName, "donut_model_download_url", defaultDonutModelDownloadURL)
+	llmConfig.DonutModelPath, _ = getFinalPath(workingPath, getConfigItemStringValue(configFile, sectionName, "donut_model_path", defaultDonutModelPath))
+	llmConfig.DonutWorkerPath = getConfigItemStringValue(configFile, sectionName, "donut_worker_path")
+	llmConfig.DonutOnnxRuntimeLibraryPath = getConfigItemStringValue(configFile, sectionName, "donut_onnxruntime_library_path", defaultDonutOnnxRuntimeLibraryPath)
+	llmConfig.DonutThreads = getConfigItemUint32Value(configFile, sectionName, "donut_threads", defaultDonutThreads)
+	llmConfig.DonutLowMemory = getConfigItemBoolValue(configFile, sectionName, "donut_low_memory", false)
+	llmConfig.DonutWorkerIdleTimeout = getConfigItemUint32Value(configFile, sectionName, "donut_worker_idle_timeout", defaultDonutWorkerIdleTimeout)
+	llmConfig.DonutDateOrder = strings.ToUpper(getConfigItemStringValue(configFile, sectionName, "donut_date_order", "DMY"))
+	llmConfig.DonutDefaultAccount = getConfigItemStringValue(configFile, sectionName, "donut_default_account")
+
+	if llmConfig.DonutDateOrder != "DMY" && llmConfig.DonutDateOrder != "MDY" {
+		return nil, errs.ErrInvalidDonutDateOrder
+	}
+
+	if llmConfig.DonutThreads < 1 {
+		llmConfig.DonutThreads = defaultDonutThreads
+	}
 
 	llmConfig.LargeLanguageModelAPIProxy = getConfigItemStringValue(configFile, sectionName, "proxy", "system")
 	llmConfig.LargeLanguageModelAPIRequestTimeout = getConfigItemUint32Value(configFile, sectionName, "request_timeout", defaultLargeLanguageModelAPIRequestTimeout)

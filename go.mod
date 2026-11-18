@@ -30,7 +30,9 @@ require (
 	github.com/urfave/cli/v3 v3.14.0
 	github.com/wk8/go-ordered-map/v2 v2.1.8
 	github.com/xuri/excelize/v2 v2.11.0
+	github.com/yalue/onnxruntime_go v1.27.0
 	golang.org/x/crypto v0.58.0
+	golang.org/x/image v0.38.0
 	golang.org/x/net v0.62.0
 	golang.org/x/oauth2 v0.37.0
 	golang.org/x/text v0.43.0

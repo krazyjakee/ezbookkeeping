@@ -109,7 +109,15 @@ func TestMCPAttachmentResolveExtension(t *testing.T) {
 	assert.Equal(t, MCPToolErrorCodeInvalidValue, toolErr.Code)
 	assert.Equal(t, "file_extension", toolErr.Field)
 
-	_, err = mcpAttachmentResolveExtension("", "text/plain")
+	extension, err = mcpAttachmentResolveExtension("", "text/csv")
+	assert.Nil(t, err)
+	assert.Equal(t, "csv", extension)
+
+	extension, err = mcpAttachmentResolveExtension("", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	assert.Nil(t, err)
+	assert.Equal(t, "xlsx", extension)
+
+	_, err = mcpAttachmentResolveExtension("", "text/html")
 	toolErr = mcpTestGetToolError(t, err)
 	assert.Equal(t, MCPToolErrorCodeInvalidValue, toolErr.Code)
 	assert.Equal(t, "content_type", toolErr.Field)

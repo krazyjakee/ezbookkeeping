@@ -240,7 +240,7 @@ In the mobile version of ezrbookkeeping, you can long-press on any item in the a
 
 ## How to create a transaction using AI clipboard text recognition
 
-First, you need to configure the artificial intelligence and large language model (LLM) settings. In the `ai` section, enable `transaction_from_ai_text_recognition` to allow creating transactions via AI clipboard text recognition. Then, in the `llm_text_recognition` section, set the `llm_provider`, along with the corresponding provider's API key, model ID, and other required settings. Make sure the specified model supports text recognition. For details, see [Configuration - Artificial Intelligence](/configuration/#artificial-intelligence).
+With the Docker image this works out of the box: the built-in `donut` provider is enabled by default and reads receipts on the server itself (its models are downloaded from Hugging Face when the server starts). To use a large language model instead, configure the artificial intelligence and large language model (LLM) settings. In the `ai` section, enable `transaction_from_ai_text_recognition` to allow creating transactions via AI clipboard text recognition. Then, in the `llm_text_recognition` section, set the `llm_provider`, along with the corresponding provider's API key, model ID, and other required settings. Make sure the specified model supports text recognition. For details, see [Configuration - Artificial Intelligence](/configuration/#artificial-intelligence).
 
 After setting up the large language model configuration:
 

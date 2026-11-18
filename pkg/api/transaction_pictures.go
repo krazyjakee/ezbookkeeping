@@ -297,17 +297,26 @@ func computeTransactionPictureFileChecksum(pictureFile multipart.File) (string, 
 func setTransactionPictureResponseHeaders(c *core.WebContext, pictureId int64, fileExtension string, download bool) {
 	c.Header("X-Content-Type-Options", "nosniff")
 
-	if !utils.IsPdfFileExtension(fileExtension) {
+	if utils.GetImageContentType(fileExtension) != "" {
 		return
 	}
 
 	dispositionType := "inline"
+	previewable := utils.IsTransactionAttachmentPreviewable(fileExtension)
 
-	if download {
+	// only pdf documents can be previewed by the browser, other documents (office documents, text files, heic images) are always downloaded
+	if download || !previewable {
 		dispositionType = "attachment"
 	}
 
-	// pdf documents can carry active content, so restrict everything except the browser built-in pdf viewer and disallow embedding into other pages
-	c.Header("Content-Disposition", dispositionType+"; filename=\""+utils.Int64ToString(pictureId)+"."+utils.PdfFileExtension+"\"")
-	c.Header("Content-Security-Policy", "default-src 'none'; object-src 'self'; img-src 'self' data: blob:; style-src 'unsafe-inline'; frame-ancestors 'none'; form-action 'none'; base-uri 'none'")
+	contentSecurityPolicy := "default-src 'none'; object-src 'self'; img-src 'self' data: blob:; style-src 'unsafe-inline'; frame-ancestors 'none'; form-action 'none'; base-uri 'none'"
+
+	// the browser built-in pdf viewer does not work in sandboxed documents, so only other documents are sandboxed
+	if !previewable {
+		contentSecurityPolicy += "; sandbox"
+	}
+
+	// documents can carry active content, so restrict everything except the browser built-in pdf viewer and disallow embedding into other pages
+	c.Header("Content-Disposition", dispositionType+"; filename=\""+utils.Int64ToString(pictureId)+"."+fileExtension+"\"")
+	c.Header("Content-Security-Policy", contentSecurityPolicy)
 }

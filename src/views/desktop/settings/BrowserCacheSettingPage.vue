@@ -50,7 +50,7 @@
                                 color: 'primary'
                             },
                             {
-                                title: 'Transaction Pictures',
+                                title: 'Transaction Documents',
                                 count: fileCacheStatistics ? formatVolumeToLocalizedNumerals(fileCacheStatistics.transactionPictureCacheSize, 2) : '-',
                                 icon: mdiImage,
                                 color: 'error-darken-1'
@@ -135,8 +135,8 @@
                                     item-value="value"
                                     persistent-placeholder
                                     :disabled="loading || !isSupportedFileCache || !fileCacheStatistics"
-                                    :label="tt('Cache Expiration for Transaction Pictures')"
-                                    :placeholder="tt('Cache Expiration for Transaction Pictures')"
+                                    :label="tt('Cache Expiration for Transaction Documents')"
+                                    :placeholder="tt('Cache Expiration for Transaction Documents')"
                                     :items="allTransactionPictureCacheExpirationOptions"
                                     v-model="transactionPictureCacheExpiration"
                                 />

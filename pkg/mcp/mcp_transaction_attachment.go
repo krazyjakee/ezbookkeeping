@@ -36,7 +36,15 @@ var mcpAttachmentContentTypeExtensionMap = map[string]string{
 	"image/png":       "png",
 	"image/gif":       "gif",
 	"image/webp":      "webp",
+	"image/heic":      "heic",
+	"image/heif":      "heif",
 	"application/pdf": "pdf",
+	"application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":       "xlsx",
+	"application/vnd.oasis.opendocument.text":                                 "odt",
+	"application/vnd.oasis.opendocument.spreadsheet":                          "ods",
+	"text/plain": "txt",
+	"text/csv":   "csv",
 }
 
 // MCPTransactionAttachmentInfo represents the information of a transaction attachment (receipt picture or document)

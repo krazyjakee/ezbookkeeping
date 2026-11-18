@@ -33,11 +33,58 @@ const PdfFileExtension = "pdf"
 // PdfFileMagicBytes represents the magic bytes at the beginning of a pdf document
 var PdfFileMagicBytes = []byte("%PDF-")
 
-var documentFileExtensionContentTypeMap = map[string]string{
-	PdfFileExtension: "application/pdf",
+// zipFileMagicBytes represents the magic bytes at the beginning of a zip archive (office open xml and open document files are zip archives)
+var zipFileMagicBytes = []byte("PK\x03\x04")
+
+// textFileCheckedHeaderLength represents the length of the beginning of a text document which is checked for binary content
+const textFileCheckedHeaderLength = 4096
+
+// isoBaseMediaFileHeaderLength represents the length of the beginning of a heic / heif image which contains the file type box and its major brand
+const isoBaseMediaFileHeaderLength = 12
+
+// heifBrands represents the major brands of the file type box of heic / heif images
+var heifBrands = map[string]bool{
+	"heic": true,
+	"heix": true,
+	"hevc": true,
+	"hevx": true,
+	"heim": true,
+	"heis": true,
+	"hevm": true,
+	"hevs": true,
+	"mif1": true,
+	"msf1": true,
 }
 
-// GetTransactionAttachmentContentType returns the content type of specified transaction attachment file extension (images and pdf documents) or returns empty when the file extension is not supported
+// transactionAttachmentContentKind represents how the content of a transaction attachment file type is validated
+type transactionAttachmentContentKind byte
+
+const (
+	transactionAttachmentContentKindNone transactionAttachmentContentKind = iota
+	transactionAttachmentContentKindPdf
+	transactionAttachmentContentKindZip
+	transactionAttachmentContentKindText
+	transactionAttachmentContentKindHeif
+)
+
+type documentFileType struct {
+	contentType string
+	contentKind transactionAttachmentContentKind
+}
+
+var documentFileExtensionTypeMap = map[string]documentFileType{
+	PdfFileExtension: {contentType: "application/pdf", contentKind: transactionAttachmentContentKindPdf},
+	"docx":           {contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", contentKind: transactionAttachmentContentKindZip},
+	"xlsx":           {contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", contentKind: transactionAttachmentContentKindZip},
+	"odt":            {contentType: "application/vnd.oasis.opendocument.text", contentKind: transactionAttachmentContentKindZip},
+	"ods":            {contentType: "application/vnd.oasis.opendocument.spreadsheet", contentKind: transactionAttachmentContentKindZip},
+	"txt":            {contentType: "text/plain", contentKind: transactionAttachmentContentKindText},
+	"csv":            {contentType: "text/csv", contentKind: transactionAttachmentContentKindText},
+	"heic":           {contentType: "image/heic", contentKind: transactionAttachmentContentKindHeif},
+	"heif":           {contentType: "image/heif", contentKind: transactionAttachmentContentKindHeif},
+}
+
+// GetTransactionAttachmentContentType returns the content type of specified transaction attachment file extension (images and documents) or returns empty when the file extension is not supported
 func GetTransactionAttachmentContentType(fileExtension string) string {
 	contentType := GetImageContentType(fileExtension)
 
@@ -45,13 +92,13 @@ func GetTransactionAttachmentContentType(fileExtension string) string {
 		return contentType
 	}
 
-	contentType, exists := documentFileExtensionContentTypeMap[fileExtension]
+	fileType, exists := documentFileExtensionTypeMap[fileExtension]
 
 	if !exists {
 		return ""
 	}
 
-	return contentType
+	return fileType.contentType
 }
 
 // IsPdfFileExtension returns whether the specified file extension is pdf document
@@ -59,13 +106,37 @@ func IsPdfFileExtension(fileExtension string) bool {
 	return fileExtension == PdfFileExtension
 }
 
+// IsTextDocumentFileExtension returns whether the specified file extension is a plain text document (e.g. txt or csv)
+func IsTextDocumentFileExtension(fileExtension string) bool {
+	fileType, exists := documentFileExtensionTypeMap[fileExtension]
+	return exists && fileType.contentKind == transactionAttachmentContentKindText
+}
+
+// IsTransactionAttachmentPreviewable returns whether the specified transaction attachment file extension can be displayed inline by browsers (images and pdf documents), other documents are always downloaded
+func IsTransactionAttachmentPreviewable(fileExtension string) bool {
+	return GetImageContentType(fileExtension) != "" || IsPdfFileExtension(fileExtension)
+}
+
 // GetTransactionAttachmentMagicBytesLength returns the length of the file header which needs to be read for checking the content of specified transaction attachment file extension
 func GetTransactionAttachmentMagicBytesLength(fileExtension string) int {
-	if IsPdfFileExtension(fileExtension) {
-		return len(PdfFileMagicBytes)
+	fileType, exists := documentFileExtensionTypeMap[fileExtension]
+
+	if !exists {
+		return 0
 	}
 
-	return 0
+	switch fileType.contentKind {
+	case transactionAttachmentContentKindPdf:
+		return len(PdfFileMagicBytes)
+	case transactionAttachmentContentKindZip:
+		return len(zipFileMagicBytes)
+	case transactionAttachmentContentKindText:
+		return textFileCheckedHeaderLength
+	case transactionAttachmentContentKindHeif:
+		return isoBaseMediaFileHeaderLength
+	default:
+		return 0
+	}
 }
 
 // IsTransactionAttachmentContentValid returns whether the file header matches the magic bytes required by specified transaction attachment file extension
@@ -74,11 +145,24 @@ func IsTransactionAttachmentContentValid(fileExtension string, fileHeader []byte
 		return false
 	}
 
-	if IsPdfFileExtension(fileExtension) {
-		return bytes.HasPrefix(fileHeader, PdfFileMagicBytes)
+	fileType, exists := documentFileExtensionTypeMap[fileExtension]
+
+	if !exists {
+		return true
 	}
 
-	return true
+	switch fileType.contentKind {
+	case transactionAttachmentContentKindPdf:
+		return bytes.HasPrefix(fileHeader, PdfFileMagicBytes)
+	case transactionAttachmentContentKindZip:
+		return bytes.HasPrefix(fileHeader, zipFileMagicBytes)
+	case transactionAttachmentContentKindText:
+		return len(fileHeader) > 0 && bytes.IndexByte(fileHeader, 0) < 0
+	case transactionAttachmentContentKindHeif:
+		return len(fileHeader) >= isoBaseMediaFileHeaderLength && string(fileHeader[4:8]) == "ftyp" && heifBrands[string(fileHeader[8:12])]
+	default:
+		return true
+	}
 }
 
 // ListFileNamesWithPrefixAndSuffix returns file name list which has specified prefix and suffix

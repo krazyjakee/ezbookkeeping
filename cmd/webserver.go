@@ -19,6 +19,7 @@ import (
 	"github.com/mayswind/ezbookkeeping/pkg/core"
 	"github.com/mayswind/ezbookkeeping/pkg/cron"
 	"github.com/mayswind/ezbookkeeping/pkg/errs"
+	"github.com/mayswind/ezbookkeeping/pkg/llm"
 	"github.com/mayswind/ezbookkeeping/pkg/log"
 	"github.com/mayswind/ezbookkeeping/pkg/mcp"
 	"github.com/mayswind/ezbookkeeping/pkg/middlewares"
@@ -65,6 +66,9 @@ func startWebServer(c *core.CliContext) error {
 		log.BootErrorf(c, "[webserver.startWebServer] initializes requestid generator failed, because %s", err.Error())
 		return err
 	}
+
+	// the built-in receipt recognition models are downloaded in the background, so they are ready for the first document
+	llm.PreloadReceiptImageRecognitionModel(config)
 
 	err = mcp.InitializeMCPHandlers(config)
 

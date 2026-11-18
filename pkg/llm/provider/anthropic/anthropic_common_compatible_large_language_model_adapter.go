@@ -199,6 +199,21 @@ func (p *CommonAnthropicMessagesAPILargeLanguageModelAdapter) buildJsonRequestBo
 					},
 				},
 			})
+		} else if request.UserPromptType == data.LARGE_LANGUAGE_MODEL_REQUEST_PROMPT_TYPE_DOCUMENT {
+			documentBase64Data := base64.StdEncoding.EncodeToString(request.UserPrompt)
+			messagesRequest.Messages = append(messagesRequest.Messages, &AnthropicMessagesRequestMessage[[]*AnthropicMessagesRequestImageBlockParam]{
+				Role: AnthropicMessageRoleUser,
+				Content: []*AnthropicMessagesRequestImageBlockParam{
+					{
+						Type: "document",
+						Source: &AnthropicMessagesRequestBase64ImageSource{
+							Data:      documentBase64Data,
+							MediaType: request.UserPromptContentType,
+							Type:      "base64",
+						},
+					},
+				},
+			})
 		} else {
 			messagesRequest.Messages = append(messagesRequest.Messages, &AnthropicMessagesRequestMessage[string]{
 				Role:    AnthropicMessageRoleUser,

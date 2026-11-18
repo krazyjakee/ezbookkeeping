@@ -126,6 +126,11 @@ func (p *LMStudioLargeLanguageModelAdapter) buildJsonRequestBody(c core.Context,
 		chatRequest.SystemPrompt = request.SystemPrompt
 	}
 
+	if request.UserPromptType == data.LARGE_LANGUAGE_MODEL_REQUEST_PROMPT_TYPE_DOCUMENT {
+		log.Warnf(c, "[lm_studio_large_language_model_adapter.buildJsonRequestBody] documents are not supported for user \"uid:%d\"", uid)
+		return nil, errs.ErrLargeLanguageModelDocumentNotSupported
+	}
+
 	if len(request.UserPrompt) > 0 {
 		if request.UserPromptType == data.LARGE_LANGUAGE_MODEL_REQUEST_PROMPT_TYPE_IMAGE_URL {
 			imageBase64Data := "data:" + request.UserPromptContentType + ";base64," + base64.StdEncoding.EncodeToString(request.UserPrompt)

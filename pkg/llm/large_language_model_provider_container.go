@@ -6,10 +6,12 @@ import (
 	"github.com/mayswind/ezbookkeeping/pkg/llm/data"
 	"github.com/mayswind/ezbookkeeping/pkg/llm/provider"
 	"github.com/mayswind/ezbookkeeping/pkg/llm/provider/anthropic"
+	"github.com/mayswind/ezbookkeeping/pkg/llm/provider/donut"
 	"github.com/mayswind/ezbookkeeping/pkg/llm/provider/googleai"
 	"github.com/mayswind/ezbookkeeping/pkg/llm/provider/lmstudio"
 	"github.com/mayswind/ezbookkeeping/pkg/llm/provider/ollama"
 	"github.com/mayswind/ezbookkeeping/pkg/llm/provider/openai"
+	"github.com/mayswind/ezbookkeeping/pkg/log"
 	"github.com/mayswind/ezbookkeeping/pkg/settings"
 )
 
@@ -38,6 +40,14 @@ func InitializeLargeLanguageModelProvider(config *settings.Config) error {
 	}
 
 	if config.ReceiptImageRecognitionLLMConfig != nil {
+		// the built-in donut provider is the default, but its worker is only included in the Docker image
+		if config.ReceiptImageRecognitionLLMConfig.LLMProvider == settings.DonutLLMProvider && config.TransactionFromAIImageRecognition {
+			if workerPath, available := donut.IsWorkerAvailable(config.ReceiptImageRecognitionLLMConfig); !available {
+				log.Warnf(nil, "[large_language_model_provider_container.InitializeLargeLanguageModelProvider] receipt image recognition is disabled, because the worker of the \"donut\" provider is not found at %s (it is included in the Docker image), configure another llm_provider in [llm_image_recognition] or set donut_worker_path", workerPath)
+				config.TransactionFromAIImageRecognition = false
+			}
+		}
+
 		Container.receiptImageRecognitionCurrentProvider, err = initializeLargeLanguageModelProvider(config.ReceiptImageRecognitionLLMConfig, config.EnableDebugLog)
 
 		if err != nil {
@@ -75,11 +85,30 @@ func initializeLargeLanguageModelProvider(llmConfig *settings.LLMConfig, enableR
 		return lmstudio.NewLMStudioLargeLanguageModelProvider(llmConfig, enableResponseLog), nil
 	} else if llmConfig.LLMProvider == settings.GoogleAILLMProvider {
 		return googleai.NewGoogleAILargeLanguageModelProvider(llmConfig, enableResponseLog), nil
+	} else if llmConfig.LLMProvider == settings.DonutLLMProvider {
+		return donut.NewDonutLargeLanguageModelProvider(llmConfig), nil
 	} else if llmConfig.LLMProvider == "" {
 		return nil, nil
 	}
 
 	return nil, errs.ErrInvalidLLMProvider
+}
+
+// preloadableProvider is a provider which needs to prepare local resources (e.g. download models) before it is used
+type preloadableProvider interface {
+	Preload()
+}
+
+// PreloadReceiptImageRecognitionModel starts preparing the receipt image recognition provider in the background
+// (the built-in donut provider downloads its models), it is called when the web server starts
+func PreloadReceiptImageRecognitionModel(config *settings.Config) {
+	if !config.TransactionFromAIImageRecognition || Container.receiptImageRecognitionCurrentProvider == nil {
+		return
+	}
+
+	if preloadable, ok := Container.receiptImageRecognitionCurrentProvider.(preloadableProvider); ok {
+		preloadable.Preload()
+	}
 }
 
 // GetJsonResponseByTextRecognitionModel returns the json response from the current large language model provider by transaction text recognition model

@@ -57,7 +57,7 @@ type OpenAIChatCompletionsRequest struct {
 }
 
 // OpenAIChatCompletionsRequestMessage defines the structure of OpenAI chat completions request message
-type OpenAIChatCompletionsRequestMessage[T string | []*OpenAIChatCompletionsRequestImageContent] struct {
+type OpenAIChatCompletionsRequestMessage[T string | []*OpenAIChatCompletionsRequestImageContent | []*OpenAIChatCompletionsRequestFileContent] struct {
 	Role    OpenAIMessageRole `json:"role"`
 	Content T                 `json:"content"`
 }
@@ -66,6 +66,18 @@ type OpenAIChatCompletionsRequestMessage[T string | []*OpenAIChatCompletionsRequ
 type OpenAIChatCompletionsRequestImageContent struct {
 	Type     string                                `json:"type"`
 	ImageURL *OpenAIChatCompletionsRequestImageUrl `json:"image_url"`
+}
+
+// OpenAIChatCompletionsRequestFileContent defines the structure of OpenAI chat completions request file content
+type OpenAIChatCompletionsRequestFileContent struct {
+	Type string                                `json:"type"`
+	File *OpenAIChatCompletionsRequestFileData `json:"file"`
+}
+
+// OpenAIChatCompletionsRequestFileData defines the structure of OpenAI chat completions request file data
+type OpenAIChatCompletionsRequestFileData struct {
+	FileName string `json:"filename"`
+	FileData string `json:"file_data"`
 }
 
 // OpenAIChatCompletionsRequestResponseFormat defines the structure of OpenAI chat completions request response format
@@ -188,6 +200,20 @@ func (p *CommonOpenAIChatCompletionsAPILargeLanguageModelAdapter) buildJsonReque
 						Type: "image_url",
 						ImageURL: &OpenAIChatCompletionsRequestImageUrl{
 							Url: imageBase64Data,
+						},
+					},
+				},
+			})
+		} else if request.UserPromptType == data.LARGE_LANGUAGE_MODEL_REQUEST_PROMPT_TYPE_DOCUMENT {
+			fileBase64Data := "data:" + request.UserPromptContentType + ";base64," + base64.StdEncoding.EncodeToString(request.UserPrompt)
+			chatCompletionsRequest.Messages = append(chatCompletionsRequest.Messages, &OpenAIChatCompletionsRequestMessage[[]*OpenAIChatCompletionsRequestFileContent]{
+				Role: OpenAIMessageRoleUser,
+				Content: []*OpenAIChatCompletionsRequestFileContent{
+					{
+						Type: "file",
+						File: &OpenAIChatCompletionsRequestFileData{
+							FileName: request.UserPromptFileName,
+							FileData: fileBase64Data,
 						},
 					},
 				},
