@@ -1,7 +1,11 @@
 package datastore
 
 import (
+	"fmt"
+	"strings"
+
 	"xorm.io/xorm"
+	"xorm.io/xorm/schemas"
 
 	"github.com/mayswind/ezbookkeeping/pkg/core"
 	"github.com/mayswind/ezbookkeeping/pkg/settings"
@@ -90,5 +94,72 @@ func (db *XOrmDatabase) RollbackToSavePoint(sess DatabaseSession, savePointName 
 
 // SyncStructs updates database structs by database models
 func (db *XOrmDatabase) SyncStructs(beans ...any) error {
-	return db.engineGroup.Sync2(beans...)
+	err := db.engineGroup.Sync2(beans...)
+
+	if err != nil {
+		return err
+	}
+
+	return db.widenVarcharColumns(beans...)
+}
+
+// widenVarcharColumns enlarges VARCHAR columns which are shorter in the database than in the models.
+// xorm treats VARCHAR(m) and VARCHAR(n) as the same type and never widens them on MySQL or Postgres,
+// so without this an increased model length is only enforced by validation and writes fail in the database.
+// Columns are never shrunk, and SQLite does not enforce VARCHAR lengths, so it is skipped.
+func (db *XOrmDatabase) widenVarcharColumns(beans ...any) error {
+	if db.databaseType != settings.MySqlDbType && db.databaseType != settings.PostgresDbType {
+		return nil
+	}
+
+	tables, err := db.engineGroup.DBMetas()
+
+	if err != nil {
+		return err
+	}
+
+	existingTables := make(map[string]*schemas.Table, len(tables))
+
+	for _, table := range tables {
+		existingTables[strings.ToLower(table.Name)] = table
+	}
+
+	for _, bean := range beans {
+		table, err := db.engineGroup.TableInfo(bean)
+
+		if err != nil {
+			return err
+		}
+
+		tableName := db.engineGroup.TableName(bean)
+		existingTable, exists := existingTables[strings.ToLower(tableName)]
+
+		if !exists {
+			continue
+		}
+
+		for _, column := range table.Columns() {
+			if !isVarcharColumn(column) {
+				continue
+			}
+
+			existingColumn := existingTable.GetColumn(column.Name)
+
+			if existingColumn == nil || !isVarcharColumn(existingColumn) || existingColumn.Length >= column.Length {
+				continue
+			}
+
+			_, err = db.engineGroup.Exec(db.engineGroup.Dialect().ModifyColumnSQL(db.engineGroup.TableName(bean, true), column))
+
+			if err != nil {
+				return fmt.Errorf("failed to widen column %s.%s from varchar(%d) to varchar(%d): %w", tableName, column.Name, existingColumn.Length, column.Length, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+func isVarcharColumn(column *schemas.Column) bool {
+	return column.Length > 0 && (strings.EqualFold(column.SQLType.Name, schemas.Varchar) || strings.EqualFold(column.SQLType.Name, schemas.NVarchar))
 }
