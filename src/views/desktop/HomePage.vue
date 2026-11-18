@@ -1,15 +1,26 @@
 <template>
     <main-page-layout no-navbar>
         <template #content>
+            <div class="overview-currency-quick-switch-bar" v-if="showQuickSwitch">
+                <currency-quick-switch :currencies="quickSwitchCurrencies"
+                                       :selected-currency="selectedCurrency"
+                                       :switching-currency="switchingCurrency"
+                                       :disabled="loadingOverview"
+                                       @switch="onSwitchCurrency" />
+            </div>
             <overview-dashboard :layout="layout" :loading="loadingOverview" :load-failed="loadingFailed" @refresh="reload" />
         </template>
     </main-page-layout>
 </template>
 
 <script setup lang="ts">
+import CurrencyQuickSwitch from '@/components/common/CurrencyQuickSwitch.vue';
 import OverviewDashboard from './overview/OverviewDashboard.vue';
 
 import { ref, computed } from 'vue';
+
+import { useI18n } from '@/locales/helpers.ts';
+import { useCurrencyQuickSwitchBase } from '@/views/base/overview/CurrencyQuickSwitchBase.ts';
 
 import { useSettingsStore } from '@/stores/setting.ts';
 import { useAccountsStore } from '@/stores/account.ts';
@@ -34,6 +45,9 @@ import {
     parseDesktopOverviewLayout
 } from '@/lib/overview_layout.ts';
 import logger from '@/lib/logger.ts';
+
+const { getCurrencyName } = useI18n();
+const { switchingCurrency, quickSwitchCurrencies, selectedCurrency, showQuickSwitch, switchCurrency } = useCurrencyQuickSwitchBase();
 
 const settingsStore = useSettingsStore();
 const accountsStore = useAccountsStore();
@@ -137,9 +151,32 @@ function reload(force: boolean): void {
     });
 }
 
+function onSwitchCurrency(currency: string): void {
+    switchCurrency(currency).then(switched => {
+        if (!switched) {
+            return;
+        }
+
+        desktopPageStore.addToast('format.misc.defaultCurrencyChangedTo', { currency: `${getCurrencyName(currency)} (${currency})` });
+        reload(false);
+    }).catch(error => {
+        // the default currency has not been changed, the selection has already gone back to the saved currency
+        if (!error.processed) {
+            desktopPageStore.addErrorToast(error);
+        }
+    });
+}
+
 clearShareImageCache();
 
 if (isUserLogined() && isUserUnlocked()) {
     reload(false);
 }
 </script>
+
+<style>
+.overview-currency-quick-switch-bar {
+    display: flex;
+    margin-block-end: var(--ebk-space-4);
+}
+</style>

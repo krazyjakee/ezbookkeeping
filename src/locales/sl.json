@@ -120,8 +120,10 @@
             "720p": "720p (approx. {size} KiB)"
         },
         "misc": {
+            "defaultCurrencyChangedTo": "Default currency changed to {currency}",
             "nextOccurrence": "Naslednja: {date}",
             "occurrencesLeft": "Preostalo: {count}",
+            "quickSwitchCurrenciesHint": "Currencies shown on the home page for quick switching (up to {count})",
             "nHour": "{n} ura",
             "nHours": "{n} ur",
             "nDay": "{n} dan",
@@ -2615,6 +2617,7 @@
     "Accounts Included in Overview Statistics": "Računi vključeni v statistiko pregleda",
     "Transaction Categories Included in Overview Statistics": "Kategorije vključene v statistiko pregleda",
     "Transaction Tags Included in Overview Statistics": "Transaction Tags Included in Overview Statistics",
+    "Quick Switch Currencies": "Quick Switch Currencies",
     "Timezone Type": "Vrsta časovnega pasu",
     "Application Timezone": "Časovni pas aplikacije",
     "Transaction List Page": "Stran s seznamom transakcij",

@@ -120,6 +120,8 @@
             "720p": "720p (approx. {size} KiB)"
         },
         "misc": {
+            "quickSwitchCurrenciesHint": "Currencies shown on the home page for quick switching (up to {count})",
+            "defaultCurrencyChangedTo": "Default currency changed to {currency}",
             "nextOccurrence": "अगला: {date}",
             "occurrencesLeft": "{count} शेष",
             "nHour": "{n} घंटा",
@@ -2615,6 +2617,7 @@
     "Accounts Included in Overview Statistics": "अवलोकन सांख्यिकी में शामिल खाते",
     "Transaction Categories Included in Overview Statistics": "अवलोकन सांख्यिकी में शामिल लेन-देन श्रेणियाँ",
     "Transaction Tags Included in Overview Statistics": "अवलोकन सांख्यिकी में शामिल लेन-देन टैग",
+    "Quick Switch Currencies": "Quick Switch Currencies",
     "Timezone Type": "समय क्षेत्र प्रकार",
     "Application Timezone": "ऐप्लिकेशन समय क्षेत्र",
     "Transaction List Page": "लेन-देन सूची पृष्ठ",

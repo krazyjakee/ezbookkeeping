@@ -120,6 +120,7 @@
             "720p": "720p (approx. {size} KiB)"
         },
         "misc": {
+            "defaultCurrencyChangedTo": "Default currency changed to {currency}",
             "nextOccurrence": "ครั้งถัดไป: {date}",
             "occurrencesLeft": "เหลือ {count} ครั้ง",
             "nHour": "{n} ชั่วโมง",
@@ -128,6 +129,7 @@
             "nDays": "{n} วัน",
             "nMonth": "{n} เดือน",
             "nMonths": "{n} เดือน",
+            "quickSwitchCurrenciesHint": "Currencies shown on the home page for quick switching (up to {count})",
             "lineIndex": "Line {index}",
             "recordIndex": "Record {index}",
             "sheetIndex": "Sheet {index}",
@@ -2615,6 +2617,7 @@
     "Accounts Included in Overview Statistics": "บัญชีที่รวมในสถิติภาพรวม",
     "Transaction Categories Included in Overview Statistics": "หมวดรายการที่รวมในสถิติภาพรวม",
     "Transaction Tags Included in Overview Statistics": "Transaction Tags Included in Overview Statistics",
+    "Quick Switch Currencies": "Quick Switch Currencies",
     "Timezone Type": "ประเภทโซนเวลา",
     "Application Timezone": "โซนเวลาแอปพลิเคชัน",
     "Transaction List Page": "หน้ารายการ",

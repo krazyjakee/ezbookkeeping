@@ -120,6 +120,7 @@
             "720p": "720p (approx. {size} KiB)"
         },
         "misc": {
+            "defaultCurrencyChangedTo": "Default currency changed to {currency}",
             "nextOccurrence": "Volgende: {date}",
             "occurrencesLeft": "nog {count}",
             "nHour": "{n} uur",
@@ -128,6 +129,7 @@
             "nDays": "{n} dagen",
             "nMonth": "{n} maand",
             "nMonths": "{n} maanden",
+            "quickSwitchCurrenciesHint": "Currencies shown on the home page for quick switching (up to {count})",
             "lineIndex": "Line {index}",
             "recordIndex": "Record {index}",
             "sheetIndex": "Sheet {index}",
@@ -2615,6 +2617,7 @@
     "Accounts Included in Overview Statistics": "Accounts Included in Overview Statistics",
     "Transaction Categories Included in Overview Statistics": "Transaction Categories Included in Overview Statistics",
     "Transaction Tags Included in Overview Statistics": "Transaction Tags Included in Overview Statistics",
+    "Quick Switch Currencies": "Quick Switch Currencies",
     "Timezone Type": "Tijdzonetype",
     "Application Timezone": "Applicatietijdzone",
     "Transaction List Page": "Transactielijstpagina",

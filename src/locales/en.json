@@ -120,9 +120,11 @@
             "720p": "720p (approx. {size} KiB)"
         },
         "misc": {
+            "defaultCurrencyChangedTo": "Default currency changed to {currency}",
             "categoryAccountsForPercentOfExpense": "{name} accounts for {percent} of expenses",
             "nextOccurrence": "Next: {date}",
             "occurrencesLeft": "{count} left",
+            "quickSwitchCurrenciesHint": "Currencies shown on the home page for quick switching (up to {count})",
             "nHour": "{n} Hour",
             "nHours": "{n} Hours",
             "nDay": "{n} Day",
@@ -2730,6 +2732,7 @@
     "Accounts Included in Overview Statistics": "Accounts Included in Overview Statistics",
     "Transaction Categories Included in Overview Statistics": "Transaction Categories Included in Overview Statistics",
     "Transaction Tags Included in Overview Statistics": "Transaction Tags Included in Overview Statistics",
+    "Quick Switch Currencies": "Quick Switch Currencies",
     "Timezone Type": "Timezone Type",
     "Application Timezone": "Application Timezone",
     "Transaction List Page": "Transaction List Page",

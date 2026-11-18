@@ -120,6 +120,7 @@
             "720p": "720p (approx. {size} KiB)"
         },
         "misc": {
+            "defaultCurrencyChangedTo": "Default currency changed to {currency}",
             "nextOccurrence": "Prochaine : {date}",
             "occurrencesLeft": "{count} restantes",
             "nHour": "{n} heure",
@@ -128,6 +129,7 @@
             "nDays": "{n} jours",
             "nMonth": "{n} mois",
             "nMonths": "{n} mois",
+            "quickSwitchCurrenciesHint": "Currencies shown on the home page for quick switching (up to {count})",
             "lineIndex": "Line {index}",
             "recordIndex": "Record {index}",
             "sheetIndex": "Sheet {index}",
@@ -2615,6 +2617,7 @@
     "Accounts Included in Overview Statistics": "Comptes inclus dans les statistiques d'aperçu",
     "Transaction Categories Included in Overview Statistics": "Catégories de transaction incluses dans les statistiques d'aperçu",
     "Transaction Tags Included in Overview Statistics": "Transaction Tags Included in Overview Statistics",
+    "Quick Switch Currencies": "Quick Switch Currencies",
     "Timezone Type": "Type de fuseau horaire",
     "Application Timezone": "Fuseau horaire de l'application",
     "Transaction List Page": "Page de liste des transactions",

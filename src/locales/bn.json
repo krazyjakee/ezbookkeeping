@@ -120,6 +120,8 @@
             "720p": "720p (প্রায় {size} KiB)"
         },
         "misc": {
+            "quickSwitchCurrenciesHint": "হোম পেজে দ্রুত পরিবর্তনের জন্য দেখানো মুদ্রা (সর্বোচ্চ {count}টি)",
+            "defaultCurrencyChangedTo": "ডিফল্ট মুদ্রা পরিবর্তন করে {currency} করা হয়েছে",
             "categoryAccountsForPercentOfExpense": "মোট ব্যয়ের {percent} {name}",
             "nextOccurrence": "পরবর্তী: {date}",
             "occurrencesLeft": "{count}টি বাকি",
@@ -2730,6 +2732,7 @@
     "Accounts Included in Overview Statistics": "সংক্ষিপ্ত বিবরণের পরিসংখ্যানে অন্তর্ভুক্ত অ্যাকাউন্ট",
     "Transaction Categories Included in Overview Statistics": "সংক্ষিপ্ত বিবরণের পরিসংখ্যানে অন্তর্ভুক্ত লেনদেন শ্রেণি",
     "Transaction Tags Included in Overview Statistics": "সংক্ষিপ্ত বিবরণের পরিসংখ্যানে অন্তর্ভুক্ত লেনদেন ট্যাগ",
+    "Quick Switch Currencies": "দ্রুত মুদ্রা পরিবর্তন",
     "Timezone Type": "সময় অঞ্চলের ধরন",
     "Application Timezone": "অ্যাপ্লিকেশনের সময় অঞ্চল",
     "Transaction List Page": "লেনদেন তালিকা পৃষ্ঠা",

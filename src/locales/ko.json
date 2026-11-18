@@ -120,6 +120,7 @@
             "720p": "720p (approx. {size} KiB)"
         },
         "misc": {
+            "defaultCurrencyChangedTo": "Default currency changed to {currency}",
             "nextOccurrence": "다음: {date}",
             "occurrencesLeft": "{count}회 남음",
             "nHour": "{n}시간",
@@ -128,6 +129,7 @@
             "nDays": "{n}일",
             "nMonth": "{n}개월",
             "nMonths": "{n}개월",
+            "quickSwitchCurrenciesHint": "Currencies shown on the home page for quick switching (up to {count})",
             "lineIndex": "Line {index}",
             "recordIndex": "Record {index}",
             "sheetIndex": "Sheet {index}",
@@ -2615,6 +2617,7 @@
     "Accounts Included in Overview Statistics": "개요 통계에 포함된 계좌",
     "Transaction Categories Included in Overview Statistics": "개요 통계에 포함된 거래 범주",
     "Transaction Tags Included in Overview Statistics": "Transaction Tags Included in Overview Statistics",
+    "Quick Switch Currencies": "Quick Switch Currencies",
     "Timezone Type": "시간대 유형",
     "Application Timezone": "애플리케이션 시간대",
     "Transaction List Page": "거래 목록 페이지",

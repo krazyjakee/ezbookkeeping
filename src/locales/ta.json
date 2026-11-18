@@ -120,8 +120,10 @@
             "720p": "720p (approx. {size} KiB)"
         },
         "misc": {
+            "defaultCurrencyChangedTo": "Default currency changed to {currency}",
             "nextOccurrence": "அடுத்தது: {date}",
             "occurrencesLeft": "{count} மீதமுள்ளன",
+            "quickSwitchCurrenciesHint": "Currencies shown on the home page for quick switching (up to {count})",
             "nHour": "{n} மணி நேரம்",
             "nHours": "{n} மணி நேரங்கள்",
             "nDay": "{n} நாள்",
@@ -2615,6 +2617,7 @@
     "Accounts Included in Overview Statistics": "மேல்‌காட்சி புள்ளியியல்இல் அடங்கிய கணக்குகள்",
     "Transaction Categories Included in Overview Statistics": "மேல்‌காட்சி புள்ளியியல்இல் அடங்கிய பரிவர்த்தனை வகைகள்",
     "Transaction Tags Included in Overview Statistics": "Transaction Tags Included in Overview Statistics",
+    "Quick Switch Currencies": "Quick Switch Currencies",
     "Timezone Type": "நேரம் வலயம் வகை",
     "Application Timezone": "பயன்பாடு நேரம் வலயம்",
     "Transaction List Page": "பரிவர்த்தனை பட்டியல் பக்கம்",

@@ -120,6 +120,8 @@
             "720p": "720p (cca {size} KiB)"
         },
         "misc": {
+            "quickSwitchCurrenciesHint": "Currencies shown on the home page for quick switching (up to {count})",
+            "defaultCurrencyChangedTo": "Default currency changed to {currency}",
             "nextOccurrence": "Ďalšia: {date}",
             "occurrencesLeft": "zostáva {count}",
             "nHour": "{n} hodina",
@@ -2615,6 +2617,7 @@
     "Accounts Included in Overview Statistics": "Účty zahrnuté do štatistík prehľadu",
     "Transaction Categories Included in Overview Statistics": "Kategórie zahrnuté do štatistík prehľadu",
     "Transaction Tags Included in Overview Statistics": "Štítky zahrnuté do štatistík prehľadu",
+    "Quick Switch Currencies": "Quick Switch Currencies",
     "Timezone Type": "Typ časového pásma",
     "Application Timezone": "Časové pásmo aplikácie",
     "Transaction List Page": "Stránka Zoznam transakcií",

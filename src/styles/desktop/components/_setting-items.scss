@@ -184,6 +184,30 @@
         &:last-child {
             border-block-end: 0;
         }
+
+        /* rows whose control can grow (multiple selections) wrap under the label on narrow widths */
+        &.setting-item--wrap {
+            flex-wrap: wrap;
+            column-gap: var(--ebk-space-4);
+            row-gap: var(--ebk-space-2);
+            padding-block: var(--ebk-space-2);
+        }
+    }
+}
+
+/* Row label with a secondary hint line under it */
+.ebk-settings-row-label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    color: var(--ebk-color-text-primary);
+    overflow-wrap: anywhere;
+
+    .ebk-settings-row-hint {
+        color: var(--ebk-color-text-secondary);
+        font-size: 0.75rem;
+        line-height: 1.4;
     }
 }
 

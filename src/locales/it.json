@@ -120,8 +120,10 @@
             "720p": "720p (approx. {size} KiB)"
         },
         "misc": {
+            "defaultCurrencyChangedTo": "Default currency changed to {currency}",
             "nextOccurrence": "Prossima: {date}",
             "occurrencesLeft": "{count} rimanenti",
+            "quickSwitchCurrenciesHint": "Currencies shown on the home page for quick switching (up to {count})",
             "nHour": "{n} ora",
             "nHours": "{n} ore",
             "nDay": "{n} giorno",
@@ -2615,6 +2617,7 @@
     "Accounts Included in Overview Statistics": "Accounts Included in Overview Statistics",
     "Transaction Categories Included in Overview Statistics": "Transaction Categories Included in Overview Statistics",
     "Transaction Tags Included in Overview Statistics": "Transaction Tags Included in Overview Statistics",
+    "Quick Switch Currencies": "Quick Switch Currencies",
     "Timezone Type": "Tipo fuso orario",
     "Application Timezone": "Fuso orario applicazione",
     "Transaction List Page": "Pagina elenco transazioni",

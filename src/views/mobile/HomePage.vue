@@ -4,6 +4,15 @@
             <f7-nav-title :title="tt('global.app.title')"></f7-nav-title>
         </f7-navbar>
 
+        <div class="home-currency-quick-switch" v-if="showQuickSwitch">
+            <currency-quick-switch touch
+                                   :currencies="quickSwitchCurrencies"
+                                   :selected-currency="selectedCurrency"
+                                   :switching-currency="switchingCurrency"
+                                   :disabled="loading"
+                                   @switch="onSwitchCurrency" />
+        </div>
+
         <overview-dashboard :layout="layout" :loading="loading" :load-failed="loadFailed"
                             @navigate="onNavigate" @retry="retry" />
 
@@ -72,6 +81,7 @@
 
 <script setup lang="ts">
 import AIImageRecognitionSheet, { type AIImageRecognitionResult } from '@/components/mobile/AIImageRecognitionSheet.vue';
+import CurrencyQuickSwitch from '@/components/common/CurrencyQuickSwitch.vue';
 import OverviewDashboard from './overview/OverviewDashboard.vue';
 
 import { ref, computed, useTemplateRef } from 'vue';
@@ -79,6 +89,8 @@ import type { Router } from 'framework7/types';
 
 import { useI18n } from '@/locales/helpers.ts';
 import { useI18nUIComponents, isiOS } from '@/lib/ui/mobile.ts';
+
+import { useCurrencyQuickSwitchBase } from '@/views/base/overview/CurrencyQuickSwitchBase.ts';
 
 import { useSettingsStore } from '@/stores/setting.ts';
 import { useAccountsStore } from '@/stores/account.ts';
@@ -122,8 +134,9 @@ const props = defineProps<{
     f7router: Router.Router;
 }>();
 
-const { tt } = useI18n();
+const { tt, getCurrencyName } = useI18n();
 const { showToast } = useI18nUIComponents();
+const { switchingCurrency, quickSwitchCurrencies, selectedCurrency, showQuickSwitch, switchCurrency } = useCurrencyQuickSwitchBase();
 
 const settingsStore = useSettingsStore();
 const accountsStore = useAccountsStore();
@@ -211,6 +224,22 @@ function reload(done?: () => void): void {
         done?.();
         loadFailed.value = !error.isUpToDate;
 
+        if (!error.processed) {
+            showToast(error.message || error);
+        }
+    });
+}
+
+function onSwitchCurrency(currency: string): void {
+    switchCurrency(currency).then(switched => {
+        if (!switched) {
+            return;
+        }
+
+        showToast(tt('format.misc.defaultCurrencyChangedTo', { currency: `${getCurrencyName(currency)} (${currency})` }));
+        reload();
+    }).catch(error => {
+        // the default currency has not been changed, the selection has already gone back to the saved currency
         if (!error.processed) {
             showToast(error.message || error);
         }
@@ -375,6 +404,11 @@ init();
 </script>
 
 <style>
+.home-currency-quick-switch {
+    padding-block: var(--ebk-space-3) 0;
+    padding-inline: calc(var(--ebk-space-3) + var(--f7-safe-area-left)) calc(var(--ebk-space-3) + var(--f7-safe-area-right));
+}
+
 .home-summary-card {
     background-color: var(--f7-color-yellow);
 }
