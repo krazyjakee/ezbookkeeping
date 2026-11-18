@@ -1,7 +1,19 @@
-:root {
-    --ebk-amount-color-green: 0, 150, 136;
-    --ebk-amount-color-red: 212, 63, 63;
+// Amount colors keep the hue the user picked, with a text shade per theme that reaches 4.5:1 (WCAG 1.4.3)
+// on every surface, sunken well and selected tint of that theme (#36, docs/design/tokens.md "Amount colors")
+:root,
+.v-theme--light {
+    --ebk-amount-color-green: 0, 118, 107;
+    --ebk-amount-color-red: 191, 57, 57;
+    --ebk-amount-color-yellow: 127, 102, 6;
+    --ebk-amount-color-blue: 52, 106, 176;
+}
+
+:root[data-ebk-theme="dark"],
+.v-theme--dark {
+    --ebk-amount-color-green: 41, 167, 155;
+    --ebk-amount-color-red: 225, 121, 121;
     --ebk-amount-color-yellow: 226, 182, 10;
+    --ebk-amount-color-blue: 110, 153, 208;
 }
 
 :root.expense-amount-color-green {
@@ -15,7 +27,7 @@
     }
 
     .bg-expense {
-        color: rgb(var(--v-theme-on-primary)) !important;
+        color: #fff !important;
         background-color: rgb(var(--ebk-amount-color-green));
     }
 }
@@ -31,7 +43,7 @@
     }
 
     .bg-income {
-        color: rgb(var(--v-theme-on-primary)) !important;
+        color: #fff !important;
         background-color: rgb(var(--ebk-amount-color-green));
     }
 }
@@ -47,7 +59,7 @@
     }
 
     .bg-expense {
-        color: rgb(var(--v-theme-on-primary)) !important;
+        color: #fff !important;
         background-color: rgb(var(--ebk-amount-color-red));
     }
 }
@@ -63,7 +75,7 @@
     }
 
     .bg-income {
-        color: rgb(var(--v-theme-on-primary)) !important;
+        color: #fff !important;
         background-color: rgb(var(--ebk-amount-color-red));
     }
 }
@@ -79,7 +91,7 @@
     }
 
     .bg-expense {
-        color: rgb(var(--v-theme-on-primary)) !important;
+        color: #fff !important;
         background-color: rgb(var(--ebk-amount-color-yellow));
     }
 }
@@ -95,8 +107,40 @@
     }
 
     .bg-income {
-        color: rgb(var(--v-theme-on-primary)) !important;
+        color: #fff !important;
         background-color: rgb(var(--ebk-amount-color-yellow));
+    }
+}
+
+:root.expense-amount-color-blue {
+    .v-theme--light,
+    .v-theme--dark {
+        --v-theme-expense: var(--ebk-amount-color-blue);
+    }
+
+    .text-expense {
+        color: rgb(var(--ebk-amount-color-blue));
+    }
+
+    .bg-expense {
+        color: #fff !important;
+        background-color: rgb(var(--ebk-amount-color-blue));
+    }
+}
+
+:root.income-amount-color-blue {
+    .v-theme--light,
+    .v-theme--dark {
+        --v-theme-income: var(--ebk-amount-color-blue);
+    }
+
+    .text-income {
+        color: rgb(var(--ebk-amount-color-blue));
+    }
+
+    .bg-income {
+        color: #fff !important;
+        background-color: rgb(var(--ebk-amount-color-blue));
     }
 }
 

@@ -17,7 +17,7 @@ import (
 // UserData represents the data command
 var UserData = &cli.Command{
 	Name:  "userdata",
-	Usage: "ezBookkeeping user data maintenance",
+	Usage: "ezrbookkeeping user data maintenance",
 	Commands: []*cli.Command{
 		{
 			Name:   "user-add",
@@ -111,6 +111,12 @@ var UserData = &cli.Command{
 					Aliases:  []string{"n"},
 					Required: true,
 					Usage:    "Specific user name",
+				},
+				&cli.BoolFlag{
+					Name:     "remain-sessions",
+					Aliases:  []string{"r"},
+					Required: false,
+					Usage:    "Remain user sessions after disabling",
 				},
 			},
 		},
@@ -506,7 +512,8 @@ func disableUser(c *core.CliContext) error {
 	}
 
 	username := c.String("username")
-	err = clis.UserData.DisableUser(c, username)
+	remainSessions := c.Bool("remain-sessions")
+	err = clis.UserData.DisableUser(c, username, remainSessions)
 
 	if err != nil {
 		log.CliErrorf(c, "[user_data.disableUser] error occurs when setting user disabled")

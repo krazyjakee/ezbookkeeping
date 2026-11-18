@@ -3,12 +3,7 @@ package services
 import (
 	"fmt"
 	"math"
-	"math/big"
-	"strings"
 	"time"
-
-	"xorm.io/builder"
-	"xorm.io/xorm"
 
 	"github.com/mayswind/ezbookkeeping/pkg/core"
 	"github.com/mayswind/ezbookkeeping/pkg/datastore"
@@ -39,536 +34,12 @@ var (
 	}
 )
 
-// GetTotalTransactionCountByUid returns total transaction count of user
-func (s *TransactionService) GetTotalTransactionCountByUid(c core.Context, uid int64) (int64, error) {
-	if uid <= 0 {
-		return 0, errs.ErrUserIdInvalid
-	}
-
-	count, err := s.UserDataDB(uid).NewSession(c).Where("uid=? AND deleted=?", uid, false).Count(&models.Transaction{})
-
-	return count, err
-}
-
-// GetAllTransactions returns all transactions
-func (s *TransactionService) GetAllTransactions(c core.Context, uid int64, pageCount int32, noDuplicated bool) ([]*models.Transaction, error) {
-	maxTransactionTime := utils.GetMaxTransactionTimeFromUnixTime(time.Now().Unix())
-	var allTransactions []*models.Transaction
-
-	for maxTransactionTime > 0 {
-		transactions, err := s.GetTransactionsByMaxTime(c, uid, maxTransactionTime, 0, 0, nil, nil, nil, false, "", "", core.MATCH_MODE_DEFAULT, false, 1, pageCount, false, noDuplicated)
-
-		if err != nil {
-			return nil, err
-		}
-
-		allTransactions = append(allTransactions, transactions...)
-
-		if len(transactions) < int(pageCount) {
-			maxTransactionTime = 0
-			break
-		}
-
-		maxTransactionTime = transactions[len(transactions)-1].TransactionTime - 1
-	}
-
-	return allTransactions, nil
-}
-
-// GetAllSpecifiedTransactions returns all transactions that match given conditions
-func (s *TransactionService) GetAllSpecifiedTransactions(c core.Context, uid int64, maxTransactionTime int64, minTransactionTime int64, transactionType models.TransactionType, categoryIds []int64, accountIds []int64, tagFilters []*models.TransactionTagFilter, noTags bool, amountFilter string, keyword string, matchMode core.MatchMode, mustHavePictures bool, pageCount int32, noDuplicated bool) ([]*models.Transaction, error) {
-	if maxTransactionTime <= 0 {
-		maxTransactionTime = utils.GetMaxTransactionTimeFromUnixTime(time.Now().Unix())
-	}
-
-	var allTransactions []*models.Transaction
-
-	for maxTransactionTime > 0 {
-		transactions, err := s.GetTransactionsByMaxTime(c, uid, maxTransactionTime, minTransactionTime, transactionType, categoryIds, accountIds, tagFilters, noTags, amountFilter, keyword, matchMode, mustHavePictures, 1, pageCount, false, noDuplicated)
-
-		if err != nil {
-			return nil, err
-		}
-
-		allTransactions = append(allTransactions, transactions...)
-
-		if len(transactions) < int(pageCount) {
-			maxTransactionTime = 0
-			break
-		}
-
-		maxTransactionTime = transactions[len(transactions)-1].TransactionTime - 1
-	}
-
-	return allTransactions, nil
-}
-
-// GetAllTransactionsInOneAccountWithAccountBalanceByMaxTime returns account statement within time range
-func (s *TransactionService) GetAllTransactionsInOneAccountWithAccountBalanceByMaxTime(c core.Context, uid int64, pageCount int32, maxTransactionTime int64, minTransactionTime int64, accountId int64, accountCategory models.AccountCategory) ([]*models.TransactionWithAccountBalance, *big.Int, *big.Int, *big.Int, *big.Int, error) {
-	if maxTransactionTime <= 0 {
-		maxTransactionTime = utils.GetMaxTransactionTimeFromUnixTime(time.Now().Unix())
-	}
-
-	var allTransactions []*models.Transaction
-
-	for maxTransactionTime > 0 {
-		transactions, err := s.GetTransactionsByMaxTime(c, uid, maxTransactionTime, 0, 0, nil, []int64{accountId}, nil, false, "", "", core.MATCH_MODE_DEFAULT, false, 1, pageCount, false, true)
-
-		if err != nil {
-			return nil, nil, nil, nil, nil, err
-		}
-
-		allTransactions = append(allTransactions, transactions...)
-
-		if len(transactions) < int(pageCount) {
-			maxTransactionTime = 0
-			break
-		}
-
-		maxTransactionTime = transactions[len(transactions)-1].TransactionTime - 1
-	}
-
-	allTransactionsAndAccountBalance := make([]*models.TransactionWithAccountBalance, 0, len(allTransactions))
-
-	if len(allTransactions) < 1 {
-		return allTransactionsAndAccountBalance, big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), nil
-	}
-
-	totalInflows := big.NewInt(0)
-	totalOutflows := big.NewInt(0)
-	openingBalance := big.NewInt(0)
-	accumulatedBalance := big.NewInt(0)
-	lastAccumulatedBalance := big.NewInt(0)
-
-	for i := len(allTransactions) - 1; i >= 0; i-- {
-		transaction := allTransactions[i]
-
-		if transaction.Type == models.TRANSACTION_DB_TYPE_MODIFY_BALANCE {
-			accumulatedBalance.Add(accumulatedBalance, big.NewInt(transaction.RelatedAccountAmount))
-		} else if transaction.Type == models.TRANSACTION_DB_TYPE_INCOME {
-			accumulatedBalance.Add(accumulatedBalance, big.NewInt(transaction.Amount))
-		} else if transaction.Type == models.TRANSACTION_DB_TYPE_EXPENSE {
-			accumulatedBalance.Sub(accumulatedBalance, big.NewInt(transaction.Amount))
-		} else if transaction.Type == models.TRANSACTION_DB_TYPE_TRANSFER_OUT {
-			accumulatedBalance.Sub(accumulatedBalance, big.NewInt(transaction.Amount))
-		} else if transaction.Type == models.TRANSACTION_DB_TYPE_TRANSFER_IN {
-			accumulatedBalance.Add(accumulatedBalance, big.NewInt(transaction.Amount))
-		} else {
-			log.Errorf(c, "[transactions.GetAllTransactionsInOneAccountWithAccountBalanceByMaxTime] trasaction type (%d) is invalid (id:%d)", transaction.TransactionId, transaction.Type)
-			return nil, nil, nil, nil, nil, errs.ErrTransactionTypeInvalid
-		}
-
-		if transaction.TransactionTime < minTransactionTime {
-			openingBalance.Set(accumulatedBalance)
-			lastAccumulatedBalance.Set(accumulatedBalance)
-			continue
-		}
-
-		if transaction.Type == models.TRANSACTION_DB_TYPE_MODIFY_BALANCE {
-			if accountCategory.IsAsset() {
-				totalInflows.Add(totalInflows, big.NewInt(transaction.RelatedAccountAmount))
-			} else if accountCategory.IsLiability() {
-				totalOutflows.Sub(totalOutflows, big.NewInt(transaction.RelatedAccountAmount))
-			}
-		} else if transaction.Type == models.TRANSACTION_DB_TYPE_INCOME {
-			totalInflows.Add(totalInflows, big.NewInt(transaction.Amount))
-		} else if transaction.Type == models.TRANSACTION_DB_TYPE_EXPENSE {
-			totalOutflows.Add(totalOutflows, big.NewInt(transaction.Amount))
-		} else if transaction.Type == models.TRANSACTION_DB_TYPE_TRANSFER_OUT {
-			totalOutflows.Add(totalOutflows, big.NewInt(transaction.Amount))
-		} else if transaction.Type == models.TRANSACTION_DB_TYPE_TRANSFER_IN {
-			totalInflows.Add(totalInflows, big.NewInt(transaction.Amount))
-		}
-
-		transactionsAndAccountBalance := &models.TransactionWithAccountBalance{
-			Transaction:           transaction,
-			AccountOpeningBalance: new(big.Int).Set(lastAccumulatedBalance),
-			AccountClosingBalance: new(big.Int).Set(accumulatedBalance),
-		}
-
-		lastAccumulatedBalance.Set(accumulatedBalance)
-		allTransactionsAndAccountBalance = append(allTransactionsAndAccountBalance, transactionsAndAccountBalance)
-	}
-
-	return allTransactionsAndAccountBalance, totalInflows, totalOutflows, openingBalance, new(big.Int).Set(accumulatedBalance), nil
-}
-
-// GetAllAccountsDailyOpeningAndClosingBalance returns daily opening and closing balance of all accounts within time range
-func (s *TransactionService) GetAllAccountsDailyOpeningAndClosingBalance(c core.Context, uid int64, maxTransactionTime int64, minTransactionTime int64, clientTimezone *time.Location) (map[int32][]*models.TransactionWithAccountBalance, error) {
-	if maxTransactionTime <= 0 {
-		maxTransactionTime = utils.GetMaxTransactionTimeFromUnixTime(time.Now().Unix())
-	}
-
-	var allTransactions []*models.Transaction
-
-	for maxTransactionTime > 0 {
-		transactions, err := s.GetTransactionsByMaxTime(c, uid, maxTransactionTime, 0, 0, nil, nil, nil, false, "", "", core.MATCH_MODE_DEFAULT, false, 1, pageCountForLoadTransactionAmounts, false, false)
-
-		if err != nil {
-			return nil, err
-		}
-
-		allTransactions = append(allTransactions, transactions...)
-
-		if len(transactions) < pageCountForLoadTransactionAmounts {
-			maxTransactionTime = 0
-			break
-		}
-
-		maxTransactionTime = transactions[len(transactions)-1].TransactionTime - 1
-	}
-
-	accountDailyLastBalances := make(map[string]*models.TransactionWithAccountBalance)
-	accountDailyBalances := make(map[int32][]*models.TransactionWithAccountBalance)
-
-	if len(allTransactions) < 1 {
-		return accountDailyBalances, nil
-	}
-
-	accumulatedBalances := make(map[int64]*big.Int)
-	accumulatedBalancesBeforeStartTime := make(map[int64]*big.Int)
-
-	for i := len(allTransactions) - 1; i >= 0; i-- {
-		transaction := allTransactions[i]
-		accumulatedBalance := accumulatedBalances[transaction.AccountId]
-
-		if accumulatedBalance == nil {
-			accumulatedBalance = big.NewInt(0)
-		}
-
-		lastAccumulatedBalance := new(big.Int).Set(accumulatedBalance)
-
-		if transaction.Type == models.TRANSACTION_DB_TYPE_MODIFY_BALANCE {
-			accumulatedBalance.Add(accumulatedBalance, big.NewInt(transaction.RelatedAccountAmount))
-		} else if transaction.Type == models.TRANSACTION_DB_TYPE_INCOME {
-			accumulatedBalance.Add(accumulatedBalance, big.NewInt(transaction.Amount))
-		} else if transaction.Type == models.TRANSACTION_DB_TYPE_EXPENSE {
-			accumulatedBalance.Sub(accumulatedBalance, big.NewInt(transaction.Amount))
-		} else if transaction.Type == models.TRANSACTION_DB_TYPE_TRANSFER_OUT {
-			accumulatedBalance.Sub(accumulatedBalance, big.NewInt(transaction.Amount))
-		} else if transaction.Type == models.TRANSACTION_DB_TYPE_TRANSFER_IN {
-			accumulatedBalance.Add(accumulatedBalance, big.NewInt(transaction.Amount))
-		} else {
-			log.Errorf(c, "[transactions.GetAllTransactionsWithAccountBalanceByMaxTime] trasaction type (%d) is invalid (id:%d)", transaction.TransactionId, transaction.Type)
-			return nil, errs.ErrTransactionTypeInvalid
-		}
-
-		accumulatedBalances[transaction.AccountId] = accumulatedBalance
-
-		if transaction.TransactionTime < minTransactionTime {
-			accumulatedBalancesBeforeStartTime[transaction.AccountId] = new(big.Int).Set(accumulatedBalance)
-			continue
-		}
-
-		yearMonthDay := utils.FormatUnixTimeToNumericYearMonthDay(utils.GetUnixTimeFromTransactionTime(transaction.TransactionTime), clientTimezone)
-		groupKey := fmt.Sprintf("%d_%d", yearMonthDay, transaction.AccountId)
-		dailyAccountBalance, exists := accountDailyLastBalances[groupKey]
-
-		if exists {
-			dailyAccountBalance.AccountClosingBalance.Set(accumulatedBalance)
-		} else {
-			dailyAccountBalance = &models.TransactionWithAccountBalance{
-				Transaction: &models.Transaction{
-					AccountId: transaction.AccountId,
-				},
-				AccountOpeningBalance: lastAccumulatedBalance,
-				AccountClosingBalance: new(big.Int).Set(accumulatedBalance),
-			}
-			accountDailyLastBalances[groupKey] = dailyAccountBalance
-		}
-	}
-
-	firstTransactionTime := allTransactions[len(allTransactions)-1].TransactionTime
-
-	if minTransactionTime > firstTransactionTime {
-		firstTransactionTime = minTransactionTime
-	}
-
-	firstYearMonthDay := utils.FormatUnixTimeToNumericYearMonthDay(utils.GetUnixTimeFromTransactionTime(firstTransactionTime), clientTimezone)
-
-	// fill in the opening balance for accounts that do not have transactions on the first day
-	for accountId, accumulatedBalance := range accumulatedBalancesBeforeStartTime {
-		if accumulatedBalance.Sign() == 0 {
-			continue
-		}
-
-		groupKey := fmt.Sprintf("%d_%d", firstYearMonthDay, accountId)
-
-		if _, exists := accountDailyLastBalances[groupKey]; exists {
-			continue
-		}
-
-		accountDailyLastBalances[groupKey] = &models.TransactionWithAccountBalance{
-			Transaction: &models.Transaction{
-				AccountId: accountId,
-			},
-			AccountOpeningBalance: new(big.Int).Set(accumulatedBalance),
-			AccountClosingBalance: new(big.Int).Set(accumulatedBalance),
-		}
-	}
-
-	for groupKey, transactionWithAccountBalance := range accountDailyLastBalances {
-		groupKeyParts := strings.Split(groupKey, "_")
-		yearMonthDay, _ := utils.StringToInt32(groupKeyParts[0])
-		dailyAccountBalances, exists := accountDailyBalances[yearMonthDay]
-
-		if !exists {
-			dailyAccountBalances = make([]*models.TransactionWithAccountBalance, 0)
-		}
-
-		dailyAccountBalances = append(dailyAccountBalances, transactionWithAccountBalance)
-		accountDailyBalances[yearMonthDay] = dailyAccountBalances
-	}
-
-	return accountDailyBalances, nil
-}
-
-// GetTransactionsByMaxTimeUpToCount returns transactions before given time and up to given count
-func (s *TransactionService) GetTransactionsByMaxTimeUpToCount(c core.Context, uid int64, maxTransactionTime int64, minTransactionTime int64, transactionType models.TransactionType, categoryIds []int64, accountIds []int64, tagFilters []*models.TransactionTagFilter, noTags bool, amountFilter string, keyword string, matchMode core.MatchMode, mustHavePictures bool, page int32, count int32, pageCount int32, needOneMoreItem bool, noDuplicated bool) ([]*models.Transaction, error) {
-	if maxTransactionTime <= 0 {
-		maxTransactionTime = utils.GetMaxTransactionTimeFromUnixTime(time.Now().Unix())
-	}
-
-	if page < 0 {
-		return nil, errs.ErrPageIndexInvalid
-	} else if page == 0 {
-		page = 1
-	}
-
-	if count < 1 {
-		return nil, errs.ErrPageCountInvalid
-	}
-
-	finalExpectedCount := int(count)
-
-	if needOneMoreItem {
-		finalExpectedCount++
-	}
-
-	var allTransactions []*models.Transaction
-	startOffset := int((page - 1) * count)
-	firstFetchCount := int(pageCount)
-
-	if finalExpectedCount < firstFetchCount {
-		firstFetchCount = finalExpectedCount
-	}
-
-	transactions, err := s.getTransactionsByMaxTimeWithOffset(c, uid, maxTransactionTime, minTransactionTime, transactionType, categoryIds, accountIds, tagFilters, noTags, amountFilter, keyword, matchMode, mustHavePictures, startOffset, firstFetchCount, noDuplicated)
-
-	if err != nil {
-		return nil, err
-	}
-
-	allTransactions = append(allTransactions, transactions...)
-
-	if len(transactions) < firstFetchCount {
-		return allTransactions, nil
-	}
-
-	maxTransactionTime = transactions[len(transactions)-1].TransactionTime - 1
-
-	for len(allTransactions) < finalExpectedCount && maxTransactionTime > 0 {
-		remainingCount := finalExpectedCount - len(allTransactions)
-		fetchCount := int(pageCount)
-
-		if remainingCount < fetchCount {
-			fetchCount = remainingCount
-		}
-
-		transactions, err := s.GetTransactionsByMaxTime(c, uid, maxTransactionTime, minTransactionTime, transactionType, categoryIds, accountIds, tagFilters, noTags, amountFilter, keyword, matchMode, mustHavePictures, 1, int32(fetchCount), false, noDuplicated)
-
-		if err != nil {
-			return nil, err
-		}
-
-		allTransactions = append(allTransactions, transactions...)
-
-		if len(transactions) < fetchCount {
-			break
-		}
-
-		maxTransactionTime = transactions[len(transactions)-1].TransactionTime - 1
-	}
-
-	return allTransactions, nil
-}
-
-// GetTransactionsByMaxTime returns transactions before given time
-func (s *TransactionService) GetTransactionsByMaxTime(c core.Context, uid int64, maxTransactionTime int64, minTransactionTime int64, transactionType models.TransactionType, categoryIds []int64, accountIds []int64, tagFilters []*models.TransactionTagFilter, noTags bool, amountFilter string, keyword string, matchMode core.MatchMode, mustHavePictures bool, page int32, count int32, needOneMoreItem bool, noDuplicated bool) ([]*models.Transaction, error) {
-	if uid <= 0 {
-		return nil, errs.ErrUserIdInvalid
-	}
-
-	if page < 0 {
-		return nil, errs.ErrPageIndexInvalid
-	} else if page == 0 {
-		page = 1
-	}
-
-	if count < 1 {
-		return nil, errs.ErrPageCountInvalid
-	}
-
-	finalCount := int(count)
-
-	if needOneMoreItem {
-		finalCount++
-	}
-
-	return s.getTransactionsByMaxTimeWithOffset(c, uid, maxTransactionTime, minTransactionTime, transactionType, categoryIds, accountIds, tagFilters, noTags, amountFilter, keyword, matchMode, mustHavePictures, int(count*(page-1)), finalCount, noDuplicated)
-}
-
-// getTransactionsByMaxTimeWithOffset returns transactions before given time with explicit offset and limit
-func (s *TransactionService) getTransactionsByMaxTimeWithOffset(c core.Context, uid int64, maxTransactionTime int64, minTransactionTime int64, transactionType models.TransactionType, categoryIds []int64, accountIds []int64, tagFilters []*models.TransactionTagFilter, noTags bool, amountFilter string, keyword string, matchMode core.MatchMode, mustHavePictures bool, offset int, limit int, noDuplicated bool) ([]*models.Transaction, error) {
-	if uid <= 0 {
-		return nil, errs.ErrUserIdInvalid
-	}
-
-	var err error
-	var transactionDbType models.TransactionDbType = 0
-
-	if transactionType > 0 {
-		transactionDbType, err = transactionType.ToTransactionDbType()
-
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	var transactions []*models.Transaction
-
-	condition, conditionParams := s.buildTransactionQueryCondition(uid, maxTransactionTime, minTransactionTime, transactionDbType, categoryIds, accountIds, tagFilters, amountFilter, keyword, matchMode, noDuplicated)
-	sess := s.UserDataDB(uid).NewSession(c).Where(condition, conditionParams...)
-	sess = s.appendFilterTagIdsConditionToQuery(sess, uid, maxTransactionTime, minTransactionTime, tagFilters, noTags)
-	sess = s.appendFilterPicturesConditionToQuery(sess, uid, mustHavePictures)
-
-	err = sess.Limit(limit, offset).OrderBy("transaction_time desc").Find(&transactions)
-
-	return transactions, err
-}
-
-// GetTransactionsInMonthByPage returns all transactions in given year and month
-func (s *TransactionService) GetTransactionsInMonthByPage(c core.Context, uid int64, year int32, month int32, transactionType models.TransactionType, categoryIds []int64, accountIds []int64, tagFilters []*models.TransactionTagFilter, noTags bool, amountFilter string, keyword string, matchMode core.MatchMode, mustHavePictures bool) ([]*models.Transaction, error) {
-	if uid <= 0 {
-		return nil, errs.ErrUserIdInvalid
-	}
-
-	var err error
-	var transactionDbType models.TransactionDbType = 0
-
-	if transactionType > 0 {
-		transactionDbType, err = transactionType.ToTransactionDbType()
-
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	minTransactionTime, maxTransactionTime, err := utils.GetTransactionTimeRangeByYearMonth(year, month)
-
-	if err != nil {
-		return nil, errs.ErrSystemError
-	}
-
-	var transactions []*models.Transaction
-
-	condition, conditionParams := s.buildTransactionQueryCondition(uid, maxTransactionTime, minTransactionTime, transactionDbType, categoryIds, accountIds, tagFilters, amountFilter, keyword, matchMode, true)
-	sess := s.UserDataDB(uid).NewSession(c).Where(condition, conditionParams...)
-	sess = s.appendFilterTagIdsConditionToQuery(sess, uid, maxTransactionTime, minTransactionTime, tagFilters, noTags)
-	sess = s.appendFilterPicturesConditionToQuery(sess, uid, mustHavePictures)
-
-	err = sess.OrderBy("transaction_time desc").Find(&transactions)
-
-	transactionsInMonth := make([]*models.Transaction, 0, len(transactions))
-
-	for i := 0; i < len(transactions); i++ {
-		transaction := transactions[i]
-		transactionUnixTime := utils.GetUnixTimeFromTransactionTime(transaction.TransactionTime)
-		transactionTimeZone := time.FixedZone("Transaction Timezone", int(transaction.TimezoneUtcOffset)*60)
-
-		if utils.IsUnixTimeEqualsYearAndMonth(transactionUnixTime, transactionTimeZone, year, month) {
-			transactionsInMonth = append(transactionsInMonth, transaction)
-		}
-	}
-
-	return transactionsInMonth, err
-}
-
-// GetTransactionByTransactionId returns a transaction model according to transaction id
-func (s *TransactionService) GetTransactionByTransactionId(c core.Context, uid int64, transactionId int64) (*models.Transaction, error) {
-	if uid <= 0 {
-		return nil, errs.ErrUserIdInvalid
-	}
-
-	if transactionId <= 0 {
-		return nil, errs.ErrTransactionIdInvalid
-	}
-
-	transaction := &models.Transaction{}
-	has, err := s.UserDataDB(uid).NewSession(c).ID(transactionId).Where("uid=? AND deleted=?", uid, false).Get(transaction)
-
-	if err != nil {
-		return nil, err
-	} else if !has {
-		return nil, errs.ErrTransactionNotFound
-	}
-
-	return transaction, nil
-}
-
-// GetTransactionsByTransactionIds returns transaction models according to transaction ids
-func (s *TransactionService) GetTransactionsByTransactionIds(c core.Context, uid int64, transactionIds []int64) ([]*models.Transaction, error) {
-	if uid <= 0 {
-		return nil, errs.ErrUserIdInvalid
-	}
-
-	if len(transactionIds) <= 0 {
-		return nil, errs.ErrTransactionIdInvalid
-	}
-
-	var transactions []*models.Transaction
-	err := s.UserDataDB(uid).NewSession(c).Where("uid=? AND deleted=?", uid, false).In("transaction_id", transactionIds).Find(&transactions)
-
-	return transactions, err
-}
-
-// GetAllTransactionCount returns total count of transactions
-func (s *TransactionService) GetAllTransactionCount(c core.Context, uid int64) (int64, error) {
-	return s.GetTransactionCount(c, uid, 0, 0, 0, nil, nil, nil, false, "", "", core.MATCH_MODE_DEFAULT, false)
-}
-
-// GetTransactionCount returns count of transactions
-func (s *TransactionService) GetTransactionCount(c core.Context, uid int64, maxTransactionTime int64, minTransactionTime int64, transactionType models.TransactionType, categoryIds []int64, accountIds []int64, tagFilters []*models.TransactionTagFilter, noTags bool, amountFilter string, keyword string, matchMode core.MatchMode, mustHavePictures bool) (int64, error) {
-	if uid <= 0 {
-		return 0, errs.ErrUserIdInvalid
-	}
-
-	var err error
-	var transactionDbType models.TransactionDbType = 0
-
-	if transactionType > 0 {
-		transactionDbType, err = transactionType.ToTransactionDbType()
-
-		if err != nil {
-			return 0, err
-		}
-	}
-
-	condition, conditionParams := s.buildTransactionQueryCondition(uid, maxTransactionTime, minTransactionTime, transactionDbType, categoryIds, accountIds, tagFilters, amountFilter, keyword, matchMode, true)
-	sess := s.UserDataDB(uid).NewSession(c).Where(condition, conditionParams...)
-	sess = s.appendFilterTagIdsConditionToQuery(sess, uid, maxTransactionTime, minTransactionTime, tagFilters, noTags)
-	sess = s.appendFilterPicturesConditionToQuery(sess, uid, mustHavePictures)
-
-	return sess.Count(&models.Transaction{})
-}
-
 // CreateTransaction saves a new transaction to database
 func (s *TransactionService) CreateTransaction(c core.Context, transaction *models.Transaction, tagIds []int64, pictureIds []int64) error {
 	if transaction.Uid <= 0 {
 		return errs.ErrUserIdInvalid
 	}
 
-	// Check whether account id is valid
 	err := s.isAccountIdValid(transaction)
 
 	if err != nil {
@@ -629,214 +100,9 @@ func (s *TransactionService) CreateTransaction(c core.Context, transaction *mode
 
 	userDataDb := s.UserDataDB(transaction.Uid)
 
-	return userDataDb.DoTransaction(c, func(sess *xorm.Session) error {
+	return userDataDb.DoTransaction(c, func(sess datastore.DatabaseSession) error {
 		return s.doCreateTransaction(c, userDataDb, sess, transaction, transactionTagIndexes, tagIds, pictureIds, pictureUpdateModel)
 	})
-}
-
-// BatchCreateTransactions saves new transactions to database
-func (s *TransactionService) BatchCreateTransactions(c core.Context, uid int64, transactions []*models.Transaction, allTagIds map[int][]int64, processHandler core.TaskProcessUpdateHandler) error {
-	now := time.Now().Unix()
-	currentProcess := float64(0)
-	processUpdateStep := int(math.Max(100.0, float64(len(transactions)/100.0)))
-
-	needTransactionUuidCount := uint16(0)
-	needTagIndexUuidCount := uint16(0)
-
-	for i := 0; i < len(transactions); i++ {
-		transaction := transactions[i]
-
-		if transaction.Uid != uid {
-			return errs.ErrUserIdInvalid
-		}
-
-		// Check whether account id is valid
-		err := s.isAccountIdValid(transaction)
-
-		if err != nil {
-			return err
-		}
-
-		if transaction.Type == models.TRANSACTION_DB_TYPE_TRANSFER_OUT || transaction.Type == models.TRANSACTION_DB_TYPE_TRANSFER_IN {
-			needTransactionUuidCount += 2
-		} else {
-			needTransactionUuidCount++
-		}
-
-		transaction.TransactionTime = utils.GetMinTransactionTimeFromUnixTime(utils.GetUnixTimeFromTransactionTime(transaction.TransactionTime))
-
-		transaction.CreatedUnixTime = now
-		transaction.UpdatedUnixTime = now
-	}
-
-	for index, tagIds := range allTagIds {
-		if index < 0 || index >= len(transactions) {
-			return errs.ErrOperationFailed
-		}
-
-		uniqueTagIds := utils.ToUniqueInt64Slice(tagIds)
-		needTagIndexUuidCount += uint16(len(uniqueTagIds))
-	}
-
-	if needTransactionUuidCount > uint16(65535) || needTagIndexUuidCount > uint16(65535) {
-		return errs.ErrImportTooManyTransaction
-	}
-
-	transactionUuids := s.GenerateUuids(uuid.UUID_TYPE_TRANSACTION, needTransactionUuidCount)
-	transactionUuidIndex := 0
-
-	if len(transactionUuids) < int(needTransactionUuidCount) {
-		return errs.ErrSystemIsBusy
-	}
-
-	for i := 0; i < len(transactions); i++ {
-		transaction := transactions[i]
-
-		transaction.TransactionId = transactionUuids[transactionUuidIndex]
-		transactionUuidIndex++
-
-		if transaction.Type == models.TRANSACTION_DB_TYPE_TRANSFER_OUT || transaction.Type == models.TRANSACTION_DB_TYPE_TRANSFER_IN {
-			transaction.RelatedId = transactionUuids[transactionUuidIndex]
-			transactionUuidIndex++
-		}
-	}
-
-	tagIndexUuids := s.GenerateUuids(uuid.UUID_TYPE_TAG_INDEX, needTagIndexUuidCount)
-	tagIndexUuidIndex := 0
-
-	if len(tagIndexUuids) < int(needTagIndexUuidCount) {
-		return errs.ErrSystemIsBusy
-	}
-
-	allTransactionTagIndexes := make(map[int64][]*models.TransactionTagIndex)
-	allTransactionTagIds := make(map[int64][]int64)
-
-	for index, tagIds := range allTagIds {
-		transaction := transactions[index]
-		uniqueTagIds := utils.ToUniqueInt64Slice(tagIds)
-
-		transactionTagIndexes := make([]*models.TransactionTagIndex, len(uniqueTagIds))
-
-		for i := 0; i < len(uniqueTagIds); i++ {
-			transactionTagIndexes[i] = &models.TransactionTagIndex{
-				TagIndexId:      tagIndexUuids[tagIndexUuidIndex],
-				Uid:             transaction.Uid,
-				Deleted:         false,
-				TagId:           uniqueTagIds[i],
-				TransactionId:   transaction.TransactionId,
-				CreatedUnixTime: now,
-				UpdatedUnixTime: now,
-			}
-
-			tagIndexUuidIndex++
-		}
-
-		allTransactionTagIndexes[transaction.TransactionId] = transactionTagIndexes
-		allTransactionTagIds[transaction.TransactionId] = uniqueTagIds
-	}
-
-	userDataDb := s.UserDataDB(uid)
-
-	return userDataDb.DoTransaction(c, func(sess *xorm.Session) error {
-		for i := 0; i < len(transactions); i++ {
-			transaction := transactions[i]
-			transactionTagIndexes := allTransactionTagIndexes[transaction.TransactionId]
-			transactionTagIds := allTransactionTagIds[transaction.TransactionId]
-			err := s.doCreateTransaction(c, userDataDb, sess, transaction, transactionTagIndexes, transactionTagIds, nil, nil)
-
-			currentProcess = float64(i) / float64(len(transactions)) * 100
-
-			if processHandler != nil && i%processUpdateStep == 0 {
-				processHandler(currentProcess)
-			}
-
-			if err != nil {
-				transactionUnixTime := utils.GetUnixTimeFromTransactionTime(transaction.TransactionTime)
-				transactionTimeZone := time.FixedZone("Transaction Timezone", int(transaction.TimezoneUtcOffset)*60)
-				log.Errorf(c, "[transactions.BatchCreateTransactions] failed to create trasaction (datetime: %s, type: %s, amount: %d)", utils.FormatUnixTimeToLongDateTime(transactionUnixTime, transactionTimeZone), transaction.Type, transaction.Amount)
-				return err
-			}
-		}
-
-		return nil
-	})
-}
-
-// CreateScheduledTransactions saves all scheduled transactions that should be created now
-func (s *TransactionService) CreateScheduledTransactions(c core.Context, currentUnixTime int64, interval time.Duration) error {
-	var allTemplates []*models.TransactionTemplate
-	intervalMinute := int(interval / time.Minute)
-	currentTime := time.Unix(currentUnixTime, 0)
-	currentMinute := (currentTime.Minute() / intervalMinute) * intervalMinute
-
-	startTime := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), currentTime.Hour(), currentMinute, 0, 0, time.Local)
-	startTimeInUTC := startTime.In(time.UTC)
-
-	minutesElapsedOfDayInUtc := startTimeInUTC.Hour()*60 + startTimeInUTC.Minute()
-	secondsElapsedOfDayInUtc := minutesElapsedOfDayInUtc * 60
-	todayFirstTimeInUTC := startTimeInUTC.Add(time.Duration(-secondsElapsedOfDayInUtc) * time.Second)
-	todayFirstUnixTimeInUTC := todayFirstTimeInUTC.Unix()
-
-	minScheduledAt := minutesElapsedOfDayInUtc
-	maxScheduledAt := minScheduledAt + intervalMinute
-
-	for i := 0; i < s.UserDataDBCount(); i++ {
-		var templates []*models.TransactionTemplate
-		err := s.UserDataDBByIndex(i).NewSession(c).Where("deleted=?"+
-			" AND template_type=?"+
-			" AND (scheduled_frequency_type=? OR scheduled_frequency_type=? OR scheduled_frequency_type=? OR scheduled_frequency_type=? OR scheduled_frequency_type=?)"+
-			" AND (scheduled_start_time IS NULL OR scheduled_start_time<=?)"+
-			" AND (scheduled_end_time IS NULL OR scheduled_end_time>=?)"+
-			" AND scheduled_at>=?"+
-			" AND scheduled_at<?",
-			false,
-			models.TRANSACTION_TEMPLATE_TYPE_SCHEDULE,
-			models.TRANSACTION_SCHEDULE_FREQUENCY_TYPE_WEEKLY, models.TRANSACTION_SCHEDULE_FREQUENCY_TYPE_MONTHLY, models.TRANSACTION_SCHEDULE_FREQUENCY_TYPE_DAILY, models.TRANSACTION_SCHEDULE_FREQUENCY_TYPE_YEARLY, models.TRANSACTION_SCHEDULE_FREQUENCY_TYPE_EVERY_N_DAYS,
-			startTime.Unix(),
-			startTime.Unix(),
-			minScheduledAt,
-			maxScheduledAt).Find(&templates)
-
-		if err != nil {
-			return err
-		}
-
-		allTemplates = append(allTemplates, templates...)
-	}
-
-	if len(allTemplates) < 1 {
-		return nil
-	}
-
-	log.Infof(c, "[transactions.CreateScheduledTransactions] should process %d scheduled transaction templates now (scheduled at from %d to %d)", len(allTemplates), minScheduledAt, maxScheduledAt)
-
-	successCount := 0
-	skipCount := 0
-	failedCount := 0
-
-	for i := 0; i < len(allTemplates); i++ {
-		template := allTemplates[i]
-		transaction, tagIds := s.createTransactionByScheduledTransactionTemplate(c, template, startTimeInUTC, todayFirstUnixTimeInUTC)
-
-		if transaction == nil {
-			skipCount++
-			continue
-		}
-
-		err := s.CreateTransaction(c, transaction, tagIds, nil)
-
-		if err == nil {
-			successCount++
-			log.Infof(c, "[transactions.CreateScheduledTransactions] transaction template \"id:%d\" has created a new trasaction \"id:%d\"", template.TemplateId, transaction.TransactionId)
-		} else {
-			failedCount++
-			log.Errorf(c, "[transactions.CreateScheduledTransactions] transaction template \"id:%d\" failed to create new trasaction, because %s", template.TemplateId, err.Error())
-		}
-	}
-
-	log.Infof(c, "[transactions.CreateScheduledTransactions] %d transactions has been created successfully, %d templates does not need to create transactions and %d transactions failed to create", successCount, skipCount, failedCount)
-
-	return nil
 }
 
 // ModifyTransaction saves an existed transaction to database
@@ -895,8 +161,7 @@ func (s *TransactionService) ModifyTransaction(c core.Context, transaction *mode
 		}
 	}
 
-	err := s.UserDataDB(transaction.Uid).DoTransaction(c, func(sess *xorm.Session) error {
-		// Get and verify current transaction
+	err := s.UserDataDB(transaction.Uid).DoTransaction(c, func(sess datastore.DatabaseSession) error {
 		oldTransaction := &models.Transaction{}
 		has, err := sess.ID(transaction.TransactionId).Where("uid=? AND deleted=?", transaction.Uid, false).Get(oldTransaction)
 
@@ -930,14 +195,12 @@ func (s *TransactionService) ModifyTransaction(c core.Context, transaction *mode
 			updateCols = append(updateCols, "related_id")
 		}
 
-		// Check whether account id is valid
 		err = s.isAccountIdValid(transaction)
 
 		if err != nil {
 			return err
 		}
 
-		// Get and verify source and destination account (if necessary)
 		sourceAccount, destinationAccount, err := s.getAccountModels(sess, transaction)
 
 		if err != nil {
@@ -972,9 +235,7 @@ func (s *TransactionService) ModifyTransaction(c core.Context, transaction *mode
 			return errs.ErrCannotAddTransactionToHiddenAccount
 		}
 
-		// Append modified columns and verify
 		if transaction.Type != oldTransaction.Type || transaction.CategoryId != oldTransaction.CategoryId {
-			// Get and verify category
 			err = s.isCategoryValid(sess, transaction)
 
 			if err != nil {
@@ -1064,14 +325,12 @@ func (s *TransactionService) ModifyTransaction(c core.Context, transaction *mode
 			updateCols = append(updateCols, "geo_latitude")
 		}
 
-		// Get and verify tags
 		err = s.isTagsValid(sess, transaction.Uid, transactionTagIndexes, addTagIds)
 
 		if err != nil {
 			return err
 		}
 
-		// Get and verify pictures
 		err = s.isPicturesValid(sess, transaction, addPictureIds)
 
 		if err != nil {
@@ -1096,7 +355,6 @@ func (s *TransactionService) ModifyTransaction(c core.Context, transaction *mode
 			}
 		}
 
-		// Update transaction row
 		updatedRows, err := sess.ID(transaction.TransactionId).Cols(updateCols...).Where("uid=? AND deleted=?", transaction.Uid, false).Update(transaction)
 
 		if err != nil {
@@ -1169,7 +427,6 @@ func (s *TransactionService) ModifyTransaction(c core.Context, transaction *mode
 			}
 		}
 
-		// Update transaction tag index
 		if len(removeTagIds) > 0 {
 			tagIndexUpdateModel := &models.TransactionTagIndex{
 				Deleted:         true,
@@ -1211,7 +468,6 @@ func (s *TransactionService) ModifyTransaction(c core.Context, transaction *mode
 			}
 		}
 
-		// Update transaction picture
 		if len(removePictureIds) > 0 {
 			pictureUpdateModel := &models.TransactionPictureInfo{
 				Deleted:         true,
@@ -1242,7 +498,6 @@ func (s *TransactionService) ModifyTransaction(c core.Context, transaction *mode
 			}
 		}
 
-		// Update account table
 		if transaction.Type == models.TRANSACTION_DB_TYPE_MODIFY_BALANCE {
 			if transaction.AccountId != oldTransaction.AccountId {
 				return errs.ErrBalanceModificationTransactionCannotChangeAccountId
@@ -1457,195 +712,6 @@ func (s *TransactionService) ModifyTransaction(c core.Context, transaction *mode
 	return nil
 }
 
-// BatchUpdateTransactionsCategory batch updates the categories of transactions
-func (s *TransactionService) BatchUpdateTransactionsCategory(c core.Context, uid int64, transactionIds []int64, newCategoryId int64) error {
-	if uid <= 0 {
-		return errs.ErrUserIdInvalid
-	}
-
-	if len(transactionIds) < 1 {
-		return errs.ErrTransactionIdInvalid
-	}
-
-	if newCategoryId <= 0 {
-		return errs.ErrTransactionCategoryIdInvalid
-	}
-
-	uniqueTransactionIds := utils.ToUniqueInt64Slice(transactionIds)
-	now := time.Now().Unix()
-
-	updateModel := &models.Transaction{
-		CategoryId:      newCategoryId,
-		UpdatedUnixTime: now,
-	}
-
-	return s.UserDataDB(uid).DoTransaction(c, func(sess *xorm.Session) error {
-		updatedRows, err := sess.Cols("category_id", "updated_unix_time").Where("uid=? AND deleted=?", uid, false).In("transaction_id", uniqueTransactionIds).Update(updateModel)
-
-		if err != nil {
-			return err
-		} else if updatedRows < int64(len(uniqueTransactionIds)) {
-			return errs.ErrTransactionNotFound
-		}
-
-		return err
-	})
-}
-
-// BatchAddTagsToTransactions batch adds tags to transactions
-func (s *TransactionService) BatchAddTagsToTransactions(c core.Context, uid int64, transactions []*models.Transaction, addTransactionTagIds map[int64][]int64) error {
-	if uid <= 0 {
-		return errs.ErrUserIdInvalid
-	}
-
-	if len(addTransactionTagIds) < 1 {
-		return errs.ErrTransactionIdInvalid
-	}
-
-	now := time.Now().Unix()
-	transactionTagIndexes := make([]*models.TransactionTagIndex, 0, len(addTransactionTagIds))
-	transactionsMap := make(map[int64]*models.Transaction, len(transactions))
-	transactionTagIdsMap := make(map[int64]bool, 0)
-
-	for i := 0; i < len(transactions); i++ {
-		transaction := transactions[i]
-		transactionsMap[transaction.TransactionId] = transaction
-	}
-
-	for transactionId, tagIds := range addTransactionTagIds {
-		if transactionId <= 0 {
-			return errs.ErrTransactionIdInvalid
-		}
-
-		transaction, exists := transactionsMap[transactionId]
-
-		if !exists || transaction == nil {
-			return errs.ErrTransactionNotFound
-		}
-
-		tagIds = utils.ToUniqueInt64Slice(tagIds)
-
-		for i := 0; i < len(tagIds); i++ {
-			tagId := tagIds[i]
-
-			if tagId <= 0 {
-				return errs.ErrTransactionTagIdInvalid
-			}
-
-			transactionTagIndexes = append(transactionTagIndexes, &models.TransactionTagIndex{
-				Uid:             uid,
-				Deleted:         false,
-				TransactionTime: transaction.TransactionTime,
-				TagId:           tagId,
-				TransactionId:   transactionId,
-				CreatedUnixTime: now,
-				UpdatedUnixTime: now,
-			})
-
-			transactionTagIdsMap[tagId] = true
-		}
-	}
-
-	tagIndexUuids := s.GenerateUuids(uuid.UUID_TYPE_TAG_INDEX, uint16(len(transactionTagIndexes)))
-
-	if len(tagIndexUuids) < len(transactionTagIndexes) {
-		return errs.ErrCannotAddTagsToTooManyTransactionsOneTime
-	}
-
-	for i := 0; i < len(transactionTagIndexes); i++ {
-		transactionTagIndexes[i].TagIndexId = tagIndexUuids[i]
-	}
-
-	tagIds := make([]int64, 0, len(transactionTagIdsMap))
-
-	for tagId := range transactionTagIdsMap {
-		tagIds = append(tagIds, tagId)
-	}
-
-	return s.UserDataDB(uid).DoTransaction(c, func(sess *xorm.Session) error {
-		// Get and verify tags
-		err := s.isTagsValid(sess, uid, transactionTagIndexes, tagIds)
-
-		if err != nil {
-			return err
-		}
-
-		for i := 0; i < len(transactionTagIndexes); i++ {
-			transactionTagIndex := transactionTagIndexes[i]
-			_, err := sess.Insert(transactionTagIndex)
-
-			if err != nil {
-				return err
-			}
-		}
-
-		return nil
-	})
-}
-
-// BatchRemoveTagsFromTransactions batch removes tags from transactions
-func (s *TransactionService) BatchRemoveTagsFromTransactions(c core.Context, uid int64, transactionIds []int64, tagIds []int64) error {
-	if uid <= 0 {
-		return errs.ErrUserIdInvalid
-	}
-
-	if len(transactionIds) < 1 {
-		return errs.ErrTransactionIdInvalid
-	}
-
-	uniqueTransactionIds := utils.ToUniqueInt64Slice(transactionIds)
-	uniqueTagIds := utils.ToUniqueInt64Slice(tagIds)
-	now := time.Now().Unix()
-
-	tagIndexUpdateModel := &models.TransactionTagIndex{
-		Deleted:         true,
-		DeletedUnixTime: now,
-	}
-
-	return s.UserDataDB(uid).DoTransaction(c, func(sess *xorm.Session) error {
-		deletedRows, err := sess.Cols("deleted", "deleted_unix_time").Where("uid=? AND deleted=?", uid, false).In("transaction_id", uniqueTransactionIds).In("tag_id", uniqueTagIds).Update(tagIndexUpdateModel)
-
-		if err != nil {
-			return err
-		} else if deletedRows < 1 {
-			return errs.ErrTransactionTagNotFound
-		}
-
-		return nil
-	})
-}
-
-// BatchClearAllTagsFromTransactions batch clears all tags from transactions
-func (s *TransactionService) BatchClearAllTagsFromTransactions(c core.Context, uid int64, transactionIds []int64) error {
-	if uid <= 0 {
-		return errs.ErrUserIdInvalid
-	}
-
-	if len(transactionIds) < 1 {
-		return errs.ErrTransactionIdInvalid
-	}
-
-	uniqueTransactionIds := utils.ToUniqueInt64Slice(transactionIds)
-	now := time.Now().Unix()
-
-	tagIndexUpdateModel := &models.TransactionTagIndex{
-		Deleted:         true,
-		DeletedUnixTime: now,
-	}
-
-	return s.UserDataDB(uid).DoTransaction(c, func(sess *xorm.Session) error {
-		deletedRows, err := sess.Cols("deleted", "deleted_unix_time").Where("uid=? AND deleted=?", uid, false).In("transaction_id", uniqueTransactionIds).Update(tagIndexUpdateModel)
-
-		if err != nil {
-			return err
-		} else if deletedRows < 1 {
-			return errs.ErrTransactionTagNotFound
-		}
-
-		return nil
-	})
-}
-
 // MoveAllTransactionsBetweenAccounts moves all transactions from one account to another account, and combine balance modification transactions if necessary
 func (s *TransactionService) MoveAllTransactionsBetweenAccounts(c core.Context, uid int64, fromAccountId int64, toAccountId int64) error {
 	if uid <= 0 {
@@ -1660,8 +726,7 @@ func (s *TransactionService) MoveAllTransactionsBetweenAccounts(c core.Context, 
 		return errs.ErrCannotMoveTransactionToSameAccount
 	}
 
-	return s.UserDataDB(uid).DoTransaction(c, func(sess *xorm.Session) error {
-		// get and verify from and to account
+	return s.UserDataDB(uid).DoTransaction(c, func(sess datastore.DatabaseSession) error {
 		fromAccount := &models.Account{}
 		has, err := sess.ID(fromAccountId).Where("uid=? AND deleted=?", uid, false).Get(fromAccount)
 
@@ -1811,7 +876,6 @@ func (s *TransactionService) MoveAllTransactionsBetweenAccounts(c core.Context, 
 			}
 		}
 
-		// update all transactions of from account
 		updateModel := &models.Transaction{
 			AccountId:       toAccountId,
 			UpdatedUnixTime: time.Now().Unix(),
@@ -1827,7 +891,6 @@ func (s *TransactionService) MoveAllTransactionsBetweenAccounts(c core.Context, 
 			log.Infof(c, "[transactions.MoveAllTransactionsBetweenAccounts] user \"uid:%d\" has moved %d transactions from account \"id:%d\" to account \"id:%d\"", uid, updatedRows, fromAccountId, toAccountId)
 		}
 
-		// update all related transactions of from account
 		updateRelatedModel := &models.Transaction{
 			RelatedAccountId: toAccountId,
 			UpdatedUnixTime:  time.Now().Unix(),
@@ -1859,7 +922,6 @@ func (s *TransactionService) MoveAllTransactionsBetweenAccounts(c core.Context, 
 			log.Infof(c, "[transactions.MoveAllTransactionsBetweenAccounts] user \"uid:%d\" has deleted %d transactions which account id and related account id are both \"%d\"", uid, deletedRows, toAccountId)
 		}
 
-		// update account balance
 		if fromAccount.Balance != 0 {
 			newToAccountBalance, ok := utils.AddInt64(toAccount.Balance, fromAccount.Balance)
 
@@ -1918,8 +980,7 @@ func (s *TransactionService) DeleteTransaction(c core.Context, uid int64, transa
 		DeletedUnixTime: now,
 	}
 
-	return s.UserDataDB(uid).DoTransaction(c, func(sess *xorm.Session) error {
-		// Get and verify current transaction
+	return s.UserDataDB(uid).DoTransaction(c, func(sess datastore.DatabaseSession) error {
 		oldTransaction := &models.Transaction{}
 		has, err := sess.ID(transactionId).Where("uid=? AND deleted=?", uid, false).Get(oldTransaction)
 
@@ -1929,7 +990,6 @@ func (s *TransactionService) DeleteTransaction(c core.Context, uid int64, transa
 			return errs.ErrTransactionNotFound
 		}
 
-		// Get and verify source and destination account
 		sourceAccount, destinationAccount, err := s.getAccountModels(sess, oldTransaction)
 
 		if err != nil {
@@ -1944,7 +1004,6 @@ func (s *TransactionService) DeleteTransaction(c core.Context, uid int64, transa
 			return errs.ErrCannotDeleteTransactionInParentAccount
 		}
 
-		// Update transaction row to deleted
 		deletedRows, err := sess.ID(oldTransaction.TransactionId).Cols("deleted", "deleted_unix_time").Where("uid=? AND deleted=?", uid, false).Update(updateModel)
 
 		if err != nil {
@@ -1963,21 +1022,18 @@ func (s *TransactionService) DeleteTransaction(c core.Context, uid int64, transa
 			}
 		}
 
-		// Update transaction tag index
 		_, err = sess.Cols("deleted", "deleted_unix_time").Where("uid=? AND deleted=? AND transaction_id=?", uid, false, oldTransaction.TransactionId).Update(tagIndexUpdateModel)
 
 		if err != nil {
 			return err
 		}
 
-		// Update transaction picture
 		_, err = sess.Cols("deleted", "deleted_unix_time").Where("uid=? AND deleted=? AND transaction_id=?", uid, false, oldTransaction.TransactionId).Update(pictureUpdateModel)
 
 		if err != nil {
 			return err
 		}
 
-		// Update account table
 		if oldTransaction.Type == models.TRANSACTION_DB_TYPE_MODIFY_BALANCE {
 			if oldTransaction.RelatedAccountAmount != 0 {
 				sourceAccount.UpdatedUnixTime = time.Now().Unix()
@@ -2075,22 +1131,19 @@ func (s *TransactionService) DeleteAllTransactions(c core.Context, uid int64, de
 		DeletedUnixTime: now,
 	}
 
-	return s.UserDataDB(uid).DoTransaction(c, func(sess *xorm.Session) error {
-		// Update all transactions to deleted
+	return s.UserDataDB(uid).DoTransaction(c, func(sess datastore.DatabaseSession) error {
 		_, err := sess.Cols("deleted", "deleted_unix_time").Where("uid=? AND deleted=?", uid, false).Update(updateModel)
 
 		if err != nil {
 			return err
 		}
 
-		// Update all transaction tag index to deleted
 		_, err = sess.Cols("deleted", "deleted_unix_time").Where("uid=? AND deleted=?", uid, false).Update(tagIndexUpdateModel)
 
 		if err != nil {
 			return err
 		}
 
-		// Update all transaction pictures to deleted
 		_, err = sess.Cols("deleted", "deleted_unix_time").Where("uid=? AND deleted=?", uid, false).Update(pictureUpdateModel)
 
 		if err != nil {
@@ -2185,439 +1238,7 @@ func (s *TransactionService) GetRelatedTransferTransaction(originalTransaction *
 	return relatedTransaction
 }
 
-// GetAccountsTotalIncomeAndExpense returns the every accounts total income and expense amount by specific date range
-func (s *TransactionService) GetAccountsTotalIncomeAndExpense(c core.Context, uid int64, startUnixTime int64, endUnixTime int64, excludeAccountIds []int64, excludeCategoryIds []int64, tagFilters []*models.TransactionTagFilter, clientTimezone *time.Location, useTransactionTimezone bool) (map[int64]*big.Int, map[int64]*big.Int, error) {
-	if uid <= 0 {
-		return nil, nil, errs.ErrUserIdInvalid
-	}
-
-	startLocalDateTime := utils.FormatUnixTimeToNumericLocalDateTime(startUnixTime, clientTimezone)
-	endLocalDateTime := utils.FormatUnixTimeToNumericLocalDateTime(endUnixTime, clientTimezone)
-
-	allTransactions, err := s.getAllTransactionsInSpecifiedDateRange(c, uid, startUnixTime, endUnixTime, excludeAccountIds, excludeCategoryIds, tagFilters, clientTimezone)
-
-	if err != nil {
-		return nil, nil, err
-	}
-
-	incomeAmounts := make(map[int64]*big.Int)
-	expenseAmounts := make(map[int64]*big.Int)
-
-	for i := 0; i < len(allTransactions); i++ {
-		transaction := allTransactions[i]
-		timeZone := clientTimezone
-
-		if useTransactionTimezone {
-			timeZone = time.FixedZone("Transaction Timezone", int(transaction.TimezoneUtcOffset)*60)
-		}
-
-		localDateTime := utils.FormatUnixTimeToNumericLocalDateTime(utils.GetUnixTimeFromTransactionTime(transaction.TransactionTime), timeZone)
-
-		if localDateTime < startLocalDateTime || localDateTime > endLocalDateTime {
-			continue
-		}
-
-		var amountsMap map[int64]*big.Int
-
-		if transaction.Type == models.TRANSACTION_DB_TYPE_INCOME {
-			amountsMap = incomeAmounts
-		} else if transaction.Type == models.TRANSACTION_DB_TYPE_EXPENSE {
-			amountsMap = expenseAmounts
-		}
-
-		totalAmounts, exists := amountsMap[transaction.AccountId]
-
-		if !exists {
-			totalAmounts = big.NewInt(0)
-		}
-
-		totalAmounts.Add(totalAmounts, big.NewInt(transaction.Amount))
-		amountsMap[transaction.AccountId] = totalAmounts
-	}
-
-	return incomeAmounts, expenseAmounts, nil
-}
-
-// GetAccountsDailyIncomeAndExpense returns daily income and expense amounts grouped by account
-func (s *TransactionService) GetAccountsDailyIncomeAndExpense(c core.Context, uid int64, startUnixTime int64, endUnixTime int64, excludeAccountIds []int64, excludeCategoryIds []int64, tagFilters []*models.TransactionTagFilter, clientTimezone *time.Location, useTransactionTimezone bool) (map[int32]map[int64]*big.Int, map[int32]map[int64]*big.Int, error) {
-	if uid <= 0 {
-		return nil, nil, errs.ErrUserIdInvalid
-	}
-
-	startLocalDateTime := utils.FormatUnixTimeToNumericLocalDateTime(startUnixTime, clientTimezone)
-	endLocalDateTime := utils.FormatUnixTimeToNumericLocalDateTime(endUnixTime, clientTimezone)
-
-	allTransactions, err := s.getAllTransactionsInSpecifiedDateRange(c, uid, startUnixTime, endUnixTime, excludeAccountIds, excludeCategoryIds, tagFilters, clientTimezone)
-
-	if err != nil {
-		return nil, nil, err
-	}
-
-	incomeAmounts := make(map[int32]map[int64]*big.Int)
-	expenseAmounts := make(map[int32]map[int64]*big.Int)
-
-	for i := 0; i < len(allTransactions); i++ {
-		transaction := allTransactions[i]
-		timeZone := clientTimezone
-
-		if useTransactionTimezone {
-			timeZone = time.FixedZone("Transaction Timezone", int(transaction.TimezoneUtcOffset)*60)
-		}
-
-		unixTime := utils.GetUnixTimeFromTransactionTime(transaction.TransactionTime)
-		localDateTime := utils.FormatUnixTimeToNumericLocalDateTime(unixTime, timeZone)
-
-		if localDateTime < startLocalDateTime || localDateTime > endLocalDateTime {
-			continue
-		}
-
-		var allAmounts map[int32]map[int64]*big.Int
-
-		if transaction.Type == models.TRANSACTION_DB_TYPE_INCOME {
-			allAmounts = incomeAmounts
-		} else if transaction.Type == models.TRANSACTION_DB_TYPE_EXPENSE {
-			allAmounts = expenseAmounts
-		}
-
-		yearMonthDay := utils.FormatUnixTimeToNumericYearMonthDay(unixTime, timeZone)
-		dailyAmounts, exists := allAmounts[yearMonthDay]
-
-		if !exists {
-			dailyAmounts = make(map[int64]*big.Int)
-		}
-
-		amount, exists := dailyAmounts[transaction.AccountId]
-
-		if !exists {
-			amount = big.NewInt(0)
-		}
-
-		amount.Add(amount, big.NewInt(transaction.Amount))
-		dailyAmounts[transaction.AccountId] = amount
-		allAmounts[yearMonthDay] = dailyAmounts
-	}
-
-	return incomeAmounts, expenseAmounts, nil
-}
-
-// GetAccountsAndCategoriesTotalInflowAndOutflow returns the every accounts and categories total inflows and outflows amount by specific date range
-func (s *TransactionService) GetAccountsAndCategoriesTotalInflowAndOutflow(c core.Context, uid int64, startUnixTime int64, endUnixTime int64, tagFilters []*models.TransactionTagFilter, noTags bool, keyword string, matchMode core.MatchMode, clientTimezone *time.Location, useTransactionTimezone bool) ([]*models.TransactionTotalAmount, error) {
-	if uid <= 0 {
-		return nil, errs.ErrUserIdInvalid
-	}
-
-	var startLocalDateTime, endLocalDateTime, startTransactionTime, endTransactionTime int64
-
-	if startUnixTime > 0 {
-		startLocalDateTime = utils.FormatUnixTimeToNumericLocalDateTime(startUnixTime, clientTimezone)
-		startUnixTime = utils.GetMinUnixTimeWithSameLocalDateTime(startUnixTime, utils.GetTimezoneOffsetMinutes(startUnixTime, clientTimezone))
-		startTransactionTime = utils.GetMinTransactionTimeFromUnixTime(startUnixTime)
-	}
-
-	if endUnixTime > 0 {
-		endLocalDateTime = utils.FormatUnixTimeToNumericLocalDateTime(endUnixTime, clientTimezone)
-		endUnixTime = utils.GetMaxUnixTimeWithSameLocalDateTime(endUnixTime, utils.GetTimezoneOffsetMinutes(endUnixTime, clientTimezone))
-		endTransactionTime = utils.GetMaxTransactionTimeFromUnixTime(endUnixTime)
-	}
-
-	condition := "uid=? AND deleted=? AND (type=? OR type=? OR type=? OR type=?)"
-	conditionParams := make([]any, 0, 6)
-	conditionParams = append(conditionParams, uid)
-	conditionParams = append(conditionParams, false)
-	conditionParams = append(conditionParams, models.TRANSACTION_DB_TYPE_INCOME)
-	conditionParams = append(conditionParams, models.TRANSACTION_DB_TYPE_EXPENSE)
-	conditionParams = append(conditionParams, models.TRANSACTION_DB_TYPE_TRANSFER_OUT)
-	conditionParams = append(conditionParams, models.TRANSACTION_DB_TYPE_TRANSFER_IN)
-
-	minTransactionTime := startTransactionTime
-	maxTransactionTime := endTransactionTime
-	var allTransactions []*models.Transaction
-
-	for maxTransactionTime >= 0 {
-		var transactions []*models.Transaction
-
-		finalCondition := condition
-		finalConditionParams := make([]any, 0, 6)
-		finalConditionParams = append(finalConditionParams, conditionParams...)
-
-		if minTransactionTime > 0 {
-			finalCondition = finalCondition + " AND transaction_time>=?"
-			finalConditionParams = append(finalConditionParams, minTransactionTime)
-		}
-
-		if maxTransactionTime > 0 {
-			finalCondition = finalCondition + " AND transaction_time<=?"
-			finalConditionParams = append(finalConditionParams, maxTransactionTime)
-		}
-
-		if keyword != "" {
-			if matchMode == core.MATCH_MODE_IGNORE_CASE {
-				finalCondition = finalCondition + " AND LOWER(comment) LIKE LOWER(?)"
-			} else {
-				finalCondition = finalCondition + " AND comment LIKE ?"
-			}
-			finalConditionParams = append(finalConditionParams, "%%"+keyword+"%%")
-		}
-
-		sess := s.UserDataDB(uid).NewSession(c).Select("type, category_id, account_id, related_account_id, transaction_time, timezone_utc_offset, amount").Where(finalCondition, finalConditionParams...)
-		sess = s.appendFilterTagIdsConditionToQuery(sess, uid, maxTransactionTime, minTransactionTime, tagFilters, noTags)
-
-		err := sess.Limit(pageCountForLoadTransactionAmounts, 0).OrderBy("transaction_time desc").Find(&transactions)
-
-		if err != nil {
-			return nil, err
-		}
-
-		allTransactions = append(allTransactions, transactions...)
-
-		if len(transactions) < pageCountForLoadTransactionAmounts {
-			maxTransactionTime = -1
-			break
-		}
-
-		maxTransactionTime = transactions[len(transactions)-1].TransactionTime - 1
-	}
-
-	transactionTotalAmountsMap := make(map[string]*models.TransactionTotalAmount)
-
-	for i := 0; i < len(allTransactions); i++ {
-		transaction := allTransactions[i]
-		timeZone := clientTimezone
-
-		if useTransactionTimezone {
-			timeZone = time.FixedZone("Transaction Timezone", int(transaction.TimezoneUtcOffset)*60)
-		}
-
-		localDateTime := utils.FormatUnixTimeToNumericLocalDateTime(utils.GetUnixTimeFromTransactionTime(transaction.TransactionTime), timeZone)
-
-		if (startLocalDateTime > 0 && localDateTime < startLocalDateTime) || (endLocalDateTime > 0 && localDateTime > endLocalDateTime) {
-			continue
-		}
-
-		groupKey := fmt.Sprintf("%d_%d", transaction.CategoryId, transaction.AccountId)
-
-		if transaction.Type == models.TRANSACTION_DB_TYPE_TRANSFER_OUT || transaction.Type == models.TRANSACTION_DB_TYPE_TRANSFER_IN {
-			groupKey = fmt.Sprintf("%d_%d_%d_%d", transaction.CategoryId, transaction.AccountId, transaction.RelatedAccountId, transaction.Type)
-		}
-
-		totalAmounts, exists := transactionTotalAmountsMap[groupKey]
-
-		if !exists {
-			totalAmounts = &models.TransactionTotalAmount{
-				Type:             transaction.Type,
-				CategoryId:       transaction.CategoryId,
-				AccountId:        transaction.AccountId,
-				RelatedAccountId: transaction.RelatedAccountId,
-				Amount:           big.NewInt(0),
-			}
-
-			transactionTotalAmountsMap[groupKey] = totalAmounts
-		}
-
-		totalAmounts.Amount.Add(totalAmounts.Amount, big.NewInt(transaction.Amount))
-	}
-
-	transactionTotalAmounts := make([]*models.TransactionTotalAmount, 0, len(transactionTotalAmountsMap))
-
-	for _, totalAmounts := range transactionTotalAmountsMap {
-		transactionTotalAmounts = append(transactionTotalAmounts, totalAmounts)
-	}
-
-	return transactionTotalAmounts, nil
-}
-
-// GetUnreconciledTransactionCounts returns transaction counts after each account's last reconciled time
-func (s *TransactionService) GetUnreconciledTransactionCounts(c core.Context, uid int64, accountLastReconciledTimes map[int64]int64) ([]*models.TransactionUnreconciledCountItem, error) {
-	if uid <= 0 {
-		return nil, errs.ErrUserIdInvalid
-	}
-
-	accountConditions := make([]builder.Cond, 0, len(accountLastReconciledTimes))
-
-	for accountId, lastReconciledTime := range accountLastReconciledTimes {
-		accountConditions = append(accountConditions, builder.And(
-			builder.Eq{"account_id": accountId},
-			builder.Gt{"transaction_time": utils.GetMaxTransactionTimeFromUnixTime(lastReconciledTime)},
-		))
-	}
-
-	counts := make([]*models.TransactionUnreconciledCountItem, 0)
-
-	if len(accountConditions) < 1 {
-		return counts, nil
-	}
-
-	err := s.UserDataDB(uid).NewSession(c).Table(&models.Transaction{}).Select("account_id, SUM(1) AS count").Where(builder.And(builder.Eq{"uid": uid, "deleted": false}, builder.Or(accountConditions...))).GroupBy("account_id").Having("SUM(1) > 0").OrderBy("account_id asc").Find(&counts)
-
-	return counts, err
-}
-
-// GetAccountsAndCategoriesMonthlyInflowAndOutflow returns the every accounts monthly inflows and outflows amount by specific date range
-func (s *TransactionService) GetAccountsAndCategoriesMonthlyInflowAndOutflow(c core.Context, uid int64, startYear int32, startMonth int32, endYear int32, endMonth int32, tagFilters []*models.TransactionTagFilter, noTags bool, keyword string, matchMode core.MatchMode, clientTimezone *time.Location, useTransactionTimezone bool) (map[int32][]*models.TransactionTotalAmount, error) {
-	if uid <= 0 {
-		return nil, errs.ErrUserIdInvalid
-	}
-
-	var startTransactionTime, endTransactionTime int64
-	var err error
-
-	if startYear > 0 && startMonth > 0 {
-		startTransactionTime, _, err = utils.GetTransactionTimeRangeByYearMonth(startYear, startMonth)
-
-		if err != nil {
-			return nil, errs.ErrSystemError
-		}
-	}
-
-	if endYear > 0 && endMonth > 0 {
-		_, endTransactionTime, err = utils.GetTransactionTimeRangeByYearMonth(endYear, endMonth)
-
-		if err != nil {
-			return nil, errs.ErrSystemError
-		}
-	}
-
-	condition := "uid=? AND deleted=? AND (type=? OR type=? OR type=? OR type=?)"
-	conditionParams := make([]any, 0, 6)
-	conditionParams = append(conditionParams, uid)
-	conditionParams = append(conditionParams, false)
-	conditionParams = append(conditionParams, models.TRANSACTION_DB_TYPE_INCOME)
-	conditionParams = append(conditionParams, models.TRANSACTION_DB_TYPE_EXPENSE)
-	conditionParams = append(conditionParams, models.TRANSACTION_DB_TYPE_TRANSFER_OUT)
-	conditionParams = append(conditionParams, models.TRANSACTION_DB_TYPE_TRANSFER_IN)
-
-	minTransactionTime := startTransactionTime
-	maxTransactionTime := endTransactionTime
-	var allTransactions []*models.Transaction
-
-	for maxTransactionTime >= 0 {
-		var transactions []*models.Transaction
-
-		finalCondition := condition
-		finalConditionParams := make([]any, 0, 6)
-		finalConditionParams = append(finalConditionParams, conditionParams...)
-
-		if minTransactionTime > 0 {
-			finalCondition = finalCondition + " AND transaction_time>=?"
-			finalConditionParams = append(finalConditionParams, minTransactionTime)
-		}
-
-		if maxTransactionTime > 0 {
-			finalCondition = finalCondition + " AND transaction_time<=?"
-			finalConditionParams = append(finalConditionParams, maxTransactionTime)
-		}
-
-		if keyword != "" {
-			if matchMode == core.MATCH_MODE_IGNORE_CASE {
-				finalCondition = finalCondition + " AND LOWER(comment) LIKE LOWER(?)"
-			} else {
-				finalCondition = finalCondition + " AND comment LIKE ?"
-			}
-			finalConditionParams = append(finalConditionParams, "%%"+keyword+"%%")
-		}
-
-		sess := s.UserDataDB(uid).NewSession(c).Select("type, category_id, account_id, related_account_id, transaction_time, timezone_utc_offset, amount").Where(finalCondition, finalConditionParams...)
-		sess = s.appendFilterTagIdsConditionToQuery(sess, uid, maxTransactionTime, minTransactionTime, tagFilters, noTags)
-
-		err := sess.Limit(pageCountForLoadTransactionAmounts, 0).OrderBy("transaction_time desc").Find(&transactions)
-
-		if err != nil {
-			return nil, err
-		}
-
-		allTransactions = append(allTransactions, transactions...)
-
-		if len(transactions) < pageCountForLoadTransactionAmounts {
-			maxTransactionTime = -1
-			break
-		}
-
-		maxTransactionTime = transactions[len(transactions)-1].TransactionTime - 1
-	}
-
-	startYearMonth := startYear*100 + startMonth
-	endYearMonth := endYear*100 + endMonth
-	transactionsMonthlyAmountsMap := make(map[string]*models.TransactionTotalAmount)
-	transactionsMonthlyAmounts := make(map[int32][]*models.TransactionTotalAmount)
-
-	for i := 0; i < len(allTransactions); i++ {
-		transaction := allTransactions[i]
-		timeZone := clientTimezone
-
-		if useTransactionTimezone {
-			timeZone = time.FixedZone("Transaction Timezone", int(transaction.TimezoneUtcOffset)*60)
-		}
-
-		yearMonth := utils.FormatUnixTimeToNumericYearMonth(utils.GetUnixTimeFromTransactionTime(transaction.TransactionTime), timeZone)
-
-		if (startYearMonth > 0 && yearMonth < startYearMonth) || (endYearMonth > 0 && yearMonth > endYearMonth) {
-			continue
-		}
-
-		groupKey := fmt.Sprintf("%d_%d_%d", yearMonth, transaction.CategoryId, transaction.AccountId)
-
-		if transaction.Type == models.TRANSACTION_DB_TYPE_TRANSFER_OUT || transaction.Type == models.TRANSACTION_DB_TYPE_TRANSFER_IN {
-			groupKey = fmt.Sprintf("%d_%d_%d_%d_%d", yearMonth, transaction.CategoryId, transaction.AccountId, transaction.RelatedAccountId, transaction.Type)
-		}
-
-		transactionAmounts, exists := transactionsMonthlyAmountsMap[groupKey]
-
-		if !exists {
-			transactionAmounts = &models.TransactionTotalAmount{
-				Type:             transaction.Type,
-				CategoryId:       transaction.CategoryId,
-				AccountId:        transaction.AccountId,
-				RelatedAccountId: transaction.RelatedAccountId,
-				Amount:           big.NewInt(0),
-			}
-
-			transactionsMonthlyAmountsMap[groupKey] = transactionAmounts
-		}
-
-		transactionAmounts.Amount.Add(transactionAmounts.Amount, big.NewInt(transaction.Amount))
-	}
-
-	for groupKey, transaction := range transactionsMonthlyAmountsMap {
-		groupKeyParts := strings.Split(groupKey, "_")
-		yearMonth, _ := utils.StringToInt32(groupKeyParts[0])
-		monthlyAmounts, exists := transactionsMonthlyAmounts[yearMonth]
-
-		if !exists {
-			monthlyAmounts = make([]*models.TransactionTotalAmount, 0)
-		}
-
-		monthlyAmounts = append(monthlyAmounts, transaction)
-		transactionsMonthlyAmounts[yearMonth] = monthlyAmounts
-	}
-
-	return transactionsMonthlyAmounts, nil
-}
-
-// GetTransactionMapByList returns a transaction map by a list
-func (s *TransactionService) GetTransactionMapByList(transactions []*models.Transaction) map[int64]*models.Transaction {
-	transactionMap := make(map[int64]*models.Transaction)
-
-	for i := 0; i < len(transactions); i++ {
-		transaction := transactions[i]
-		transactionMap[transaction.TransactionId] = transaction
-	}
-
-	return transactionMap
-}
-
-// GetTransactionIds returns transaction ids list
-func (s *TransactionService) GetTransactionIds(transactions []*models.Transaction) []int64 {
-	transactionIds := make([]int64, len(transactions))
-
-	for i := 0; i < len(transactions); i++ {
-		transactionIds[i] = transactions[i].TransactionId
-	}
-
-	return transactionIds
-}
-
-func (s *TransactionService) doCreateTransaction(c core.Context, database *datastore.Database, sess *xorm.Session, transaction *models.Transaction, transactionTagIndexes []*models.TransactionTagIndex, tagIds []int64, pictureIds []int64, pictureUpdateModel *models.TransactionPictureInfo) error {
-	// Get and verify source and destination account
+func (s *TransactionService) doCreateTransaction(c core.Context, database datastore.Database, sess datastore.DatabaseSession, transaction *models.Transaction, transactionTagIndexes []*models.TransactionTagIndex, tagIds []int64, pictureIds []int64, pictureUpdateModel *models.TransactionPictureInfo) error {
 	sourceAccount, destinationAccount, err := s.getAccountModels(sess, transaction)
 
 	if err != nil {
@@ -2642,21 +1263,18 @@ func (s *TransactionService) doCreateTransaction(c core.Context, database *datas
 		return errs.ErrTransferTransactionAmountCannotBeLessThanZero
 	}
 
-	// Get and verify category
 	err = s.isCategoryValid(sess, transaction)
 
 	if err != nil {
 		return err
 	}
 
-	// Get and verify tags
 	err = s.isTagsValid(sess, transaction.Uid, transactionTagIndexes, tagIds)
 
 	if err != nil {
 		return err
 	}
 
-	// Get and verify pictures
 	err = s.isPicturesValid(sess, transaction, pictureIds)
 
 	if err != nil {
@@ -2699,7 +1317,6 @@ func (s *TransactionService) doCreateTransaction(c core.Context, database *datas
 		}
 	}
 
-	// Insert transaction row
 	var relatedTransaction *models.Transaction
 
 	if transaction.Type == models.TRANSACTION_DB_TYPE_TRANSFER_OUT || transaction.Type == models.TRANSACTION_DB_TYPE_TRANSFER_IN {
@@ -2778,7 +1395,6 @@ func (s *TransactionService) doCreateTransaction(c core.Context, database *datas
 
 	err = nil
 
-	// Insert transaction tag index
 	if len(transactionTagIndexes) > 0 {
 		for i := 0; i < len(transactionTagIndexes); i++ {
 			transactionTagIndex := transactionTagIndexes[i]
@@ -2793,7 +1409,6 @@ func (s *TransactionService) doCreateTransaction(c core.Context, database *datas
 		}
 	}
 
-	// Update transaction picture
 	if len(pictureIds) > 0 {
 		_, err = sess.Cols("transaction_id", "updated_unix_time").Where("uid=? AND deleted=? AND transaction_id=?", transaction.Uid, false, models.TransactionPictureNewPictureTransactionId).In("picture_id", pictureIds).Update(pictureUpdateModel)
 
@@ -2803,7 +1418,6 @@ func (s *TransactionService) doCreateTransaction(c core.Context, database *datas
 		}
 	}
 
-	// Update account table
 	if transaction.Type == models.TRANSACTION_DB_TYPE_MODIFY_BALANCE {
 		if transaction.RelatedAccountAmount != 0 {
 			sourceAccount.UpdatedUnixTime = time.Now().Unix()
@@ -2876,7 +1490,7 @@ func (s *TransactionService) doCreateTransaction(c core.Context, database *datas
 	return err
 }
 
-func (s *TransactionService) updateAccountBalance(sess *xorm.Session, account *models.Account, delta int64) (int64, error) {
+func (s *TransactionService) updateAccountBalance(sess datastore.DatabaseSession, account *models.Account, delta int64) (int64, error) {
 	if delta == 0 {
 		return 1, nil
 	}
@@ -2900,439 +1514,7 @@ func (s *TransactionService) updateAccountBalance(sess *xorm.Session, account *m
 	return updatedRows, err
 }
 
-func (s *TransactionService) getAllTransactionsInSpecifiedDateRange(c core.Context, uid int64, startUnixTime int64, endUnixTime int64, excludeAccountIds []int64, excludeCategoryIds []int64, tagFilters []*models.TransactionTagFilter, clientTimezone *time.Location) ([]*models.Transaction, error) {
-	startUnixTime = utils.GetMinUnixTimeWithSameLocalDateTime(startUnixTime, utils.GetTimezoneOffsetMinutes(startUnixTime, clientTimezone))
-	endUnixTime = utils.GetMaxUnixTimeWithSameLocalDateTime(endUnixTime, utils.GetTimezoneOffsetMinutes(endUnixTime, clientTimezone))
-
-	startTransactionTime := utils.GetMinTransactionTimeFromUnixTime(startUnixTime)
-	endTransactionTime := utils.GetMaxTransactionTimeFromUnixTime(endUnixTime)
-
-	condition := "uid=? AND deleted=? AND (type=? OR type=?)"
-	conditionParams := make([]any, 0, 4+len(excludeAccountIds)+len(excludeCategoryIds))
-	conditionParams = append(conditionParams, uid)
-	conditionParams = append(conditionParams, false)
-	conditionParams = append(conditionParams, models.TRANSACTION_DB_TYPE_INCOME)
-	conditionParams = append(conditionParams, models.TRANSACTION_DB_TYPE_EXPENSE)
-
-	if len(excludeAccountIds) > 0 {
-		var accountIdsCondition strings.Builder
-		accountIdConditionParams := make([]any, 0, len(excludeAccountIds))
-
-		for i := 0; i < len(excludeAccountIds); i++ {
-			if i > 0 {
-				accountIdsCondition.WriteString(",")
-			}
-
-			accountIdsCondition.WriteString("?")
-			accountIdConditionParams = append(accountIdConditionParams, excludeAccountIds[i])
-		}
-
-		condition = condition + " AND account_id NOT IN (" + accountIdsCondition.String() + ")"
-		conditionParams = append(conditionParams, accountIdConditionParams...)
-	}
-
-	if len(excludeCategoryIds) > 0 {
-		var categoryIdsCondition strings.Builder
-		categoryIdConditionParams := make([]any, 0, len(excludeCategoryIds))
-
-		for i := 0; i < len(excludeCategoryIds); i++ {
-			if i > 0 {
-				categoryIdsCondition.WriteString(",")
-			}
-
-			categoryIdsCondition.WriteString("?")
-			categoryIdConditionParams = append(categoryIdConditionParams, excludeCategoryIds[i])
-		}
-
-		condition = condition + " AND category_id NOT IN (" + categoryIdsCondition.String() + ")"
-		conditionParams = append(conditionParams, categoryIdConditionParams...)
-	}
-
-	condition = condition + " AND transaction_time>=? AND transaction_time<=?"
-
-	minTransactionTime := startTransactionTime
-	maxTransactionTime := endTransactionTime
-	var allTransactions []*models.Transaction
-
-	for maxTransactionTime > 0 {
-		var transactions []*models.Transaction
-
-		finalConditionParams := make([]any, 0, 6)
-		finalConditionParams = append(finalConditionParams, conditionParams...)
-		finalConditionParams = append(finalConditionParams, minTransactionTime)
-		finalConditionParams = append(finalConditionParams, maxTransactionTime)
-
-		sess := s.UserDataDB(uid).NewSession(c).Select("type, account_id, transaction_time, timezone_utc_offset, amount").Where(condition, finalConditionParams...)
-		sess = s.appendFilterTagIdsConditionToQuery(sess, uid, maxTransactionTime, minTransactionTime, tagFilters, false)
-
-		err := sess.Limit(pageCountForLoadTransactionAmounts, 0).OrderBy("transaction_time desc").Find(&transactions)
-
-		if err != nil {
-			return nil, err
-		}
-
-		allTransactions = append(allTransactions, transactions...)
-
-		if len(transactions) < pageCountForLoadTransactionAmounts {
-			maxTransactionTime = 0
-			break
-		}
-
-		maxTransactionTime = transactions[len(transactions)-1].TransactionTime - 1
-	}
-
-	return allTransactions, nil
-}
-
-func (s *TransactionService) buildTransactionQueryCondition(uid int64, maxTransactionTime int64, minTransactionTime int64, transactionDbType models.TransactionDbType, categoryIds []int64, accountIds []int64, tagFilters []*models.TransactionTagFilter, amountFilter string, keyword string, matchMode core.MatchMode, noDuplicated bool) (string, []any) {
-	condition := "uid=? AND deleted=?"
-	conditionParams := make([]any, 0, 16)
-	conditionParams = append(conditionParams, uid)
-	conditionParams = append(conditionParams, false)
-
-	if maxTransactionTime > 0 {
-		condition = condition + " AND transaction_time<=?"
-		conditionParams = append(conditionParams, maxTransactionTime)
-	}
-
-	if minTransactionTime > 0 {
-		condition = condition + " AND transaction_time>=?"
-		conditionParams = append(conditionParams, minTransactionTime)
-	}
-
-	var accountIdsCondition strings.Builder
-	accountIdConditionParams := make([]any, 0, len(accountIds))
-
-	for i := 0; i < len(accountIds); i++ {
-		if i > 0 {
-			accountIdsCondition.WriteString(",")
-		}
-
-		accountIdsCondition.WriteString("?")
-		accountIdConditionParams = append(accountIdConditionParams, accountIds[i])
-	}
-
-	if models.TRANSACTION_DB_TYPE_MODIFY_BALANCE <= transactionDbType && transactionDbType <= models.TRANSACTION_DB_TYPE_EXPENSE {
-		condition = condition + " AND type=?"
-		conditionParams = append(conditionParams, transactionDbType)
-	} else if transactionDbType == models.TRANSACTION_DB_TYPE_TRANSFER_OUT || transactionDbType == models.TRANSACTION_DB_TYPE_TRANSFER_IN {
-		if len(accountIds) == 0 {
-			condition = condition + " AND type=?"
-			conditionParams = append(conditionParams, models.TRANSACTION_DB_TYPE_TRANSFER_OUT)
-		} else if len(accountIds) == 1 {
-			condition = condition + " AND (type=? OR type=?)"
-			conditionParams = append(conditionParams, models.TRANSACTION_DB_TYPE_TRANSFER_OUT)
-			conditionParams = append(conditionParams, models.TRANSACTION_DB_TYPE_TRANSFER_IN)
-		} else { // len(accountsIds) > 1
-			condition = condition + " AND (type=? OR (type=? AND related_account_id NOT IN (" + accountIdsCondition.String() + ")))"
-			conditionParams = append(conditionParams, models.TRANSACTION_DB_TYPE_TRANSFER_OUT)
-			conditionParams = append(conditionParams, models.TRANSACTION_DB_TYPE_TRANSFER_IN)
-			conditionParams = append(conditionParams, accountIdConditionParams...)
-		}
-	} else {
-		if noDuplicated {
-			if len(accountIds) == 0 {
-				condition = condition + " AND (type=? OR type=? OR type=? OR type=?)"
-				conditionParams = append(conditionParams, models.TRANSACTION_DB_TYPE_MODIFY_BALANCE)
-				conditionParams = append(conditionParams, models.TRANSACTION_DB_TYPE_INCOME)
-				conditionParams = append(conditionParams, models.TRANSACTION_DB_TYPE_EXPENSE)
-				conditionParams = append(conditionParams, models.TRANSACTION_DB_TYPE_TRANSFER_OUT)
-			} else if len(accountIds) == 1 {
-				// Do Nothing
-			} else { // len(accountsIds) > 1
-				condition = condition + " AND (type=? OR type=? OR type=? OR type=? OR (type=? AND related_account_id NOT IN (" + accountIdsCondition.String() + ")))"
-				conditionParams = append(conditionParams, models.TRANSACTION_DB_TYPE_MODIFY_BALANCE)
-				conditionParams = append(conditionParams, models.TRANSACTION_DB_TYPE_INCOME)
-				conditionParams = append(conditionParams, models.TRANSACTION_DB_TYPE_EXPENSE)
-				conditionParams = append(conditionParams, models.TRANSACTION_DB_TYPE_TRANSFER_OUT)
-				conditionParams = append(conditionParams, models.TRANSACTION_DB_TYPE_TRANSFER_IN)
-				conditionParams = append(conditionParams, accountIdConditionParams...)
-			}
-		}
-	}
-
-	if len(categoryIds) > 0 {
-		var conditions strings.Builder
-
-		for i := 0; i < len(categoryIds); i++ {
-			if i > 0 {
-				conditions.WriteString(",")
-			}
-
-			conditions.WriteString("?")
-			conditionParams = append(conditionParams, categoryIds[i])
-		}
-
-		if conditions.Len() > 1 {
-			condition = condition + " AND category_id IN (" + conditions.String() + ")"
-		} else {
-			condition = condition + " AND category_id = " + conditions.String()
-		}
-	}
-
-	if len(accountIds) > 0 {
-		if accountIdsCondition.Len() > 1 {
-			condition = condition + " AND account_id IN (" + accountIdsCondition.String() + ")"
-		} else {
-			condition = condition + " AND account_id = " + accountIdsCondition.String()
-		}
-
-		conditionParams = append(conditionParams, accountIdConditionParams...)
-	}
-
-	if amountFilter != "" {
-		amountFilterItems := strings.Split(amountFilter, ":")
-
-		if len(amountFilterItems) == 2 && amountFilterItems[0] == "gt" {
-			value, err := utils.StringToInt64(amountFilterItems[1])
-
-			if err == nil {
-				condition = condition + " AND amount > ?"
-				conditionParams = append(conditionParams, value)
-			}
-		} else if len(amountFilterItems) == 2 && amountFilterItems[0] == "lt" {
-			value, err := utils.StringToInt64(amountFilterItems[1])
-
-			if err == nil {
-				condition = condition + " AND amount < ?"
-				conditionParams = append(conditionParams, value)
-			}
-		} else if len(amountFilterItems) == 2 && amountFilterItems[0] == "eq" {
-			value, err := utils.StringToInt64(amountFilterItems[1])
-
-			if err == nil {
-				condition = condition + " AND amount = ?"
-				conditionParams = append(conditionParams, value)
-			}
-		} else if len(amountFilterItems) == 2 && amountFilterItems[0] == "ne" {
-			value, err := utils.StringToInt64(amountFilterItems[1])
-
-			if err == nil {
-				condition = condition + " AND amount <> ?"
-				conditionParams = append(conditionParams, value)
-			}
-		} else if len(amountFilterItems) == 3 && amountFilterItems[0] == "bt" {
-			value1, err := utils.StringToInt64(amountFilterItems[1])
-			value2, err := utils.StringToInt64(amountFilterItems[2])
-
-			if err == nil {
-				condition = condition + " AND amount >= ? AND amount <= ?"
-				conditionParams = append(conditionParams, value1)
-				conditionParams = append(conditionParams, value2)
-			}
-		} else if len(amountFilterItems) == 3 && amountFilterItems[0] == "nb" {
-			value1, err := utils.StringToInt64(amountFilterItems[1])
-			value2, err := utils.StringToInt64(amountFilterItems[2])
-
-			if err == nil {
-				condition = condition + " AND (amount < ? OR amount > ?)"
-				conditionParams = append(conditionParams, value1)
-				conditionParams = append(conditionParams, value2)
-			}
-		}
-	}
-
-	if keyword != "" {
-		if matchMode == core.MATCH_MODE_IGNORE_CASE {
-			condition = condition + " AND LOWER(comment) LIKE LOWER(?)"
-		} else {
-			condition = condition + " AND comment LIKE ?"
-		}
-		conditionParams = append(conditionParams, "%%"+keyword+"%%")
-	}
-
-	return condition, conditionParams
-}
-
-func (s *TransactionService) appendFilterTagIdsConditionToQuery(sess *xorm.Session, uid int64, maxTransactionTime int64, minTransactionTime int64, tagFilters []*models.TransactionTagFilter, noTags bool) *xorm.Session {
-	if noTags {
-		subQueryCondition := builder.And(builder.Eq{"uid": uid}, builder.Eq{"deleted": false})
-
-		if maxTransactionTime > 0 {
-			subQueryCondition = subQueryCondition.And(builder.Lte{"transaction_time": maxTransactionTime})
-		}
-
-		if minTransactionTime > 0 {
-			subQueryCondition = subQueryCondition.And(builder.Gte{"transaction_time": minTransactionTime})
-		}
-
-		subQuery := builder.Select("transaction_id").From("transaction_tag_index").Where(subQueryCondition)
-		sess.NotIn("transaction_id", subQuery).NotIn("related_id", subQuery)
-		return sess
-	}
-
-	if len(tagFilters) < 1 {
-		return sess
-	}
-
-	for i := 0; i < len(tagFilters); i++ {
-		tagFilter := tagFilters[i]
-		subQueryCondition := builder.And(builder.Eq{"uid": uid}, builder.Eq{"deleted": false})
-
-		if maxTransactionTime > 0 {
-			subQueryCondition = subQueryCondition.And(builder.Lte{"transaction_time": maxTransactionTime})
-		}
-
-		if minTransactionTime > 0 {
-			subQueryCondition = subQueryCondition.And(builder.Gte{"transaction_time": minTransactionTime})
-		}
-
-		subQueryCondition = subQueryCondition.And(builder.In("tag_id", tagFilter.TagIds))
-		subQuery := builder.Select("transaction_id").From("transaction_tag_index").Where(subQueryCondition)
-
-		if tagFilter.Type == models.TRANSACTION_TAG_FILTER_HAS_ALL || tagFilter.Type == models.TRANSACTION_TAG_FILTER_NOT_HAS_ALL {
-			subQuery = subQuery.GroupBy("transaction_id").Having(fmt.Sprintf("COUNT(DISTINCT tag_id) >= %d", len(tagFilter.TagIds)))
-		}
-
-		if tagFilter.Type == models.TRANSACTION_TAG_FILTER_HAS_ANY || tagFilter.Type == models.TRANSACTION_TAG_FILTER_HAS_ALL {
-			sess.And(builder.Or(builder.In("transaction_id", subQuery), builder.In("related_id", subQuery)))
-		} else if tagFilter.Type == models.TRANSACTION_TAG_FILTER_NOT_HAS_ANY || tagFilter.Type == models.TRANSACTION_TAG_FILTER_NOT_HAS_ALL {
-			sess.NotIn("transaction_id", subQuery).NotIn("related_id", subQuery)
-		}
-	}
-
-	return sess
-}
-
-func (s *TransactionService) appendFilterPicturesConditionToQuery(sess *xorm.Session, uid int64, mustHavePictures bool) *xorm.Session {
-	if !mustHavePictures {
-		return sess
-	}
-
-	subQuery := builder.Select("transaction_id").From("transaction_picture_info").Where(builder.And(builder.Eq{"uid": uid}, builder.Eq{"deleted": false}, builder.Neq{"transaction_id": models.TransactionPictureNewPictureTransactionId}))
-	sess.And(builder.Or(builder.In("transaction_id", subQuery), builder.In("related_id", subQuery)))
-
-	return sess
-}
-
-func (s *TransactionService) createTransactionByScheduledTransactionTemplate(c core.Context, template *models.TransactionTemplate, startTimeInUTC time.Time, todayFirstUnixTimeInUTC int64) (*models.Transaction, []int64) {
-	if template.ScheduledFrequencyType == models.TRANSACTION_SCHEDULE_FREQUENCY_TYPE_DISABLED {
-		log.Infof(c, "[transactions.CreateScheduledTransactions] transaction template \"id:%d\" disabled scheduled transaction frequency", template.TemplateId)
-		return nil, nil
-	}
-
-	if (template.ScheduledFrequencyType != models.TRANSACTION_SCHEDULE_FREQUENCY_TYPE_WEEKLY &&
-		template.ScheduledFrequencyType != models.TRANSACTION_SCHEDULE_FREQUENCY_TYPE_MONTHLY &&
-		template.ScheduledFrequencyType != models.TRANSACTION_SCHEDULE_FREQUENCY_TYPE_DAILY &&
-		template.ScheduledFrequencyType != models.TRANSACTION_SCHEDULE_FREQUENCY_TYPE_YEARLY &&
-		template.ScheduledFrequencyType != models.TRANSACTION_SCHEDULE_FREQUENCY_TYPE_EVERY_N_DAYS) ||
-		template.ScheduledFrequency == "" {
-		log.Warnf(c, "[transactions.CreateScheduledTransactions] transaction template \"id:%d\" has invalid scheduled transaction frequency", template.TemplateId)
-		return nil, nil
-	}
-
-	frequencyValues, err := utils.StringArrayToInt64Array(strings.Split(template.ScheduledFrequency, ","))
-
-	if err != nil {
-		log.Warnf(c, "[transactions.CreateScheduledTransactions] transaction template \"id:%d\" has invalid scheduled transaction frequency, because %s", template.TemplateId, err.Error())
-		return nil, nil
-	}
-
-	templateTimezone := time.FixedZone("Template Timezone", int(template.ScheduledTimezoneUtcOffset)*60)
-
-	if len(template.ScheduledTimezoneName) > 0 {
-		location, err := time.LoadLocation(template.ScheduledTimezoneName)
-
-		if err != nil {
-			log.Warnf(c, "[transactions.CreateScheduledTransactions] transaction template \"id:%d\" cannot load timezone \"%s\", because %s", template.TemplateId, template.ScheduledTimezoneName, err.Error())
-		} else {
-			templateTimezone = location
-		}
-	}
-
-	transactionTime := utils.GetScheduledTransactionFinalTime(todayFirstUnixTimeInUTC, template.ScheduledAt, template.CreatedUnixTime, templateTimezone)
-
-	if transactionTime == nil {
-		log.Warnf(c, "[transactions.CreateScheduledTransactions] transaction template \"id:%d\" does not need to create transaction, the scheduled local date does not exist", template.TemplateId)
-		return nil, nil
-	}
-
-	transactionTimezoneUtcOffset := utils.GetTimezoneOffsetMinutes(transactionTime.Unix(), templateTimezone)
-
-	if template.ScheduledFrequencyType == models.TRANSACTION_SCHEDULE_FREQUENCY_TYPE_MONTHLY {
-		maxDayInMonth := utils.GetMaxDayOfMonth(transactionTime.Year(), transactionTime.Month())
-
-		for i := 0; i < len(frequencyValues); i++ {
-			if frequencyValues[i] < 0 {
-				frequencyValues[i] = int64(maxDayInMonth) + frequencyValues[i] + 1
-			}
-		}
-	}
-
-	frequencyValueSet := utils.ToSet(frequencyValues)
-
-	if template.ScheduledFrequencyType == models.TRANSACTION_SCHEDULE_FREQUENCY_TYPE_WEEKLY && !frequencyValueSet[int64(transactionTime.Weekday())] {
-		log.Infof(c, "[transactions.CreateScheduledTransactions] transaction template \"id:%d\" does not need to create transaction, today is %s", template.TemplateId, startTimeInUTC.Weekday())
-		return nil, nil
-	} else if template.ScheduledFrequencyType == models.TRANSACTION_SCHEDULE_FREQUENCY_TYPE_MONTHLY && !frequencyValueSet[int64(transactionTime.Day())] {
-		log.Infof(c, "[transactions.CreateScheduledTransactions] transaction template \"id:%d\" does not need to create transaction, today is %d of month", template.TemplateId, startTimeInUTC.Day())
-		return nil, nil
-	} else if template.ScheduledFrequencyType == models.TRANSACTION_SCHEDULE_FREQUENCY_TYPE_YEARLY && !frequencyValueSet[int64(transactionTime.Month())*100+int64(transactionTime.Day())] {
-		log.Infof(c, "[transactions.CreateScheduledTransactions] transaction template \"id:%d\" does not need to create transaction, today is %d-%d of year", template.TemplateId, startTimeInUTC.Month(), startTimeInUTC.Day())
-		return nil, nil
-	} else if template.ScheduledFrequencyType == models.TRANSACTION_SCHEDULE_FREQUENCY_TYPE_EVERY_N_DAYS {
-		if template.ScheduledStartTime == nil || len(frequencyValues) != 1 || frequencyValues[0] <= 0 {
-			log.Warnf(c, "[transactions.CreateScheduledTransactions] transaction template \"id:%d\" has invalid scheduled transaction frequency for every N days", template.TemplateId)
-			return nil, nil
-		}
-
-		n := frequencyValues[0]
-		startDate := time.Unix(*template.ScheduledStartTime, 0).In(templateTimezone)
-		daysDiff := utils.GetDaysBetweenDates(startDate, *transactionTime)
-
-		if daysDiff < 0 || int64(daysDiff)%n != 0 {
-			log.Infof(c, "[transactions.CreateScheduledTransactions] transaction template \"id:%d\" does not need to create transaction, days diff is %d with interval %d", template.TemplateId, daysDiff, n)
-			return nil, nil
-		}
-	}
-
-	if template.ScheduledStartTime != nil && *template.ScheduledStartTime > transactionTime.Unix() {
-		log.Infof(c, "[transactions.CreateScheduledTransactions] transaction template \"id:%d\" does not need to create transaction, now is earlier than the start time %d", template.TemplateId, *template.ScheduledStartTime)
-		return nil, nil
-	}
-
-	if template.ScheduledEndTime != nil && *template.ScheduledEndTime < transactionTime.Unix() {
-		log.Infof(c, "[transactions.CreateScheduledTransactions] transaction template \"id:%d\" does not need to create transaction, now is later than the end time %d", template.TemplateId, *template.ScheduledEndTime)
-		return nil, nil
-	}
-
-	var transactionDbType models.TransactionDbType
-
-	if template.Type == models.TRANSACTION_TYPE_EXPENSE {
-		transactionDbType = models.TRANSACTION_DB_TYPE_EXPENSE
-	} else if template.Type == models.TRANSACTION_TYPE_INCOME {
-		transactionDbType = models.TRANSACTION_DB_TYPE_INCOME
-	} else if template.Type == models.TRANSACTION_TYPE_TRANSFER {
-		transactionDbType = models.TRANSACTION_DB_TYPE_TRANSFER_OUT
-	} else {
-		log.Warnf(c, "[transactions.CreateScheduledTransactions] transaction template \"id:%d\" has invalid transaction type", template.TemplateId)
-		return nil, nil
-	}
-
-	transaction := &models.Transaction{
-		Uid:               template.Uid,
-		Type:              transactionDbType,
-		CategoryId:        template.CategoryId,
-		TransactionTime:   utils.GetMinTransactionTimeFromUnixTime(transactionTime.Unix()),
-		TimezoneUtcOffset: transactionTimezoneUtcOffset,
-		AccountId:         template.AccountId,
-		Amount:            template.Amount,
-		HideAmount:        template.HideAmount,
-		Comment:           template.Comment,
-		CreatedIp:         c.ClientIP(),
-		ScheduledCreated:  true,
-	}
-
-	if template.Type == models.TRANSACTION_TYPE_TRANSFER {
-		transaction.RelatedAccountId = template.RelatedAccountId
-		transaction.RelatedAccountAmount = template.RelatedAccountAmount
-	}
-
-	tagIds := template.GetTagIds()
-	return transaction, tagIds
-}
-
-func (s *TransactionService) getAccountModels(sess *xorm.Session, transaction *models.Transaction) (sourceAccount *models.Account, destinationAccount *models.Account, err error) {
+func (s *TransactionService) getAccountModels(sess datastore.DatabaseSession, transaction *models.Transaction) (sourceAccount *models.Account, destinationAccount *models.Account, err error) {
 	sourceAccount = &models.Account{}
 	destinationAccount = &models.Account{}
 
@@ -3344,7 +1526,6 @@ func (s *TransactionService) getAccountModels(sess *xorm.Session, transaction *m
 		return nil, nil, errs.ErrSourceAccountNotFound
 	}
 
-	// check whether the related account is valid
 	if transaction.Type == models.TRANSACTION_DB_TYPE_MODIFY_BALANCE {
 		if transaction.RelatedAccountId != 0 && transaction.RelatedAccountId != transaction.AccountId {
 			return nil, nil, errs.ErrAccountIdInvalid
@@ -3422,7 +1603,7 @@ func (s *TransactionService) getAccountModels(sess *xorm.Session, transaction *m
 	return sourceAccount, destinationAccount, nil
 }
 
-func (s *TransactionService) getOldAccountModels(sess *xorm.Session, transaction *models.Transaction, oldTransaction *models.Transaction, sourceAccount *models.Account, destinationAccount *models.Account) (oldSourceAccount *models.Account, oldDestinationAccount *models.Account, err error) {
+func (s *TransactionService) getOldAccountModels(sess datastore.DatabaseSession, transaction *models.Transaction, oldTransaction *models.Transaction, sourceAccount *models.Account, destinationAccount *models.Account) (oldSourceAccount *models.Account, oldDestinationAccount *models.Account, err error) {
 	oldSourceAccount = &models.Account{}
 	oldDestinationAccount = &models.Account{}
 
@@ -3498,7 +1679,7 @@ func (s *TransactionService) isAccountIdValid(transaction *models.Transaction) e
 	return nil
 }
 
-func (s *TransactionService) isCategoryValid(sess *xorm.Session, transaction *models.Transaction) error {
+func (s *TransactionService) isCategoryValid(sess datastore.DatabaseSession, transaction *models.Transaction) error {
 	if transaction.Type == models.TRANSACTION_DB_TYPE_MODIFY_BALANCE {
 		if transaction.CategoryId != 0 {
 			return errs.ErrBalanceModificationTransactionCannotSetCategory
@@ -3544,7 +1725,7 @@ func (s *TransactionService) isCategoryValid(sess *xorm.Session, transaction *mo
 	return nil
 }
 
-func (s *TransactionService) isTagsValid(sess *xorm.Session, uid int64, transactionTagIndexes []*models.TransactionTagIndex, tagIds []int64) error {
+func (s *TransactionService) isTagsValid(sess datastore.DatabaseSession, uid int64, transactionTagIndexes []*models.TransactionTagIndex, tagIds []int64) error {
 	if len(transactionTagIndexes) > 0 {
 		var tags []*models.TransactionTag
 		err := sess.Where("uid=? AND deleted=?", uid, false).In("tag_id", tagIds).Find(&tags)
@@ -3573,7 +1754,7 @@ func (s *TransactionService) isTagsValid(sess *xorm.Session, uid int64, transact
 	return nil
 }
 
-func (s *TransactionService) isPicturesValid(sess *xorm.Session, transaction *models.Transaction, pictureIds []int64) error {
+func (s *TransactionService) isPicturesValid(sess datastore.DatabaseSession, transaction *models.Transaction, pictureIds []int64) error {
 	if len(pictureIds) > 0 {
 		var pictureInfos []*models.TransactionPictureInfo
 		err := sess.Where("uid=? AND deleted=?", transaction.Uid, false).In("picture_id", pictureIds).Find(&pictureInfos)

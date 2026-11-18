@@ -157,11 +157,12 @@ export default defineConfig(() => {
                 injectRegister: false,
                 manifestFilename: 'manifest.json',
                 manifest: {
-                    name: 'ezBookkeeping',
-                    short_name: 'ezBookkeeping',
-                    description: 'An open source, powerful, self-hosted personal finance app that is easy to use.',
-                    theme_color: '#C67E48',
-                    background_color: '#F6F7F8',
+                    name: 'ezrbookkeeping',
+                    short_name: 'ezrbookkeeping',
+                    description: 'ezrbookkeeping, a business-focused fork of ezBookkeeping, an open source, self-hosted bookkeeping app that is easy to use.',
+                    // splash and browser chrome follow the light canvas; dark is applied at runtime via the theme-color meta
+                    theme_color: '#F7F4EF',
+                    background_color: '#F7F4EF',
                     start_url: './',
                     scope: './',
                     display: 'standalone',
@@ -288,6 +289,14 @@ export default defineConfig(() => {
                                 test: /[\\/]node_modules[\\/](echarts|zrender|tslib|resize-detector)[\\/]/i
                             },
                             {
+                                name:  'ua-parser',
+                                test: /[\\/]node_modules[\\/]ua-parser-js[\\/]/i
+                            },
+                            {
+                                name:  'chardet',
+                                test: /[\\/]node_modules[\\/]chardet[\\/]/i
+                            },
+                            {
                                 name: 'monaco-editor',
                                 test: /[\\/]node_modules[\\/](monaco-editor|monaco-editor-core)[\\/]/i
                             },
@@ -324,16 +333,12 @@ export default defineConfig(() => {
                                         return true;
                                     } else if (/[\\/]src[\\/]views[\\/]base[\\/]/i.test(id)) {
                                         return true;
-                                    } else if (/[\\/]src[\\/]locales[\\/]helpers\.(js|ts)/i.test(id)) {
+                                    } else if (/[\\/]src[\\/]locales[\\/](helpers|index)\.(js|ts)/i.test(id)) {
                                         return true;
                                     } else {
                                         return false;
                                     }
                                 }
-                            },
-                            {
-                                name:  'locales',
-                                test: /[\\/]src[\\/]locales[\\/]/i
                             }
                         ]
                     }

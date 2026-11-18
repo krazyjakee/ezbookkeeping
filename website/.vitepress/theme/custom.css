@@ -1,0 +1,839 @@
+/*
+ * ezrbookkeeping documentation theme: "Copper Instrument Panel"
+ *
+ * Mirrors the application design tokens (docs/design/README.md §3, docs/design/tokens.md,
+ * src/styles/common/_tokens.scss) on top of the VitePress default theme.
+ * Light: warm neutral canvas #F7F4EF. Dark: #0B0A09. Copper #C67E48 marks the active
+ * location, selection, focus and the single primary action.
+ */
+
+/* ------------------------------------------------------------------ */
+/* Tokens                                                              */
+/* ------------------------------------------------------------------ */
+
+:root {
+    --ebk-copper-50: #fbf3ec;
+    --ebk-copper-100: #f3dfcd;
+    --ebk-copper-300: #dfa97f;
+    --ebk-copper-500: #c67e48;
+    --ebk-copper-600: #b67443;
+    --ebk-copper-700: #97592f;
+    --ebk-copper-900: #5a3219;
+    --ebk-copper-500-rgb: 198, 126, 72;
+
+    --ebk-color-canvas: #f7f4ef;
+    --ebk-color-surface: #ffffff;
+    --ebk-color-surface-raised: #ffffff;
+    --ebk-color-surface-sunken: #f1ece5;
+    --ebk-color-text-primary: #2b2421;
+    --ebk-color-text-secondary: #6b605a;
+    --ebk-color-text-tertiary: #7a6f68;
+    --ebk-color-text-primary-rgb: 43, 36, 33;
+    --ebk-color-hairline: rgba(54, 47, 42, 0.14);
+    --ebk-color-hairline-strong: rgba(54, 47, 42, 0.26);
+    --ebk-color-copper-line: rgba(var(--ebk-copper-500-rgb), 0.45);
+    --ebk-color-selected-background: rgba(var(--ebk-copper-500-rgb), 0.1);
+    --ebk-color-primary-text: var(--ebk-copper-700);
+    --ebk-color-on-primary: #140f0d;
+
+    --ebk-color-success: #4cd964;
+    --ebk-color-info: #2196f3;
+    --ebk-color-warning: #ff9500;
+    --ebk-color-error: #ff3b30;
+
+    --ebk-grid-size: 24px;
+    --ebk-grid-opacity: 0.035;
+    --ebk-color-grid-line: rgba(var(--ebk-color-text-primary-rgb), var(--ebk-grid-opacity));
+
+    --ebk-focus-ring-color: var(--ebk-copper-600);
+    --ebk-focus-outline: 2px solid var(--ebk-focus-ring-color);
+    --ebk-glow: 0 0 0 1px var(--ebk-color-copper-line), 0 0 12px rgba(var(--ebk-copper-500-rgb), 0.25);
+    --ebk-shadow-sm: 0 1px 2px rgba(68, 48, 34, 0.05), 0 3px 10px rgba(68, 48, 34, 0.035);
+    --ebk-shadow-md: 0 7px 24px rgba(68, 48, 34, 0.1);
+
+    --ebk-radius-panel: 10px;
+    --ebk-radius-control: 8px;
+    --ebk-radius-dialog: 16px;
+    --ebk-header-strip-height: 40px;
+
+    --ebk-font-technical-size: 0.75rem;
+    --ebk-font-technical-weight: 600;
+    --ebk-font-technical-letter-spacing: 0.08em;
+
+    --ebk-motion-duration-xs: 90ms;
+    --ebk-motion-duration-sm: 160ms;
+    --ebk-motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+    /* VitePress mapping */
+    --vp-c-bg: var(--ebk-color-canvas);
+    --vp-c-bg-alt: var(--ebk-color-surface-sunken);
+    --vp-c-bg-elv: var(--ebk-color-surface-raised);
+    --vp-c-bg-soft: var(--ebk-color-surface-sunken);
+
+    --vp-c-border: var(--ebk-color-hairline-strong);
+    --vp-c-divider: var(--ebk-color-hairline);
+    --vp-c-gutter: var(--ebk-color-hairline);
+
+    --vp-c-text-1: var(--ebk-color-text-primary);
+    --vp-c-text-2: var(--ebk-color-text-secondary);
+    --vp-c-text-3: var(--ebk-color-text-tertiary);
+
+    --vp-c-default-soft: rgba(54, 47, 42, 0.06);
+
+    --vp-c-indigo-1: var(--ebk-copper-700);
+    --vp-c-indigo-2: var(--ebk-copper-600);
+    --vp-c-indigo-3: var(--ebk-copper-500);
+    --vp-c-indigo-soft: rgba(var(--ebk-copper-500-rgb), 0.12);
+    --vp-c-brand-1: var(--ebk-copper-700);
+    --vp-c-brand-2: var(--ebk-copper-600);
+    --vp-c-brand-3: var(--ebk-copper-500);
+    --vp-c-brand-soft: rgba(var(--ebk-copper-500-rgb), 0.12);
+
+    --vp-home-hero-name-color: var(--ebk-color-primary-text);
+    --vp-home-hero-name-background: transparent;
+
+    --vp-button-brand-border: transparent;
+    --vp-button-brand-text: var(--ebk-color-on-primary);
+    --vp-button-brand-bg: var(--ebk-copper-500);
+    --vp-button-brand-hover-border: transparent;
+    --vp-button-brand-hover-text: var(--ebk-color-on-primary);
+    --vp-button-brand-hover-bg: var(--ebk-copper-600);
+    --vp-button-brand-active-border: transparent;
+    --vp-button-brand-active-text: var(--ebk-color-on-primary);
+    --vp-button-brand-active-bg: var(--ebk-copper-600);
+    --vp-button-alt-border: var(--ebk-color-hairline-strong);
+    --vp-button-alt-text: var(--ebk-color-text-primary);
+    --vp-button-alt-bg: var(--ebk-color-surface);
+    --vp-button-alt-hover-border: var(--ebk-color-copper-line);
+    --vp-button-alt-hover-text: var(--ebk-color-primary-text);
+    --vp-button-alt-hover-bg: var(--ebk-color-surface);
+    --vp-button-alt-active-border: var(--ebk-copper-500);
+    --vp-button-alt-active-text: var(--ebk-color-primary-text);
+    --vp-button-alt-active-bg: var(--ebk-color-selected-background);
+
+    --vp-nav-bg-color: var(--ebk-color-canvas);
+    --vp-nav-screen-bg-color: var(--ebk-color-canvas);
+    --vp-local-nav-bg-color: var(--ebk-color-canvas);
+    --vp-sidebar-bg-color: var(--ebk-color-canvas);
+
+    --vp-code-color: var(--ebk-color-primary-text);
+    --vp-code-bg: var(--ebk-color-surface-sunken);
+    --vp-code-block-bg: var(--ebk-color-surface-sunken);
+    --vp-code-block-divider-color: var(--ebk-color-hairline);
+    --vp-code-line-highlight-color: rgba(var(--ebk-copper-500-rgb), 0.1);
+    --vp-code-copy-code-bg: var(--ebk-color-surface);
+    --vp-code-copy-code-hover-bg: var(--ebk-color-surface);
+    --vp-code-copy-code-border-color: var(--ebk-color-hairline);
+    --vp-code-copy-code-hover-border-color: var(--ebk-color-copper-line);
+    --vp-code-tab-active-bar-color: var(--ebk-copper-500);
+
+    --vp-input-border-color: var(--ebk-color-hairline-strong);
+    --vp-input-bg-color: var(--ebk-color-surface-sunken);
+
+    --vp-local-search-bg: var(--ebk-color-surface-raised);
+    --vp-local-search-result-bg: var(--ebk-color-surface);
+    --vp-local-search-result-border: var(--ebk-color-hairline);
+    --vp-local-search-result-selected-bg: var(--ebk-color-selected-background);
+    --vp-local-search-result-selected-border: var(--ebk-copper-500);
+    --vp-local-search-highlight-bg: rgba(var(--ebk-copper-500-rgb), 0.24);
+    --vp-local-search-highlight-text: var(--ebk-color-text-primary);
+
+    --vp-badge-tip-text: var(--ebk-color-primary-text);
+    --vp-badge-tip-bg: var(--ebk-color-selected-background);
+
+    --ebk-docs-footer-background-color: var(--ebk-color-surface-sunken);
+}
+
+.dark {
+    --ebk-color-canvas: #0b0a09;
+    --ebk-color-surface: #161412;
+    --ebk-color-surface-raised: #1e1b18;
+    --ebk-color-surface-sunken: #100e0c;
+    --ebk-color-text-primary: #f4ebe1;
+    --ebk-color-text-secondary: #b9ada2;
+    --ebk-color-text-tertiary: #978b80;
+    --ebk-color-text-primary-rgb: 244, 235, 225;
+    --ebk-color-hairline: rgba(236, 226, 217, 0.12);
+    --ebk-color-hairline-strong: rgba(236, 226, 217, 0.22);
+    --ebk-color-copper-line: rgba(var(--ebk-copper-500-rgb), 0.55);
+    --ebk-color-selected-background: rgba(var(--ebk-copper-500-rgb), 0.16);
+    --ebk-color-primary-text: var(--ebk-copper-500);
+
+    --ebk-focus-ring-color: var(--ebk-copper-500);
+    --ebk-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.18), 0 3px 10px rgba(0, 0, 0, 0.14);
+    --ebk-shadow-md: 0 7px 24px rgba(0, 0, 0, 0.28);
+
+    --vp-c-default-soft: rgba(236, 226, 217, 0.08);
+
+    --vp-c-indigo-1: var(--ebk-copper-500);
+    --vp-c-indigo-2: var(--ebk-copper-300);
+    --vp-c-indigo-3: var(--ebk-copper-500);
+    --vp-c-indigo-soft: rgba(var(--ebk-copper-500-rgb), 0.16);
+    --vp-c-brand-1: var(--ebk-copper-500);
+    --vp-c-brand-2: var(--ebk-copper-300);
+    --vp-c-brand-3: var(--ebk-copper-500);
+    --vp-c-brand-soft: rgba(var(--ebk-copper-500-rgb), 0.16);
+
+    --vp-code-bg: rgba(236, 226, 217, 0.08);
+    /* inline code sits on a lighter well (table rows, tips): copper 300 keeps it well above 4.5:1 (#36) */
+    --vp-code-color: var(--ebk-copper-300);
+    --vp-code-copy-code-bg: var(--ebk-color-surface-raised);
+    --vp-code-copy-code-hover-bg: var(--ebk-color-surface-raised);
+    --vp-code-line-highlight-color: rgba(var(--ebk-copper-500-rgb), 0.16);
+
+    --vp-local-search-result-bg: var(--ebk-color-surface);
+    --vp-backdrop-bg-color: rgba(0, 0, 0, 0.7);
+}
+
+/* ------------------------------------------------------------------ */
+/* Canvas, grid and focus                                              */
+/* ------------------------------------------------------------------ */
+
+/* 24px grid at 3.5% on the page canvas only (never inside panels, tables or dialogs) */
+body {
+    background-color: var(--ebk-color-canvas);
+    background-image:
+        linear-gradient(to right, var(--ebk-color-grid-line) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--ebk-color-grid-line) 1px, transparent 1px);
+    background-size: var(--ebk-grid-size) var(--ebk-grid-size);
+}
+
+::selection {
+    background-color: rgba(var(--ebk-copper-500-rgb), 0.28);
+}
+
+/* Focus-visible: a 2px copper ring at 2px offset (§7) */
+:is(a, button, summary, [tabindex]:not([tabindex="-1"]), input, select, textarea, [role="button"]):focus-visible {
+    outline: var(--ebk-focus-outline);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.VPLocalSearchBox .search-input:focus-visible {
+    outline: none;
+}
+
+.VPLocalSearchBox .search-bar:focus-within {
+    border-color: var(--ebk-copper-500);
+    box-shadow: var(--ebk-glow);
+}
+
+.VPLocalSearchBox .result:focus-visible {
+    border-color: var(--ebk-copper-500);
+}
+
+/* ------------------------------------------------------------------ */
+/* Technical labels (D10): small, letter-spaced, uppercase for Latin  */
+/* ------------------------------------------------------------------ */
+
+.VPSidebarItem.level-0 > .item > .text,
+.VPSidebarItem.level-0 > .item > .link > .text,
+.VPDocAsideOutline .outline-title,
+.VPLocalNavOutlineDropdown .header .top-link,
+.VPDocFooter .pager-link .desc,
+.vp-doc div[class*='language-'] > span.lang,
+.vp-doc .custom-block .custom-block-title,
+.vp-doc table th,
+.ebk-technical-label {
+    font-size: var(--ebk-font-technical-size) !important;
+    font-weight: var(--ebk-font-technical-weight) !important;
+    letter-spacing: var(--ebk-font-technical-letter-spacing);
+}
+
+:lang(en) .VPSidebarItem.level-0 > .item > .text,
+:lang(en) .VPSidebarItem.level-0 > .item > .link > .text,
+:lang(en) .VPDocAsideOutline .outline-title,
+:lang(en) .VPDocFooter .pager-link .desc,
+.vp-doc div[class*='language-'] > span.lang,
+:lang(en) .vp-doc .custom-block .custom-block-title,
+:lang(en) .vp-doc table th,
+:lang(en) .ebk-technical-label,
+:lang(en) .VPFeatures .VPFeature .icon {
+    text-transform: uppercase;
+}
+
+/* ------------------------------------------------------------------ */
+/* Navigation                                                          */
+/* ------------------------------------------------------------------ */
+
+.VPNavBar .divider-line,
+.VPNavBar.has-sidebar .divider,
+.VPLocalNav {
+    border-color: var(--ebk-color-hairline) !important;
+}
+
+.VPNavBar:not(.home.top) .divider-line {
+    background-color: var(--ebk-color-hairline) !important;
+}
+
+.VPNavBar .title .VPNavBarTitle .title {
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+
+.VPNavBarMenuLink.active,
+.VPNavBarMenuGroup.active > .button {
+    color: var(--ebk-color-primary-text) !important;
+    box-shadow: inset 0 -2px 0 var(--ebk-copper-500);
+}
+
+.VPNavBarMenuLink,
+.VPNavBarMenuGroup > .button {
+    transition: color var(--ebk-motion-duration-sm) var(--ebk-motion-ease-standard) !important;
+}
+
+.VPMenu,
+.VPNavScreen {
+    border-color: var(--ebk-color-hairline) !important;
+}
+
+.VPMenu {
+    border-radius: var(--ebk-radius-control) !important;
+    box-shadow: var(--ebk-shadow-md) !important;
+}
+
+.VPMenuLink .link.active {
+    color: var(--ebk-color-primary-text) !important;
+    background-color: var(--ebk-color-selected-background);
+}
+
+.VPNavBarSearch .DocSearch-Button {
+    border: 1px solid var(--ebk-color-hairline-strong);
+    border-radius: var(--ebk-radius-control);
+    background-color: var(--ebk-color-surface-sunken);
+}
+
+.VPNavBarSearch .DocSearch-Button:hover {
+    border-color: var(--ebk-color-copper-line);
+}
+
+.VPNavBarSearch .DocSearch-Button .DocSearch-Button-Keys {
+    border-color: var(--ebk-color-hairline);
+}
+
+/* Sidebar: solid canvas with a hairline edge; active item = copper tint + leading edge */
+.VPSidebar {
+    border-inline-end: 1px solid var(--ebk-color-hairline);
+}
+
+.VPSidebar .group + .group {
+    border-top-color: var(--ebk-color-hairline) !important;
+}
+
+.VPSidebar .VPSidebarItem.level-0 > .item > .text,
+.VPSidebar .VPSidebarItem.level-0 > .item > .link > .text {
+    color: var(--ebk-color-text-secondary);
+}
+
+.VPSidebar .VPSidebarItem.level-1 > .item {
+    position: relative;
+    margin-inline: -10px;
+    padding-inline: 10px;
+    border-radius: var(--ebk-radius-control);
+}
+
+.VPSidebar .VPSidebarItem.level-1.is-link > .item:hover {
+    background-color: var(--vp-c-default-soft);
+}
+
+.VPSidebar .VPSidebarItem.level-1.is-active > .item {
+    background-color: var(--ebk-color-selected-background);
+}
+
+.VPSidebar .VPSidebarItem.level-1.is-active > .item::before {
+    content: '';
+    position: absolute;
+    inset-block: 6px;
+    inset-inline-start: 0;
+    width: 3px;
+    border-radius: 2px;
+    background-color: var(--ebk-copper-500);
+}
+
+.VPSidebar .VPSidebarItem.level-1.is-active > .item .link > .text {
+    color: var(--ebk-color-primary-text);
+    font-weight: 600;
+}
+
+/* Outline (on this page) */
+.VPDocAsideOutline .content {
+    border-inline-start-color: var(--ebk-color-hairline) !important;
+}
+
+.VPDocAsideOutline .outline-marker {
+    background-color: var(--ebk-copper-500) !important;
+    width: 2px !important;
+}
+
+.VPDocAsideOutline .outline-title {
+    color: var(--ebk-color-text-secondary);
+}
+
+/* ------------------------------------------------------------------ */
+/* Documentation content panel                                         */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 959px) {
+    /* no grid behind long-form text on narrow screens */
+    .VPContent.has-sidebar,
+    .VPDoc {
+        background-color: var(--ebk-color-canvas);
+    }
+}
+
+@media (min-width: 960px) {
+    .VPDoc .content-container {
+        position: relative;
+        padding: 36px 40px 40px;
+        border: 1px solid var(--ebk-color-hairline);
+        border-radius: var(--ebk-radius-panel);
+        background-color: var(--ebk-color-surface);
+        box-shadow: var(--ebk-shadow-sm);
+    }
+
+    .VPDoc.has-aside .content-container {
+        max-width: 768px;
+    }
+
+    /* copper start tick (D3) */
+    .VPDoc .content-container::before {
+        content: '';
+        position: absolute;
+        inset-block-start: 6px;
+        inset-inline-start: 6px;
+        width: 8px;
+        height: 8px;
+        border-block-start: 2px solid var(--ebk-color-copper-line);
+        border-inline-start: 2px solid var(--ebk-color-copper-line);
+        pointer-events: none;
+    }
+
+    .VPDoc {
+        padding-top: 40px !important;
+    }
+}
+
+.vp-doc h1 {
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.vp-doc h2 {
+    border-top-color: var(--ebk-color-hairline);
+    font-weight: 600;
+}
+
+.vp-doc h3,
+.vp-doc h4 {
+    font-weight: 600;
+}
+
+.vp-doc hr {
+    border-top-color: var(--ebk-color-hairline);
+}
+
+/* Links */
+.vp-doc a {
+    color: var(--ebk-color-primary-text);
+    text-decoration-color: var(--ebk-color-copper-line);
+    text-underline-offset: 3px;
+    transition: color var(--ebk-motion-duration-xs) var(--ebk-motion-ease-standard), text-decoration-color var(--ebk-motion-duration-xs) var(--ebk-motion-ease-standard);
+}
+
+.vp-doc a:hover {
+    color: var(--vp-c-brand-2);
+    text-decoration-color: currentColor;
+}
+
+.vp-doc a > code {
+    color: inherit;
+}
+
+/* Inline code */
+.vp-doc :not(pre) > code {
+    border: 1px solid var(--ebk-color-hairline);
+    border-radius: 4px;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Code blocks: sunken framed modules with a technical language label */
+.vp-doc div[class*='language-'] {
+    border: 1px solid var(--ebk-color-hairline);
+}
+
+@media (min-width: 640px) {
+    .vp-doc div[class*='language-'] {
+        border-radius: var(--ebk-radius-panel);
+    }
+}
+
+@media (max-width: 639px) {
+    .vp-doc div[class*='language-'] {
+        border-inline: 0;
+    }
+}
+
+.vp-doc div[class*='language-'] > span.lang {
+    top: 4px;
+    color: var(--ebk-color-text-secondary);
+}
+
+.vp-doc div[class*='language-'] > button.copy {
+    border-radius: var(--ebk-radius-control);
+}
+
+.vp-doc .vp-code-group .tabs {
+    border: 1px solid var(--ebk-color-hairline);
+    border-bottom: 0;
+    background-color: var(--ebk-color-surface-sunken);
+    box-shadow: inset 0 -1px var(--ebk-color-hairline);
+}
+
+@media (min-width: 640px) {
+    .vp-doc .vp-code-group .tabs {
+        border-radius: var(--ebk-radius-panel) var(--ebk-radius-panel) 0 0;
+    }
+
+    .vp-doc .vp-code-group div[class*='language-'] {
+        border-radius: 0 0 var(--ebk-radius-panel) var(--ebk-radius-panel);
+    }
+}
+
+/* Tables: hairline grid, sunken header strip, tabular figures */
+.vp-doc table {
+    font-variant-numeric: tabular-nums;
+}
+
+.vp-doc tr {
+    border-top-color: var(--ebk-color-hairline);
+    background-color: transparent;
+}
+
+.vp-doc tr:nth-child(2n) {
+    background-color: rgba(var(--ebk-color-text-primary-rgb), 0.02);
+}
+
+.vp-doc th,
+.vp-doc td {
+    border-color: var(--ebk-color-hairline);
+}
+
+.vp-doc th {
+    background-color: var(--ebk-color-surface-sunken);
+    color: var(--ebk-color-text-secondary);
+}
+
+/* Callouts: framed panels with a semantic leading edge; the title names the type (not colour alone) */
+.vp-doc .custom-block {
+    --ebk-callout-edge: var(--ebk-copper-500);
+    --ebk-callout-tint: rgba(var(--ebk-copper-500-rgb), 0.06);
+
+    position: relative;
+    padding: 12px 16px 4px;
+    border: 1px solid var(--ebk-color-hairline);
+    border-inline-start: 3px solid var(--ebk-callout-edge);
+    border-radius: var(--ebk-radius-panel);
+    background-color: var(--ebk-callout-tint);
+    color: var(--ebk-color-text-primary);
+}
+
+.vp-doc .custom-block.note,
+.vp-doc .custom-block.info {
+    --ebk-callout-edge: var(--ebk-color-info);
+    --ebk-callout-tint: rgba(33, 150, 243, 0.06);
+}
+
+.vp-doc .custom-block.tip {
+    --ebk-callout-edge: var(--ebk-copper-500);
+    --ebk-callout-tint: rgba(var(--ebk-copper-500-rgb), 0.07);
+}
+
+.vp-doc .custom-block.important {
+    --ebk-callout-edge: var(--ebk-copper-700);
+    --ebk-callout-tint: rgba(var(--ebk-copper-500-rgb), 0.1);
+}
+
+.vp-doc .custom-block.warning {
+    --ebk-callout-edge: var(--ebk-color-warning);
+    --ebk-callout-tint: rgba(255, 149, 0, 0.07);
+}
+
+.vp-doc .custom-block.danger,
+.vp-doc .custom-block.caution {
+    --ebk-callout-edge: var(--ebk-color-error);
+    --ebk-callout-tint: rgba(255, 59, 48, 0.06);
+}
+
+.vp-doc .custom-block.details {
+    --ebk-callout-edge: var(--ebk-color-hairline-strong);
+    --ebk-callout-tint: var(--ebk-color-surface-sunken);
+}
+
+.dark .vp-doc .custom-block.important {
+    --ebk-callout-edge: var(--ebk-copper-300);
+}
+
+.vp-doc .custom-block .custom-block-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+    color: var(--ebk-color-text-primary);
+}
+
+.vp-doc .custom-block:not(.details) .custom-block-title::before {
+    content: '';
+    flex: none;
+    width: 6px;
+    height: 6px;
+    border-radius: 1px;
+    background-color: var(--ebk-callout-edge);
+}
+
+.vp-doc .custom-block a {
+    color: var(--ebk-color-primary-text);
+}
+
+.vp-doc .custom-block code {
+    background-color: var(--vp-code-bg);
+}
+
+.vp-doc .custom-block div[class*='language-'] {
+    background-color: var(--ebk-color-surface-sunken);
+}
+
+/* Images in docs */
+.vp-doc img {
+    border-radius: var(--ebk-radius-control);
+}
+
+.vp-doc p > img,
+.vp-doc p > a > img {
+    border: 1px solid var(--ebk-color-hairline);
+}
+
+/* Doc footer */
+.VPDocFooter .pager-link {
+    border-color: var(--ebk-color-hairline) !important;
+    border-radius: var(--ebk-radius-panel) !important;
+    background-color: var(--ebk-color-surface);
+    transition: border-color var(--ebk-motion-duration-sm) var(--ebk-motion-ease-standard) !important;
+}
+
+.VPDocFooter .pager-link:hover {
+    border-color: var(--ebk-color-copper-line) !important;
+}
+
+.VPDocFooter .pager-link .desc {
+    color: var(--ebk-color-text-secondary) !important;
+}
+
+.VPDocFooter .edit-info,
+.VPDocFooter .prev-next {
+    border-top-color: var(--ebk-color-hairline) !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* Search dialog: raised surface, 16px radius, dialog brackets (D3)    */
+/* ------------------------------------------------------------------ */
+
+.VPLocalSearchBox .shell {
+    border: 1px solid var(--ebk-color-hairline);
+    border-radius: var(--ebk-radius-dialog) !important;
+    box-shadow: var(--ebk-shadow-md);
+}
+
+.VPLocalSearchBox .shell::before,
+.VPLocalSearchBox .shell::after {
+    content: '';
+    position: absolute;
+    width: 26px;
+    height: 26px;
+    border: 0 solid var(--ebk-color-copper-line);
+    pointer-events: none;
+}
+
+.VPLocalSearchBox .shell::before {
+    inset-block-start: -1px;
+    inset-inline-start: -1px;
+    border-block-start-width: 1px;
+    border-inline-start-width: 1px;
+    border-start-start-radius: var(--ebk-radius-dialog);
+}
+
+.VPLocalSearchBox .shell::after {
+    inset-block-end: -1px;
+    inset-inline-end: -1px;
+    border-block-end-width: 1px;
+    border-inline-end-width: 1px;
+    border-end-end-radius: var(--ebk-radius-dialog);
+}
+
+.VPLocalSearchBox .search-bar {
+    border-color: var(--ebk-color-hairline-strong) !important;
+    border-radius: var(--ebk-radius-control) !important;
+    background-color: var(--ebk-color-surface-sunken);
+}
+
+.VPLocalSearchBox .result {
+    border-width: 1px !important;
+    border-radius: var(--ebk-radius-control) !important;
+}
+
+.VPLocalSearchBox .result.selected {
+    box-shadow: inset 3px 0 0 var(--ebk-copper-500);
+}
+
+/* ------------------------------------------------------------------ */
+/* Home                                                                */
+/* ------------------------------------------------------------------ */
+
+.VPHome {
+    margin-bottom: 0 !important;
+}
+
+.VPHero .name {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.VPHero .text {
+    font-weight: 600;
+    letter-spacing: -0.015em;
+}
+
+.VPHero .tagline {
+    color: var(--ebk-color-text-secondary);
+}
+
+.VPHero .VPButton {
+    border-radius: var(--ebk-radius-control) !important;
+    font-weight: 600 !important;
+}
+
+.VPHero .VPButton.brand:hover {
+    box-shadow: var(--ebk-glow);
+}
+
+/* Feature modules: panels with a technical header strip and start tick */
+.VPFeatures .VPFeature {
+    position: relative;
+    border: 1px solid var(--ebk-color-hairline) !important;
+    border-radius: var(--ebk-radius-panel) !important;
+    background-color: var(--ebk-color-surface) !important;
+    box-shadow: var(--ebk-shadow-sm);
+}
+
+.VPFeatures .VPFeature::before {
+    content: '';
+    position: absolute;
+    z-index: 1;
+    inset-block-start: 6px;
+    inset-inline-start: 6px;
+    width: 8px;
+    height: 8px;
+    border-block-start: 2px solid var(--ebk-color-copper-line);
+    border-inline-start: 2px solid var(--ebk-color-copper-line);
+    pointer-events: none;
+}
+
+.VPFeatures .VPFeature .box {
+    padding: 0 0 20px !important;
+}
+
+.VPFeatures .VPFeature .icon {
+    justify-content: flex-start !important;
+    width: auto !important;
+    height: var(--ebk-header-strip-height) !important;
+    margin: 0 0 16px !important;
+    padding-inline: 20px;
+    border-block-end: 1px solid var(--ebk-color-hairline);
+    border-radius: 0 !important;
+    background-color: transparent !important;
+    color: var(--ebk-color-primary-text);
+    font-size: var(--ebk-font-technical-size) !important;
+    font-weight: var(--ebk-font-technical-weight);
+    letter-spacing: var(--ebk-font-technical-letter-spacing);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.VPFeatures .VPFeature .title,
+.VPFeatures .VPFeature .details {
+    padding-inline: 20px;
+}
+
+.VPFeatures .VPFeature .details {
+    color: var(--ebk-color-text-secondary);
+    font-weight: 400 !important;
+}
+
+/* Footer */
+.VPFooter {
+    border-top: 1px solid var(--ebk-color-hairline) !important;
+    background-color: var(--ebk-docs-footer-background-color) !important;
+}
+
+.VPFooter a {
+    color: var(--ebk-color-primary-text);
+    text-underline-offset: 3px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Reduced motion, forced colors and print                             */
+/* ------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+@media (forced-colors: active) {
+    body {
+        background-image: none;
+    }
+
+    .VPDoc .content-container::before,
+    .VPFeatures .VPFeature::before,
+    .VPLocalSearchBox .shell::before,
+    .VPLocalSearchBox .shell::after,
+    .VPSidebar .VPSidebarItem.level-1.is-active > .item::before,
+    .vp-doc .custom-block .custom-block-title::before {
+        display: none;
+    }
+
+    .VPDoc .content-container,
+    .VPFeatures .VPFeature,
+    .VPLocalSearchBox .shell {
+        box-shadow: none !important;
+    }
+
+    :is(a, button, summary, [tabindex]:not([tabindex="-1"]), input, select, textarea, [role="button"]):focus-visible {
+        outline-color: Highlight;
+    }
+}
+
+/* Code highlighting (#36): a few github-light / github-dark token colors reach only 3-4:1 on the sunken code well,
+   these get the nearest shade that passes WCAG AA (4.5:1). The inline --shiki-* values are overridden with !important. */
+html:not(.dark) .vp-doc [class*='language-'] span[style*='--shiki-light:#D73A49'] { --shiki-light: #c23442 !important; }
+html:not(.dark) .vp-doc [class*='language-'] span[style*='--shiki-light:#E36209'] { --shiki-light: #af4b07 !important; }
+html:not(.dark) .vp-doc [class*='language-'] span[style*='--shiki-light:#22863A'] { --shiki-light: #1f7934 !important; }
+html:not(.dark) .vp-doc [class*='language-'] span[style*='--shiki-light:#6A737D'] { --shiki-light: #626a73 !important; }
+html.dark .vp-doc [class*='language-'] span[style*='--shiki-dark:#6A737D'] { --shiki-dark: #7f878f !important; }
+
+@media print {
+    body {
+        background-image: none;
+    }
+
+    .VPDoc .content-container {
+        border: 0;
+        box-shadow: none;
+    }
+}

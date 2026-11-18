@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { defineStore } from 'pinia';
 
 import {
@@ -37,6 +37,7 @@ import {
     clearSettings
 } from '@/lib/settings.ts';
 
+import { setMotionPreference as applyMotionPreference } from '@/lib/motion.ts';
 import logger from '@/lib/logger.ts';
 import services from '@/lib/services.ts';
 
@@ -59,6 +60,9 @@ export const useSettingsStore = defineStore('settings', () => {
     });
 
     const accountCategoryDisplayOrders = computed<Record<number, number>>(() => AccountCategory.allDisplayOrders(appSettings.value.accountCategoryOrders));
+
+    // keep the motion state (root classes, chart / framework animations) in sync with the setting, including resets
+    watch(() => appSettings.value.motionPreference, value => applyMotionPreference(value), { immediate: true });
 
     function updateApplicationSettingsValueAndAppSettingsFromCloudSetting(key: string, value: string | number | boolean | Record<string, boolean>): void {
         const keyItems = key.split('.');
@@ -197,6 +201,11 @@ export const useSettingsStore = defineStore('settings', () => {
         appSettings.value.animate = value;
     }
 
+    function setMotionPreference(value: string): void {
+        updateApplicationSettingsValue('motionPreference', value);
+        appSettings.value.motionPreference = value;
+    }
+
     // Application Lock
     function setEnableApplicationLock(value: boolean): void {
         updateApplicationSettingsValue('applicationLock', value);
@@ -287,6 +296,12 @@ export const useSettingsStore = defineStore('settings', () => {
         updateApplicationSettingsValue('showTagInTransactionListPage', value);
         appSettings.value.showTagInTransactionListPage = value;
         updateUserApplicationCloudSettingValue('showTagInTransactionListPage', value);
+    }
+
+    function setShowPictureIndicatorInTransactionListPage(value: boolean): void {
+        updateApplicationSettingsValue('showPictureIndicatorInTransactionListPage', value);
+        appSettings.value.showPictureIndicatorInTransactionListPage = value;
+        updateUserApplicationCloudSettingValue('showPictureIndicatorInTransactionListPage', value);
     }
 
     function setDefaultKeywordMatchModeInTransactionListPage(value: number): void {
@@ -399,6 +414,12 @@ export const useSettingsStore = defineStore('settings', () => {
         updateUserApplicationCloudSettingValue('hideCategoriesWithoutAccounts', value);
     }
 
+    function setCollapseSubAccountsByDefault(value: boolean): void {
+        updateApplicationSettingsValue('collapseSubAccountsByDefault', value);
+        appSettings.value.collapseSubAccountsByDefault = value;
+        updateUserApplicationCloudSettingValue('collapseSubAccountsByDefault', value);
+    }
+
     function setDefaultCreditCardAmountDisplayTypeInMobile(value: number): void {
         updateApplicationSettingsValue('defaultCreditCardAmountDisplayTypeInMobile', value);
         appSettings.value.defaultCreditCardAmountDisplayTypeInMobile = value;
@@ -429,6 +450,12 @@ export const useSettingsStore = defineStore('settings', () => {
         updateApplicationSettingsValue('mapCacheExpiration', value);
         appSettings.value.mapCacheExpiration = value;
         updateUserApplicationCloudSettingValue('mapCacheExpiration', value);
+    }
+
+    function setTransactionPictureCacheExpiration(value: number): void {
+        updateApplicationSettingsValue('transactionPictureCacheExpiration', value);
+        appSettings.value.transactionPictureCacheExpiration = value;
+        updateUserApplicationCloudSettingValue('transactionPictureCacheExpiration', value);
     }
 
     function setExchangeRatesDataCacheExpiration(value: number): void {
@@ -608,6 +635,17 @@ export const useSettingsStore = defineStore('settings', () => {
         }
     }
 
+    function getLocaleDefaultSettingsSnapshot(): LocaleDefaultSettings {
+        const snapshot: LocaleDefaultSettings = {
+            currency: localeDefaultSettings.value.currency,
+            firstDayOfWeek: localeDefaultSettings.value.firstDayOfWeek,
+            preferredExpenseAmountColor: localeDefaultSettings.value.preferredExpenseAmountColor,
+            preferredIncomeAmountColor: localeDefaultSettings.value.preferredIncomeAmountColor
+        };
+
+        return snapshot;
+    }
+
     function updateLocalizedDefaultSettings(newLocaleDefaultSettings: LocaleDefaultSettings | null) {
         if (!newLocaleDefaultSettings) {
             return;
@@ -615,6 +653,8 @@ export const useSettingsStore = defineStore('settings', () => {
 
         localeDefaultSettings.value.currency = newLocaleDefaultSettings.currency;
         localeDefaultSettings.value.firstDayOfWeek = newLocaleDefaultSettings.firstDayOfWeek;
+        localeDefaultSettings.value.preferredExpenseAmountColor = newLocaleDefaultSettings.preferredExpenseAmountColor;
+        localeDefaultSettings.value.preferredIncomeAmountColor = newLocaleDefaultSettings.preferredIncomeAmountColor;
     }
 
     return {
@@ -637,6 +677,7 @@ export const useSettingsStore = defineStore('settings', () => {
         setChartColors,
         setEnableSwipeBack,
         setEnableAnimate,
+        setMotionPreference,
         // -- Application Lock
         setEnableApplicationLock,
         setEnableApplicationLockWebAuthn,
@@ -656,6 +697,7 @@ export const useSettingsStore = defineStore('settings', () => {
         setShowTotalAmountInTransactionListPage,
         setTotalAmountTypeInTransactionListPage,
         setShowTagInTransactionListPage,
+        setShowPictureIndicatorInTransactionListPage,
         setDefaultKeywordMatchModeInTransactionListPage,
         // -- Transaction Edit Page
         setQuickSaveButtonStyleInMobileTransactionListPage,
@@ -678,6 +720,7 @@ export const useSettingsStore = defineStore('settings', () => {
         // -- Account List Page
         setTotalAmountExcludeAccountIds,
         setHideCategoriesWithoutAccounts,
+        setCollapseSubAccountsByDefault,
         setDefaultCreditCardAmountDisplayTypeInMobile,
         setReconciliationStatementButtonDefaultDateRangeTypeInDesktop,
         setReconciliationStatementPageDefaultDateRangeTypeInMobile,
@@ -685,6 +728,7 @@ export const useSettingsStore = defineStore('settings', () => {
         setCurrencySortByInExchangeRatesPage,
         // -- Browser Cache Management
         setMapCacheExpiration,
+        setTransactionPictureCacheExpiration,
         setExchangeRatesDataCacheExpiration,
         // -- Statistics Settings
         setStatisticsDefaultChartDataType,
@@ -703,6 +747,7 @@ export const useSettingsStore = defineStore('settings', () => {
         createApplicationCloudSettings,
         setApplicationSettingsFromCloudSettings,
         updateApplicationSyncSettingKeys,
+        getLocaleDefaultSettingsSnapshot,
         updateLocalizedDefaultSettings
     };
 });

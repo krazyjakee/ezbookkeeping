@@ -60,7 +60,7 @@ func InitializeDataStore(config *settings.Config) error {
 	return nil
 }
 
-func initializeDatabase(dbConfig *settings.DatabaseConfig) (*Database, error) {
+func initializeDatabase(dbConfig *settings.DatabaseConfig) (*XOrmDatabase, error) {
 	var connStr string
 	var err error
 
@@ -103,13 +103,13 @@ func initializeDatabase(dbConfig *settings.DatabaseConfig) (*Database, error) {
 	engineGroup.SetMaxOpenConns(int(dbConfig.MaxOpenConnection))
 	engineGroup.SetConnMaxLifetime(time.Duration(dbConfig.ConnectionMaxLifeTime) * time.Second)
 
-	return &Database{
+	return &XOrmDatabase{
 		databaseType: dbConfig.DatabaseType,
 		engineGroup:  engineGroup,
 	}, nil
 }
 
-func setDatabaseLogger(database *Database, config *settings.Config) {
+func setDatabaseLogger(database *XOrmDatabase, config *settings.Config) {
 	if config.EnableQueryLog {
 		database.engineGroup.SetLogger(NewXOrmLoggerAdapter(config.EnableQueryLog, config.LogLevel))
 		database.engineGroup.ShowSQL(true)
@@ -138,8 +138,8 @@ func getPostgresConnectionString(dbConfig *settings.DatabaseConfig) (string, err
 			return "", errs.ErrDatabaseHostInvalid
 		}
 
-		return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
-			url.QueryEscape(dbConfig.DatabaseUser), url.QueryEscape(dbConfig.DatabasePassword), host, port, dbConfig.DatabaseName, dbConfig.DatabaseSSLMode), nil
+		return fmt.Sprintf("postgres://%s@%s/%s?sslmode=%s",
+			url.UserPassword(dbConfig.DatabaseUser, dbConfig.DatabasePassword), net.JoinHostPort(host, port), dbConfig.DatabaseName, dbConfig.DatabaseSSLMode), nil
 	}
 }
 

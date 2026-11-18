@@ -1,6 +1,11 @@
 package api
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"io"
+	"mime/multipart"
+
 	"github.com/mayswind/ezbookkeeping/pkg/core"
 	"github.com/mayswind/ezbookkeeping/pkg/duplicatechecker"
 	"github.com/mayswind/ezbookkeeping/pkg/errs"
@@ -16,6 +21,7 @@ type TransactionPicturesApi struct {
 	ApiUsingConfig
 	ApiUsingDuplicateChecker
 	users    *services.UserService
+	tokens   *services.TokenService
 	pictures *services.TransactionPictureService
 }
 
@@ -29,9 +35,10 @@ var (
 			ApiUsingConfig: ApiUsingConfig{
 				container: settings.Container,
 			},
-			container: duplicatechecker.Container,
+			duplicateChecker: duplicatechecker.Container,
 		},
 		users:    services.Users,
+		tokens:   services.Tokens,
 		pictures: services.TransactionPictures,
 	}
 )
@@ -65,9 +72,9 @@ func (a *TransactionPicturesApi) TransactionPictureUploadHandler(c *core.WebCont
 
 	fileExtension := utils.GetFileNameExtension(pictureFiles[0].Filename)
 
-	if utils.GetImageContentType(fileExtension) == "" {
+	if utils.GetTransactionAttachmentContentType(fileExtension) == "" {
 		log.Warnf(c, "[transaction_pictures.TransactionPictureUploadHandler] the file extension \"%s\" of transaction picture in request is not supported for user \"uid:%d\"", fileExtension, uid)
-		return nil, errs.ErrImageTypeNotSupported
+		return nil, errs.ErrTransactionPictureTypeNotSupported
 	}
 
 	pictureFile, err := pictureFiles[0].Open()
@@ -77,7 +84,26 @@ func (a *TransactionPicturesApi) TransactionPictureUploadHandler(c *core.WebCont
 		return nil, errs.ErrOperationFailed
 	}
 
+	err = checkTransactionPictureFileContent(pictureFile, fileExtension)
+
+	if err != nil {
+		pictureFile.Close()
+		log.Warnf(c, "[transaction_pictures.TransactionPictureUploadHandler] the content of transaction picture in request does not match the file extension \"%s\" for user \"uid:%d\", because %s", fileExtension, uid, err.Error())
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+
+	fileSha256, fileSize, err := computeTransactionPictureFileChecksum(pictureFile)
+
+	if err != nil {
+		pictureFile.Close()
+		log.Errorf(c, "[transaction_pictures.TransactionPictureUploadHandler] failed to compute checksum of transaction picture file for user \"uid:%d\", because %s", uid, err.Error())
+		return nil, errs.ErrOperationFailed
+	}
+
 	pictureInfo := a.createNewPictureInfoModel(uid, fileExtension, c.ClientIP())
+	pictureInfo.OriginalFileName = models.SanitizeTransactionPictureOriginalFileName(pictureFiles[0].Filename)
+	pictureInfo.FileSize = fileSize
+	pictureInfo.FileSha256 = fileSha256
 
 	clientSessionIds := form.Value["clientSessionId"]
 	clientSessionId := ""
@@ -101,7 +127,14 @@ func (a *TransactionPicturesApi) TransactionPictureUploadHandler(c *core.WebCont
 					return nil, errs.Or(err, errs.ErrOperationFailed)
 				}
 
-				pictureInfoResp := a.GetTransactionPictureInfoResponse(pictureInfo)
+				pictureToken, err := a.GetTransactionPictureToken(c, uid)
+
+				if err != nil {
+					log.Errorf(c, "[transaction_pictures.TransactionPictureUploadHandler] failed to get transaction picture token for user \"uid:%d\", because %s", uid, err.Error())
+					return nil, errs.Or(err, errs.ErrTokenGenerating)
+				}
+
+				pictureInfoResp := a.GetTransactionPictureInfoResponse(pictureInfo, pictureToken)
 
 				return pictureInfoResp, nil
 			}
@@ -116,7 +149,15 @@ func (a *TransactionPicturesApi) TransactionPictureUploadHandler(c *core.WebCont
 	}
 
 	a.SetSubmissionRemarkIfEnable(duplicatechecker.DUPLICATE_CHECKER_TYPE_NEW_PICTURE, uid, clientSessionId, utils.Int64ToString(pictureInfo.PictureId))
-	pictureInfoResp := a.GetTransactionPictureInfoResponse(pictureInfo)
+
+	pictureToken, err := a.GetTransactionPictureToken(c, uid)
+
+	if err != nil {
+		log.Errorf(c, "[transaction_pictures.TransactionPictureUploadHandler] failed to get transaction picture token for user \"uid:%d\", because %s", uid, err.Error())
+		return nil, errs.Or(err, errs.ErrTokenGenerating)
+	}
+
+	pictureInfoResp := a.GetTransactionPictureInfoResponse(pictureInfo, pictureToken)
 
 	return pictureInfoResp, nil
 }
@@ -125,10 +166,10 @@ func (a *TransactionPicturesApi) TransactionPictureUploadHandler(c *core.WebCont
 func (a *TransactionPicturesApi) TransactionPictureGetHandler(c *core.WebContext) ([]byte, string, *errs.Error) {
 	fileName := c.Param("fileName")
 	fileExtension := utils.GetFileNameExtension(fileName)
-	contentType := utils.GetImageContentType(fileExtension)
+	contentType := utils.GetTransactionAttachmentContentType(fileExtension)
 
 	if contentType == "" {
-		return nil, "", errs.ErrImageTypeNotSupported
+		return nil, "", errs.ErrTransactionPictureTypeNotSupported
 	}
 
 	fileBaseName := utils.GetFileNameWithoutExtension(fileName)
@@ -148,6 +189,8 @@ func (a *TransactionPicturesApi) TransactionPictureGetHandler(c *core.WebContext
 
 		return nil, "", errs.Or(err, errs.ErrOperationFailed)
 	}
+
+	setTransactionPictureResponseHeaders(c, pictureId, fileExtension, c.Query("download") == "true")
 
 	return pictureData, contentType, nil
 }
@@ -173,6 +216,28 @@ func (a *TransactionPicturesApi) TransactionPictureRemoveUnusedHandler(c *core.W
 	return true, nil
 }
 
+func (a *TransactionPicturesApi) GetTransactionPictureToken(c *core.WebContext, uid int64) (string, error) {
+	claims := c.GetTokenClaims()
+
+	if claims == nil {
+		log.Warnf(c, "[transaction_pictures.GetTransactionPictureToken] token is invalid, because claims is nil or token type is not normal")
+		return "", errs.ErrInvalidToken
+	}
+
+	if claims.Type != core.USER_TOKEN_TYPE_NORMAL {
+		return "", nil
+	}
+
+	pictureToken, err := a.tokens.DeriveTransactionPictureToken(c, claims, c.GetTokenRecord())
+
+	if err != nil {
+		log.Errorf(c, "[transaction_pictures.GetTransactionPictureToken] failed to derive transaction picture token for user \"uid:%d\", because %s", uid, err.Error())
+		return "", errs.Or(err, errs.ErrTokenGenerating)
+	}
+
+	return pictureToken, nil
+}
+
 func (a *TransactionPicturesApi) createNewPictureInfoModel(uid int64, fileExtension string, clientIp string) *models.TransactionPictureInfo {
 	return &models.TransactionPictureInfo{
 		Uid:              uid,
@@ -180,4 +245,69 @@ func (a *TransactionPicturesApi) createNewPictureInfoModel(uid int64, fileExtens
 		PictureExtension: fileExtension,
 		CreatedIp:        clientIp,
 	}
+}
+
+// checkTransactionPictureFileContent checks whether the beginning of the uploaded file matches the magic bytes of the file extension, and rewinds the file to the beginning
+func checkTransactionPictureFileContent(pictureFile multipart.File, fileExtension string) error {
+	if utils.GetTransactionAttachmentContentType(fileExtension) == "" {
+		return errs.ErrTransactionPictureTypeNotSupported
+	}
+
+	headerLength := utils.GetTransactionAttachmentMagicBytesLength(fileExtension)
+
+	if headerLength < 1 {
+		return nil
+	}
+
+	fileHeader := make([]byte, headerLength)
+	readLength, err := io.ReadFull(pictureFile, fileHeader)
+
+	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
+		return err
+	}
+
+	if !utils.IsTransactionAttachmentContentValid(fileExtension, fileHeader[:readLength]) {
+		return errs.ErrTransactionPictureContentInvalid
+	}
+
+	_, err = pictureFile.Seek(0, io.SeekStart)
+
+	return err
+}
+
+// computeTransactionPictureFileChecksum returns the hex encoded SHA-256 checksum and the size of the uploaded file, and rewinds the file to the beginning
+func computeTransactionPictureFileChecksum(pictureFile multipart.File) (string, int64, error) {
+	hash := sha256.New()
+	size, err := io.Copy(hash, pictureFile)
+
+	if err != nil {
+		return "", 0, err
+	}
+
+	_, err = pictureFile.Seek(0, io.SeekStart)
+
+	if err != nil {
+		return "", 0, err
+	}
+
+	return hex.EncodeToString(hash.Sum(nil)), size, nil
+}
+
+// setTransactionPictureResponseHeaders sets the security related response headers for the transaction picture or document
+func setTransactionPictureResponseHeaders(c *core.WebContext, pictureId int64, fileExtension string, download bool) {
+	c.Header("X-Content-Type-Options", "nosniff")
+
+	if !utils.IsPdfFileExtension(fileExtension) {
+		return
+	}
+
+	dispositionType := "inline"
+
+	if download {
+		dispositionType = "attachment"
+	}
+
+	// pdf documents can carry active content, so restrict everything except the browser built-in pdf viewer and disallow embedding into other pages
+	c.Header("Content-Disposition", dispositionType+"; filename=\""+utils.Int64ToString(pictureId)+"."+utils.PdfFileExtension+"\"")
+	c.Header("Content-Security-Policy", "default-src 'none'; object-src 'self'; img-src 'self' data: blob:; style-src 'unsafe-inline'; frame-ancestors 'none'; form-action 'none'; base-uri 'none'")
 }

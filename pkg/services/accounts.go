@@ -5,8 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"xorm.io/xorm"
-
 	"github.com/mayswind/ezbookkeeping/pkg/core"
 	"github.com/mayswind/ezbookkeeping/pkg/datastore"
 	"github.com/mayswind/ezbookkeeping/pkg/errs"
@@ -299,7 +297,7 @@ func (s *AccountService) CreateAccounts(c core.Context, mainAccount *models.Acco
 
 	userDataDb := s.UserDataDB(mainAccount.Uid)
 
-	return userDataDb.DoTransaction(c, func(sess *xorm.Session) error {
+	return userDataDb.DoTransaction(c, func(sess datastore.DatabaseSession) error {
 		for i := 0; i < len(allAccounts); i++ {
 			account := allAccounts[i]
 			_, err := sess.Insert(account)
@@ -441,8 +439,7 @@ func (s *AccountService) ModifyAccounts(c core.Context, mainAccount *models.Acco
 
 	userDataDb := s.UserDataDB(mainAccount.Uid)
 
-	return userDataDb.DoTransaction(c, func(sess *xorm.Session) error {
-		// update accounts
+	return userDataDb.DoTransaction(c, func(sess datastore.DatabaseSession) error {
 		for i := 0; i < len(updateAccounts); i++ {
 			account := updateAccounts[i]
 			updateColumns := []string{"name", "display_order", "category", "icon", "icon_type", "color", "comment", "extend", "hidden", "updated_unix_time"}
@@ -460,7 +457,6 @@ func (s *AccountService) ModifyAccounts(c core.Context, mainAccount *models.Acco
 			}
 		}
 
-		// add new sub accounts
 		for i := 0; i < len(addSubAccounts); i++ {
 			account := addSubAccounts[i]
 			_, err := sess.Insert(account)
@@ -470,7 +466,6 @@ func (s *AccountService) ModifyAccounts(c core.Context, mainAccount *models.Acco
 			}
 		}
 
-		// add init transaction for new sub accounts
 		for i := 0; i < len(addInitTransactions); i++ {
 			transaction := addInitTransactions[i]
 
@@ -526,7 +521,6 @@ func (s *AccountService) ModifyAccounts(c core.Context, mainAccount *models.Acco
 			}
 		}
 
-		// remove sub accounts
 		if len(removeSubAccountIds) > 0 {
 			subAccountsCount, err := sess.Where("uid=? AND deleted=? AND parent_account_id=?", mainAccount.Uid, false, mainAccount.AccountId).Count(&models.Account{})
 
@@ -606,7 +600,7 @@ func (s *AccountService) UpdateAccountExtend(c core.Context, uid int64, account 
 
 	account.UpdatedUnixTime = time.Now().Unix()
 
-	return s.UserDataDB(uid).DoTransaction(c, func(sess *xorm.Session) error {
+	return s.UserDataDB(uid).DoTransaction(c, func(sess datastore.DatabaseSession) error {
 		updatedRows, err := sess.ID(account.AccountId).Cols("extend", "updated_unix_time").Where("uid=? AND deleted=?", uid, false).Update(account)
 
 		if err != nil {
@@ -632,7 +626,7 @@ func (s *AccountService) HideAccount(c core.Context, uid int64, ids []int64, hid
 		UpdatedUnixTime: now,
 	}
 
-	return s.UserDataDB(uid).DoTransaction(c, func(sess *xorm.Session) error {
+	return s.UserDataDB(uid).DoTransaction(c, func(sess datastore.DatabaseSession) error {
 		updatedRows, err := sess.Cols("hidden", "updated_unix_time").Where("uid=? AND deleted=?", uid, false).In("account_id", ids).Update(updateModel)
 
 		if err != nil {
@@ -655,7 +649,7 @@ func (s *AccountService) ModifyAccountDisplayOrders(c core.Context, uid int64, a
 		accounts[i].UpdatedUnixTime = time.Now().Unix()
 	}
 
-	return s.UserDataDB(uid).DoTransaction(c, func(sess *xorm.Session) error {
+	return s.UserDataDB(uid).DoTransaction(c, func(sess datastore.DatabaseSession) error {
 		for i := 0; i < len(accounts); i++ {
 			account := accounts[i]
 			updatedRows, err := sess.ID(account.AccountId).Cols("display_order", "updated_unix_time").Where("uid=? AND deleted=?", uid, false).Update(account)
@@ -685,7 +679,7 @@ func (s *AccountService) DeleteAccount(c core.Context, uid int64, accountId int6
 		DeletedUnixTime: now,
 	}
 
-	return s.UserDataDB(uid).DoTransaction(c, func(sess *xorm.Session) error {
+	return s.UserDataDB(uid).DoTransaction(c, func(sess datastore.DatabaseSession) error {
 		var accountAndSubAccounts []*models.Account
 		err := sess.Where("uid=? AND deleted=? AND ((account_id=? AND parent_account_id=?) OR parent_account_id=?)", uid, false, accountId, models.LevelOneAccountParentId, accountId).Find(&accountAndSubAccounts)
 
@@ -803,7 +797,7 @@ func (s *AccountService) DeleteSubAccount(c core.Context, uid int64, accountId i
 		DeletedUnixTime: now,
 	}
 
-	return s.UserDataDB(uid).DoTransaction(c, func(sess *xorm.Session) error {
+	return s.UserDataDB(uid).DoTransaction(c, func(sess datastore.DatabaseSession) error {
 		account := &models.Account{}
 		has, err := sess.Cols("account_id", "uid", "deleted", "parent_account_id").Where("uid=? AND deleted=? AND account_id=? AND parent_account_id<>?", uid, false, accountId, models.LevelOneAccountParentId).Limit(1).Get(account)
 
@@ -956,9 +950,7 @@ func (s *AccountService) GetAccountOrSubAccountIds(c core.Context, accountIds st
 				accountIdsMap[subAccount.ParentAccountId] = 1
 			}
 
-			if _, exists := accountIdsMap[subAccount.AccountId]; exists {
-				delete(accountIdsMap, subAccount.AccountId)
-			}
+			delete(accountIdsMap, subAccount.AccountId)
 
 			allAccountIds = append(allAccountIds, subAccount.AccountId)
 		}

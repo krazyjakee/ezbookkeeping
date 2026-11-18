@@ -1,5 +1,5 @@
 <template>
-    <v-dialog width="1000" :persistent="isAccountModified" v-model="showState">
+    <v-dialog width="1000" :persistent="loading || submitting || isAccountModified" v-model="showState">
         <two-column-dialog-layout :disabled="loading || submitting" :loading="loading"
                                   :title="tt(title)" :cancel-button-title="tt('Cancel')"
                                   @cancel="cancel">
@@ -47,7 +47,7 @@
                 <v-window class="d-flex flex-grow-1 disable-tab-transition w-100-window-container"
                           v-model="activeTab">
                     <v-window-item value="account">
-                        <v-form class="my-4">
+                        <v-form class="my-4 ebk-dialog-form">
                             <v-row>
                                 <v-col cols="12" md="12">
                                     <v-text-field
@@ -196,28 +196,34 @@
             </template>
 
             <template #footer>
-                <v-spacer/>
-                <v-tooltip :disabled="!inputIsEmpty" :text="inputEmptyProblemMessage ? tt(inputEmptyProblemMessage) : ''">
-                    <template v-slot:activator="{ props }">
-                        <div v-bind="props" class="d-inline-block">
-                            <v-btn :disabled="inputIsEmpty || loading || submitting" @click="save">
-                                {{ tt(saveButtonTitle) }}
-                                <v-progress-circular indeterminate size="22" class="ms-2" v-if="submitting"></v-progress-circular>
-                            </v-btn>
-                        </div>
-                    </template>
-                </v-tooltip>
+                <div class="ebk-dialog-footer">
+                    <div class="ebk-dialog-footer-status" role="status" aria-live="polite">
+                        <template v-if="footerStatus">
+                            <span class="ebk-dialog-footer-status-dot" :class="`ebk-dialog-footer-status-dot--${footerStatus.kind}`" aria-hidden="true"></span>
+                            <span>{{ footerStatus.text }}</span>
+                        </template>
+                    </div>
+                    <v-btn color="default" variant="outlined" :disabled="loading || submitting" @click="cancel">{{ tt('Cancel') }}</v-btn>
+                    <v-tooltip :disabled="!inputIsEmpty" :text="inputEmptyProblemMessage ? tt(inputEmptyProblemMessage) : ''">
+                        <template v-slot:activator="{ props }">
+                            <div v-bind="props" class="d-inline-block">
+                                <v-btn color="primary" variant="flat" :disabled="inputIsEmpty || loading || submitting" @click="save">
+                                    {{ tt(saveButtonTitle) }}
+                                    <v-progress-circular indeterminate size="22" class="ms-2" v-if="submitting"></v-progress-circular>
+                                </v-btn>
+                            </div>
+                        </template>
+                    </v-tooltip>
+                </div>
             </template>
         </two-column-dialog-layout>
     </v-dialog>
 
     <confirm-dialog ref="confirmDialog"/>
-    <snack-bar ref="snackbar" />
 </template>
 
 <script setup lang="ts">
 import ConfirmDialog from '@/components/desktop/ConfirmDialog.vue';
-import SnackBar from '@/components/desktop/SnackBar.vue';
 
 import { ref, computed, useTemplateRef, watch } from 'vue';
 
@@ -226,6 +232,7 @@ import { useAccountEditPageBase } from '@/views/base/accounts/AccountEditPageBas
 
 import { useUserStore } from '@/stores/user.ts';
 import { useAccountsStore } from '@/stores/account.ts';
+import { useDesktopPageStore } from '@/stores/desktopPage.ts';
 
 import { itemAndIndex } from '@/core/base.ts';
 import { AccountType, AccountCategory } from '@/core/account.ts';
@@ -249,7 +256,6 @@ interface AccountEditResponse {
 }
 
 type ConfirmDialogType = InstanceType<typeof ConfirmDialog>;
-type SnackBarType = InstanceType<typeof SnackBar>;
 
 const { tt } = useI18n();
 const {
@@ -280,9 +286,9 @@ const {
 
 const userStore = useUserStore();
 const accountsStore = useAccountsStore();
+const desktopPageStore = useDesktopPageStore();
 
 const confirmDialog = useTemplateRef<ConfirmDialogType>('confirmDialog');
-const snackbar = useTemplateRef<SnackBarType>('snackbar');
 
 let resolveFunc: ((value: AccountEditResponse) => void) | null = null;
 let rejectFunc: ((reason?: unknown) => void) | null = null;
@@ -318,6 +324,27 @@ const isAccountModified = computed<boolean>(() => {
     } else { // Edit
         return !!initAccount.value && !isEquals(account.value.toModifyRequest(clientSessionId.value, subAccounts.value), initAccount.value.toModifyRequest(clientSessionId.value, initAccount.value.subAccounts));
     }
+});
+
+// footer status text at the start of the dialog footer (design guideline 4.4)
+const footerStatus = computed<{ kind: 'progress' | 'warning' | 'modified', text: string } | null>(() => {
+    if (loading.value) {
+        return null;
+    }
+
+    if (submitting.value) {
+        return { kind: 'progress', text: tt('Saving...') };
+    }
+
+    if (isAccountModified.value && inputIsEmpty.value && inputEmptyProblemMessage.value) {
+        return { kind: 'warning', text: tt(inputEmptyProblemMessage.value) };
+    }
+
+    if (isAccountModified.value) {
+        return { kind: 'modified', text: tt('Unsaved changes') };
+    }
+
+    return null;
 });
 
 function open(options?: { id?: string, currentAccount?: Account, category?: number }): Promise<AccountEditResponse> {
@@ -380,7 +407,7 @@ function save(): void {
     const problemMessage = inputEmptyProblemMessage.value;
 
     if (problemMessage) {
-        snackbar.value?.showMessage(problemMessage);
+        desktopPageStore.addToast(problemMessage);
         return;
     }
 
@@ -406,7 +433,7 @@ function save(): void {
         submitting.value = false;
 
         if (!error.processed) {
-            snackbar.value?.showError(error);
+            desktopPageStore.addErrorToast(error);
         }
     });
 }
@@ -431,7 +458,7 @@ function cancel(): void {
 }
 
 function onShowDateTimeError(error: string): void {
-    snackbar.value?.showError(error);
+    desktopPageStore.addErrorToast(error);
 }
 
 watch(() => account.value.type, (newValue) => {

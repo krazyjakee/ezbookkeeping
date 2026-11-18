@@ -1,0 +1,170 @@
+---
+title: Command Line
+---
+
+# Command Line
+
+The ezrbookkeeping server program is also a command line tool, providing various commands for database maintenance, user management, scheduled task management, and other utilities.
+
+## Usage
+
+```shell
+ezbookkeeping [global options] command [command options] [arguments...]
+```
+
+## Global Options
+
+* `--help`, `-h`: Show help. Optional.
+* `--version`, `-v`: Show version. Optional.
+* `--conf-path FILE`: Specify custom config path. Optional. (default is `%WORKING_DIR%/conf/ezbookkeeping.ini`)
+
+## Commands
+
+### server
+
+ezrbookkeeping web server operation.
+
+* `run`: Start ezrbookkeeping web server.
+
+### database
+
+ezrbookkeeping database maintenance operation.
+
+* `update`: Update database structure.
+
+### userdata
+
+ezrbookkeeping user data maintenance operation.
+
+* `user-add`: Add a new user.
+    * Options:
+    * `--username value`, `-n value`: User name. Required.
+    * `--email value`, `-m value`: User email. Required.
+    * `--nickname value`, `-i value`: User nickname. Required.
+    * `--password value`, `-p value`: User password. Required.
+    * `--default-currency value`, `-c value`: User default currency code. Required.
+* `user-get`: Display specified user info.
+    * Options:
+    * `--username value`, `-n value`: User name. Required.
+* `user-modify-password`: Modify specified user password.
+    * Options:
+    * `--username value`, `-n value`: User name. Required.
+    * `--password value`, `-p value`: User password. Required.
+* `user-enable`: Enable specified user.
+    * Options:
+    * `--username value`, `-n value`: User name. Required.
+* `user-disable`: Disable specified user.
+    * Options:
+    * `--username value`, `-n value`: User name. Required.
+    * `--remain-sessions`, `-r`: Whether to keep the user's existing sessions. Optional. (By default, all sessions will be cleared after disabling the user)
+* `user-set-restrict-features`: Set restrictions of user features.
+    * Options:
+    * `--username value`, `-n value`: User name. Required.
+    * `--features value`, `-t value`: Specific feature types (feature types separated by commas). Required. See `default_feature_restrictions` in [Configuration - User](/configuration/#user) for more information.
+* `user-add-restrict-features`: Add restrictions of user features.
+    * Options:
+    * `--username value`, `-n value`: User name. Required.
+    * `--features value`, `-t value`: Specific feature types (feature types separated by commas). Required. See `default_feature_restrictions` in [Configuration - User](/configuration/#user) for more information.
+* `user-remove-restrict-features`: Remove restrictions of user features.
+    * Options:
+    * `--username value`, `-n value`: User name. Required.
+    * `--features value`, `-t value`: Specific feature types (feature types separated by commas). Required. See `default_feature_restrictions` in [Configuration - User](/configuration/#user) for more information.
+* `user-resend-verify-email`: Resend user verify email.
+    * Options:
+    * `--username value`, `-n value`: User name. Required.
+* `user-set-email-verified`: Set specified user email address verified.
+    * Options:
+    * `--username value`, `-n value`: User name. Required.
+* `user-set-email-unverified`: Set specified user email address unverified.
+    * Options:
+    * `--username value`, `-n value`: User name. Required.
+* `user-delete`: Delete specified user.
+    * Options:
+    * `--username value`, `-n value`: User name. Required.
+* `user-2fa-disable`: Disable specified user two factor authentication.
+    * Options:
+    * `--username value`, `-n value`: User name. Required.
+* `user-session-list`: List specified user all sessions.
+    * Options:
+    * `--username value`, `-n value`: User name. Required.
+* `user-session-new`: Create new session for user
+    * Options:
+    * `--username value`, `-n value`: User name. Required.
+    * `--type value`, `-t value`: Specific token type, supports `api` and `mcp`, default is `api`.
+    * `--expiresInSeconds value`, `-e value`: Token expiration time (0 – 4294967295 seconds, `0` means no expiration). Required.
+* `user-session-revoke`: Revoke the specified user session.
+    * Options:
+    * `--token value`, `-t value`: Specific token content. Required.
+* `user-session-clear`: Clear specified user all sessions.
+    * Options:
+    * `--username value`, `-n value`: User name. Required.
+* `send-password-reset-mail`: Send password reset mail.
+    * Options:
+    * `--username value`, `-n value`: User name. Required.
+* `transaction-check`: Check whether specified user all transactions and accounts are correct.
+    * Options:
+    * `--username value`, `-n value`: User name. Required.
+* `transaction-tag-index-fix-transaction-time`: Fix the transaction tag index data which does not have transaction time (bug before v0.5.0).
+    * Options:
+    * `--username value`, `-n value`: User name. Required.
+* `transaction-import`: Import transactions to specified user.
+    * Options:
+    * `--username value`, `-n value`: User name. Required.
+    * `--file value`, `-f value`: Import file path (e.g. `transaction.csv`). Required.
+    * `--type value`, `-t value`: Import file type, support `ezbookkeeping_csv` or `ezbookkeeping_tsv`. Required.
+* `transaction-export`: Export specified user all transactions to `.csv` file.
+    * Options:
+    * `--username value`, `-n value`: User name. Required.
+    * `--file value`, `-f value`: Target file path (e.g. `transaction.csv`). Required.
+    * `--type value`, `-t value`: Export file type, support `csv` or `tsv`, default is `csv`.
+
+### cron
+
+ezrbookkeeping cron job utilities.
+
+* `list`: List all enabled cron jobs.
+* `run`: Run specified cron job.
+    * Options:
+    * `--name name`, `-n name`: Cron job name.
+
+### backup
+
+ezrbookkeeping full-instance backup and restore. See [Backup and Restore](/backup/) for details.
+
+* `create`: Create a full-instance backup (database, uploaded files and configuration file).
+    * Options:
+    * `--output value`, `-o value`: Backup output directory. Optional. (default is `backup_path` in [Configuration - Backup](/configuration/#backup))
+    * `--no-config`: Do not include the configuration file in the backup. Optional.
+    * `--encrypt`: Encrypt the backup. Optional. (default is `backup_encrypt`)
+    * `--no-retention`: Do not remove old backups by the retention policy after the backup is created. Optional.
+    * `--passphrase-file value`: Read the backup encryption passphrase from the specified file. Optional. (default is `backup_passphrase`)
+* `list [backup directory]`: List backups (newest first) and the status of the latest backup run. (default directory is `backup_path`)
+* `verify <backup file>`: Verify a backup file (decryption, archive integrity, manifest, checksums, data validity and compatibility).
+    * Options:
+    * `--passphrase-file value`: Read the backup encryption passphrase from the specified file. Optional.
+* `restore <backup file>`: Restore a backup into the configured database and object storage, then print a verification report.
+    * Options:
+    * `--dry-run`: Only validate the backup and the target, do not modify anything. Optional.
+    * `--force`: Allow restoring into a non-empty target, all existing data in ezrbookkeeping tables will be deleted. Requires `--yes-overwrite-existing-data`. Optional.
+    * `--yes-overwrite-existing-data`: Confirm that existing data may be overwritten. Optional.
+    * `--config-output value`: Write the configuration file contained in the backup to the specified path. Optional.
+    * `--passphrase-file value`: Read the backup encryption passphrase from the specified file. Optional.
+
+### security
+
+ezrbookkeeping security utilities.
+
+* `gen-secret-key`: Generate a random secret key.
+    * Options:
+    * `--length value`, `-l value`: The length of secret key. Optional. (default is `32`)
+
+### utility
+
+ezrbookkeeping general utilities.
+
+* `parse-default-request-id`: Parse a request id which is generated by default request generator and show the details.
+    * Options:
+    * `--id`: The request ID.
+* `send-test-mail`: Send a test email to specified e-mail address.
+    * Options:
+    * `--to`: To e-mail address.

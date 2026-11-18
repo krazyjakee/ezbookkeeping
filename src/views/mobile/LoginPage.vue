@@ -1,113 +1,127 @@
 <template>
     <f7-page no-navbar no-swipeback login-screen hide-toolbar-on-scroll class="login-page">
-        <f7-login-screen-title>
-            <img alt="logo" class="login-page-logo" :src="APPLICATION_LOGO_PATH" />
-            <f7-block class="login-page-tile margin-vertical-half">{{ tt('global.app.title') }}</f7-block>
-        </f7-login-screen-title>
+        <div class="ebk-auth-wordmark">
+            <img alt="" class="ebk-auth-wordmark-logo" :src="APPLICATION_LOGO_PATH" />
+            <span class="ebk-auth-wordmark-title">{{ tt('global.app.title') }}</span>
+        </div>
 
-        <f7-list inset v-if="tips">
-            <f7-block-footer>{{ tips }}</f7-block-footer>
-        </f7-list>
+        <section class="ebk-panel ebk-panel--bracketed ebk-auth-panel" aria-labelledby="mobile-login-title"
+                 :aria-busy="loggingInByPassword || loggingInByOAuth2 ? 'true' : 'false'">
+            <header class="ebk-panel-header-strip ebk-auth-panel-header">
+                <span>{{ tt('Account Access') }}</span>
+                <span class="ebk-panel-header-actions ebk-auth-panel-live" :class="{ 'ebk-auth-panel-live--busy': loggingInByPassword || loggingInByOAuth2 }" aria-hidden="true"></span>
+            </header>
 
-        <f7-list form class="login-page-form margin-bottom-half">
-            <f7-list-input
-                type="text"
-                autocomplete="username"
-                autocapitalize="none"
-                autocorrect="off"
-                spellcheck="false"
-                inputmode="email"
-                clear-button
-                class="margin-top-half"
-                :disabled="loggingInByPassword || loggingInByOAuth2"
-                :label="tt('Username')"
-                :placeholder="tt('Your username or email')"
-                v-model:value.trim="username"
-                @input="tempToken = ''"
-                v-if="isInternalAuthEnabled()"
-            ></f7-list-input>
-
-            <f7-list-item class="login-divider no-margin display-flex align-items-center" v-if="isInternalAuthEnabled()">
-                <hr class="no-margin" />
-            </f7-list-item>
-
-            <f7-list-input
-                type="password"
-                autocomplete="current-password"
-                clear-button
-                :disabled="loggingInByPassword || loggingInByOAuth2"
-                :label="tt('Password')"
-                :placeholder="tt('Your password')"
-                v-model:value="password"
-                @input="tempToken = ''"
-                @keyup.enter="loginByPressEnter"
-                v-if="isInternalAuthEnabled()"
-            ></f7-list-input>
-
-            <f7-list-item class="login-page-utilities" v-if="isInternalAuthEnabled()">
-                <template #title>
-                    <small>
-                        <f7-link :class="{ 'disabled': loggingInByPassword || loggingInByOAuth2 }" @click="switchToDesktopVersion">{{ tt('Switch to Desktop Version') }}</f7-link>
-                    </small>
-                </template>
-                <template #after>
-                    <small>
-                        <f7-link :class="{ 'disabled': !isUserForgetPasswordEnabled() || loggingInByPassword || loggingInByOAuth2 }" @click="forgetPasswordEmail = ''; showForgetPasswordSheet = true">{{ tt('Forget Password?') }}</f7-link>
-                    </small>
-                </template>
-            </f7-list-item>
-
-            <f7-list-button class="login-page-primary-action margin-horizontal" :class="{ 'disabled': inputIsEmpty || loggingInByPassword || loggingInByOAuth2 }" :text="tt('Log In')"
-                            @click="login" v-if="isInternalAuthEnabled()"></f7-list-button>
-
-            <f7-list-item class="login-divider margin-vertical-half display-flex align-items-center" v-if="isInternalAuthEnabled() && isOAuth2Enabled()">
-                <hr class="margin-inline-end-half" />
-                <small>{{ tt('or') }}</small>
-                <hr class="margin-inline-start-half" />
-            </f7-list-item>
-
-            <f7-list-button external class="login-page-secondary-action margin-horizontal"
-                            :class="{ 'disabled': loggingInByPassword || loggingInByOAuth2, 'margin-top': !isInternalAuthEnabled() }"
-                            :href="oauth2LoginUrl" :text="oauth2LoginDisplayName"
-                            @click="loginByOAuth2" v-if="isOAuth2Enabled()"></f7-list-button>
-
-            <f7-list-item class="login-page-utilities login-page-utilities-centered" v-if="!isInternalAuthEnabled()">
-                <template #title>
-                    <small>
-                        <f7-link :class="{ 'disabled': loggingInByPassword || loggingInByOAuth2 }" @click="switchToDesktopVersion">{{ tt('Switch to Desktop Version') }}</f7-link>
-                    </small>
-                </template>
-            </f7-list-item>
-
-            <f7-list-item class="block-footer margin-bottom-half" v-if="isInternalAuthEnabled()">
-                <div class="width-100 align-content-center">
-                    <span style="margin-inline-end: 0.3rem;">{{ tt('Don\'t have an account?') }}</span>
-                    <f7-link :class="{ 'disabled': !isUserRegistrationEnabled() || loggingInByPassword || loggingInByOAuth2 }" href="/signup" :text="tt('Create an account')"></f7-link>
+            <div class="ebk-auth-panel-intro">
+                <h1 class="ebk-auth-title" id="mobile-login-title">{{ tt('Welcome to ezrbookkeeping') }}</h1>
+                <p class="ebk-auth-message" v-if="isInternalAuthEnabled()">{{ tt('Please log in with your ezrbookkeeping account') }}</p>
+                <p class="ebk-auth-message" v-if="tips">{{ tips }}</p>
+                <div class="ebk-auth-status ebk-auth-status--error" role="alert" v-if="errorMessage">
+                    <f7-icon f7="exclamationmark_circle" aria-hidden="true"></f7-icon>
+                    <span>{{ errorMessage }}</span>
                 </div>
-            </f7-list-item>
+            </div>
 
-            <f7-block-footer class="padding-bottom">
-            </f7-block-footer>
-        </f7-list>
+            <f7-list form class="login-page-form no-margin-top margin-bottom-half">
+                <f7-list-input
+                    type="text"
+                    name="username"
+                    autocomplete="username"
+                    autocapitalize="none"
+                    autocorrect="off"
+                    spellcheck="false"
+                    inputmode="email"
+                    clear-button
+                    :disabled="loggingInByPassword || loggingInByOAuth2"
+                    :label="tt('Username')"
+                    :placeholder="tt('Your username or email')"
+                    v-model:value.trim="username"
+                    @input="tempToken = ''; errorMessage = null"
+                    v-if="isInternalAuthEnabled()"
+                ></f7-list-input>
+
+                <f7-list-input
+                    name="password"
+                    autocomplete="current-password"
+                    :type="showPassword ? 'text' : 'password'"
+                    :disabled="loggingInByPassword || loggingInByOAuth2"
+                    :label="tt('Password')"
+                    :placeholder="tt('Your password')"
+                    v-model:value="password"
+                    @input="tempToken = ''; errorMessage = null"
+                    @keyup.enter="loginByPressEnter"
+                    v-if="isInternalAuthEnabled()"
+                >
+                    <template #content-end>
+                        <f7-link class="ebk-auth-password-toggle" role="button"
+                                 :class="{ 'disabled': loggingInByPassword || loggingInByOAuth2 }"
+                                 :aria-label="showPassword ? tt('Hide Password') : tt('Show Password')"
+                                 :aria-pressed="showPassword ? 'true' : 'false'"
+                                 :icon-f7="showPassword ? 'eye_slash' : 'eye'"
+                                 @click="showPassword = !showPassword"></f7-link>
+                    </template>
+                </f7-list-input>
+
+                <f7-list-item class="login-page-utilities" v-if="isInternalAuthEnabled()">
+                    <template #title>
+                        <small>
+                            <f7-link :class="{ 'disabled': loggingInByPassword || loggingInByOAuth2 }" @click="switchToDesktopVersion">{{ tt('Switch to Desktop Version') }}</f7-link>
+                        </small>
+                    </template>
+                    <template #after>
+                        <small>
+                            <f7-link :class="{ 'disabled': !isUserForgetPasswordEnabled() || loggingInByPassword || loggingInByOAuth2 }" @click="forgetPasswordEmail = ''; showForgetPasswordSheet = true">{{ tt('Forget Password?') }}</f7-link>
+                        </small>
+                    </template>
+                </f7-list-item>
+
+                <f7-list-button class="login-page-primary-action" :class="{ 'disabled': inputIsEmpty || loggingInByPassword || loggingInByOAuth2 }" :text="tt('Log In')"
+                                @click="login" v-if="isInternalAuthEnabled()"></f7-list-button>
+
+                <f7-list-item class="login-divider margin-vertical-half display-flex align-items-center" v-if="isInternalAuthEnabled() && isOAuth2Enabled()">
+                    <hr class="margin-inline-end-half" />
+                    <small>{{ tt('or') }}</small>
+                    <hr class="margin-inline-start-half" />
+                </f7-list-item>
+
+                <f7-list-button external class="login-page-secondary-action"
+                                :class="{ 'disabled': loggingInByPassword || loggingInByOAuth2, 'margin-top': !isInternalAuthEnabled() }"
+                                :href="oauth2LoginUrl" :text="oauth2LoginDisplayName"
+                                @click="loginByOAuth2" v-if="isOAuth2Enabled()"></f7-list-button>
+
+                <f7-list-item class="login-page-utilities login-page-utilities-centered" v-if="!isInternalAuthEnabled()">
+                    <template #title>
+                        <small>
+                            <f7-link :class="{ 'disabled': loggingInByPassword || loggingInByOAuth2 }" @click="switchToDesktopVersion">{{ tt('Switch to Desktop Version') }}</f7-link>
+                        </small>
+                    </template>
+                </f7-list-item>
+            </f7-list>
+
+            <div class="ebk-auth-panel-secondary" v-if="isInternalAuthEnabled()">
+                <span style="margin-inline-end: 0.3rem;">{{ tt('Don\'t have an account?') }}</span>
+                <f7-link :class="{ 'disabled': !isUserRegistrationEnabled() || loggingInByPassword || loggingInByOAuth2 }" href="/signup" :text="tt('Create an account')"></f7-link>
+            </div>
+        </section>
 
         <f7-list class="login-page-bottom">
             <f7-block-footer>
-                <language-select-button :disabled="loggingInByPassword || loggingInByOAuth2" />
+                <language-select-button :disabled="loggingInByPassword || loggingInByOAuth2" @error="showToast" />
 
                 <div class="login-page-powered-by margin-top-half">
                     <span>Powered by</span>
-                    <f7-link @click="openExternalUrl('https://github.com/mayswind/ezbookkeeping')" target="_blank">ezBookkeeping</f7-link>
+                    <f7-link @click="openExternalUrl('https://github.com/krazyjakee/ezbookkeeping')" target="_blank">ezrbookkeeping</f7-link>
                     <span>{{ version }}</span>
                 </div>
             </f7-block-footer>
         </f7-list>
 
         <f7-toolbar class="login-page-fixed-bottom" tabbar bottom :outline="false">
-            <language-select-button :disabled="loggingInByPassword || loggingInByOAuth2" />
+            <language-select-button :disabled="loggingInByPassword || loggingInByOAuth2" @error="showToast" />
 
             <div class="login-page-powered-by margin-top-half">
                 <span>Powered by</span>
-                <f7-link @click="openExternalUrl('https://github.com/mayswind/ezbookkeeping')" target="_blank">ezBookkeeping</f7-link>
+                <f7-link @click="openExternalUrl('https://github.com/krazyjakee/ezbookkeeping')" target="_blank">ezrbookkeeping</f7-link>
                 <span>{{ version }}</span>
             </div>
         </f7-toolbar>
@@ -121,14 +135,20 @@
                     <div class="ebk-sheet-title"><b>{{ tt('Two-Factor Authentication') }}</b></div>
                 </div>
                 <div class="padding-horizontal padding-bottom">
+                    <p class="ebk-auth-sheet-message">
+                        {{ twoFAVerifyType === 'passcode' ? tt('Enter the passcode from your two-factor authentication app.') : tt('Enter one of your two-factor authentication backup codes.') }}
+                    </p>
                     <f7-list class="no-margin">
                         <f7-list-input
                             type="number"
+                            name="passcode"
+                            inputmode="numeric"
                             autocomplete="one-time-code"
                             outline
                             clear-button
                             class="no-margin no-padding-bottom"
                             v-if="twoFAVerifyType === 'passcode'"
+                            :aria-label="tt('Passcode')"
                             :placeholder="tt('Passcode')"
                             v-model:value="passcode"
                             @keyup.enter="verify"
@@ -139,6 +159,7 @@
                             clear-button
                             class="no-margin no-padding-bottom"
                             v-if="twoFAVerifyType === 'backupcode'"
+                            :aria-label="tt('Backup Code')"
                             :placeholder="tt('Backup Code')"
                             v-model:value="backupCode"
                             @keyup.enter="verify"
@@ -223,7 +244,7 @@ const props = defineProps<{
     f7router: Router.Router;
 }>();
 
-const { tt } = useI18n();
+const { tt, te } = useI18n();
 const { showAlert, showConfirm, showToast, openExternalUrl } = useI18nUIComponents();
 
 const rootStore = useRootStore();
@@ -255,6 +276,8 @@ const currentPasswordForResendVerifyEmail = ref<string>('');
 const requestingForgetPassword = ref<boolean>(false);
 const requestingResendVerifyEmail = ref<boolean>(false);
 const show2faSheet = ref<boolean>(false);
+const showPassword = ref<boolean>(false);
+const errorMessage = ref<string | null>(null);
 const showForgetPasswordSheet = ref<boolean>(false);
 const showVerifyEmailSheet = ref<boolean>(false);
 
@@ -291,6 +314,8 @@ function login(): void {
     }
 
     loggingInByPassword.value = true;
+    errorMessage.value = null;
+    showPassword.value = false;
     resendVerifyEmail.value = '';
     hasValidEmailVerifyToken.value = false;
     currentPasswordForResendVerifyEmail.value = '';
@@ -300,17 +325,25 @@ function login(): void {
         loginName: username.value,
         password: password.value
     }).then(authResponse => {
-        loggingInByPassword.value = false;
-        hideLoading();
-
         if (authResponse.need2FA) {
+            loggingInByPassword.value = false;
+            hideLoading();
+
             tempToken.value = authResponse.token;
             show2faSheet.value = true;
             return;
         }
 
-        doAfterLogin(authResponse);
-        router.refreshPage();
+        doAfterLogin(authResponse).then(loginHint => {
+            if (loginHint) {
+                showToast(loginHint);
+            }
+
+            router.refreshPage();
+        }).finally(() => {
+            loggingInByPassword.value = false;
+            hideLoading();
+        });
     }).catch(error => {
         loggingInByPassword.value = false;
         hideLoading();
@@ -324,7 +357,7 @@ function login(): void {
         }
 
         if (!error.processed) {
-            showToast(error.message || error);
+            errorMessage.value = error.message ? te(error.message) : (te(error) || tt('An error occurred'));
         }
     });
 }
@@ -365,12 +398,17 @@ function verify(): void {
         passcode: twoFAVerifyType.value === 'passcode' ? passcode.value : null,
         recoveryCode: twoFAVerifyType.value === 'backupcode' ? backupCode.value : null
     }).then(authResponse => {
-        verifying.value = false;
-        hideLoading();
+        doAfterLogin(authResponse).then(loginHint => {
+            if (loginHint) {
+                showToast(loginHint);
+            }
 
-        doAfterLogin(authResponse);
-        show2faSheet.value = false;
-        router.refreshPage();
+            router.refreshPage();
+        }).finally(() => {
+            verifying.value = false;
+            hideLoading();
+            show2faSheet.value = false;
+        });
     }).catch(error => {
         verifying.value = false;
         hideLoading();

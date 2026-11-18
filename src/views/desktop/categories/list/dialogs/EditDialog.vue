@@ -1,10 +1,10 @@
 <template>
-    <v-dialog width="800" :persistent="isCategoryModified" v-model="showState">
+    <v-dialog width="800" :persistent="loading || submitting || isCategoryModified" v-model="showState">
         <one-column-dialog-layout :disabled="loading || submitting" :loading="loading"
                                   :title="tt(title)" :cancel-button-title="tt('Cancel')"
                                   @cancel="cancel">
             <template #content>
-                <v-form class="mt-2">
+                <v-form class="mt-2 ebk-dialog-form">
                     <v-row>
                         <v-col cols="12" md="12">
                             <v-text-field
@@ -78,33 +78,38 @@
             </template>
 
             <template #footer>
-                <v-spacer/>
-                <v-tooltip :disabled="!inputIsEmpty" :text="inputEmptyProblemMessage ? tt(inputEmptyProblemMessage) : ''">
-                    <template v-slot:activator="{ props }">
-                        <div v-bind="props" class="d-inline-block">
-                            <v-btn :disabled="inputIsEmpty || loading || submitting" @click="save">
-                                {{ tt(saveButtonTitle) }}
-                                <v-progress-circular indeterminate size="22" class="ms-2" v-if="submitting"></v-progress-circular>
-                            </v-btn>
-                        </div>
-                    </template>
-                </v-tooltip>
+                <div class="ebk-dialog-footer">
+                    <div class="ebk-dialog-footer-status" role="status" aria-live="polite">
+                        <template v-if="footerStatus">
+                            <span class="ebk-dialog-footer-status-dot" :class="`ebk-dialog-footer-status-dot--${footerStatus.kind}`" aria-hidden="true"></span>
+                            <span>{{ footerStatus.text }}</span>
+                        </template>
+                    </div>
+                    <v-btn color="default" variant="outlined" :disabled="loading || submitting" @click="cancel">{{ tt('Cancel') }}</v-btn>
+                    <v-tooltip :disabled="!inputIsEmpty" :text="inputEmptyProblemMessage ? tt(inputEmptyProblemMessage) : ''">
+                        <template v-slot:activator="{ props }">
+                            <div v-bind="props" class="d-inline-block">
+                                <v-btn color="primary" variant="flat" :disabled="inputIsEmpty || loading || submitting" @click="save">
+                                    {{ tt(saveButtonTitle) }}
+                                    <v-progress-circular indeterminate size="22" class="ms-2" v-if="submitting"></v-progress-circular>
+                                </v-btn>
+                            </div>
+                        </template>
+                    </v-tooltip>
+                </div>
             </template>
         </one-column-dialog-layout>
     </v-dialog>
-
-    <snack-bar ref="snackbar" />
 </template>
 
 <script setup lang="ts">
-import SnackBar from '@/components/desktop/SnackBar.vue';
-
-import { ref, computed, useTemplateRef } from 'vue';
+import { ref, computed } from 'vue';
 
 import { useI18n } from '@/locales/helpers.ts';
 import { useCategoryEditPageBase } from '@/views/base/categories/CategoryEditPageBase.ts';
 
 import { useTransactionCategoriesStore } from '@/stores/transactionCategory.ts';
+import { useDesktopPageStore } from '@/stores/desktopPage.ts';
 
 import type { ColorValue } from '@/core/color.ts';
 import { CategoryType } from '@/core/category.ts';
@@ -118,9 +123,8 @@ import { generateRandomUUID } from '@/lib/misc.ts';
 
 interface TransactionCategoryEditResponse {
     message: string;
+    category?: TransactionCategory;
 }
-
-type SnackBarType = InstanceType<typeof SnackBar>;
 
 const { tt } = useI18n();
 const {
@@ -137,8 +141,7 @@ const {
 } = useCategoryEditPageBase();
 
 const transactionCategoriesStore = useTransactionCategoriesStore();
-
-const snackbar = useTemplateRef<SnackBarType>('snackbar');
+const desktopPageStore = useDesktopPageStore();
 
 let resolveFunc: ((value: TransactionCategoryEditResponse) => void) | null = null;
 let rejectFunc: ((reason?: unknown) => void) | null = null;
@@ -154,7 +157,28 @@ const isCategoryModified = computed<boolean>(() => {
     }
 });
 
-function open(options: { id?: string; parentId?: string; type?: CategoryType; currentCategory?: TransactionCategory, color?: ColorValue, icon?: string }): Promise<TransactionCategoryEditResponse> {
+// footer status text at the start of the dialog footer (design guideline 4.4)
+const footerStatus = computed<{ kind: 'progress' | 'warning' | 'modified', text: string } | null>(() => {
+    if (loading.value) {
+        return null;
+    }
+
+    if (submitting.value) {
+        return { kind: 'progress', text: tt('Saving...') };
+    }
+
+    if (isCategoryModified.value && inputIsEmpty.value && inputEmptyProblemMessage.value) {
+        return { kind: 'warning', text: tt(inputEmptyProblemMessage.value) };
+    }
+
+    if (isCategoryModified.value) {
+        return { kind: 'modified', text: tt('Unsaved changes') };
+    }
+
+    return null;
+});
+
+function open(options: { id?: string; parentId?: string; type?: CategoryType; currentCategory?: TransactionCategory, color?: ColorValue, icon?: string, name?: string }): Promise<TransactionCategoryEditResponse> {
     showState.value = true;
     loading.value = true;
     submitting.value = false;
@@ -214,6 +238,10 @@ function open(options: { id?: string; parentId?: string; type?: CategoryType; cu
             category.value.icon = initCategory.value.icon;
         }
 
+        if (options.name) {
+            category.value.name = options.name;
+        }
+
         clientSessionId.value = generateRandomUUID();
         loading.value = false;
     }
@@ -228,7 +256,7 @@ function save(): void {
     const problemMessage = inputEmptyProblemMessage.value;
 
     if (problemMessage) {
-        snackbar.value?.showMessage(problemMessage);
+        desktopPageStore.addToast(problemMessage);
         return;
     }
 
@@ -238,7 +266,7 @@ function save(): void {
         category: category.value,
         isEdit: !!editCategoryId.value,
         clientSessionId: clientSessionId.value
-    }).then(() => {
+    }).then(savedCategory => {
         submitting.value = false;
 
         let message = 'You have saved this category';
@@ -247,13 +275,13 @@ function save(): void {
             message = 'You have added a new category';
         }
 
-        resolveFunc?.({ message });
+        resolveFunc?.({ message, category: savedCategory });
         showState.value = false;
     }).catch(error => {
         submitting.value = false;
 
         if (!error.processed) {
-            snackbar.value?.showError(error);
+            desktopPageStore.addErrorToast(error);
         }
     });
 }

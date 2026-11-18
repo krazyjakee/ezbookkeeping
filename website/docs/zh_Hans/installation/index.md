@@ -1,0 +1,79 @@
+---
+title: "安装"
+---
+
+# 介绍
+
+ezrbookkeeping 是一款开源、强大、易用的自托管 (self-hosted) 个人记账应用。它能帮助您记录日常交易、导入各种来源的数据，并快速搜索和筛选账单。您可以使用预设的图表或通过自定义查询和图表维度来分析历史数据，以便更好地了解消费情况和财务趋势。ezrbookkeeping 易于部署，只需一条 Docker 命令即可启动。它资源占用低，在树莓派、NAS 和微型服务器等设备也能流畅运行。
+
+ezrbookkeeping 为移动端和桌面端提供了各自原生的界面设计。借助 PWA (渐进式网页应用) 技术，您还可以将它 [添加到手机主屏幕](/zh_Hans/faq/#如何将-ezrbookkeeping-添加到手机主屏幕)，像原生 App 一样使用。
+
+ezrbookkeeping 通过使用更轻量的技术栈和更高效的架构设计，使得软件本身非常轻量，但同时提供了非常强大的功能，你可以从 [功能列表](/zh_Hans/features/) 了解所有支持的功能。
+
+## 使用 Docker 部署
+访问 [Docker Hub](https://hub.docker.com/r/krazyjakee/ezrbookkeeping) 查看所有镜像和标签。
+
+**最新发布版本：**
+
+```shell
+$ docker run -p8080:8080 krazyjakee/ezrbookkeeping
+```
+
+**最新每日构建：**
+
+```shell
+$ docker run -p8080:8080 krazyjakee/ezrbookkeeping:latest-snapshot
+```
+
+> [!NOTE] 提示
+> 上述命令仅适用于测试和评估目的。对于生产环境，建议使用特定版本的镜像，并使用持久化数据卷来存储数据，以避免数据丢失。
+
+## 从二进制包安装
+下载最新发布版本：[https://github.com/krazyjakee/ezbookkeeping/releases](https://github.com/krazyjakee/ezbookkeeping/releases)
+
+**Linux / macOS / FreeBSD**
+
+```shell
+$ ./ezbookkeeping server run
+```
+
+**Windows**
+
+```shell
+> .\ezbookkeeping.exe server run
+```
+
+默认 ezrbookkeeping 将会监听 8080 端口。您可以访问 `http://{YOUR_HOST_ADDRESS}:8080/` 。
+
+## 从源代码构建
+请确保您已经安装 [Golang](https://golang.org/), [GCC](https://gcc.gnu.org/), [Node.js](https://nodejs.org/) 和 [NPM](https://www.npmjs.com/)。然后下载源代码并执行以下步骤：
+
+**Linux / macOS / FreeBSD**
+
+```shell
+$ ./build.sh package -o ezrbookkeeping.tar.gz
+```
+
+所有的文件将被打包到 `ezrbookkeeping.tar.gz`.
+
+**Windows**
+
+```shell
+> .\build.bat package -o ezrbookkeeping.zip
+```
+
+或
+
+```powershell
+PS > .\build.ps1 package -Output ezrbookkeeping.zip
+```
+
+所有的文件将被打包到 `ezrbookkeeping.zip`.
+
+您还可以构建 Docker 镜像，确保您已经安装 [Docker](https://www.docker.com/)，然后执行以下步骤：
+
+**Linux**
+
+```shell
+$ ./build.sh docker
+```

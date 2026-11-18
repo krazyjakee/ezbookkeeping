@@ -98,7 +98,7 @@ func (t *mt940TransactionDataRowIterator) Next(ctx core.Context, user *models.Us
 	t.currentIndex++
 
 	data := t.dataTable.data.Statements[t.currentIndex]
-	rowItems, err := t.parseTransaction(ctx, user, t.dataTable.data, data)
+	rowItems, err := t.parseTransaction(ctx, t.dataTable.data, data)
 
 	if err != nil {
 		log.Errorf(ctx, "[mt_transaction_data_table.Next] cannot parsing transaction in %s, because %s", t.CurrentRowId(), err.Error())
@@ -111,7 +111,7 @@ func (t *mt940TransactionDataRowIterator) Next(ctx core.Context, user *models.Us
 	}, nil
 }
 
-func (t *mt940TransactionDataRowIterator) parseTransaction(ctx core.Context, user *models.User, mt940Data *mt940Data, statement *mtStatement) (map[datatable.TransactionDataTableColumn]string, error) {
+func (t *mt940TransactionDataRowIterator) parseTransaction(ctx core.Context, mt940Data *mt940Data, statement *mtStatement) (map[datatable.TransactionDataTableColumn]string, error) {
 	data := make(map[datatable.TransactionDataTableColumn]string, len(mt940TransactionSupportedColumns))
 
 	if statement.ValueDate == "" && len(statement.ValueDate) != 6 {
@@ -164,14 +164,22 @@ func (t *mt940TransactionDataRowIterator) parseTransaction(ctx core.Context, use
 	}
 
 	informationToAccountOwnerMap := statement.GetInformationToAccountOwnerMap()
+	description := informationToAccountOwnerMap[MT_INFORMATION_TO_ACCOUNT_OWNER_TAG_REMITTANCE]
 
-	if len(informationToAccountOwnerMap) > 0 {
-		if value, exists := informationToAccountOwnerMap[MT_INFORMATION_TO_ACCOUNT_OWNER_TAG_REMITTANCE]; exists {
-			data[datatable.TRANSACTION_DATA_TABLE_DESCRIPTION] = value
+	if strings.HasPrefix(description, MT_REMITTANCE_CODE_UNSTRUCTURED+"/") || strings.HasPrefix(description, MT_REMITTANCE_CODE_STRUCTURED+"/") {
+		subFields := strings.SplitN(description, "/", 3)
+		description = ""
+
+		if len(subFields) == 3 {
+			description = strings.TrimSpace(subFields[2])
 		}
-	} else {
-		data[datatable.TRANSACTION_DATA_TABLE_DESCRIPTION] = strings.Join(statement.InformationToAccountOwner, "\n")
 	}
+
+	if len(description) < 1 {
+		description = strings.Join(statement.InformationToAccountOwner, "\n")
+	}
+
+	data[datatable.TRANSACTION_DATA_TABLE_DESCRIPTION] = description
 
 	return data, nil
 }

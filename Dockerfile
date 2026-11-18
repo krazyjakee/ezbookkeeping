@@ -1,5 +1,5 @@
 # Build backend binary file
-FROM golang:1.27.1-alpine3.24 AS be-builder
+FROM golang:1.27.3-alpine3.24 AS be-builder
 ARG RELEASE_BUILD
 ARG BUILD_PIPELINE
 ARG BUILD_UNIXTIME
@@ -19,7 +19,7 @@ RUN apk add git gcc g++ libc-dev
 RUN ./build.sh backend
 
 # Build frontend files
-FROM --platform=$BUILDPLATFORM node:26.10.0-alpine3.24 AS fe-builder
+FROM --platform=$BUILDPLATFORM node:26.13.0-alpine3.24 AS fe-builder
 ARG RELEASE_BUILD
 ARG BUILD_PIPELINE
 ARG BUILD_UNIXTIME
@@ -37,8 +37,14 @@ RUN apk add git
 RUN ./build.sh frontend
 
 # Package docker image
-FROM alpine:3.24.2
-LABEL maintainer="MaysWind <i@mayswind.net>"
+FROM alpine:3.24.3
+LABEL maintainer="krazyjakee (https://github.com/krazyjakee/ezbookkeeping)" \
+      org.opencontainers.image.title="ezrbookkeeping" \
+      org.opencontainers.image.description="ezrbookkeeping, a business-focused fork of ezBookkeeping, an open source, self-hosted bookkeeping app" \
+      org.opencontainers.image.source="https://github.com/krazyjakee/ezbookkeeping" \
+      org.opencontainers.image.url="https://github.com/krazyjakee/ezbookkeeping" \
+      org.opencontainers.image.documentation="https://krazyjakee.github.io/ezbookkeeping/" \
+      org.opencontainers.image.licenses="MIT"
 RUN addgroup -S -g 1000 ezbookkeeping && adduser -S -G ezbookkeeping -u 1000 ezbookkeeping
 RUN apk --no-cache add tzdata
 COPY docker/docker-entrypoint.sh /docker-entrypoint.sh

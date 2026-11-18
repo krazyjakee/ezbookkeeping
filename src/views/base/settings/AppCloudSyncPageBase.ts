@@ -55,6 +55,7 @@ export const ALL_APPLICATION_CLOUD_SETTINGS: CategorizedApplicationCloudSettingI
             { settingKey: 'showTotalAmountInTransactionListPage', settingName: 'Show Monthly Total Amount', mobile: true, desktop: true },
             { settingKey: 'totalAmountTypeInTransactionListPage', settingName: 'Total Amount Calculation Method', mobile: true, desktop: true },
             { settingKey: 'showTagInTransactionListPage', settingName: 'Show Transaction Tags', mobile: true, desktop: true },
+            { settingKey: 'showPictureIndicatorInTransactionListPage', settingName: 'Show Transaction Picture Indicator', mobile: true, desktop: true },
             { settingKey: 'defaultKeywordMatchModeInTransactionListPage', settingName: 'Default Keyword Search Matching Mode', mobile: true, desktop: true }
         ]
     },
@@ -100,6 +101,7 @@ export const ALL_APPLICATION_CLOUD_SETTINGS: CategorizedApplicationCloudSettingI
         items: [
             { settingKey: 'totalAmountExcludeAccountIds', settingName: 'Accounts Included in Total', mobile: true, desktop: true },
             { settingKey: 'hideCategoriesWithoutAccounts', settingName: 'Hide Categories Without Accounts', mobile: false, desktop: true },
+            { settingKey: 'collapseSubAccountsByDefault', settingName: 'Collapse Sub-accounts by Default', mobile: true, desktop: true },
             { settingKey: 'defaultCreditCardAmountDisplayTypeInMobile', settingName: 'Default Credit Card Amount', mobile: true, desktop: false },
             { settingKey: 'reconciliationStatementButtonDefaultDateRangeTypeInDesktop', settingName: 'Default Date Range for Reconciliation Statement Button', mobile: false, desktop: true },
             { settingKey: 'reconciliationStatementPageDefaultDateRangeTypeInMobile', settingName: 'Default Date Range for Reconciliation Statement Page', mobile: true, desktop: false }
@@ -115,6 +117,7 @@ export const ALL_APPLICATION_CLOUD_SETTINGS: CategorizedApplicationCloudSettingI
         categoryName: 'Browser Cache Management',
         items: [
             { settingKey: 'mapCacheExpiration', settingName: 'Cache Expiration for Map Data', mobile: true, desktop: true },
+            { settingKey: 'transactionPictureCacheExpiration', settingName: 'Cache Expiration for Transaction Pictures', mobile: true, desktop: true },
             { settingKey: 'exchangeRatesDataCacheExpiration', settingName: 'Cache Expiration for Exchange Rates Data', mobile: true, desktop: true }
         ]
     },

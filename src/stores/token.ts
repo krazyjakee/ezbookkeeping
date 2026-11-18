@@ -1,7 +1,9 @@
+import { ref } from 'vue';
 import { defineStore } from 'pinia';
 
 import { useSettingsStore } from './setting.ts';
 import { useUserStore } from './user.ts';
+import { useUserCustomIconsStore } from './userCustomIcon.ts';
 
 import type {
     TokenGenerateAPIResponse,
@@ -14,11 +16,28 @@ import { isObject } from '@/lib/common.ts';
 import { updateCurrentToken } from '@/lib/userstate.ts';
 
 import logger from '@/lib/logger.ts';
-import services from '@/lib/services.ts';
+import services, { toStoreError } from '@/lib/services.ts';
 
 export const useTokensStore = defineStore('tokens', () => {
     const settingsStore = useSettingsStore();
     const userStore = useUserStore();
+    const userCustomIconsStore = useUserCustomIconsStore();
+
+    const mapProxyToken = ref<string | null>(null);
+
+    function updateMapProxyToken(token?: string): void {
+        if (token) {
+            mapProxyToken.value = token;
+        }
+    }
+
+    function resetMapProxyToken(): void {
+        mapProxyToken.value = null;
+    }
+
+    function getMapProxyToken(): string | null {
+        return mapProxyToken.value;
+    }
 
     function getAllTokens(): Promise<TokenInfoResponse[]> {
         return new Promise((resolve, reject) => {
@@ -34,24 +53,19 @@ export const useTokensStore = defineStore('tokens', () => {
             }).catch(error => {
                 logger.error('failed to load token list', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve session list' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve session list'));
             });
         });
     }
 
     function refreshTokenAndRevokeOldToken(): Promise<TokenRefreshResponse> {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
             services.refreshToken().then(response => {
                 const data = response.data;
 
                 if (data && data.success && data.result) {
                     settingsStore.setApplicationSettingsFromCloudSettings(data.result.applicationCloudSettings);
+                    updateMapProxyToken(data.result.newMapProxyToken);
                 }
 
                 if (data && data.success && data.result && data.result.user && isObject(data.result.user)) {
@@ -61,27 +75,40 @@ export const useTokensStore = defineStore('tokens', () => {
                 if (data && data.success && data.result && data.result.newToken) {
                     updateCurrentToken(data.result.newToken);
 
+                    if (!userCustomIconsStore.customIconListStateInvalid) {
+                        userCustomIconsStore.updateCustomIconListInvalidState(true);
+                    }
+
                     if (data.result.oldTokenId) {
                         revokeToken({
                             tokenId: data.result.oldTokenId,
                             ignoreError: true
+                        }).catch(error => {
+                            logger.warn('failed to revoke old token after refreshing', error);
                         });
                     }
                 }
 
                 resolve(data.result);
-            });
+            }).catch(reject);
         });
     }
 
-    function generateToken<T extends 'api' | 'mcp'>({ type, expiresInSeconds, password }: { type: T, expiresInSeconds: number, password: string }): Promise<{ 'api': TokenGenerateAPIResponse, 'mcp': TokenGenerateMCPResponse }[T]> {
+    function generateToken<T extends 'api' | 'mcp'>({ type, expiresInSeconds, password, enabledMCPTools }: { type: T, expiresInSeconds: number, password: string, enabledMCPTools?: string[] }): Promise<{ 'api': TokenGenerateAPIResponse, 'mcp': TokenGenerateMCPResponse }[T]> {
         return new Promise((resolve, reject) => {
             let promise = null;
 
             if (type === 'api') {
-                promise = services.generateAPIToken({ expiresInSeconds, password });
+                promise = services.generateAPIToken({
+                    expiresInSeconds: expiresInSeconds,
+                    password: password
+                });
             } else if (type === 'mcp') {
-                promise = services.generateMCPToken({ expiresInSeconds, password });
+                promise = services.generateMCPToken({
+                    expiresInSeconds: expiresInSeconds,
+                    password: password,
+                    enabledTools: enabledMCPTools
+                });
             } else {
                 reject({ message: 'An error occurred' });
                 return;
@@ -99,13 +126,7 @@ export const useTokensStore = defineStore('tokens', () => {
             }).catch(error => {
                 logger.error('failed to generate token', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to generate token' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to generate token'));
             });
         });
     }
@@ -124,13 +145,7 @@ export const useTokensStore = defineStore('tokens', () => {
             }).catch(error => {
                 logger.error('failed to revoke token', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to logout from this session' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to logout from this session'));
             });
         });
     }
@@ -149,19 +164,16 @@ export const useTokensStore = defineStore('tokens', () => {
             }).catch(error => {
                 logger.error('failed to revoke all tokens', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to logout all other sessions' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to logout all other sessions'));
             });
         });
     }
 
     return {
         // functions
+        updateMapProxyToken,
+        resetMapProxyToken,
+        getMapProxyToken,
         getAllTokens,
         refreshTokenAndRevokeOldToken,
         generateToken,

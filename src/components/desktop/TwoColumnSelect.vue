@@ -43,7 +43,7 @@
                 <div class="primary-list-container">
                     <v-list ref="primaryList" :class="{ 'list-item-with-header': !!primaryHeaderField, 'list-item-with-footer': !!primaryFooterField }"
                             @keydown.capture="onListKeydown($event, 'left')">
-                        <v-list-item :class="{ 'primary-list-item-selected v-list-item--active text-primary': item === selectedPrimaryItem }"
+                        <v-list-item :class="{ 'primary-list-item-selected v-list-item--active text-primary': item === activePrimaryItem }"
                                      :key="primaryKeyField ? (item as Record<string, unknown>)[primaryKeyField] as string : JSON.stringify(item)"
                                      v-for="item in filteredItems"
                                      @click="onPrimaryItemClicked(item)">
@@ -65,7 +65,7 @@
                 <div class="secondary-list-container">
                     <v-list ref="secondaryList" :class="{ 'list-item-with-header': !!secondaryHeaderField, 'list-item-with-footer': !!secondaryFooterField }"
                             @keydown.capture="onListKeydown($event, 'right')"
-                            v-if="selectedPrimaryItem && primarySubItemsField && (selectedPrimaryItem as Record<string, unknown>)[primarySubItemsField]">
+                            v-if="activePrimaryItem && primarySubItemsField && (activePrimaryItem as Record<string, unknown>)[primarySubItemsField]">
                         <v-list-item :class="{ 'secondary-list-item-selected v-list-item--active text-primary': isSecondarySelected(subItem) }"
                                      :key="secondaryKeyField ? subItem[secondaryKeyField] as string : JSON.stringify(subItem)"
                                      v-for="subItem in filteredSubItems"
@@ -85,6 +85,17 @@
                         </v-list-item>
                     </v-list>
                 </div>
+            </div>
+            <v-divider v-if="addPrimaryItemText || addSecondaryItemText" />
+            <div class="two-column-list-container" v-if="addPrimaryItemText || addSecondaryItemText">
+                <v-list class="py-0">
+                    <v-list-item :prepend-icon="mdiPlus" :title="addPrimaryItemText"
+                                 v-if="addPrimaryItemText" @click="onAddPrimaryItemClicked"></v-list-item>
+                </v-list>
+                <v-list class="py-0">
+                    <v-list-item :prepend-icon="mdiPlus" :title="addSecondaryItemText" :disabled="!activePrimaryItem"
+                                 v-if="addSecondaryItemText" @click="onAddSecondaryItemClicked"></v-list-item>
+                </v-list>
             </div>
         </template>
     </v-select>
@@ -117,7 +128,8 @@ import {
 
 import {
     mdiChevronRight,
-    mdiMagnify
+    mdiMagnify,
+    mdiPlus
 } from '@mdi/js';
 
 interface DesktopTwoColumnListItemSelectionProps extends CommonTwoColumnListItemSelectionProps {
@@ -132,12 +144,17 @@ interface DesktopTwoColumnListItemSelectionProps extends CommonTwoColumnListItem
     customSelectionSecondaryText?: string;
     noItemText?: string;
     autoUpdateMenuPosition?: boolean;
+    disableAutoSelectFirstSecondaryItem?: boolean;
+    addPrimaryItemText?: string;
+    addSecondaryItemText?: string;
 }
 
 const props = defineProps<DesktopTwoColumnListItemSelectionProps>();
 
 const emit = defineEmits<{
     (e: 'update:modelValue', value: unknown): void;
+    (e: 'add:primary', filterContent: string): void;
+    (e: 'add:secondary', primaryItem: unknown, filterContent: string): void;
 }>();
 
 const { tt, ti } = useI18n();
@@ -161,8 +178,9 @@ const primaryList = useTemplateRef<VList>('primaryList');
 const secondaryList = useTemplateRef<VList>('secondaryList');
 
 const menuState = ref<boolean>(false);
+const menuPrimaryValue = ref<unknown>(undefined);
 
-const filteredSubItems = computed<Record<string, unknown>[]>(() => getFilteredSubItems(selectedPrimaryItem.value));
+const filteredSubItems = computed<Record<string, unknown>[]>(() => getFilteredSubItems(activePrimaryItem.value));
 
 const currentPrimaryValue = computed<unknown>({
     get: () => {
@@ -175,7 +193,16 @@ const currentPrimaryValue = computed<unknown>({
             return;
         }
 
+        if (props.disableAutoSelectFirstSecondaryItem) {
+            menuPrimaryValue.value = value;
+            return;
+        }
+
         const secondaryItem = getFirstVisibleItem(getFilteredSubItems(primaryItem), props.primaryHiddenField as string);
+
+        if (props.addSecondaryItemText) {
+            menuPrimaryValue.value = value;
+        }
 
         if (secondaryItem) {
             if (props.secondaryValueField) {
@@ -197,6 +224,7 @@ const currentSecondaryValue = computed<unknown>({
 
 const selectedPrimaryItem = computed<unknown>(() => getSelectedPrimaryItem(currentPrimaryValue.value));
 const selectedSecondaryItem = computed<unknown>(() => getSelectedSecondaryItem(currentSecondaryValue.value, selectedPrimaryItem.value));
+const activePrimaryItem = computed<unknown>(() => menuState.value && (props.disableAutoSelectFirstSecondaryItem || props.addSecondaryItemText) ? getSelectedPrimaryItem(menuPrimaryValue.value) : selectedPrimaryItem.value);
 
 const noSelectionText = computed<string>(() => props.noItemText ? props.noItemText : tt('None'));
 
@@ -255,6 +283,24 @@ function onSecondaryItemClicked(subItem: unknown): void {
     updateCurrentSecondaryValue(currentSecondaryValue, subItem);
 }
 
+function onAddPrimaryItemClicked(): void {
+    const currentFilterContent = filterContent.value ?? '';
+    menuState.value = false;
+    emit('add:primary', currentFilterContent);
+}
+
+function onAddSecondaryItemClicked(): void {
+    const primaryItem = activePrimaryItem.value;
+    const currentFilterContent = filterContent.value ?? '';
+
+    if (!primaryItem) {
+        return;
+    }
+
+    menuState.value = false;
+    emit('add:secondary', primaryItem, currentFilterContent);
+}
+
 function onListKeydown(event: KeyboardEvent, column: TwoColumnListColumn): void {
     setTwoColumnItemFocusWhenKeydown(event, column, {
         getList: column => {
@@ -268,7 +314,7 @@ function onListKeydown(event: KeyboardEvent, column: TwoColumnListColumn): void 
         },
         getSelectedIndex: column => {
             if (column === 'left') {
-                return filteredItems.value.findIndex(item => item === selectedPrimaryItem.value);
+                return filteredItems.value.findIndex(item => item === activePrimaryItem.value);
             } else if (column === 'right') {
                 return filteredSubItems.value.findIndex(isSecondarySelected);
             } else {
@@ -293,6 +339,8 @@ function onListKeydown(event: KeyboardEvent, column: TwoColumnListColumn): void 
 
 function onMenuStateChanged(state: boolean): void {
     if (state) {
+        menuPrimaryValue.value = getCurrentPrimaryValueBySecondaryValue(props.modelValue);
+
         nextTick(() => {
             if (dropdownMenu.value && dropdownMenu.value.parentElement) {
                 scrollToSelectedItem(dropdownMenu.value.parentElement, '.primary-list-container', '.primary-list-container', '.primary-list-item-selected');

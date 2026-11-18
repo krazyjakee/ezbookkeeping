@@ -1,64 +1,66 @@
 <template>
-    <v-card class="overview-widget savings-rate-widget h-100" :class="{ disabled: loading }">
-        <template #title>
-            <overview-widget-header :title="title || currentPeriodTitle" :icon="mdiPiggyBankOutline">
-                <v-btn density="compact" color="default" variant="text" :aria-label="tt('More')" :icon="true" v-if="!editing">
-                    <v-icon :icon="mdiDotsVertical" />
-                    <v-menu activator="parent">
-                        <v-list>
-                            <v-list-item :prepend-icon="mdiListBoxOutline" :to="currentDetailsUrl">
-                                <v-list-item-title>{{ tt('View Details') }}</v-list-item-title>
-                            </v-list-item>
-                        </v-list>
-                    </v-menu>
-                </v-btn>
-            </overview-widget-header>
+    <overview-widget-panel class="savings-rate-widget"
+                           :title="title || currentPeriodTitle"
+                           :meta="currentDisplayDateTime"
+                           :loading="loading" :empty="!hasData">
+        <template #actions v-if="!editing">
+            <v-btn density="comfortable" size="small" color="default" variant="text"
+                   :aria-label="tt('View Details')" :icon="true" :to="currentDetailsUrl">
+                <v-icon :icon="mdiChevronRight" class="icon-with-direction" size="20" />
+                <v-tooltip activator="parent">{{ tt('View Details') }}</v-tooltip>
+            </v-btn>
         </template>
-        <v-card-text class="overview-widget__body savings-rate-widget__body">
-            <div class="overview-widget__caption">{{ tt('Net Income') }}</div>
-            <div class="overview-widget__amount text-headline-small font-weight-medium text-truncate"
-                 :class="{ 'text-income': !!currentDisplayNetIncomeAmount, 'text-medium-emphasis': !currentDisplayNetIncomeAmount }"
-                 v-if="!loading || currentDisplayNetIncomeAmount">{{ currentDisplayNetIncomeAmount !== '' ? currentDisplayNetIncomeAmount : tt('No data') }}</div>
-            <v-skeleton-loader class="skeleton-no-margin mt-3 mb-6" type="text" width="120px" :loading="true" v-else-if="loading && !currentDisplayNetIncomeAmount"></v-skeleton-loader>
-            <div class="d-flex justify-space-between align-center my-3">
-                <span class="text-body-medium">{{ tt('Savings Rate') }}</span>
-                <span class="text-title-medium text-primary" v-if="!loading || currentDisplayNetIncomeAmount">{{ currentDisplaySavingsRate || '-' }}</span>
-                <v-skeleton-loader class="skeleton-no-margin pb-3" type="text" width="80px" :loading="true" v-else-if="loading && !currentDisplayNetIncomeAmount"></v-skeleton-loader>
+
+        <div class="overview-widget__kpi">
+            <span class="overview-widget__label ebk-technical-heading">{{ tt('Net Income') }}</span>
+            <signed-amount class="overview-widget__hero-amount" :type="currentSignedDisplayNetIncomeAmount.type"
+                           :text="currentSignedDisplayNetIncomeAmount.text" :hide-sign="currentSignedDisplayNetIncomeAmount.hideSign"
+                           v-if="hasData" />
+            <v-skeleton-loader class="skeleton-no-margin overview-widget__skeleton-hero" type="heading" width="160px" v-else />
+        </div>
+
+        <div class="overview-widget__detail-row savings-rate-widget__rate">
+            <span class="overview-widget__label ebk-technical-heading">{{ tt('Savings Rate') }}</span>
+            <span class="savings-rate-widget__rate-value ebk-numeric" v-if="hasData">{{ currentDisplaySavingsRate || '-' }}</span>
+            <v-skeleton-loader class="skeleton-no-margin" type="text" width="64px" v-else />
+        </div>
+
+        <div class="overview-widget__kpi-pair overview-widget__kpi-pair--compact">
+            <div class="overview-widget__kpi">
+                <span class="overview-widget__label ebk-technical-heading">
+                    <v-icon class="overview-widget__label-icon" :icon="mdiArrowUp" size="14" />{{ tt('Income') }}
+                </span>
+                <signed-amount class="overview-widget__row-amount" type="income"
+                               :text="currentSignedDisplayIncomeAmount.text" :hide-sign="currentSignedDisplayIncomeAmount.hideSign"
+                               v-if="hasData" />
+                <v-skeleton-loader class="skeleton-no-margin" type="text" width="80px" v-else />
             </div>
-            <div class="savings-rate-widget__breakdown" v-if="!loading || currentDisplayNetIncomeAmount">
-                <div>
-                    <span class="overview-widget__caption">{{ tt('Income') }}</span>
-                    <span class="overview-widget__amount text-income text-truncate">{{ currentDisplayIncomeAmount ? currentDisplayIncomeAmount : '-' }}</span>
-                </div>
-                <div>
-                    <span class="overview-widget__caption">{{ tt('Expense') }}</span>
-                    <span class="overview-widget__amount text-expense text-truncate">{{ currentDisplayExpenseAmount ? currentDisplayExpenseAmount : '-' }}</span>
-                </div>
+            <div class="overview-widget__kpi">
+                <span class="overview-widget__label ebk-technical-heading">
+                    <v-icon class="overview-widget__label-icon" :icon="mdiArrowDown" size="14" />{{ tt('Expense') }}
+                </span>
+                <signed-amount class="overview-widget__row-amount" type="expense"
+                               :text="currentSignedDisplayExpenseAmount.text" :hide-sign="currentSignedDisplayExpenseAmount.hideSign"
+                               v-if="hasData" />
+                <v-skeleton-loader class="skeleton-no-margin" type="text" width="80px" v-else />
             </div>
-            <div class="savings-rate-widget__breakdown" v-if="loading && !currentDisplayNetIncomeAmount">
-                <div>
-                    <span>{{ tt('Income') }}</span>
-                    <v-skeleton-loader class="skeleton-no-margin" type="text" width="80px" :loading="true"></v-skeleton-loader>
-                </div>
-                <div>
-                    <span>{{ tt('Expense') }}</span>
-                    <v-skeleton-loader class="skeleton-no-margin" type="text" width="80px" :loading="true"></v-skeleton-loader>
-                </div>
-            </div>
-        </v-card-text>
-    </v-card>
+        </div>
+    </overview-widget-panel>
 </template>
 
 <script setup lang="ts">
-import OverviewWidgetHeader from './OverviewWidgetHeader.vue';
+import OverviewWidgetPanel from './OverviewWidgetPanel.vue';
+import SignedAmount from '@/components/common/SignedAmount.vue';
+
+import { computed } from 'vue';
 
 import { useI18n } from '@/locales/helpers.ts';
 import { type CommonPeriodStatisticsWidgetProps, usePeriodStatisticsWidgetBase } from '@/views/base/overview/PeriodStatisticsWidgetBase.ts';
 
 import {
-    mdiPiggyBankOutline,
-    mdiDotsVertical,
-    mdiListBoxOutline
+    mdiArrowDown,
+    mdiArrowUp,
+    mdiChevronRight
 } from '@mdi/js';
 
 interface PeriodNetIncomeAndSavingsRateWidgetProps extends CommonPeriodStatisticsWidgetProps {
@@ -71,11 +73,15 @@ const props = defineProps<PeriodNetIncomeAndSavingsRateWidgetProps>();
 
 const { tt } = useI18n();
 const {
+    currentOverviewItem,
     currentPeriodTitle,
-    currentDisplayIncomeAmount,
-    currentDisplayExpenseAmount,
-    currentDisplayNetIncomeAmount,
+    currentDisplayDateTime,
+    currentSignedDisplayIncomeAmount,
+    currentSignedDisplayExpenseAmount,
+    currentSignedDisplayNetIncomeAmount,
     currentDisplaySavingsRate,
     currentDetailsUrl
 } = usePeriodStatisticsWidgetBase(props);
+
+const hasData = computed<boolean>(() => !!currentOverviewItem.value?.valid);
 </script>

@@ -21,27 +21,63 @@
 .overview-dashboard-item-editing > .overview-dashboard-widget {
     pointer-events: none;
     user-select: none;
+    outline: 1px dashed var(--ebk-color-copper-line);
+    outline-offset: 3px;
 }
 
+.overview-dashboard-item-editing:hover > .overview-dashboard-widget,
+.overview-dashboard-item-editing:focus-within > .overview-dashboard-widget {
+    outline-style: solid;
+}
+
+// the header strip is the drag handle in the editor, the toolbar keeps the non-drag controls (move up / down, more)
 .overview-dashboard-title-drag-area {
     position: absolute;
     z-index: 4;
-    height: 64px;
+    height: var(--ebk-header-strip-height);
     inset-block-start: 0;
-    inset-inline: 0 48px;
+    inset-inline: 0 140px;
     cursor: move;
     touch-action: none;
     user-select: none;
 }
 
+.overview-dashboard-drag-indicator {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 32px;
+    color: var(--ebk-color-text-secondary);
+    cursor: move;
+    touch-action: none;
+}
+
+// the widget's own header actions are replaced by the editor toolbar, and its labels truncate before the toolbar
+.overview-dashboard-item-editing {
+    .overview-widget__actions {
+        visibility: hidden;
+    }
+
+    .overview-widget .overview-widget__header {
+        padding-inline-end: 140px;
+    }
+}
+
 .overview-dashboard-editor-toolbar {
     display: flex;
-    gap: 4px;
+    align-items: center;
+    gap: 2px;
     position: absolute;
     z-index: 5;
-    inset-block-start: 8px;
-    inset-inline-end: 8px;
-    background: transparent;
+    height: var(--ebk-header-strip-height);
+    inset-block-start: 0;
+    inset-inline-end: 4px;
+    padding-inline-start: 4px;
+    border-inline-start: 1px solid var(--ebk-color-hairline);
+    background: var(--ebk-color-surface);
+    border-start-end-radius: var(--ebk-radius-panel);
+    color: var(--ebk-color-text-secondary);
 }
 
 .overview-dashboard-resize-handle {
@@ -52,16 +88,16 @@
     z-index: 1;
     min-width: 0;
     min-height: 0;
-    border: 2px dashed rgb(var(--v-theme-primary));
-    background: rgba(var(--v-theme-primary), 0.12);
-    border-radius: var(--ebk-radius-lg);
-    transition: grid-column 120ms ease, grid-row 120ms ease;
+    border: 1px dashed var(--ebk-color-primary);
+    background: var(--ebk-color-selected-background);
+    border-radius: var(--ebk-radius-panel);
 }
 
 .overview-dashboard-item-dragging {
     z-index: 2500;
     opacity: 0.96;
-    filter: drop-shadow(0 14px 22px rgba(var(--ebk-shadow-color), 0.28));
+    box-shadow: var(--ebk-shadow-lg);
+    border-radius: var(--ebk-radius-panel);
     transform: scale(1.01);
     pointer-events: none;
 }
@@ -72,12 +108,13 @@
     justify-content: center;
     position: absolute;
     z-index: 5;
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     border: 0;
-    color: rgba(var(--v-theme-on-surface), var(--v-disabled-opacity));
+    color: var(--ebk-color-text-secondary);
     background: transparent;
-    border-radius: 8px 0 8px 0;
+    border-start-start-radius: var(--ebk-radius-control);
+    border-end-end-radius: var(--ebk-radius-panel);
     inset-inline-end: 0;
     inset-block-end: 0;
     cursor: nwse-resize;
@@ -95,8 +132,12 @@ html[dir="rtl"] .overview-dashboard-resize-handle {
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 2px dashed rgba(var(--v-theme-on-surface), 0.2);
-    border-radius: 12px;
+
+    > .overview-dashboard-empty-state {
+        width: 100%;
+        height: 100%;
+        justify-content: center;
+    }
 }
 
 @media (max-width: 959px) {

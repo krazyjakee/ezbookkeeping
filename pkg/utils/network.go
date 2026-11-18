@@ -29,7 +29,7 @@ func GetLocalIPAddressesString() (string, error) {
 		buff.WriteString(localAddrs[i].String())
 	}
 
-	return string(buff.Bytes()), nil
+	return buff.String(), nil
 }
 
 // GetLocalIPAddresses returns all local ip address object array

@@ -49,7 +49,7 @@
                 <div class="w-100 h-100 d-flex align-center justify-content-center" v-if="executionError">
                     <v-alert class="mb-3" density="compact" type="error" variant="tonal" :text="executionError" />
                 </div>
-                <v-chart autoresize :option="chartOptions" :update-options="{ notMerge: true }"
+                <v-chart autoresize :option="displayChartOptions" :update-options="{ notMerge: true }"
                          v-if="!executionError && chartOptions" />
             </div>
         </v-col>
@@ -67,7 +67,6 @@
     </v-row>
 
     <iframe id="sandbox" ref="sandbox" sandbox="allow-scripts" style="display: none;"></iframe>
-    <snack-bar ref="snackbar" />
     <snack-bar ref="snackbarForFailureReason" not-auto-hide color="warning" variant="outlined" location="top center" />
 </template>
 
@@ -83,6 +82,7 @@ import { useSettingsStore } from '@/stores/setting.ts';
 import { useUserStore } from '@/stores/user.ts';
 import { useExplorersStore } from '@/stores/explorer.ts';
 import { useExchangeRatesStore } from '@/stores/exchangeRates.ts';
+import { useDesktopPageStore } from '@/stores/desktopPage.ts';
 
 import { itemAndIndex } from '@/core/base.ts';
 import type { BigDecimal } from '@/core/numeral.ts';
@@ -94,6 +94,7 @@ import type { TransactionExplorerQuery } from '@/models/explorer.ts';
 import { parseBigDecimal } from '@/lib/numeral.ts';
 import { parseDateTimeFromUnixTimeWithTimezoneOffset } from '@/lib/datetime.ts';
 import { generateRandomUUID } from '@/lib/misc.ts';
+import { isReducedMotion } from '@/lib/motion.ts';
 import logger from '@/lib/logger.ts';
 
 import {
@@ -175,6 +176,7 @@ const settingsStore = useSettingsStore();
 const userStore = useUserStore();
 const explorersStore = useExplorersStore();
 const exchangeRatesStore = useExchangeRatesStore();
+const desktopPageStore = useDesktopPageStore();
 
 const sandboxMessageSignature: string = '#ezBookkeeping-sandbox-message#';
 const sandboxBuildinScripts: string = `
@@ -216,12 +218,13 @@ window.addEventListener('message', function (event) {
 `;
 
 const sandbox = useTemplateRef<HTMLIFrameElement>('sandbox');
-const snackbar = useTemplateRef<SnackBarType>('snackbar');
 const snackbarForFailureReason = useTemplateRef<SnackBarType>('snackbarForFailureReason');
 
 const sandboxLoaded = ref<boolean>(false);
 const customScript = ref<string>('');
 const chartOptions = ref<Record<string, unknown>>({});
+// chart options are user defined, only turn off the chart animations when motion is reduced
+const displayChartOptions = computed<Record<string, unknown>>(() => isReducedMotion() ? { ...chartOptions.value, animation: false } : chartOptions.value);
 const executingScript = ref<boolean>(false);
 const executionError = ref<string>('');
 const aiModeState = ref<CustomChartAIState>(CustomChartAIState.Idle);
@@ -674,7 +677,7 @@ function generateAICode(): void {
         cancelAIGeneratingUuid.value = undefined;
 
         if (!error.processed) {
-            snackbar.value?.showError(error);
+            desktopPageStore.addErrorToast(error);
         }
     });
 }
@@ -688,7 +691,7 @@ function cancelAIGeneration(): void {
     aiModeState.value = CustomChartAIState.Prompting;
     cancelAIGeneratingUuid.value = undefined;
 
-    snackbar.value?.showMessage('User Canceled');
+    desktopPageStore.addToast('User Canceled');
 }
 
 function exitAIMode(): void {
@@ -707,11 +710,11 @@ function onMessage(event: MessageEvent<SandboxResponse>): void {
     const data = event.data;
 
     if (data.knownError) {
-        snackbar.value?.showError(data.knownError);
+        desktopPageStore.addErrorToast(data.knownError);
         executionError.value = tt(data.knownError);
     } else if (data.error) {
         logger.error('Failed to execute custom script: ' + data.error);
-        snackbar.value?.showError('Failed to execute custom script');
+        desktopPageStore.addErrorToast('Failed to execute custom script');
         executionError.value = data.error;
     } else if (data.result) {
         try {

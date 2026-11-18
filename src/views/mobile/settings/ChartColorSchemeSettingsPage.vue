@@ -1,5 +1,5 @@
 <template>
-    <f7-page>
+    <f7-page class="ebk-settings-page">
         <f7-navbar>
             <f7-nav-left :back-link="tt('Back')"></f7-nav-left>
             <f7-nav-title :title="tt('Chart Color Scheme')"></f7-nav-title>
@@ -13,6 +13,7 @@
                  class="margin-top-half chart-color-list" @sortable:sort="onSort">
             <f7-list-input readonly type="colorpicker"
                            :id="`chart_color_${chartColorIds[index]}`"
+                           :input-id="`chart_color_input_${chartColorIds[index]}`"
                            :key="chartColorIds[index]"
                            :color-picker-params="{
                                modules: ['sb-spectrum', 'hue-slider', 'hex'],
@@ -23,6 +24,7 @@
                            @colorpicker:change="updateChartColor(index, $event.hex ?? '')"
                            v-for="(color, index) in chartColors">
                 <template #inner-start>
+                    <label class="ebk-visually-hidden" :for="`chart_color_input_${chartColorIds[index]}`">{{ `${tt('Color')} ${index + 1}: #${color}` }}</label>
                     <ItemIcon icon-type="fixed-f7" icon-id="app_fill" size="36px" :color="color" @click="openColorPicker"></ItemIcon>
                 </template>
                 <template #inner-end>

@@ -1,4 +1,4 @@
-import { createApp, ref } from 'vue';
+import { createApp, ref, watch } from 'vue';
 import { createPinia } from 'pinia';
 import { type I18n, type Composer, createI18n } from 'vue-i18n';
 
@@ -38,6 +38,7 @@ import { VSelect } from 'vuetify/components/VSelect';
 import { VSkeletonLoader } from 'vuetify/components/VSkeletonLoader';
 import { VSlideGroup, VSlideGroupItem } from 'vuetify/components/VSlideGroup';
 import { VSnackbar } from 'vuetify/components/VSnackbar';
+import { VSnackbarQueue } from 'vuetify/components/VSnackbarQueue';
 import { VSwitch } from 'vuetify/components/VSwitch';
 import { VTabs, VTab } from 'vuetify/components/VTabs';
 import { VTable } from 'vuetify/components/VTable';
@@ -86,6 +87,7 @@ import router from '@/router/desktop.ts';
 
 import { DecimalSeparator, DigitGroupingSymbol } from '@/core/numeral.ts';
 import { getI18nOptions, getRtlLocales } from '@/locales/helpers.ts';
+import { initMotionPreference, useReducedMotion } from '@/lib/motion.ts';
 
 import PinCodeInput from '@/components/common/PinCodeInput.vue';
 import MapView from '@/components/common/MapView.vue';
@@ -208,6 +210,7 @@ const vuetify = createVuetify({
         VSlideGroup,
         VSlideGroupItem,
         VSnackbar,
+        VSnackbarQueue,
         VSwitch,
         VTabs,
         VTab,
@@ -296,6 +299,10 @@ const vuetify = createVuetify({
             timeout: 3000,
             zIndex: 9000
         },
+        VSnackbarQueue: {
+            timeout: 3000,
+            zIndex: 9000
+        },
         VTable: {
             hover: true,
             density: 'comfortable'
@@ -339,11 +346,12 @@ const vuetify = createVuetify({
             light: {
                 dark: false,
                 colors: {
+                    // mapped from the shared design tokens (src/styles/common/_tokens.scss, docs/design/tokens.md)
                     'primary': '#c67e48',
                     'primary-darken-1': '#b67443',
-                    'on-primary': '#ffffff',
-                    'secondary': '#8c8c8c',
-                    'secondary-darken-1': '#595754',
+                    'on-primary': '#140f0d',
+                    'secondary': '#6b605a',
+                    'secondary-darken-1': '#4f4641',
                     'on-secondary': '#ffffff',
                     'success': '#4cd964',
                     'success-darken-1': '#40b654',
@@ -358,10 +366,14 @@ const vuetify = createVuetify({
                     'error-darken-1': '#e1342b',
                     'on-error': '#ffffff',
                     'teal': '#009688',
-                    'background': '#faf8f4',
-                    'on-background': '#413935',
-                    'surface': '#fff',
-                    'on-surface': '#413935',
+                    'background': '#f7f4ef',
+                    'on-background': '#2b2421',
+                    'surface': '#ffffff',
+                    'on-surface': '#2b2421',
+                    'surface-raised': '#ffffff',
+                    'on-surface-raised': '#2b2421',
+                    'surface-sunken': '#f1ece5',
+                    'on-surface-sunken': '#2b2421',
                     'notification-background': '#ffffff',
                     'on-notification-background': '#000',
                     'grey': '#8c8c8c',
@@ -381,7 +393,7 @@ const vuetify = createVuetify({
                 },
                 variables: {
                     'code-color': '#ff8000',
-                    'overlay-scrim-background': '#413935',
+                    'overlay-scrim-background': '#2b2421',
                     'tooltip-background': '#212121',
                     'tooltip-color': '#ffffff',
                     'overlay-scrim-opacity': 0.2,
@@ -392,9 +404,9 @@ const vuetify = createVuetify({
                     'pressed-opacity': 0.14,
                     'dragged-opacity': 0.1,
                     'disabled-opacity': 0.4,
-                    'border-color': '#413f3b',
-                    'border-opacity': 0.12,
-                    'table-header-background': '#fdfcf9',
+                    'border-color': '#362f2a',
+                    'border-opacity': 0.14,
+                    'table-header-background': '#f1ece5',
                     'high-emphasis-opacity': 0.9,
                     'medium-emphasis-opacity': 0.7,
 
@@ -410,9 +422,10 @@ const vuetify = createVuetify({
             dark: {
                 dark: true,
                 colors: {
+                    // mapped from the shared design tokens (src/styles/common/_tokens.scss, docs/design/tokens.md)
                     'primary': '#c67e48',
                     'primary-darken-1': '#b67443',
-                    'on-primary': '#ffffff',
+                    'on-primary': '#140f0d',
                     'secondary': '#9d9b99',
                     'secondary-darken-1': '#3e3d3c',
                     'on-secondary': '#fff',
@@ -429,10 +442,14 @@ const vuetify = createVuetify({
                     'error-darken-1': '#e1342b',
                     'on-error': '#ffffff',
                     'teal': '#009688',
-                    'background': '#060504',
-                    'on-background': '#fcf0e3',
-                    'surface': '#1a1a1a',
-                    'on-surface': '#fcf0e3',
+                    'background': '#0b0a09',
+                    'on-background': '#f4ebe1',
+                    'surface': '#161412',
+                    'on-surface': '#f4ebe1',
+                    'surface-raised': '#1e1b18',
+                    'on-surface-raised': '#f4ebe1',
+                    'surface-sunken': '#100e0c',
+                    'on-surface-sunken': '#f4ebe1',
                     'notification-background': '#2e2e2e',
                     'on-notification-background': '#fff',
                     'grey': '#4d4c4b',
@@ -463,9 +480,9 @@ const vuetify = createVuetify({
                     'pressed-opacity': 0.14,
                     'disabled-opacity': 0.4,
                     'dragged-opacity': 0.1,
-                    'border-color': '#edece9',
+                    'border-color': '#ece2d9',
                     'border-opacity': 0.12,
-                    'table-header-background': '#23201d',
+                    'table-header-background': '#100e0c',
                     'high-emphasis-opacity': 0.9,
                     'medium-emphasis-opacity': 0.7,
 
@@ -529,8 +546,46 @@ const vuetify = createVuetify({
 // key is in the original i18n text of vuetify (in vuetify/lib/locale/en.js), value is the text in the ezBookkeeping i18n files
 const vuetifyI18nTextKeyMap: Record<string, string> = {
     'open': 'Open',
-    'close': 'Close'
+    'close': 'Close',
+    'loading': 'Loading...',
+    'noDataText': 'No data',
+    'input.clear': 'Clear',
+    // accessible names of clickable field icons (e.g. the calendar icon of DateTimeSelect), unmapped keys were announced as "input.appendAction" (#36)
+    'input.appendAction': 'Open',
+    'input.prependAction': 'Open',
+    'pagination.ariaLabel.root': 'Pagination Navigation',
+    'pagination.ariaLabel.next': 'Next Page',
+    'pagination.ariaLabel.previous': 'Previous Page',
+    'colorPicker.ariaLabel.eyedropper': 'Select color with eyedropper',
+    'colorPicker.ariaLabel.hueSlider': 'Hue',
+    'colorPicker.ariaLabel.hexInput': 'HEX value'
 }
+
+// these components use the javascript (Web Animations) based dialog transition, which ignores css, so they fall back to the css fade transition when motion is reduced
+const VUETIFY_COMPONENTS_WITH_REDUCED_MOTION_TRANSITION: string[] = ['VDialog', 'VMenu', 'VSelect', 'VAutocomplete'];
+
+function applyVuetifyMotionDefaults(reducedMotion: boolean): void {
+    const defaults = vuetify.defaults.value;
+
+    if (!defaults) {
+        return;
+    }
+
+    for (const componentName of VUETIFY_COMPONENTS_WITH_REDUCED_MOTION_TRANSITION) {
+        const componentDefaults: Record<string, unknown> = defaults[componentName] ?? {};
+
+        if (reducedMotion) {
+            componentDefaults['transition'] = 'fade-transition';
+        } else {
+            delete componentDefaults['transition'];
+        }
+
+        defaults[componentName] = componentDefaults;
+    }
+}
+
+initMotionPreference();
+watch(useReducedMotion(), reducedMotion => applyVuetifyMotionDefaults(reducedMotion), { immediate: true });
 
 echarts.use([
     CanvasRenderer,

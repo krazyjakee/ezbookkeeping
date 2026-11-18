@@ -10,6 +10,7 @@ import { useOverviewStore } from '@/stores/overview.ts';
 import { useExchangeRatesStore } from '@/stores/exchangeRates.ts';
 
 import type { BigDecimal } from '@/core/numeral.ts';
+import { DateRange } from '@/core/datetime.ts';
 import { CategoryType } from '@/core/category.ts';
 import { TransactionType } from '@/core/transaction.ts';
 import { DISPLAY_HIDDEN_AMOUNT, INCOMPLETE_AMOUNT_SUFFIX } from '@/consts/numeral.ts';
@@ -38,7 +39,7 @@ export interface CommonExpenseCategoryRankingWidgetProps {
 }
 
 export function useExpenseCategoryRankingWidgetBase(props: CommonExpenseCategoryRankingWidgetProps) {
-    const { formatAmountToLocalizedNumeralsWithCurrency } = useI18n();
+    const { tt, formatAmountToLocalizedNumeralsWithCurrency, formatPercentToLocalizedNumerals } = useI18n();
 
     const settingsStore = useSettingsStore();
     const userStore = useUserStore();
@@ -140,6 +141,29 @@ export function useExpenseCategoryRankingWidgetBase(props: CommonExpenseCategory
         return formatAmountToLocalizedNumeralsWithCurrency(amount, defaultCurrency.value) + (incomplete ? INCOMPLETE_AMOUNT_SUFFIX : '');
     }
 
+    function getDisplayPercent(item: RankingItem): string {
+        return formatPercentToLocalizedNumerals(item.percent, 2, '<0.01');
+    }
+
+    function getDisplayPeriodName(): string {
+        const dateRange = DateRange.valueOf(props.dateType);
+        return dateRange ? tt(dateRange.name) : '';
+    }
+
+    // one-sentence text summary of the ranking (design guidelines D7), e.g. "Payroll accounts for 73.88% of expenses"
+    function getSummaryText(): string {
+        const topItem = rankingData.value.items[0];
+
+        if (props.loading || !topItem || topItem.percent < 0 || !topItem.value.isPositive()) {
+            return '';
+        }
+
+        return tt('format.misc.categoryAccountsForPercentOfExpense', {
+            name: topItem.name,
+            percent: getDisplayPercent(topItem)
+        });
+    }
+
     function getTransactionItemLinkUrl(categoryId: string): string {
         return `/transaction/list?${overviewStore.getTransactionListPageParams({ type: TransactionType.Expense, dateType: props.dateType, categoryIds: [categoryId] })}`;
     }
@@ -148,8 +172,12 @@ export function useExpenseCategoryRankingWidgetBase(props: CommonExpenseCategory
         // computed states
         rankingData,
         rankingItems,
+        showAmountInHomePage,
         // functions
         getDisplayAmount,
+        getDisplayPercent,
+        getDisplayPeriodName,
+        getSummaryText,
         getTransactionItemLinkUrl
     };
 }

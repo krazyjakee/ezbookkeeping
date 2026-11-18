@@ -4,15 +4,20 @@ import { defineStore } from 'pinia';
 import { itemAndIndex } from '@/core/base.ts';
 import type { UserCustomIconInfoResponse, UserCustomIconNewDisplayOrderRequest } from '@/models/user_custom_icon.ts';
 
-import { isEquals } from '@/lib/common.ts';
+import { isObject, isString, isNumber } from '@/lib/common.ts';
+import { getCurrentUnixTime } from '@/lib/datetime.ts';
 import { deleteCustomIconCacheEntry } from '@/lib/cache.ts';
+import { isUserCustomIconsEquals } from '@/lib/icon.ts';
 
-import services from '@/lib/services.ts';
+import services, { toStoreError } from '@/lib/services.ts';
 import logger from '@/lib/logger.ts';
 
 export const useUserCustomIconsStore = defineStore('userCustomIcons', () => {
     const allCustomIcons = ref<UserCustomIconInfoResponse[]>([]);
+    const customIconListExpiresAt = ref<number>(0);
     const customIconListStateInvalid = ref<boolean>(true);
+
+    let loadingPromise: Promise<UserCustomIconInfoResponse[]> | null = null;
 
     function loadCustomIconsList(customIcons: UserCustomIconInfoResponse[]): void {
         allCustomIcons.value = customIcons;
@@ -40,52 +45,69 @@ export const useUserCustomIconsStore = defineStore('userCustomIcons', () => {
     }
 
     function resetCustomIcons(): void {
+        loadingPromise = null;
         allCustomIcons.value = [];
+        customIconListExpiresAt.value = 0;
         customIconListStateInvalid.value = true;
     }
 
     function loadAllCustomIcons({ force }: { force?: boolean }): Promise<UserCustomIconInfoResponse[]> {
-        if (!force && !customIconListStateInvalid.value) {
+        if (loadingPromise) {
+            return loadingPromise;
+        }
+
+        if (!force && !customIconListStateInvalid.value && customIconListExpiresAt.value > getCurrentUnixTime()) {
             return Promise.resolve(allCustomIcons.value);
         }
 
-        return new Promise((resolve, reject) => {
+        const currentPromise = loadingPromise = new Promise((resolve, reject) => {
             services.getAllUserCustomIcons().then(response => {
+                if (!loadingPromise || loadingPromise !== currentPromise) {
+                    logger.error('loadingPromise is invalid after retrieving custom icon list');
+                    reject({ message: 'An error occurred' });
+                    return;
+                }
+
                 const data = response.data;
 
                 if (!data || !data.success || !data.result) {
+                    loadingPromise = null;
                     reject({ message: 'Unable to retrieve custom icon list' });
                     return;
                 }
+
+                customIconListExpiresAt.value = data.result.expiresAt;
 
                 if (customIconListStateInvalid.value) {
                     updateCustomIconListInvalidState(false);
                 }
 
-                if (force && data.result && isEquals(allCustomIcons.value, data.result)) {
+                if (force && data.result && isUserCustomIconsEquals(allCustomIcons.value, data.result.items)) {
+                    loadingPromise = null;
                     reject({ message: 'Custom icon list is up to date', isUpToDate: true });
                     return;
                 }
 
-                loadCustomIconsList(data.result);
+                loadCustomIconsList(data.result.items);
+                loadingPromise = null;
 
                 resolve(allCustomIcons.value);
             }).catch(error => {
+                if (loadingPromise === currentPromise) {
+                    loadingPromise = null;
+                }
+
                 if (force) {
                     logger.error('failed to force load custom icon list', error);
                 } else {
                     logger.error('failed to load custom icon list', error);
                 }
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve custom icon list' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve custom icon list'));
             });
         });
+
+        return loadingPromise;
     }
 
     function uploadCustomIcon({ iconFile, clientSessionId }: { iconFile: File, clientSessionId: string }): Promise<UserCustomIconInfoResponse> {
@@ -104,13 +126,7 @@ export const useUserCustomIconsStore = defineStore('userCustomIcons', () => {
             }).catch(error => {
                 logger.error('failed to upload custom icon', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to upload custom icon' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to upload custom icon'));
             });
         });
     }
@@ -172,13 +188,7 @@ export const useUserCustomIconsStore = defineStore('userCustomIcons', () => {
             }).catch(error => {
                 logger.error('failed to save custom icons display order', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to move custom icon' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to move custom icon'));
             });
         });
     }
@@ -194,25 +204,33 @@ export const useUserCustomIconsStore = defineStore('userCustomIcons', () => {
                 }
 
                 removeCustomIconFromIconList(customIcon);
-                deleteCustomIconCacheEntry(services.getUserCustomIconUrlWithToken(customIcon.id));
+                deleteCustomIconCacheEntry(customIcon.originalUrl);
 
                 resolve(data.result);
             }).catch(error => {
                 logger.error('failed to delete custom icon', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to delete custom icon' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to delete custom icon'));
             });
         });
     }
 
-    function getUserCustomIconUrlWithToken(customIcon: UserCustomIconInfoResponse): string {
-        return services.getUserCustomIconUrlWithToken(customIcon.id);
+    function getUserCustomIconUrl(customIconOrIconId: UserCustomIconInfoResponse | string | number): string | undefined {
+        if (isObject(customIconOrIconId)) {
+            return customIconOrIconId.originalUrl;
+        } else if (isString(customIconOrIconId) || isNumber(customIconOrIconId)) {
+            if (isNumber(customIconOrIconId)) {
+                customIconOrIconId = customIconOrIconId.toString();
+            }
+
+            for (const customIcon of allCustomIcons.value) {
+                if (customIcon.id === customIconOrIconId) {
+                    return customIcon.originalUrl;
+                }
+            }
+        }
+
+        return undefined;
     }
 
     return {
@@ -227,6 +245,6 @@ export const useUserCustomIconsStore = defineStore('userCustomIcons', () => {
         changeCustomIconDisplayOrder,
         updateCustomIconDisplayOrders,
         deleteCustomIcon,
-        getUserCustomIconUrlWithToken
+        getUserCustomIconUrl
     };
 });

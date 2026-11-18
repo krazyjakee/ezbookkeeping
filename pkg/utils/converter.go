@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"math"
 	"math/big"
 	"strconv"
 	"strings"
@@ -16,18 +17,6 @@ func IntToString(num int) string {
 // StringToInt parses a textual representation of the number to int
 func StringToInt(str string) (int, error) {
 	return strconv.Atoi(str)
-}
-
-// StringTryToInt parses a textual representation of the number to int if str is valid,
-// or returns the default value
-func StringTryToInt(str string, defaultValue int) int {
-	num, err := StringToInt(str)
-
-	if err != nil {
-		return defaultValue
-	}
-
-	return num
 }
 
 // StringToInt32 parses a textual representation of the number to int32
@@ -77,18 +66,6 @@ func StringArrayToInt64Array(strs []string) ([]int64, error) {
 	}
 
 	return ret, nil
-}
-
-// StringTryToInt64 parses a textual representation of the number to int64 if str is valid,
-// or returns the default value
-func StringTryToInt64(str string, defaultValue int64) int64 {
-	num, err := StringToInt64(str)
-
-	if err != nil {
-		return defaultValue
-	}
-
-	return num
 }
 
 // Float64ToString returns the textual representation of this number
@@ -141,6 +118,12 @@ func ParseAmount(amount string) (int64, error) {
 	integer := int64(0)
 	decimals := int64(0)
 
+	// The sign was taken above, so both parts must be plain digits ("-+1" and
+	// "1.+5" are not amounts even though strconv accepts a sign in each part)
+	if !IsStringOnlyContainsDigits(items[0]) || (len(items) == 2 && !IsStringOnlyContainsDigits(items[1])) {
+		return 0, errs.ErrNumberInvalid
+	}
+
 	if len(items[0]) > 0 {
 		integer, err = StringToInt64(items[0])
 
@@ -171,6 +154,12 @@ func ParseAmount(amount string) (int64, error) {
 		if len(items[1]) == 1 {
 			decimals = decimals * 10
 		}
+	}
+
+	// integer*100+decimals must fit in int64; otherwise it would wrap around
+	// to a different (possibly negative) amount instead of failing
+	if integer > (math.MaxInt64-decimals)/100 {
+		return 0, errs.ErrNumberInvalid
 	}
 
 	return sign*integer*100 + sign*decimals, nil

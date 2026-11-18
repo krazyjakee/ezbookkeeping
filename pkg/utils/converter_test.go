@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"math"
 	"math/big"
 	"testing"
 
@@ -51,15 +52,6 @@ func TestStringToInt32_InvalidNumber(t *testing.T) {
 	assert.NotEqual(t, nil, err)
 }
 
-func TestStringTryToInt32_InvalidNumber(t *testing.T) {
-	expectedValue := -1
-	actualValue := StringTryToInt("", -1)
-	assert.Equal(t, expectedValue, actualValue)
-
-	actualValue = StringTryToInt("null", -1)
-	assert.Equal(t, expectedValue, actualValue)
-}
-
 func TestInt64ToString(t *testing.T) {
 	expectedValue := "-123456789012345"
 	actualValue := Int64ToString(-123456789012345)
@@ -100,15 +92,6 @@ func TestStringArrayToInt64Array_InvalidNumber(t *testing.T) {
 
 	_, err = StringArrayToInt64Array([]string{"0", "1", "null", "12345678", "1234567890123456"})
 	assert.NotEqual(t, nil, err)
-}
-
-func TestStringTryToInt64_InvalidNumber(t *testing.T) {
-	expectedValue := int64(-1)
-	actualValue := StringTryToInt64("", -1)
-	assert.Equal(t, expectedValue, actualValue)
-
-	actualValue = StringTryToInt64("null", -1)
-	assert.Equal(t, expectedValue, actualValue)
 }
 
 func TestFloat64ToString(t *testing.T) {
@@ -328,4 +311,34 @@ func TestParseAmount_InvalidAmount(t *testing.T) {
 
 	_, err = ParseAmount("1.234")
 	assert.NotNil(t, err)
+
+	// A second sign after the leading one is not part of the number
+	_, err = ParseAmount("-+1")
+	assert.NotNil(t, err)
+
+	_, err = ParseAmount("++1")
+	assert.NotNil(t, err)
+
+	_, err = ParseAmount("1.+5")
+	assert.NotNil(t, err)
+
+	// Amounts beyond the int64 range must fail instead of wrapping around
+	_, err = ParseAmount("92233720368547758.08")
+	assert.NotNil(t, err)
+
+	_, err = ParseAmount("-92233720368547758.08")
+	assert.NotNil(t, err)
+
+	_, err = ParseAmount("100000000000000000")
+	assert.NotNil(t, err)
+}
+
+func TestParseAmount_Int64Bounds(t *testing.T) {
+	actualValue, err := ParseAmount("92233720368547758.07")
+	assert.Nil(t, err)
+	assert.Equal(t, int64(math.MaxInt64), actualValue)
+
+	actualValue, err = ParseAmount("-92233720368547758.07")
+	assert.Nil(t, err)
+	assert.Equal(t, int64(-math.MaxInt64), actualValue)
 }

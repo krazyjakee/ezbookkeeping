@@ -4,6 +4,9 @@ import { useI18n } from '@/locales/helpers.ts';
 
 import { useSettingsStore } from '@/stores/setting.ts';
 import { useUserStore } from '@/stores/user.ts';
+import { useAccountsStore } from '@/stores/account.ts';
+import { useTransactionCategoriesStore } from '@/stores/transactionCategory.ts';
+import { useExchangeRatesStore } from '@/stores/exchangeRates.ts';
 import { type TransactionStatisticsFilter, useStatisticsStore } from '@/stores/statistics.ts';
 
 import type { TypeAndDisplayName } from '@/core/base.ts';
@@ -11,6 +14,8 @@ import type { BigDecimal } from '@/core/numeral.ts';
 import { type LocalizedDateRange, type WeekDayValue, DateRangeScene, DateRange } from '@/core/datetime.ts';
 import type { ColorStyleValue } from '@/core/color.ts';
 import type { AxisChartSourceDataItem } from '@/core/chart.ts';
+import { CategoryType } from '@/core/category.ts';
+import { TransactionRelatedAccountType } from '@/core/transaction.ts';
 import {
     StatisticsAnalysisType,
     ChartDataType,
@@ -30,13 +35,25 @@ import type {
 } from '@/models/transaction.ts';
 
 import { limitText, findNameByType, findDisplayNameByType } from '@/lib/common.ts';
-import { isBigDecimal } from '@/lib/numeral.ts';
+import { BIG_DECIMAL_ZERO, isBigDecimal, parseBigDecimal } from '@/lib/numeral.ts';
 import {
     parseDateTimeFromUnixTime,
     getYearMonthFirstUnixTime,
     getYearMonthLastUnixTime
 } from '@/lib/datetime.ts';
 import { getDisplayColor, getCategoryDisplayColor, getAccountDisplayColor } from '@/lib/color.ts';
+
+/**
+ * Income, expense and net movement of the loaded statistics data, shown in the KPI tiles and summaries (#32).
+ * They are calculated from the data the page has already loaded, no additional requests are made.
+ */
+export interface StatisticsIncomeExpenseTotals {
+    readonly income: BigDecimal;
+    readonly expense: BigDecimal;
+    readonly net: BigDecimal;
+}
+
+export type StatisticsAmountKind = 'income' | 'expense' | 'none';
 
 export function useStatisticsTransactionPageBase() {
     const {
@@ -53,6 +70,9 @@ export function useStatisticsTransactionPageBase() {
 
     const settingsStore = useSettingsStore();
     const userStore = useUserStore();
+    const accountsStore = useAccountsStore();
+    const transactionCategoriesStore = useTransactionCategoriesStore();
+    const exchangeRatesStore = useExchangeRatesStore();
     const statisticsStore = useStatisticsStore();
 
     const loading = ref<boolean>(true);
@@ -339,6 +359,114 @@ export function useStatisticsTransactionPageBase() {
     const trendsAnalysisData = computed<TransactionTrendsAnalysisData | null>(() => statisticsStore.trendsAnalysisData);
     const assetTrendsData = computed<TransactionAssetTrendsAnalysisData | null>(() => statisticsStore.assetTrendsData);
 
+    const isAccountBalanceChartDataType = computed<boolean>(() => {
+        return query.value.chartDataType === ChartDataType.AccountTotalAssets.type ||
+            query.value.chartDataType === ChartDataType.AccountTotalLiabilities.type ||
+            query.value.chartDataType === ChartDataType.TotalAssetsByCurrency.type ||
+            query.value.chartDataType === ChartDataType.TotalLiabilitiesByCurrency.type;
+    });
+
+    // whether the amounts of the current chart data type are income, expense or neither (balances, net amounts)
+    const chartDataAmountKind = computed<StatisticsAmountKind>(() => {
+        const chartDataType = query.value.chartDataType;
+
+        if (chartDataType === ChartDataType.OutflowsByAccount.type ||
+            chartDataType === ChartDataType.ExpenseByAccount.type ||
+            chartDataType === ChartDataType.ExpenseByPrimaryCategory.type ||
+            chartDataType === ChartDataType.ExpenseBySecondaryCategory.type ||
+            chartDataType === ChartDataType.TotalOutflows.type ||
+            chartDataType === ChartDataType.TotalExpense.type) {
+            return 'expense';
+        } else if (chartDataType === ChartDataType.InflowsByAccount.type ||
+            chartDataType === ChartDataType.IncomeByAccount.type ||
+            chartDataType === ChartDataType.IncomeByPrimaryCategory.type ||
+            chartDataType === ChartDataType.IncomeBySecondaryCategory.type ||
+            chartDataType === ChartDataType.TotalInflows.type ||
+            chartDataType === ChartDataType.TotalIncome.type) {
+            return 'income';
+        }
+
+        return 'none';
+    });
+
+    const incomeExpenseTotals = computed<StatisticsIncomeExpenseTotals | null>(() => {
+        if (analysisType.value === StatisticsAnalysisType.CategoricalAnalysis) {
+            if (isAccountBalanceChartDataType.value) {
+                return null;
+            }
+
+            const overviewData = statisticsStore.categoricalOverviewAnalysisData;
+
+            if (!overviewData) {
+                return null;
+            }
+
+            return {
+                income: overviewData.totalIncome,
+                expense: overviewData.totalExpense,
+                net: overviewData.totalIncome.subtract(overviewData.totalExpense)
+            };
+        } else if (analysisType.value === StatisticsAnalysisType.TrendAnalysis) {
+            const trendsData = statisticsStore.transactionCategoryTrendsData;
+
+            if (!trendsData || !trendsData.length) {
+                return null;
+            }
+
+            const currency = defaultCurrency.value;
+            let income = BIG_DECIMAL_ZERO;
+            let expense = BIG_DECIMAL_ZERO;
+
+            for (const trendItem of trendsData) {
+                for (const item of trendItem.items || []) {
+                    const account = accountsStore.allAccountsMap[item.accountId];
+                    const category = transactionCategoriesStore.allTransactionCategoriesMap[item.categoryId];
+
+                    if (!account || !category) {
+                        continue;
+                    }
+
+                    if (item.relatedAccountId && item.relatedAccountType === TransactionRelatedAccountType.TransferFrom) {
+                        continue;
+                    }
+
+                    if (query.value.filterAccountIds && query.value.filterAccountIds[account.id]) {
+                        continue;
+                    }
+
+                    if (query.value.filterCategoryIds && query.value.filterCategoryIds[category.id]) {
+                        continue;
+                    }
+
+                    let amount: BigDecimal | null = parseBigDecimal(item.amount);
+
+                    if (account.currency !== currency) {
+                        amount = exchangeRatesStore.getExchangedAmount(amount, account.currency, currency);
+                        amount = amount ? amount.truncate() : null;
+                    }
+
+                    if (!amount) {
+                        continue;
+                    }
+
+                    if (category.type === CategoryType.Income) {
+                        income = income.add(amount);
+                    } else if (category.type === CategoryType.Expense) {
+                        expense = expense.add(amount);
+                    }
+                }
+            }
+
+            return {
+                income: income,
+                expense: expense,
+                net: income.subtract(expense)
+            };
+        }
+
+        return null;
+    });
+
     const radarChartCategoryNames = computed<string[]>(() => {
         return categoricalAnalysisData.value?.items.filter(item => !item.hidden).map(item => item.name) ?? [];
     });
@@ -443,6 +571,9 @@ export function useStatisticsTransactionPageBase() {
         assetTrendsData,
         radarChartCategoryNames,
         radarChartData,
+        isAccountBalanceChartDataType,
+        chartDataAmountKind,
+        incomeExpenseTotals,
         // functions
         canShowCustomDateRange,
         getTransactionCategoricalAnalysisDataItemDisplayColor,

@@ -16,15 +16,31 @@
             </div>
         </f7-toolbar>
         <f7-page-content class="no-margin-vertical no-padding-vertical">
-            <div class="image-container display-flex justify-content-center" @click="showOpenImage">
+            <div class="image-container display-flex justify-content-center"
+                 :class="{ 'image-container-empty': !imageSrc, 'image-container-busy': loading || recognizing }"
+                 :aria-busy="loading || recognizing" @click="showOpenImage">
                 <img :src="imageSrc" v-if="imageSrc" />
                 <div class="image-container-background display-flex justify-content-center align-items-center text-align-center padding-horizontal" v-if="!imageSrc">
-                    <div class="display-inline-flex flex-direction-column" v-if="!loading">
+                    <div class="display-inline-flex flex-direction-column align-items-center" v-if="!loading">
+                        <span class="image-container-icon" aria-hidden="true">
+                            <f7-icon f7="doc_text_viewfinder"></f7-icon>
+                        </span>
                         <span>{{ tt('Click here to select a receipt or transaction image') }}</span>
-                        <small class="margin-top-half">{{ tt('Uploaded image and personal data will be sent to the large language model, please be aware of potential privacy risks.') }}</small>
+                        <small class="margin-top-half image-container-hint">{{ tt('Uploaded image and personal data will be sent to the large language model, please be aware of potential privacy risks.') }}</small>
                     </div>
-                    <span v-else-if="loading">{{ tt('Loading image...') }}</span>
+                    <div class="display-inline-flex flex-direction-column align-items-center" role="status" v-else-if="loading">
+                        <f7-preloader :size="28" />
+                        <span class="margin-top-half">{{ tt('Loading image...') }}</span>
+                    </div>
                 </div>
+            </div>
+            <span class="ebk-visually-hidden" role="status" aria-live="polite">{{ recognizing ? tt('Recognizing') : '' }}</span>
+            <div class="ai-image-recognition-state" v-if="recognitionFailed && !recognizing && !loading">
+                <state-panel type="error" compact :title="tt('Unable to recognize image')">
+                    <template #actions>
+                        <f7-button small tonal :text="tt('Retry')" @click="confirm"></f7-button>
+                    </template>
+                </state-panel>
             </div>
         </f7-page-content>
 
@@ -34,6 +50,8 @@
 
 
 <script setup lang="ts">
+import StatePanel from '@/components/common/StatePanel.vue';
+
 import { ref, useTemplateRef } from 'vue';
 
 import { useI18n } from '@/locales/helpers.ts';
@@ -77,17 +95,32 @@ const recognizing = ref<boolean>(false);
 const cancelRecognizingUuid = ref<string | undefined>(undefined);
 const imageFile = ref<File | null>(null);
 const imageSrc = ref<string | undefined>(undefined);
+const recognitionFailed = ref<boolean>(false);
+
+// increased whenever a new image is loaded or the sheet is closed, so that a slower earlier image load cannot overwrite the current state
+let imageLoadSequence: number = 0;
 
 function loadImage(image: Blob): void {
+    const currentImageLoadSequence = ++imageLoadSequence;
+
     loading.value = true;
+    recognitionFailed.value = false;
     imageFile.value = null;
     imageSrc.value = undefined;
 
     compressJpgImageByQuality(image, ImageUploadQualityType.HD720P).then(blob => {
+        if (currentImageLoadSequence !== imageLoadSequence) {
+            return;
+        }
+
         imageFile.value = KnownFileType.JPG.createFileFromBlob(blob, "image");
         imageSrc.value = URL.createObjectURL(blob);
         loading.value = false;
     }).catch(error => {
+        if (currentImageLoadSequence !== imageLoadSequence) {
+            return;
+        }
+
         imageFile.value = null;
         imageSrc.value = undefined;
         loading.value = false;
@@ -128,26 +161,34 @@ function confirm(): void {
     }
 
     const currentImageFile = imageFile.value;
-    cancelRecognizingUuid.value = generateRandomUUID();
+    const currentRecognizingUuid = generateRandomUUID();
+    cancelRecognizingUuid.value = currentRecognizingUuid;
     recognizing.value = true;
+    recognitionFailed.value = false;
     showCancelableLoading('Recognizing', 'AI can make mistakes. Check important info.', 'Cancel Recognition', cancelRecognize);
 
     transactionsStore.recognizeReceiptImage({
-        imageFile: imageFile.value,
-        cancelableUuid: cancelRecognizingUuid.value
+        imageFile: currentImageFile,
+        cancelableUuid: currentRecognizingUuid
     }).then(response => {
+        // ignore the result of a recognition which has been canceled or whose sheet has been closed
+        if (cancelRecognizingUuid.value !== currentRecognizingUuid) {
+            return;
+        }
+
         recognizing.value = false;
         cancelRecognizingUuid.value = undefined;
         closeAllDialog();
         emit('update:show', false);
         emit('recognition:change', { response: response, imageFile: currentImageFile });
     }).catch(error => {
-        if (error.canceled) {
+        if (error.canceled || cancelRecognizingUuid.value !== currentRecognizingUuid) {
             return;
         }
 
         recognizing.value = false;
         cancelRecognizingUuid.value = undefined;
+        recognitionFailed.value = true;
         closeAllDialog();
 
         if (!error.processed) {
@@ -174,7 +215,15 @@ function cancel(): void {
 }
 
 function close(): void {
+    imageLoadSequence++;
+
+    if (cancelRecognizingUuid.value) {
+        transactionsStore.cancelRecognizeReceiptImage(cancelRecognizingUuid.value);
+        closeAllDialog();
+    }
+
     emit('update:show', false);
+    recognitionFailed.value = false;
     loading.value = false;
     recognizing.value = false;
     cancelRecognizingUuid.value = undefined;
@@ -183,11 +232,11 @@ function close(): void {
 }
 
 function onSheetOpen(): void {
-    loading.value = false;
+    // the image state has already been reset when the sheet was last closed, and must be kept here because
+    // the caller may have started loading an image (e.g. a shared image) right before opening the sheet
+    recognitionFailed.value = false;
     recognizing.value = false;
     cancelRecognizingUuid.value = undefined;
-    imageFile.value = null;
-    imageSrc.value = undefined;
 }
 
 function onSheetClosed(): void {
@@ -203,7 +252,17 @@ defineExpose({
 .image-container {
     --ebk-ai-image-recognition-height: 310px;
     height: var(--ebk-ai-image-recognition-height);
-    border: 1px solid var(--f7-page-master-border-color);
+    border: 1px solid var(--ebk-color-hairline);
+    background-color: var(--ebk-color-surface-sunken);
+    cursor: pointer;
+
+    &.image-container-empty {
+        border: 1px dashed var(--ebk-color-copper-line);
+    }
+
+    &.image-container-busy {
+        cursor: progress;
+    }
 
     > img {
         height: var(--ebk-ai-image-recognition-height);
@@ -217,9 +276,34 @@ defineExpose({
 .image-container-background {
     width: 100%;
     height: 100%;
+    color: var(--ebk-color-text-primary);
 
     > div {
         font-size: var(--f7-input-font-size);
     }
+}
+
+.image-container-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    margin-bottom: var(--ebk-space-3);
+    border: 1px solid var(--ebk-color-copper-line);
+    border-radius: var(--ebk-radius-pill);
+    color: var(--ebk-color-primary-text);
+
+    > .icon {
+        font-size: 24px;
+    }
+}
+
+.image-container-hint {
+    color: var(--ebk-color-text-secondary);
+}
+
+.ai-image-recognition-state {
+    padding: var(--ebk-space-3);
 }
 </style>

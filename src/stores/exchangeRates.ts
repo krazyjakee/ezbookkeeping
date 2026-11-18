@@ -21,7 +21,7 @@ import {
 import { getExchangedAmountByRate } from '@/lib/numeral.ts';
 
 import logger from '@/lib/logger.ts';
-import services from '@/lib/services.ts';
+import services, { toStoreError } from '@/lib/services.ts';
 
 const exchangeRatesLocalStorageKey = 'ebk_app_exchange_rates';
 const userDataSourceType = 'user_custom';
@@ -220,13 +220,7 @@ export const useExchangeRatesStore = defineStore('exchangeRates', () => {
             }).catch(error => {
                 logger.error('failed to retrieve latest exchange rates data', error);
 
-                if (error && error.processed) {
-                    reject(error);
-                } else if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else {
-                    reject({ message: 'Unable to retrieve exchange rates data' });
-                }
+                reject(toStoreError(error, 'Unable to retrieve exchange rates data'));
             });
         });
     }
@@ -255,13 +249,7 @@ export const useExchangeRatesStore = defineStore('exchangeRates', () => {
             }).catch(error => {
                 logger.error('failed to update user custom exchange rate', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to update user custom exchange rate' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to update user custom exchange rate'));
             });
         });
     }
@@ -290,13 +278,7 @@ export const useExchangeRatesStore = defineStore('exchangeRates', () => {
             }).catch(error => {
                 logger.error('failed to delete user custom exchange rate', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to delete this user custom exchange rate' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to delete this user custom exchange rate'));
             });
         });
     }

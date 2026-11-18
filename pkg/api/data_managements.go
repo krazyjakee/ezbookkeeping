@@ -32,8 +32,12 @@ type DataManagementsApi struct {
 	pictures                *services.TransactionPictureService
 	templates               *services.TransactionTemplateService
 	userCustomIcons         *services.UserCustomIconService
+	importPresets           *services.ImportPresetsService
 	userCustomExchangeRates *services.UserCustomExchangeRatesService
 	insightsExploreres      *services.InsightsExplorerService
+	transactionReferences   *services.TransactionReferenceService
+	mcpAuditLogs            *services.MCPAuditLogService
+	mcpIdempotencyRecords   *services.MCPIdempotencyRecordService
 }
 
 // Initialize a data management api singleton instance
@@ -52,8 +56,12 @@ var (
 		pictures:                services.TransactionPictures,
 		templates:               services.TransactionTemplates,
 		userCustomIcons:         services.UserCustomIcons,
+		importPresets:           services.ImportPresets,
 		userCustomExchangeRates: services.UserCustomExchangeRates,
 		insightsExploreres:      services.InsightsExplorers,
+		transactionReferences:   services.TransactionReferences,
+		mcpAuditLogs:            services.MCPAuditLogs,
+		mcpIdempotencyRecords:   services.MCPIdempotencyRecords,
 	}
 )
 
@@ -133,6 +141,13 @@ func (a *DataManagementsApi) DataStatisticsHandler(c *core.WebContext) (any, *er
 		return nil, errs.ErrOperationFailed
 	}
 
+	totalImportPresetCount, err := a.importPresets.GetTotalImportPresetCountByUid(c, uid)
+
+	if err != nil {
+		log.Errorf(c, "[data_managements.DataStatisticsHandler] failed to get total import preset count for user \"uid:%d\", because %s", uid, err.Error())
+		return nil, errs.ErrOperationFailed
+	}
+
 	dataStatisticsResp := &models.DataStatisticsResponse{
 		TotalAccountCount:              totalAccountCount,
 		TotalTransactionCategoryCount:  totalTransactionCategoryCount,
@@ -143,6 +158,7 @@ func (a *DataManagementsApi) DataStatisticsHandler(c *core.WebContext) (any, *er
 		TotalTransactionTemplateCount:  totalTransactionTemplateCount,
 		TotalScheduledTransactionCount: totalScheduledTransactionCount,
 		TotalCustomIconCount:           totalCustomIconCount,
+		TotalImportPresetCount:         totalImportPresetCount,
 	}
 
 	return dataStatisticsResp, nil
@@ -159,16 +175,6 @@ func (a *DataManagementsApi) ClearAllDataHandler(c *core.WebContext) (any, *errs
 	}
 
 	uid := c.GetCurrentUid()
-	claims := c.GetTokenClaims()
-
-	if claims == nil {
-		log.Warnf(c, "[data_managements.ClearAllDataHandler] current token is null")
-		return nil, errs.ErrInvalidToken
-	} else if claims.Type != core.USER_TOKEN_TYPE_NORMAL {
-		log.Warnf(c, "[data_managements.ClearAllDataHandler] token type \"%d\" is not allowed to clear all user data", claims.Type)
-		return nil, errs.ErrInvalidToken
-	}
-
 	user, err := a.users.GetUserById(c, uid)
 
 	if err != nil {
@@ -229,6 +235,13 @@ func (a *DataManagementsApi) ClearAllDataHandler(c *core.WebContext) (any, *errs
 		return nil, errs.Or(err, errs.ErrOperationFailed)
 	}
 
+	err = a.importPresets.DeleteAllPresets(c, uid)
+
+	if err != nil {
+		log.Errorf(c, "[data_managements.ClearAllDataHandler] failed to delete all import presets, because %s", err.Error())
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+
 	err = a.userCustomExchangeRates.DeleteAllCustomExchangeRates(c, uid)
 
 	if err != nil {
@@ -240,6 +253,27 @@ func (a *DataManagementsApi) ClearAllDataHandler(c *core.WebContext) (any, *errs
 
 	if err != nil {
 		log.Errorf(c, "[data_managements.ClearAllDataHandler] failed to delete all explorations, because %s", err.Error())
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+
+	err = a.transactionReferences.DeleteAllTransactionReferences(c, uid)
+
+	if err != nil {
+		log.Errorf(c, "[data_managements.ClearAllDataHandler] failed to delete all transaction references, because %s", err.Error())
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+
+	err = a.mcpAuditLogs.DeleteAllAuditLogs(c, uid)
+
+	if err != nil {
+		log.Errorf(c, "[data_managements.ClearAllDataHandler] failed to delete all mcp audit logs, because %s", err.Error())
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+
+	err = a.mcpIdempotencyRecords.DeleteAllRecords(c, uid)
+
+	if err != nil {
+		log.Errorf(c, "[data_managements.ClearAllDataHandler] failed to delete all mcp idempotency records, because %s", err.Error())
 		return nil, errs.Or(err, errs.ErrOperationFailed)
 	}
 
@@ -258,16 +292,6 @@ func (a *DataManagementsApi) ClearAllTransactionsHandler(c *core.WebContext) (an
 	}
 
 	uid := c.GetCurrentUid()
-	claims := c.GetTokenClaims()
-
-	if claims == nil {
-		log.Warnf(c, "[data_managements.ClearAllTransactionsHandler] current token is null")
-		return nil, errs.ErrInvalidToken
-	} else if claims.Type != core.USER_TOKEN_TYPE_NORMAL {
-		log.Warnf(c, "[data_managements.ClearAllTransactionsHandler] token type \"%d\" is not allowed to clear all transactions", claims.Type)
-		return nil, errs.ErrInvalidToken
-	}
-
 	user, err := a.users.GetUserById(c, uid)
 
 	if err != nil {
@@ -293,6 +317,13 @@ func (a *DataManagementsApi) ClearAllTransactionsHandler(c *core.WebContext) (an
 		return nil, errs.Or(err, errs.ErrOperationFailed)
 	}
 
+	err = a.transactionReferences.DeleteAllTransactionReferences(c, uid)
+
+	if err != nil {
+		log.Errorf(c, "[data_managements.ClearAllTransactionsHandler] failed to delete all transaction references, because %s", err.Error())
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+
 	log.Infof(c, "[data_managements.ClearAllTransactionsHandler] user \"uid:%d\" has cleared all transactions", uid)
 	return true, nil
 }
@@ -308,16 +339,6 @@ func (a *DataManagementsApi) ClearAllTransactionsByAccountHandler(c *core.WebCon
 	}
 
 	uid := c.GetCurrentUid()
-	claims := c.GetTokenClaims()
-
-	if claims == nil {
-		log.Warnf(c, "[data_managements.ClearAllTransactionsByAccountHandler] current token is null")
-		return nil, errs.ErrInvalidToken
-	} else if claims.Type != core.USER_TOKEN_TYPE_NORMAL {
-		log.Warnf(c, "[data_managements.ClearAllTransactionsByAccountHandler] token type \"%d\" is not allowed to clear all transactions of account", claims.Type)
-		return nil, errs.ErrInvalidToken
-	}
-
 	user, err := a.users.GetUserById(c, uid)
 
 	if err != nil {

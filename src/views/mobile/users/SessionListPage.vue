@@ -1,5 +1,5 @@
 <template>
-    <f7-page ptr @ptr:refresh="reload" @page:afterin="onPageAfterIn">
+    <f7-page class="ebk-settings-page" ptr @ptr:refresh="reload" @page:afterin="onPageAfterIn">
         <f7-navbar>
             <f7-nav-left :class="{ 'disabled': loading }" :back-link="tt('Back')"></f7-nav-left>
             <f7-nav-title :title="tt('Device & Sessions')"></f7-nav-title>
@@ -11,12 +11,10 @@
         <f7-list strong inset dividers media-list class="margin-top-half skeleton-text" v-if="loading">
             <f7-list-item class="list-item-media-valign-middle"
                           title="Current"
+                          subtitle="MM/DD/YYYY HH:mm:ss"
                           text="Device Name (Browser xx.x.xxxx.xx)">
                 <template #media>
                     <f7-icon f7="device_phone_portrait"></f7-icon>
-                </template>
-                <template #after>
-                    <small>MM/DD/YYYY HH:mm:ss</small>
                 </template>
             </f7-list-item>
         </f7-list>
@@ -31,8 +29,8 @@
                 <template #media>
                     <f7-icon :f7="session.icon"></f7-icon>
                 </template>
-                <template #after>
-                    <small>{{ session.lastSeenDateTime }}</small>
+                <template #subtitle>
+                    <span class="ebk-numeric">{{ session.lastSeenDateTime }}</span>
                 </template>
                 <f7-swipeout-actions :left="textDirection === TextDirection.RTL"
                                      :right="textDirection === TextDirection.LTR"

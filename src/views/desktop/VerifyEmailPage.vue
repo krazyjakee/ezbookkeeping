@@ -1,100 +1,62 @@
 <template>
-    <div class="layout-wrapper">
-        <router-link to="/">
-            <div class="auth-logo d-flex align-start gap-x-3">
-                <img alt="logo" class="login-page-logo" :src="APPLICATION_LOGO_PATH" />
-                <span class="auth-app-title">{{ tt('global.app.title') }}</span>
-            </div>
-        </router-link>
-        <v-row no-gutters class="auth-wrapper">
-            <v-col cols="12" md="8" class="auth-image-background d-none d-md-flex align-center justify-center position-relative">
-                <auth-illustration variant="signup" />
-            </v-col>
-            <v-col cols="12" md="4" class="auth-card d-flex flex-column">
-                <div class="d-flex align-center justify-center h-100">
-                    <v-card variant="flat" class="w-100 mt-0 px-4 pt-12" max-width="500">
-                        <v-card-text class="py-0">
-                            <div class="text-headline-small mb-2">{{ tt('Verify your email') }}</div>
-                            <div class="auth-message text-body-large mb-0" v-if="token && loading">{{ tt('Verifying...') }}</div>
-                            <div class="auth-message text-body-large mb-0" v-if="token && verified">{{ tt('Email address is verified') }}</div>
-                            <div class="auth-message text-body-large mb-0" v-if="token && !verified && errorMessage">{{ errorMessage }}</div>
-                            <div class="auth-message text-body-large mb-0" v-if="!token && !email">{{ tt('Parameter Invalid') }}</div>
-                            <div class="auth-message text-body-large mb-0" v-if="!token && email">{{ tt(hasValidEmailVerifyToken ? 'format.misc.accountActivationAndResendValidationEmailTip' : 'format.misc.resendValidationEmailTip', { email: email }) }}</div>
-                        </v-card-text>
+    <auth-page-layout illustration="verify"
+                      :verified="verified"
+                      :label="tt('Account Access')"
+                      :title="tt('Verify your email')"
+                      :version="version"
+                      :busy="loading || resending"
+                      :status-type="currentStatus.type"
+                      :status-text="currentStatus.text">
+        <template #message>
+            <p class="ma-0" v-if="token && loading">{{ tt('Verifying...') }}</p>
+            <p class="ma-0" v-if="!token && email">{{ tt(hasValidEmailVerifyToken ? 'format.misc.accountActivationAndResendValidationEmailTip' : 'format.misc.resendValidationEmailTip', { email: email }) }}</p>
+        </template>
 
-                        <v-card-text class="pb-0 mb-6">
-                            <v-form>
-                                <v-row>
-                                    <v-col cols="12" v-if="!loading && !token && email && isUserVerifyEmailEnabled()">
-                                        <v-text-field
-                                            autocomplete="password"
-                                            type="password"
-                                            :disabled="loading || resending"
-                                            :label="tt('Password')"
-                                            :placeholder="tt('Your password')"
-                                            v-model="password"
-                                            @keyup.enter="resendEmail"
-                                        />
-                                    </v-col>
+        <v-form class="auth-access-form" @submit.prevent v-if="!loading && !token && email && isUserVerifyEmailEnabled()">
+            <input type="email" name="email" autocomplete="username" class="d-none" aria-hidden="true" tabindex="-1" :value="email" readonly />
+            <v-text-field
+                name="password"
+                autocomplete="current-password"
+                type="password"
+                :disabled="loading || resending"
+                :label="tt('Password')"
+                :placeholder="tt('Your password')"
+                v-model="password"
+                @input="resendStatus = null"
+                @keyup.enter="resendEmail"
+            />
 
-                                    <v-col cols="12" v-if="!loading && !token && email && isUserVerifyEmailEnabled()">
-                                        <v-btn block type="submit" :disabled="loading || resending || !password" @click="resendEmail">
-                                            {{ tt('Resend Validation Email') }}
-                                            <v-progress-circular indeterminate size="22" class="ms-2" v-if="resending"></v-progress-circular>
-                                        </v-btn>
-                                    </v-col>
+            <v-btn block size="large" color="primary" :loading="resending" :disabled="loading || resending || !password" @click="resendEmail">
+                {{ tt('Resend Validation Email') }}
+            </v-btn>
+        </v-form>
 
-                                    <v-col cols="12">
-                                        <router-link class="d-flex align-center justify-center mt-2"
-                                                     :class="{ 'disabled': loading || resending }"
-                                                     :to="verified ? '/' : '/login'">
-                                            <v-icon class="icon-with-direction" :icon="mdiChevronLeft"/>
-                                            <span class="text-body-medium" v-if="!verified">{{ tt('Back to login page') }}</span>
-                                            <span class="text-body-medium" v-else-if="verified">{{ tt('Back to home page') }}</span>
-                                        </router-link>
-                                    </v-col>
-                                </v-row>
-                            </v-form>
-                        </v-card-text>
-                    </v-card>
-                </div>
-                <v-spacer/>
-                <div class="d-flex align-center justify-center">
-                    <v-card variant="flat" class="w-100 px-4 pb-3" max-width="500">
-                        <v-card-text class="pt-0">
-                            <div class="text-center">
-                                <language-select-button :disabled="resending" />
-                            </div>
+        <div class="auth-access-secondary">
+            <router-link class="auth-back-link"
+                         :class="{ 'disabled': loading || resending }"
+                         :to="verified && isUserLogined() ? '/' : '/login'">
+                <v-icon class="icon-with-direction" size="20" :icon="mdiChevronLeft"/>
+                <span v-if="!verified || !isUserLogined()">{{ tt('Back to login page') }}</span>
+                <span v-else-if="verified">{{ tt('Back to home page') }}</span>
+            </router-link>
+        </div>
 
-                            <v-divider class="mt-2 mb-3" />
-
-                            <div class="auth-powered-by text-center">
-                                <span>Powered by </span>
-                                <a href="https://github.com/mayswind/ezbookkeeping" target="_blank">ezBookkeeping</a>&nbsp;<span>{{ version }}</span>
-                            </div>
-                        </v-card-text>
-                    </v-card>
-                </div>
-            </v-col>
-        </v-row>
-
-        <confirm-dialog ref="confirmDialog"/>
-        <snack-bar ref="snackbar" @update:show="onSnackbarShowStateChanged" />
-    </div>
+        <template #dialogs>
+            <snack-bar ref="snackbar" @update:show="onSnackbarShowStateChanged" />
+        </template>
+    </auth-page-layout>
 </template>
 
 <script setup lang="ts">
-import ConfirmDialog from '@/components/desktop/ConfirmDialog.vue';
 import SnackBar from '@/components/desktop/SnackBar.vue';
+import AuthPageLayout from '@/components/desktop/AuthPageLayout.vue';
 
-import { ref, useTemplateRef } from 'vue';
+import { ref, computed, useTemplateRef } from 'vue';
 import { useRouter } from 'vue-router';
 
 import { useI18n } from '@/locales/helpers.ts';
 
 import { useRootStore } from '@/stores/index.ts';
-
-import { APPLICATION_LOGO_PATH } from '@/consts/asset.ts';
 
 import { isUserVerifyEmailEnabled } from '@/lib/server_settings.ts';
 import { isUserLogined } from '@/lib/userstate.ts';
@@ -104,7 +66,6 @@ import {
     mdiChevronLeft
 } from '@mdi/js';
 
-type ConfirmDialogType = InstanceType<typeof ConfirmDialog>;
 type SnackBarType = InstanceType<typeof SnackBar>;
 
 const props = defineProps<{
@@ -121,7 +82,6 @@ const rootStore = useRootStore();
 
 const version = `${getClientDisplayVersion()}`;
 
-const confirmDialog = useTemplateRef<ConfirmDialogType>('confirmDialog');
 const snackbar = useTemplateRef<SnackBarType>('snackbar');
 
 const password = ref<string>('');
@@ -129,6 +89,21 @@ const loading = ref<boolean>(true);
 const resending = ref<boolean>(false);
 const verified = ref<boolean>(false);
 const errorMessage = ref<string>('');
+const resendStatus = ref<{ type: 'error' | 'success', text: string } | null>(null);
+
+const currentStatus = computed<{ type: 'error' | 'success', text: string | null }>(() => {
+    if (props.token && verified.value) {
+        return { type: 'success', text: tt('Email address is verified') };
+    } else if (props.token && !verified.value && errorMessage.value) {
+        return { type: 'error', text: errorMessage.value };
+    } else if (!props.token && !props.email) {
+        return { type: 'error', text: tt('Parameter Invalid') };
+    } else if (resendStatus.value) {
+        return resendStatus.value;
+    } else {
+        return { type: 'error', text: null };
+    }
+});
 
 function init(): void {
     verified.value = false;
@@ -139,10 +114,7 @@ function init(): void {
         return;
     }
 
-    rootStore.verifyEmail({
-        token: props.token,
-        requestNewToken: !isUserLogined()
-    }).then(() => {
+    rootStore.verifyEmail(props.token).then(() => {
         loading.value = false;
         verified.value = true;
         snackbar.value?.showMessage('Email address is verified');
@@ -152,25 +124,25 @@ function init(): void {
 
         if (!error.processed) {
             errorMessage.value = te(error.message || error);
-            snackbar.value?.showError(error);
         }
     });
 }
 
 function resendEmail(): void {
     resending.value = true;
+    resendStatus.value = null;
 
     rootStore.resendVerifyEmailByUnloginUser({
         email: props.email,
         password: password.value
     }).then(() => {
         resending.value = false;
-        snackbar.value?.showMessage('Validation email has been sent');
+        resendStatus.value = { type: 'success', text: tt('Validation email has been sent') };
     }).catch(error => {
         resending.value = false;
 
         if (!error.processed) {
-            snackbar.value?.showError(error);
+            resendStatus.value = { type: 'error', text: error.message ? te(error.message) : (te(error) || tt('An error occurred')) };
         }
     });
 }

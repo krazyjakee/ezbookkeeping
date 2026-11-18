@@ -5,6 +5,12 @@ on:
     branches:
       - main
 
+# Docker Hub target. Override with the DOCKER_IMAGE_NAME / DOCKER_USERNAME repository variables.
+# Images are only pushed when the DOCKER_PASSWORD secret (a Docker Hub access token) is set.
+env:
+  DOCKER_IMAGE_NAME: ${{ vars.DOCKER_IMAGE_NAME || 'krazyjakee/ezrbookkeeping' }}
+  DOCKER_USERNAME: ${{ vars.DOCKER_USERNAME || 'krazyjakee' }}
+
 jobs:
   setup:
     runs-on: ubuntu-latest
@@ -30,23 +36,30 @@ jobs:
         uses: docker/metadata-action@v6
         with:
           images: |
-            ${{ vars.DOCKER_IMAGE_NAME }}
+            ${{ env.DOCKER_IMAGE_NAME }}
           tags: |
             type=raw,value=SNAPSHOT-{{date 'YYYYMMDD'}}-${{ github.run_id }}
             type=raw,value=SNAPSHOT-{{date 'YYYYMMDD'}}
             type=raw,value=latest-snapshot
+            type=sha,prefix=sha-,format=short
+          labels: |
+            org.opencontainers.image.title=ezrbookkeeping
+            org.opencontainers.image.description=ezrbookkeeping, a business-focused fork of ezBookkeeping, an open source, self-hosted bookkeeping app
+            org.opencontainers.image.documentation=https://krazyjakee.github.io/ezbookkeeping/
+            org.opencontainers.image.licenses=MIT
+            maintainer=krazyjakee (https://github.com/krazyjakee/ezbookkeeping)
 
       - name: Set up variables
         id: variable
         run: |
-          echo "docker_push=${{ vars.DOCKER_IMAGE_NAME != '' && vars.DOCKER_USERNAME != '' && secrets.DOCKER_PASSWORD != '' }}" >> "$GITHUB_OUTPUT"
+          echo "docker_push=${{ env.DOCKER_IMAGE_NAME != '' && env.DOCKER_USERNAME != '' && secrets.DOCKER_PASSWORD != '' }}" >> "$GITHUB_OUTPUT"
           echo "build_unix_time=$(date '+%s')" >> "$GITHUB_OUTPUT"
           echo "build_date=$(date '+%Y%m%d')" >> "$GITHUB_OUTPUT"
           echo "ezbookkeeping_docker_bake_meta_file_path=${{ runner.temp }}/bake-meta.json" >> "$GITHUB_OUTPUT"
           echo "ezbookkeeping_docker_bake_meta_artifact_name=ezbookkeeping-build-dev-docker-bake-meta-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
           echo "ezbookkeeping_docker_digests_file_path=${{ runner.temp }}/digests" >> "$GITHUB_OUTPUT"
           echo "ezbookkeeping_docker_digests_artifact_name_prefix=ezbookkeeping-build-dev-digests-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
-          echo "ezbookkeeping_package_file_name_prefix=ezbookkeeping-dev-package-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
+          echo "ezbookkeeping_package_file_name_prefix=ezrbookkeeping-dev-package-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
           echo "ezbookkeeping_backend_artifact_name_prefix=ezbookkeeping-build-dev-backend-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
 
       - name: Rename docker bake meta file
@@ -78,14 +91,15 @@ jobs:
           platform: linux/amd64
           platform-name: linux-amd64
           docker-push: ${{ needs.setup.outputs.docker-push }}
-          docker-image-name: ${{ vars.DOCKER_IMAGE_NAME }}
-          docker-username: ${{ vars.DOCKER_USERNAME }}
+          docker-image-name: ${{ env.DOCKER_IMAGE_NAME }}
+          docker-username: ${{ env.DOCKER_USERNAME }}
           docker-password: ${{ secrets.DOCKER_PASSWORD }}
           docker-bake-meta-file-path: ${{ needs.setup.outputs.ezbookkeeping-docker-bake-meta-file-path }}
           docker-bake-meta-artifact-name: ${{ needs.setup.outputs.ezbookkeeping-docker-bake-meta-artifact-name }}
           docker-bake-digests-file-path: ${{ needs.setup.outputs.ezbookkeeping-docker-digests-file-path }}
           docker-bake-digests-artifact-name-prefix: ${{ needs.setup.outputs.ezbookkeeping-docker-digests-artifact-name-prefix }}
           package-file-name-prefix: ${{ needs.setup.outputs.ezbookkeeping-package-file-name-prefix }}
+          trivy-scan: true
 
   build-linux-docker-and-package-arm:
     runs-on: ubuntu-24.04-arm
@@ -114,8 +128,8 @@ jobs:
           platform: ${{ matrix.platform }}
           platform-name: ${{ matrix.platform-name }}
           docker-push: ${{ needs.setup.outputs.docker-push }}
-          docker-image-name: ${{ vars.DOCKER_IMAGE_NAME }}
-          docker-username: ${{ vars.DOCKER_USERNAME }}
+          docker-image-name: ${{ env.DOCKER_IMAGE_NAME }}
+          docker-username: ${{ env.DOCKER_USERNAME }}
           docker-password: ${{ secrets.DOCKER_PASSWORD }}
           docker-bake-meta-file-path: ${{ needs.setup.outputs.ezbookkeeping-docker-bake-meta-file-path }}
           docker-bake-meta-artifact-name: ${{ needs.setup.outputs.ezbookkeeping-docker-bake-meta-artifact-name }}
@@ -136,8 +150,8 @@ jobs:
 
       - uses: ./.github/actions/push-linux-docker
         with:
-          docker-image-name: ${{ vars.DOCKER_IMAGE_NAME }}
-          docker-username: ${{ vars.DOCKER_USERNAME }}
+          docker-image-name: ${{ env.DOCKER_IMAGE_NAME }}
+          docker-username: ${{ env.DOCKER_USERNAME }}
           docker-password: ${{ secrets.DOCKER_PASSWORD }}
           docker-bake-meta-file-path: ${{ needs.setup.outputs.ezbookkeeping-docker-bake-meta-file-path }}
           docker-bake-meta-artifact-name: ${{ needs.setup.outputs.ezbookkeeping-docker-bake-meta-artifact-name }}

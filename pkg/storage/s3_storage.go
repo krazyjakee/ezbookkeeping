@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"sort"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -167,6 +168,39 @@ func (s *S3ObjectStorage) Delete(ctx core.Context, path string) error {
 	})
 
 	return err
+}
+
+// List returns the paths of all the objects in this storage
+func (s *S3ObjectStorage) List(ctx core.Context) ([]string, error) {
+	prefix := s.getFinalPath("")
+	paths := make([]string, 0)
+
+	paginator := s3.NewListObjectsV2Paginator(s.s3Client, &s3.ListObjectsV2Input{
+		Bucket: aws.String(s.s3Config.Bucket),
+		Prefix: aws.String(prefix),
+	})
+
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+
+		if err != nil {
+			return nil, err
+		}
+
+		for _, object := range page.Contents {
+			key := aws.ToString(object.Key)
+
+			if strings.HasSuffix(key, "/") || !strings.HasPrefix(key, prefix) {
+				continue
+			}
+
+			paths = append(paths, key[len(prefix):])
+		}
+	}
+
+	sort.Strings(paths)
+
+	return paths, nil
 }
 
 func (s *S3ObjectStorage) getFinalPath(path string) string {

@@ -1,88 +1,93 @@
 <template>
     <v-row class="match-height">
         <v-col cols="12">
-            <v-card>
-                <template #title>
-                    <div class="title-and-toolbar d-flex align-center">
-                        <span>{{ tt('Custom Icons') }}</span>
-                        <v-btn class="ms-3" color="default" variant="outlined"
-                               :disabled="loading || updating" @click="add">{{ tt('Add') }}</v-btn>
-                        <v-btn class="ms-3" color="primary" variant="tonal"
+            <v-card class="ebk-mgmt-panel" :aria-busy="loading ? 'true' : 'false'">
+                <header class="ebk-panel-header-strip ebk-mgmt-header">
+                    <h2 class="ebk-mgmt-header-label">{{ tt('Custom Icons') }}</h2>
+                    <span class="ebk-mgmt-header-meta ebk-numeric" v-if="!loading && allCustomIcons.length > 0">{{ formatNumberToLocalizedNumerals(allCustomIcons.length) }}</span>
+                    <div class="ebk-panel-header-actions ebk-mgmt-header-actions">
+                        <v-btn color="primary" variant="tonal"
                                :disabled="loading || updating" @click="saveSortResult"
                                v-if="displayOrderModified">{{ tt('Save Display Order') }}</v-btn>
-                        <v-btn density="compact" color="default" variant="text" class="ms-2"
+                        <v-btn color="default" variant="outlined" :prepend-icon="mdiPlus"
+                               :disabled="loading || updating" @click="add">{{ tt('Add') }}</v-btn>
+                        <v-btn density="comfortable" color="default" variant="text"
                                :aria-label="tt('Refresh')" :icon="true" :disabled="loading || updating"
-                               :loading="loading" @click="reload">
+                               :loading="loading" @click="reload(true)">
                             <template #loader>
                                 <v-progress-circular indeterminate size="20"/>
                             </template>
-                            <v-icon :icon="mdiRefresh" size="24" />
+                            <v-icon :icon="mdiRefresh" size="22" />
                             <v-tooltip activator="parent">{{ tt('Refresh') }}</v-tooltip>
                         </v-btn>
                     </div>
-                </template>
+                </header>
 
-                <v-card-text class="pt-2" v-if="allCustomIcons.length < 1">
-                    <div class="custom-icon-grid" v-if="loading">
-                        <v-card border class="custom-icon-card card-title-with-bg" variant="flat"
-                                :key="idx" v-for="idx in [ 1, 2, 3 ]">
-                            <template #title>
-                                <div class="d-flex align-center">
-                                    <v-btn density="compact" color="default" variant="text"
-                                           :aria-label="tt('Delete')" :icon="true" :disabled="true">
-                                        <v-icon :icon="mdiDeleteOutline" size="22" />
-                                    </v-btn>
-                                    <v-spacer/>
-                                    <span class="align-self-center">
-                                        <v-icon class="disabled" :icon="mdiDrag"/>
-                                    </span>
-                                </div>
-                            </template>
-
-                            <v-card-text class="d-flex pa-1">
-                                <v-skeleton-loader class="w-100 justify-center skeleton-no-margin" type="avatar" :loading="true"></v-skeleton-loader>
-                            </v-card-text>
-                        </v-card>
+                <div class="custom-icon-body" v-if="allCustomIcons.length < 1">
+                    <div class="custom-icon-grid" aria-hidden="true" v-if="loading">
+                        <div class="custom-icon-card custom-icon-card--skeleton" :key="idx" v-for="idx in [ 1, 2, 3, 4 ]">
+                            <div class="custom-icon-preview">
+                                <v-skeleton-loader class="skeleton-no-margin" type="avatar" :loading="true"></v-skeleton-loader>
+                            </div>
+                            <div class="custom-icon-toolbar"></div>
+                        </div>
                     </div>
 
-                    <div class="text-body-medium" v-else-if="!loading">{{ tt('No available custom icons') }}</div>
-                </v-card-text>
+                    <state-panel type="error" :title="tt('Unable to retrieve custom icon list')" v-else-if="loadError">
+                        <template #actions>
+                            <v-btn color="default" variant="outlined" :prepend-icon="mdiRefresh" @click="reload(true)">{{ tt('Retry') }}</v-btn>
+                        </template>
+                    </state-panel>
+                    <state-panel type="empty" :title="tt('No available custom icons')" v-else>
+                        <template #actions>
+                            <v-btn color="default" variant="outlined" :prepend-icon="mdiPlus" :disabled="updating" @click="add">{{ tt('Add') }}</v-btn>
+                        </template>
+                    </state-panel>
+                </div>
 
-                <v-card-text class="pt-2" v-else-if="allCustomIcons.length > 0">
+                <div class="custom-icon-body" v-else-if="allCustomIcons.length > 0">
                     <draggable-list class="custom-icon-grid"
                                     item-key="id"
                                     handle=".drag-handle"
                                     ghost-class="dragging-item"
+                                    :disabled="loading || updating"
                                     v-model="allCustomIcons"
                                     @change="onMove">
-                        <template #item="{ element }">
-                            <v-card border class="custom-icon-card card-title-with-bg" variant="flat"
-                                    @mouseenter="hoveredIconId = element.id" @mouseleave="hoveredIconId = ''">
-                                <template #title>
-                                    <div class="d-flex align-center">
-                                        <v-btn density="compact" color="default" variant="text"
-                                               :aria-label="tt('Delete')" :icon="true" :disabled="updating"
-                                               @click="deleteCustomIcon(element)">
-                                            <v-icon :icon="mdiDeleteOutline" size="22" v-if="deletingCustomIconId !== element.id" />
-                                            <v-progress-circular indeterminate size="20" v-else-if="deletingCustomIconId === element.id" />
-                                            <v-tooltip activator="parent" v-if="hoveredIconId === element.id">{{ tt('Delete') }}</v-tooltip>
-                                        </v-btn>
-                                        <v-spacer/>
-                                        <span class="align-self-center">
-                                            <v-icon :class="!loading && !updating && allCustomIcons.length > 1 ? 'drag-handle' : 'disabled'"
-                                                    :aria-label="tt('Drag to Reorder')" :icon="mdiDrag"/>
-                                            <v-tooltip activator="parent" v-if="!loading && !updating && allCustomIcons.length > 1 && hoveredIconId === element.id">{{ tt('Drag to Reorder') }}</v-tooltip>
-                                        </span>
-                                    </div>
-                                </template>
-
-                                <v-card-text class="pa-1">
+                        <template #item="{ element, index }">
+                            <div class="custom-icon-card ebk-mgmt-card">
+                                <div class="custom-icon-preview">
                                     <v-img class="custom-icon-thumbnail" aspect-ratio="1" cover :src="getCustomIconUrl(element)" />
-                                </v-card-text>
-                            </v-card>
+                                </div>
+                                <div class="custom-icon-toolbar">
+                                    <span class="ebk-mgmt-drag me-0" :class="{ 'drag-handle': !loading && !updating && allCustomIcons.length > 1, 'disabled': loading || updating || allCustomIcons.length <= 1 }">
+                                        <v-icon :aria-label="tt('Drag to Reorder')" :icon="mdiDrag" size="18"/>
+                                        <v-tooltip activator="parent" v-if="!loading && !updating && allCustomIcons.length > 1">{{ tt('Drag to Reorder') }}</v-tooltip>
+                                    </span>
+                                    <v-btn class="ebk-mgmt-reveal button-icon-with-direction" color="default" density="compact" size="small" variant="text" :icon="true"
+                                           :aria-label="tt('Move Up')" :disabled="loading || updating || index <= 0"
+                                           @click="moveCustomIcon(element, index, -1)">
+                                        <v-icon :icon="mdiChevronLeft" size="18" />
+                                        <v-tooltip activator="parent">{{ tt('Move Up') }}</v-tooltip>
+                                    </v-btn>
+                                    <v-btn class="ebk-mgmt-reveal button-icon-with-direction" color="default" density="compact" size="small" variant="text" :icon="true"
+                                           :aria-label="tt('Move Down')" :disabled="loading || updating || index >= allCustomIcons.length - 1"
+                                           @click="moveCustomIcon(element, index, 1)">
+                                        <v-icon :icon="mdiChevronRight" size="18" />
+                                        <v-tooltip activator="parent">{{ tt('Move Down') }}</v-tooltip>
+                                    </v-btn>
+                                    <v-spacer/>
+                                    <v-btn color="error" density="compact" size="small" variant="text" :icon="true"
+                                           :aria-label="tt('Delete')" :disabled="updating"
+                                           @click="deleteCustomIcon(element)">
+                                        <v-icon :icon="mdiDeleteOutline" size="18" v-if="deletingCustomIconId !== element.id" />
+                                        <v-progress-circular indeterminate size="16" width="2" v-else-if="deletingCustomIconId === element.id" />
+                                        <v-tooltip activator="parent">{{ tt('Delete') }}</v-tooltip>
+                                    </v-btn>
+                                </div>
+                            </div>
                         </template>
                     </draggable-list>
-                </v-card-text>
+                </div>
             </v-card>
         </v-col>
     </v-row>
@@ -90,12 +95,11 @@
     <upload-dialog ref="uploadDialog" />
 
     <confirm-dialog ref="confirmDialog" />
-    <snack-bar ref="snackbar" />
 </template>
 
 <script setup lang="ts">
 import ConfirmDialog from '@/components/desktop/ConfirmDialog.vue';
-import SnackBar from '@/components/desktop/SnackBar.vue';
+import StatePanel from '@/components/common/StatePanel.vue';
 import UploadDialog from '@/views/desktop/customicons/dialogs/UploadDialog.vue';
 
 import { ref, computed, useTemplateRef } from 'vue';
@@ -103,64 +107,61 @@ import { ref, computed, useTemplateRef } from 'vue';
 import { useI18n } from '@/locales/helpers.ts';
 
 import { useUserCustomIconsStore } from '@/stores/userCustomIcon.ts';
+import { useDesktopPageStore } from '@/stores/desktopPage.ts';
 
 import type { UserCustomIconInfoResponse } from '@/models/user_custom_icon.ts';
 
 import {
     mdiRefresh,
     mdiDrag,
-    mdiDeleteOutline
+    mdiDeleteOutline,
+    mdiPlus,
+    mdiChevronLeft,
+    mdiChevronRight
 } from '@mdi/js';
 
 type ConfirmDialogType = InstanceType<typeof ConfirmDialog>;
-type SnackBarType = InstanceType<typeof SnackBar>;
 type UploadDialogType = InstanceType<typeof UploadDialog>;
 
-const { tt } = useI18n();
+const { tt, formatNumberToLocalizedNumerals } = useI18n();
 
 const customIconsStore = useUserCustomIconsStore();
+const desktopPageStore = useDesktopPageStore();
 
 const confirmDialog = useTemplateRef<ConfirmDialogType>('confirmDialog');
-const snackbar = useTemplateRef<SnackBarType>('snackbar');
 const uploadDialog = useTemplateRef<UploadDialogType>('uploadDialog');
 
 const loading = ref<boolean>(true);
 const updating = ref<boolean>(false);
-const hoveredIconId = ref<string>('');
+const loadError = ref<boolean>(false);
 const displayOrderModified = ref<boolean>(false);
 const deletingCustomIconId = ref<string>('');
 
 const allCustomIcons = computed<UserCustomIconInfoResponse[]>(() => customIconsStore.allCustomIcons);
 
-function getCustomIconUrl(customIcon: UserCustomIconInfoResponse): string {
-    return customIconsStore.getUserCustomIconUrlWithToken(customIcon);
+function getCustomIconUrl(customIcon: UserCustomIconInfoResponse): string | undefined {
+    return customIconsStore.getUserCustomIconUrl(customIcon);
 }
 
-function init(): void {
+function reload(force: boolean): void {
     loading.value = true;
 
-    customIconsStore.loadAllCustomIcons({ force: false }).then(() => {
+    customIconsStore.loadAllCustomIcons({
+        force: force
+    }).then(() => {
         loading.value = false;
-    }).catch(error => {
-        loading.value = false;
-
-        if (!error.processed) {
-            snackbar.value?.showError(error);
-        }
-    });
-}
-
-function reload(): void {
-    loading.value = true;
-
-    customIconsStore.loadAllCustomIcons({ force: true }).then(() => {
-        loading.value = false;
+        loadError.value = false;
         displayOrderModified.value = false;
+
+        if (force) {
+            desktopPageStore.addToast('Custom icon list has been updated');
+        }
     }).catch(error => {
         loading.value = false;
+        loadError.value = !(error && error.isUpToDate) && allCustomIcons.value.length < 1;
 
         if (!error.processed) {
-            snackbar.value?.showError(error);
+            desktopPageStore.addErrorToast(error);
         }
     });
 }
@@ -168,17 +169,17 @@ function reload(): void {
 function add(): void {
     uploadDialog.value?.open().then(result => {
         if (result && result.message) {
-            snackbar.value?.showMessage(result.message);
+            desktopPageStore.addToast(result.message);
         }
     }).catch(error => {
         if (error) {
-            snackbar.value?.showError(error);
+            desktopPageStore.addErrorToast(error);
         }
     });
 }
 
 function deleteCustomIcon(customIcon: UserCustomIconInfoResponse): void {
-    confirmDialog.value?.open('Are you sure you want to delete this custom icon?').then(() => {
+    confirmDialog.value?.open('Are you sure you want to delete this custom icon?', { color: 'error' }).then(() => {
         updating.value = true;
         deletingCustomIconId.value = customIcon.id;
 
@@ -192,7 +193,7 @@ function deleteCustomIcon(customIcon: UserCustomIconInfoResponse): void {
             deletingCustomIconId.value = '';
 
             if (!error.processed) {
-                snackbar.value?.showError(error);
+                desktopPageStore.addErrorToast(error);
             }
         });
     });
@@ -212,8 +213,27 @@ function saveSortResult(): void {
         loading.value = false;
 
         if (!error.processed) {
-            snackbar.value?.showError(error);
+            desktopPageStore.addErrorToast(error);
         }
+    });
+}
+
+// non-drag alternative to the drag handle (guidelines §6.4), uses the same display order update as dragging
+function moveCustomIcon(customIcon: UserCustomIconInfoResponse, index: number, direction: number): void {
+    const to = index + direction;
+
+    if (to < 0 || to >= allCustomIcons.value.length) {
+        return;
+    }
+
+    customIconsStore.changeCustomIconDisplayOrder({
+        iconId: customIcon.id,
+        from: index,
+        to: to
+    }).then(() => {
+        displayOrderModified.value = true;
+    }).catch(error => {
+        desktopPageStore.addErrorToast(error);
     });
 }
 
@@ -225,7 +245,7 @@ function onMove(event: { moved: { element: { id: string }, oldIndex: number, new
     const moveEvent = event.moved;
 
     if (!moveEvent.element || !moveEvent.element.id) {
-        snackbar.value?.showMessage('Unable to move custom icon');
+        desktopPageStore.addToast('Unable to move custom icon');
         return;
     }
 
@@ -236,32 +256,60 @@ function onMove(event: { moved: { element: { id: string }, oldIndex: number, new
     }).then(() => {
         displayOrderModified.value = true;
     }).catch(error => {
-        snackbar.value?.showError(error);
+        desktopPageStore.addErrorToast(error);
     });
 }
 
-init();
+reload(false);
 </script>
 
 <style>
+.custom-icon-body {
+    padding: var(--ebk-space-4);
+}
+
 .custom-icon-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+    gap: var(--ebk-space-3);
+}
 
-    > .custom-icon-card {
-        > .v-card-item {
-            padding: 4px 2px;
-        }
+.custom-icon-card {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--ebk-color-hairline);
+    border-radius: var(--ebk-radius-control);
+    background-color: var(--ebk-color-surface);
 
-        > .v-card-text {
-            min-height: 78px;
-        }
+    &.dragging-item {
+        opacity: 0.6;
     }
 }
 
+.custom-icon-card--skeleton {
+    border-style: dashed;
+}
+
+.custom-icon-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--ebk-space-3);
+    background-color: var(--ebk-color-surface-sunken);
+}
+
 .custom-icon-thumbnail {
-    border-radius: var(--ebk-radius-md);
-    background: rgba(var(--v-theme-on-surface), 0.04);
+    width: 100%;
+    max-width: 64px;
+    border-radius: var(--ebk-radius-sm);
+}
+
+.custom-icon-toolbar {
+    display: flex;
+    align-items: center;
+    min-height: 32px;
+    padding: 2px var(--ebk-space-1);
+    border-block-start: 1px solid var(--ebk-color-hairline);
 }
 </style>

@@ -1,8 +1,68 @@
 <template>
-    <f7-page>
+    <f7-page class="ebk-settings-page">
         <f7-navbar :title="tt('Preferences')" :back-link="tt('Back')"></f7-navbar>
 
-        <f7-block-title class="margin-top">{{ tt('General Settings') }}</f7-block-title>
+        <f7-block-title class="margin-top">{{ tt('Appearance') }}</f7-block-title>
+        <f7-list strong inset dividers class="settings-list">
+            <f7-list-item
+                link="#"
+                class="item-truncate-after-text"
+                popover-open=".theme-preference-popover-menu"
+            >
+                <template #after-title>
+                    <div class="item-actual-title">
+                        <span>{{ tt('Theme') }}</span>
+                    </div>
+                </template>
+                <template #after>
+                    {{ findNameByValue(allThemes, currentTheme) }}
+                </template>
+                <f7-popover class="theme-preference-popover-menu">
+                    <f7-list dividers>
+                        <f7-list-item link="#" no-chevron popover-close
+                                      :title="option.name"
+                                      :class="{ 'list-item-selected': currentTheme === option.value }"
+                                      :key="option.value"
+                                      v-for="option in allThemes"
+                                      @click="currentTheme = option.value">
+                            <template #after>
+                                <f7-icon class="list-item-checked-icon" f7="checkmark_alt" v-if="currentTheme === option.value"></f7-icon>
+                            </template>
+                        </f7-list-item>
+                    </f7-list>
+                </f7-popover>
+            </f7-list-item>
+            <f7-list-item
+                link="#"
+                class="item-truncate-after-text"
+                popover-open=".motion-preference-popover-menu"
+            >
+                <template #after-title>
+                    <div class="item-actual-title">
+                        <span>{{ tt('Motion') }}</span>
+                    </div>
+                </template>
+                <template #after>
+                    {{ findNameByValue(allMotionPreferences, motionPreference) }}
+                </template>
+                <f7-popover class="motion-preference-popover-menu">
+                    <f7-list dividers>
+                        <f7-list-item link="#" no-chevron popover-close
+                                      :title="option.name"
+                                      :class="{ 'list-item-selected': motionPreference === option.value }"
+                                      :key="option.value"
+                                      v-for="option in allMotionPreferences"
+                                      @click="motionPreference = option.value">
+                            <template #after>
+                                <f7-icon class="list-item-checked-icon" f7="checkmark_alt" v-if="motionPreference === option.value"></f7-icon>
+                            </template>
+                        </f7-list-item>
+                    </f7-list>
+                </f7-popover>
+            </f7-list-item>
+        </f7-list>
+
+        <f7-block-title>{{ tt('General Settings') }}</f7-block-title>
         <f7-list strong inset dividers class="settings-list">
             <f7-list-item>
                 <template #after-title>
@@ -187,6 +247,14 @@
                 </template>
                 <template #after>
                     <f7-toggle :checked="showTagInTransactionListPage" @toggle:change="showTagInTransactionListPage = $event"></f7-toggle>
+                </template>
+            </f7-list-item>
+            <f7-list-item>
+                <template #after-title>
+                    {{ tt('Show Transaction Picture Indicator') }}
+                </template>
+                <template #after>
+                    <f7-toggle :checked="showPictureIndicatorInTransactionListPage" @toggle:change="showPictureIndicatorInTransactionListPage = $event"></f7-toggle>
                 </template>
             </f7-list-item>
             <f7-list-item
@@ -431,6 +499,14 @@
                     </f7-list>
                 </f7-popover>
             </f7-list-item>
+            <f7-list-item>
+                <template #after-title>
+                    {{ tt('Collapse Sub-accounts by Default') }}
+                </template>
+                <template #after>
+                    <f7-toggle :checked="collapseSubAccountsByDefault" @toggle:change="collapseSubAccountsByDefault = $event"></f7-toggle>
+                </template>
+            </f7-list-item>
             <f7-list-item
                 class="item-truncate-after-text"
                 link="#"
@@ -493,7 +569,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch, onBeforeUnmount } from 'vue';
 
 import { useI18n } from '@/locales/helpers.ts';
 import { useI18nUIComponents } from '@/lib/ui/mobile.ts';
@@ -504,7 +580,8 @@ import { useAccountsStore } from '@/stores/account.ts';
 import { useTransactionCategoriesStore } from '@/stores/transactionCategory.ts';
 import { useTransactionTagsStore } from '@/stores/transactionTag.ts';
 
-import type { TypeAndDisplayName } from '@/core/base.ts';
+import type { NameValue, TypeAndDisplayName } from '@/core/base.ts';
+import { MotionPreference } from '@/core/setting.ts';
 import { CategoryType } from '@/core/category.ts';
 import { TransactionAmountType, TransactionQuickSaveButtonStyle } from '@/core/transaction.ts';
 import { DEFAULT_RECONCILIATION_STATEMENT_DATE_RANGE_IN_MOBILE } from '@/core/statistics.ts';
@@ -520,6 +597,7 @@ const {
 } = useI18n();
 const { showToast } = useI18nUIComponents();
 const {
+    allThemes,
     loadingAccounts,
     loadingTransactionCategories,
     loadingTags,
@@ -540,6 +618,7 @@ const {
     showTotalAmountInTransactionListPage,
     totalAmountTypeInTransactionListPage,
     showTagInTransactionListPage,
+    showPictureIndicatorInTransactionListPage,
     defaultKeywordMatchModeInTransactionListPage,
     autoSaveTransactionDraft,
     isAutoGetCurrentGeoLocation,
@@ -567,6 +646,27 @@ const showReconciliationStatementDefaultDateRangePopup = ref<boolean>(false);
 const allTransactionQuickSaveButtonStyles = computed<TypeAndDisplayName[]>(() => getAllTransactionQuickSaveButtonStyles());
 const allTransactionQuickAddButtonActionTypes = computed<TypeAndDisplayName[]>(() => getAllTransactionQuickAddButtonActionTypes());
 const allCreditCardAmountDisplayTypes = computed<TypeAndDisplayName[]>(() => getAllCreditCardAmountDisplayTypes());
+
+const allMotionPreferences = computed<NameValue[]>(() => [
+    { name: tt('System Default'), value: MotionPreference.System },
+    { name: tt('Reduced'), value: MotionPreference.Reduce },
+    { name: tt('Full'), value: MotionPreference.Full }
+]);
+
+const currentTheme = computed<string>({
+    get: () => settingsStore.appSettings.theme,
+    set: value => {
+        if (value !== settingsStore.appSettings.theme) {
+            settingsStore.setTheme(value);
+            location.reload();
+        }
+    }
+});
+
+const motionPreference = computed<string>({
+    get: () => settingsStore.appSettings.motionPreference,
+    set: (value: string) => settingsStore.setMotionPreference(value)
+});
 
 const overviewPageLayoutDisplayContent = computed<string>(() => {
     try {
@@ -599,6 +699,11 @@ const alwaysShowTransactionPicturesInMobileTransactionEditPage = computed<boolea
 const defaultCreditCardAmountDisplayTypeInMobile = computed<number>({
     get: () => settingsStore.appSettings.defaultCreditCardAmountDisplayTypeInMobile,
     set: (value: number) => settingsStore.setDefaultCreditCardAmountDisplayTypeInMobile(value)
+});
+
+const collapseSubAccountsByDefault = computed<boolean>({
+    get: () => settingsStore.appSettings.collapseSubAccountsByDefault,
+    set: (value) => settingsStore.setCollapseSubAccountsByDefault(value)
 });
 
 const reconciliationStatementPageDefaultDateRangeTypeInMobile = computed<number>({
@@ -649,4 +754,26 @@ function init(): void {
 }
 
 init();
+
+// settings apply and save immediately; confirm each save with a toast, as the desktop snackbar does (guideline 6.5)
+let settingsSavedToastTimer: ReturnType<typeof setTimeout> | null = null;
+
+watch(() => settingsStore.appSettings, () => {
+    if (settingsSavedToastTimer) {
+        clearTimeout(settingsSavedToastTimer);
+    }
+
+    // several values changed by one action are confirmed once
+    settingsSavedToastTimer = setTimeout(() => {
+        settingsSavedToastTimer = null;
+        showToast('Settings saved');
+    }, 200);
+}, { deep: true });
+
+onBeforeUnmount(() => {
+    if (settingsSavedToastTimer) {
+        clearTimeout(settingsSavedToastTimer);
+        settingsSavedToastTimer = null;
+    }
+});
 </script>

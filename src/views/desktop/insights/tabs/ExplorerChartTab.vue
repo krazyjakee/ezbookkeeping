@@ -9,6 +9,7 @@
                         item-title="name"
                         item-value="value"
                         density="compact"
+                        :menu-props="{ contentClass: 'select-menu-large' }"
                         :disabled="loading || disabled || isInAIMode()"
                         :label="tt('Chart Type')"
                         :items="allTransactionExplorerChartTypes"
@@ -21,6 +22,7 @@
                         item-title="name"
                         item-value="value"
                         density="compact"
+                        :menu-props="{ contentClass: 'select-menu-large' }"
                         :disabled="loading || disabled || isDefined(TransactionExplorerChartType.valueOf(currentExploration.chartType)?.fixedCategoryDimension)"
                         :label="tt('Axis / Category')"
                         :items="allTransactionExplorerDataDimensions"
@@ -34,6 +36,7 @@
                         item-title="name"
                         item-value="value"
                         density="compact"
+                        :menu-props="{ contentClass: 'select-menu-large' }"
                         :disabled="loading || disabled || !TransactionExplorerChartType.valueOf(currentExploration.chartType)?.seriesDimensionRequired"
                         :label="tt('Series')"
                         :items="allTransactionExplorerDataDimensions"
@@ -67,6 +70,7 @@
                         item-title="name"
                         item-value="value"
                         density="compact"
+                        :menu-props="{ contentClass: 'select-menu-large' }"
                         :disabled="loading || disabled"
                         :label="tt('Value Metric')"
                         :items="allTransactionExplorerValueMetrics"
@@ -186,6 +190,7 @@
             :tooltip-extra-column-names="axisChartTooltipExtraColumnNames"
             :tooltip-extra-column-total-values="axisChartShowYearOverYear || axisChartShowPeriodOverPeriod ? getAxisChartTooltipExtraColumnTotalValues : undefined"
             :tooltip-extra-column-values="axisChartShowYearOverYear || axisChartShowPeriodOverPeriod ? getAxisChartTooltipExtraColumnValues : undefined"
+            :legend-value-mode="isAdditiveValueMetric ? 'sum' : 'none'"
             @click="onClickTrendChartItem"
             v-else-if="!loading"
         />
@@ -268,6 +273,18 @@
         />
     </v-card-text>
 
+    <v-card-text class="pt-0" v-if="!loading && chartSummarySentences.length">
+        <section class="ebk-panel explorer-chart-summary" aria-labelledby="explorer-chart-summary-title">
+            <header class="ebk-panel-header-strip">
+                <span id="explorer-chart-summary-title">{{ tt('Report Summary') }}</span>
+                <span class="explorer-chart-summary-meta">{{ currentValueMetricName }}</span>
+            </header>
+            <div class="explorer-chart-summary-body" aria-live="polite">
+                <p :key="idx" v-for="(sentence, idx) in chartSummarySentences">{{ sentence }}</p>
+            </div>
+        </section>
+    </v-card-text>
+
     <transaction-list-dialog ref="transactionListDialog" @click:transaction="onClickTransaction" />
 </template>
 
@@ -282,6 +299,7 @@ import TransactionListDialog from '@/views/desktop/insights/dialogs/TransactionL
 import { computed, useTemplateRef } from 'vue';
 
 import { useI18n } from '@/locales/helpers.ts';
+import { useChartTextSummary } from '@/components/base/ChartSummaryBase.ts';
 
 import { useUserStore } from '@/stores/user.ts';
 import {
@@ -388,8 +406,11 @@ const {
     formatBigDecimalToWesternArabicNumeralsWithoutDigitGrouping,
     formatNumberToLocalizedNumerals,
     formatNumberToLocalizedNumeralsWithoutDigitGrouping,
-    formatPercentToLocalizedNumerals
+    formatPercentToLocalizedNumerals,
+    formatChartValueToLocalizedNumerals
 } = useI18n();
+
+const { getRankedItemsSummary } = useChartTextSummary();
 
 const userStore = useUserStore();
 const explorersStore = useExplorersStore();
@@ -458,6 +479,68 @@ const categoryDimensionTransactionExplorerData = computed<CategoryDimensionData[
     sortStatisticsItems(result, currentExploration.value.chartSortingType);
 
     return result;
+});
+
+// metrics whose values can be added up across items and series (counts and amount sums)
+const isAdditiveValueMetric = computed<boolean>(() => {
+    const valueMetric = currentExploration.value.valueMetric;
+
+    return valueMetric === TransactionExplorerValueMetric.TransactionCount.value ||
+        valueMetric === TransactionExplorerValueMetric.SourceAmountSum.value ||
+        valueMetric === TransactionExplorerValueMetric.SourceIncomeAmountSum.value ||
+        valueMetric === TransactionExplorerValueMetric.SourceExpenseAmountSum.value ||
+        valueMetric === TransactionExplorerValueMetric.SourceNetIncomeAmountSum.value;
+});
+
+const currentValueMetricName = computed<string>(() => findNameByValue(allTransactionExplorerValueMetrics.value, currentExploration.value.valueMetric) ?? '');
+
+// one-sentence text summary generated from the chart data (design guideline D7), the exact values are in the data table tab
+const chartSummarySentences = computed<string[]>(() => {
+    if (currentExploration.value.chartType === TransactionExplorerChartType.Custom.value || !explorersStore.categoriedTransactionExplorerData || !explorersStore.categoriedTransactionExplorerData.length) {
+        return [];
+    }
+
+    const valueType = TransactionExplorerValueMetric.valueOf(currentExploration.value.valueMetric)?.valueType ?? ChartValueType.Number;
+    const formatValue = (value: BigDecimal) => formatChartValueToLocalizedNumerals(value, valueType, defaultCurrency.value);
+    const items: { name: string, value: BigDecimal, percent?: number }[] = [];
+
+    if (categoryDimensionTransactionExplorerData.value.length) {
+        items.push(...categoryDimensionTransactionExplorerData.value.map(item => ({ name: item.name, value: item.value })));
+    } else if (isAdditiveValueMetric.value && seriesDimensionTransactionExplorerData.value.length > 1) {
+        items.push(...seriesDimensionTransactionExplorerData.value.map(item => ({ name: item.name, value: item.value })));
+    } else {
+        // values that cannot be summed are described by their largest single data point
+        for (const categoriedData of explorersStore.categoriedTransactionExplorerData) {
+            const categoryName = getCategoriedDataDisplayName(categoriedData);
+
+            for (const seriesData of categoriedData.data) {
+                const seriesName = categoriedData.data.length > 1 ? getCategoriedDataDisplayName(seriesData) : '';
+                items.push({ name: seriesName ? `${categoryName} · ${seriesName}` : categoryName, value: seriesData.value });
+            }
+        }
+    }
+
+    if (isAdditiveValueMetric.value) {
+        let positiveTotal: BigDecimal = BIG_DECIMAL_ZERO;
+
+        for (const item of items) {
+            if (item.value.isPositive()) {
+                positiveTotal = positiveTotal.add(item.value);
+            }
+        }
+
+        for (const item of items) {
+            item.percent = positiveTotal.isPositive() && item.value.isPositive() ? item.value.divide(positiveTotal).multiply(100).toDoubleNumber() : -1;
+        }
+    }
+
+    const summary = getRankedItemsSummary(items, {
+        totalName: currentValueMetricName.value,
+        formatValue: formatValue,
+        showPercent: isAdditiveValueMetric.value && items.length > 1
+    });
+
+    return summary ? [summary] : [];
 });
 
 const categoriedDataSortedByDisplayOrder = computed<SortableCategoriedTransactionExplorerDataItem[]>(() => {
@@ -1180,3 +1263,26 @@ defineExpose({
     buildExportResults
 });
 </script>
+
+<style>
+.explorer-chart-summary {
+    box-shadow: none;
+}
+
+.explorer-chart-summary-meta {
+    margin-inline-start: var(--ebk-space-2);
+    color: var(--ebk-color-text-secondary);
+    font-weight: 400;
+    letter-spacing: normal !important;
+    text-transform: none !important;
+}
+
+.explorer-chart-summary-body {
+    padding: var(--ebk-space-3) var(--ebk-space-4);
+    line-height: 1.6;
+}
+
+.explorer-chart-summary-body > p + p {
+    margin-block-start: var(--ebk-space-2);
+}
+</style>

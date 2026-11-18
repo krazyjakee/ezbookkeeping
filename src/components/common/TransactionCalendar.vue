@@ -15,6 +15,7 @@
                      :prevent-min-max-navigation="true"
                      :hide-offset-dates="true"
                      :hide-month-year-select="true"
+                     :aria-labels="ariaLabels"
                      v-model="dateTime">
         <template #day="{ day, date }">
             <div class="transaction-calendar-daily-amounts">
@@ -68,12 +69,42 @@ const emit = defineEmits<{
 }>();
 
 const {
+    tt,
     getAllLongWeekdayNames,
     getAllShortWeekdayNames,
     getCalendarDisplayDayOfMonthFromDateTime,
     getCalendarAlternateDates,
+    formatDateTimeToLongDate,
     formatAmountToLocalizedNumeralsWithCurrency
 } = useI18n();
+
+// day cells are announced with the localized long date (the date picker defaults to English labels) followed by the
+// daily income and expense shown in the cell, so the accessible name contains the visible content (#36, WCAG 2.5.3)
+const ariaLabels = computed(() => {
+    // read the inputs here, so a new label function (and new labels) is created when the amounts change
+    const dailyTotalAmounts = props.dailyTotalAmounts;
+    const displayedMonth = props.minDate.getMonth();
+
+    return {
+        day: (day: { value: Date }) => {
+            const date = day.value;
+            const parts: string[] = [formatDateTimeToLongDate(getYearMonthDayDateTime(date.getFullYear(), date.getMonth() + 1, date.getDate()))];
+            const dailyTotalAmount = dailyTotalAmounts?.[date.getDate()];
+
+            if (dailyTotalAmount && date.getMonth() === displayedMonth) {
+                if (props.showIncomeAmount && dailyTotalAmount.income && (!dailyTotalAmount.income.isZero() || dailyTotalAmount.incompleteIncome)) {
+                    parts.push(props.showAmount ? `${tt('Income')} ${getDisplayMonthTotalAmount(dailyTotalAmount.income, props.defaultCurrency, '', dailyTotalAmount.incompleteIncome)}` : tt('Income'));
+                }
+
+                if (props.showExpenseAmount && dailyTotalAmount.expense && (!dailyTotalAmount.expense.isZero() || dailyTotalAmount.incompleteExpense)) {
+                    parts.push(props.showAmount ? `${tt('Expense')} ${getDisplayMonthTotalAmount(dailyTotalAmount.expense, props.defaultCurrency, '', dailyTotalAmount.incompleteExpense)}` : tt('Expense'));
+                }
+            }
+
+            return parts.join(', ');
+        }
+    };
+});
 
 const userStore = useUserStore();
 
@@ -164,6 +195,23 @@ function getDisplayDay(date: Date): string {
 
 .transaction-calendar-daily-amount-dot + .transaction-calendar-daily-amount-dot {
     margin-inline-start: 2px;
+}
+
+/* income and expense are not told apart by colour alone (D1, WCAG 1.4.1, #36): ↑ / ↓ markers before the daily
+   amounts, and a filled dot for income versus a ring for expense when amounts are hidden */
+.transaction-calendar-daily-amount.text-income::before {
+    content: '↑';
+    margin-inline-end: 1px;
+}
+
+.transaction-calendar-daily-amount.text-expense::before {
+    content: '↓';
+    margin-inline-end: 1px;
+}
+
+.transaction-calendar-daily-amount-dot.text-expense {
+    background-color: transparent;
+    box-shadow: inset 0 0 0 1.5px currentColor;
 }
 
 .dp--cell-disabled .transaction-calendar-alternate-date {

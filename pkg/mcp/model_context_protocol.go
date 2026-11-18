@@ -1,10 +1,11 @@
 package mcp
 
 import (
-	"encoding/base64"
 	"encoding/json/jsontext"
 
 	"github.com/invopop/jsonschema"
+
+	"github.com/mayswind/ezbookkeeping/pkg/core"
 )
 
 // MCPProtocolVersion defines the type for Model Context Protocol (MCP) version
@@ -124,11 +125,21 @@ type MCPListToolsResponse struct {
 
 // MCPTool defines the structure of a tool in the MCP
 type MCPTool struct {
-	Name         string             `json:"name"`
-	InputSchema  *jsonschema.Schema `json:"inputSchema"`
-	OutputSchema *jsonschema.Schema `json:"outputSchema,omitempty"`
-	Title        string             `json:"title,omitempty"`
-	Description  string             `json:"description,omitempty"`
+	ToolType     core.MCPToolType    `json:"-"`
+	Name         string              `json:"name"`
+	InputSchema  *jsonschema.Schema  `json:"inputSchema"`
+	OutputSchema *jsonschema.Schema  `json:"outputSchema,omitempty"`
+	Title        string              `json:"title,omitempty"`
+	Description  string              `json:"description,omitempty"`
+	Annotations  *MCPToolAnnotations `json:"annotations,omitempty"`
+}
+
+// MCPToolAnnotations defines the behavior hints of a tool in the MCP
+type MCPToolAnnotations struct {
+	ReadOnlyHint    bool `json:"readOnlyHint"`
+	DestructiveHint bool `json:"destructiveHint"`
+	IdempotentHint  bool `json:"idempotentHint"`
+	OpenWorldHint   bool `json:"openWorldHint"`
 }
 
 // MCPCallToolRequest defines the request structure for listing tools in the MCP
@@ -186,33 +197,6 @@ func NewMCPTextContent(text string) *MCPTextContent {
 	return &MCPTextContent{
 		Type: "text",
 		Text: text,
-	}
-}
-
-// NewMCPImageContent creates a new instance of MCPImageContent with the given data and MIME type
-func NewMCPImageContent(data []byte, mimeType string) *MCPImageContent {
-	return &MCPImageContent{
-		Type:     "image",
-		MimeType: mimeType,
-		Data:     base64.StdEncoding.EncodeToString(data),
-	}
-}
-
-// NewMCPAudioContent creates a new instance of MCPAudioContent with the given data and MIME type
-func NewMCPAudioContent(data []byte, mimeType string) *MCPAudioContent {
-	return &MCPAudioContent{
-		Type:     "audio",
-		MimeType: mimeType,
-		Data:     base64.StdEncoding.EncodeToString(data),
-	}
-}
-
-// NewMCPResourceLink creates a new instance of MCPResourceLink with the given parameters
-func NewMCPResourceLink(uri string, name string) *MCPResourceLink {
-	return &MCPResourceLink{
-		URI:  uri,
-		Type: "resource_link",
-		Name: name,
 	}
 }
 

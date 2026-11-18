@@ -1,177 +1,161 @@
 <template>
-    <div class="layout-wrapper">
-        <router-link to="/">
-            <div class="auth-logo d-flex align-start gap-x-3">
-                <img alt="logo" class="login-page-logo" :src="APPLICATION_LOGO_PATH" />
-                <span class="auth-app-title">{{ tt('global.app.title') }}</span>
+    <auth-page-layout illustration="login"
+                      :label="tt('Account Access')"
+                      :title="show2faInput ? tt('Two-Factor Authentication') : tt('Welcome to ezrbookkeeping')"
+                      :version="version"
+                      :busy="loggingInByPassword || loggingInByOAuth2 || verifying"
+                      :status-text="errorMessage">
+        <template #message>
+            <p class="ma-0" v-if="!show2faInput && isInternalAuthEnabled()">{{ tt('Please log in with your ezrbookkeeping account') }}</p>
+            <p class="ma-0" v-if="show2faInput && twoFAVerifyType === 'passcode'">{{ tt('Enter the passcode from your two-factor authentication app.') }}</p>
+            <p class="ma-0" v-if="show2faInput && twoFAVerifyType === 'backupcode'">{{ tt('Enter one of your two-factor authentication backup codes.') }}</p>
+            <p class="ma-0" v-if="tips">{{ tips }}</p>
+        </template>
+
+        <v-form class="auth-access-form" @submit.prevent>
+            <v-text-field
+                type="text"
+                name="username"
+                autocomplete="username"
+                autocapitalize="none"
+                autocorrect="off"
+                spellcheck="false"
+                inputmode="email"
+                :autofocus="true"
+                :disabled="show2faInput || loggingInByPassword || loggingInByOAuth2 || verifying"
+                :label="tt('Username')"
+                :placeholder="tt('Your username or email')"
+                v-model.trim="username"
+                @input="tempToken = ''; errorMessage = null"
+                @keyup.enter="passwordInput?.focus()"
+                v-if="isInternalAuthEnabled()"
+            />
+
+            <v-text-field
+                name="password"
+                autocomplete="current-password"
+                ref="passwordInput"
+                :type="showPassword ? 'text' : 'password'"
+                :disabled="show2faInput || loggingInByPassword || loggingInByOAuth2 || verifying"
+                :label="tt('Password')"
+                :placeholder="tt('Your password')"
+                v-model="password"
+                @input="tempToken = ''; errorMessage = null"
+                @keyup.enter="login"
+                v-if="isInternalAuthEnabled()"
+            >
+                <template #append-inner>
+                    <v-btn class="auth-password-toggle" density="comfortable" variant="text" size="small" color="default"
+                           :icon="true"
+                           :aria-label="showPassword ? tt('Hide Password') : tt('Show Password')"
+                           :aria-pressed="showPassword ? 'true' : 'false'"
+                           :disabled="show2faInput || loggingInByPassword || loggingInByOAuth2 || verifying"
+                           @click="showPassword = !showPassword">
+                        <v-icon :icon="showPassword ? mdiEyeOffOutline : mdiEyeOutline" size="20" />
+                        <v-tooltip activator="parent" location="top">{{ showPassword ? tt('Hide Password') : tt('Show Password') }}</v-tooltip>
+                    </v-btn>
+                </template>
+            </v-text-field>
+
+            <div v-show="show2faInput">
+                <v-text-field
+                    type="number"
+                    name="passcode"
+                    autocomplete="one-time-code"
+                    inputmode="numeric"
+                    ref="passcodeInput"
+                    :disabled="loggingInByPassword || loggingInByOAuth2 || verifying"
+                    :label="tt('Passcode')"
+                    :placeholder="tt('Passcode')"
+                    v-model="passcode"
+                    @input="errorMessage = null"
+                    @keyup.enter="verify"
+                    v-if="twoFAVerifyType === 'passcode'"
+                />
+                <v-text-field
+                    type="text"
+                    name="backupcode"
+                    autocomplete="off"
+                    ref="backupCodeInput"
+                    :disabled="loggingInByPassword || loggingInByOAuth2 || verifying"
+                    :label="tt('Backup Code')"
+                    :placeholder="tt('Backup Code')"
+                    v-model="backupCode"
+                    @input="errorMessage = null"
+                    @keyup.enter="verify"
+                    v-if="twoFAVerifyType === 'backupcode'"
+                />
+                <div class="auth-access-row auth-links mt-2">
+                    <a href="javascript:void(0);"
+                       :class="{ 'disabled': loggingInByPassword || loggingInByOAuth2 || verifying }"
+                       @click="switch2FAVerifyType">
+                        {{ twoFAVerifyType === 'passcode' ? tt('Use Backup Code') : tt('Use Passcode') }}
+                    </a>
+                </div>
             </div>
-        </router-link>
-        <v-row no-gutters class="auth-wrapper">
-            <v-col cols="12" md="8" class="auth-image-background d-none d-md-flex align-center justify-center position-relative">
-                <auth-illustration variant="login" />
-            </v-col>
-            <v-col cols="12" md="4" class="auth-card d-flex flex-column">
-                <div class="d-flex align-center justify-center h-100">
-                    <v-card variant="flat" class="w-100 mt-0 px-4 pt-12" max-width="500">
-                        <v-card-text class="py-0">
-                            <div class="text-headline-small mb-2">{{ tt('Welcome to ezBookkeeping') }}</div>
-                            <div class="auth-message text-body-large mb-0" v-if="isInternalAuthEnabled()">{{ tt('Please log in with your ezBookkeeping account') }}</div>
-                            <div class="auth-message text-body-large mt-1 mb-0" v-if="tips">{{ tips }}</div>
-                        </v-card-text>
 
-                        <v-card-text class="pb-0 mb-6">
-                            <v-form>
-                                <v-row>
-                                    <v-col cols="12" v-if="isInternalAuthEnabled()">
-                                        <v-text-field
-                                            type="text"
-                                            autocomplete="username"
-                                            autocapitalize="none"
-                                            autocorrect="off"
-                                            spellcheck="false"
-                                            inputmode="email"
-                                            :autofocus="true"
-                                            :disabled="show2faInput || loggingInByPassword || loggingInByOAuth2 || verifying"
-                                            :label="tt('Username')"
-                                            :placeholder="tt('Your username or email')"
-                                            v-model.trim="username"
-                                            @input="tempToken = ''"
-                                            @keyup.enter="passwordInput?.focus()"
-                                        />
-                                    </v-col>
+            <div class="auth-access-row auth-links" v-if="isInternalAuthEnabled() && !show2faInput">
+                <a href="javascript:void(0);"
+                   :class="{ 'disabled': loggingInByPassword || loggingInByOAuth2 || verifying }"
+                   @click="showMobileQrCode = true">{{ tt('Use on Mobile Device') }}</a>
+                <router-link to="/forgetpassword"
+                             :class="{ 'disabled': !isUserForgetPasswordEnabled() || loggingInByPassword || loggingInByOAuth2 || verifying }">
+                    {{ tt('Forget Password?') }}
+                </router-link>
+            </div>
 
-                                    <v-col cols="12" v-if="isInternalAuthEnabled()">
-                                        <v-text-field
-                                            autocomplete="current-password"
-                                            ref="passwordInput"
-                                            type="password"
-                                            :disabled="show2faInput || loggingInByPassword || loggingInByOAuth2 || verifying"
-                                            :label="tt('Password')"
-                                            :placeholder="tt('Your password')"
-                                            v-model="password"
-                                            @input="tempToken = ''"
-                                            @keyup.enter="login"
-                                        />
-                                    </v-col>
+            <v-btn block size="large" color="primary"
+                   :loading="loggingInByPassword"
+                   :disabled="inputIsEmpty || loggingInByPassword || loggingInByOAuth2 || verifying"
+                   @click="login" v-if="isInternalAuthEnabled() && !show2faInput">
+                {{ tt('Log In') }}
+            </v-btn>
+            <v-btn block size="large" color="primary"
+                   :loading="verifying"
+                   :disabled="twoFAInputIsEmpty || loggingInByPassword || loggingInByOAuth2 || verifying"
+                   @click="verify" v-else-if="isInternalAuthEnabled() && show2faInput">
+                {{ tt('Continue') }}
+            </v-btn>
 
-                                    <v-col cols="12" v-show="show2faInput">
-                                        <v-text-field
-                                            type="number"
-                                            autocomplete="one-time-code"
-                                            ref="passcodeInput"
-                                            :disabled="loggingInByPassword || loggingInByOAuth2 || verifying"
-                                            :label="tt('Passcode')"
-                                            :placeholder="tt('Passcode')"
-                                            :append-inner-icon="mdiHelpCircleOutline"
-                                            v-model="passcode"
-                                            @click:append-inner="twoFAVerifyType = 'backupcode'"
-                                            @keyup.enter="verify"
-                                            v-if="twoFAVerifyType === 'passcode'"
-                                        />
-                                        <v-text-field
-                                            type="text"
-                                            autocomplete="off"
-                                            :disabled="loggingInByPassword || loggingInByOAuth2 || verifying"
-                                            :label="tt('Backup Code')"
-                                            :placeholder="tt('Backup Code')"
-                                            :append-inner-icon="mdiOnepassword"
-                                            v-model="backupCode"
-                                            @click:append-inner="twoFAVerifyType = 'passcode'"
-                                            @keyup.enter="verify"
-                                            v-if="twoFAVerifyType === 'backupcode'"
-                                        />
-                                    </v-col>
+            <div class="auth-access-divider" v-if="isInternalAuthEnabled() && isOAuth2Enabled()">{{ tt('or') }}</div>
 
-                                    <v-col cols="12" class="auth-links text-body-large py-0 mt-1 mb-4" v-if="isInternalAuthEnabled()">
-                                        <div class="d-flex align-center justify-space-between flex-wrap">
-                                            <a href="javascript:void(0);"
-                                               :class="{ 'disabled': loggingInByPassword || loggingInByOAuth2 || verifying }"
-                                               @click="showMobileQrCode = true">
-                                                <span class="nav-item-title">{{ tt('Use on Mobile Device') }}</span>
-                                            </a>
-                                            <v-spacer/>
-                                            <router-link class="text-primary" to="/forgetpassword"
-                                                         :class="{ 'disabled': !isUserForgetPasswordEnabled() || loggingInByPassword || loggingInByOAuth2 || verifying }">
-                                                {{ tt('Forget Password?') }}
-                                            </router-link>
-                                        </div>
-                                    </v-col>
+            <v-btn block size="large" variant="outlined" color="default"
+                   :loading="loggingInByOAuth2"
+                   :disabled="show2faInput || loggingInByPassword || loggingInByOAuth2 || verifying" :href="oauth2LoginUrl"
+                   @click="loggingInByOAuth2 = true" v-if="isOAuth2Enabled()">
+                {{ oauth2LoginDisplayName }}
+            </v-btn>
+        </v-form>
 
-                                    <v-col cols="12">
-                                        <v-btn block :disabled="inputIsEmpty || loggingInByPassword || loggingInByOAuth2 || verifying"
-                                               @click="login" v-if="isInternalAuthEnabled() && !show2faInput">
-                                            {{ tt('Log In') }}
-                                            <v-progress-circular indeterminate size="22" class="ms-2" v-if="loggingInByPassword"></v-progress-circular>
-                                        </v-btn>
-                                        <v-btn block :disabled="twoFAInputIsEmpty || loggingInByPassword || loggingInByOAuth2 || verifying"
-                                               @click="verify" v-else-if="isInternalAuthEnabled() && show2faInput">
-                                            {{ tt('Continue') }}
-                                            <v-progress-circular indeterminate size="22" class="ms-2" v-if="verifying"></v-progress-circular>
-                                        </v-btn>
+        <div class="auth-access-secondary auth-links">
+            <div v-if="show2faInput">
+                <a href="javascript:void(0);"
+                   :class="{ 'disabled': loggingInByPassword || loggingInByOAuth2 || verifying }"
+                   @click="cancel2FA">{{ tt('Back to login page') }}</a>
+            </div>
+            <div v-if="!isInternalAuthEnabled()">
+                <a href="javascript:void(0);"
+                   :class="{ 'disabled': loggingInByPassword || loggingInByOAuth2 || verifying }"
+                   @click="showMobileQrCode = true">{{ tt('Use on Mobile Device') }}</a>
+            </div>
+            <div v-if="isInternalAuthEnabled() && !show2faInput">
+                <span class="me-1">{{ tt('Don\'t have an account?') }}</span>
+                <router-link to="/signup"
+                             :class="{ 'disabled': !isUserRegistrationEnabled() || loggingInByPassword || loggingInByOAuth2 || verifying }">
+                    {{ tt('Create an account') }}
+                </router-link>
+            </div>
+        </div>
 
-                                        <v-col cols="12" class="d-flex align-center my-3 px-0 text-body-medium text-no-wrap" v-if="isInternalAuthEnabled() && isOAuth2Enabled()">
-                                            <v-divider class="me-3" />
-                                            {{ tt('or') }}
-                                            <v-divider class="ms-3" />
-                                        </v-col>
-
-                                        <v-btn block :disabled="show2faInput || loggingInByPassword || loggingInByOAuth2 || verifying" :href="oauth2LoginUrl"
-                                               @click="loggingInByOAuth2 = true" v-if="isOAuth2Enabled()">
-                                            {{ oauth2LoginDisplayName }}
-                                            <v-progress-circular indeterminate size="22" class="ms-2" v-if="loggingInByOAuth2"></v-progress-circular>
-                                        </v-btn>
-                                    </v-col>
-
-                                    <v-col cols="12" class="auth-links text-body-large" v-if="!isInternalAuthEnabled()">
-                                        <div class="text-center">
-                                            <a href="javascript:void(0);"
-                                               :class="{ 'disabled': loggingInByPassword || loggingInByOAuth2 || verifying }"
-                                               @click="showMobileQrCode = true">
-                                                <span class="nav-item-title">{{ tt('Use on Mobile Device') }}</span>
-                                            </a>
-                                        </div>
-                                    </v-col>
-
-                                    <v-col cols="12" class="auth-links text-center text-body-large mt-2" v-if="isInternalAuthEnabled()">
-                                        <span class="me-1">{{ tt('Don\'t have an account?') }}</span>
-                                        <router-link class="text-primary" to="/signup"
-                                                     :class="{ 'disabled': !isUserRegistrationEnabled() || loggingInByPassword || loggingInByOAuth2 || verifying }">
-                                            {{ tt('Create an account') }}
-                                        </router-link>
-                                    </v-col>
-                                </v-row>
-                            </v-form>
-                        </v-card-text>
-                    </v-card>
-                </div>
-                <v-spacer/>
-                <div class="d-flex align-center justify-center">
-                    <v-card variant="flat" class="w-100 px-4 pb-3" max-width="500">
-                        <v-card-text class="pt-0">
-                            <div class="text-center">
-                                <language-select-button :disabled="loggingInByPassword || loggingInByOAuth2 || verifying" />
-                            </div>
-
-                            <v-divider class="mt-2 mb-3" />
-
-                            <div class="auth-powered-by text-center">
-                                <span>Powered by </span>
-                                <a href="https://github.com/mayswind/ezbookkeeping" target="_blank">ezBookkeeping</a>&nbsp;<span>{{ version }}</span>
-                            </div>
-                        </v-card-text>
-                    </v-card>
-                </div>
-            </v-col>
-        </v-row>
-
-        <switch-to-mobile-dialog v-model:show="showMobileQrCode" />
-        <snack-bar ref="snackbar" />
-    </div>
+        <template #dialogs>
+            <switch-to-mobile-dialog v-model:show="showMobileQrCode" />
+        </template>
+    </auth-page-layout>
 </template>
 
 <script setup lang="ts">
 import { VTextField } from 'vuetify/components/VTextField';
-import SnackBar from '@/components/desktop/SnackBar.vue';
+import AuthPageLayout from '@/components/desktop/AuthPageLayout.vue';
 
 import { ref, useTemplateRef, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
@@ -180,8 +164,8 @@ import { useI18n } from '@/locales/helpers.ts';
 import { useLoginPageBase } from '@/views/base/LoginPageBase.ts';
 
 import { useRootStore } from '@/stores/index.ts';
+import { useDesktopPageStore } from '@/stores/desktopPage.ts';
 
-import { APPLICATION_LOGO_PATH } from '@/consts/asset.ts';
 import { KnownErrorCode } from '@/consts/api.ts';
 
 import { generateRandomUUID } from '@/lib/misc.ts';
@@ -194,17 +178,16 @@ import {
 } from '@/lib/server_settings.ts';
 
 import {
-    mdiOnepassword,
-    mdiHelpCircleOutline
+    mdiEyeOutline,
+    mdiEyeOffOutline
 } from '@mdi/js';
-
-type SnackBarType = InstanceType<typeof SnackBar>;
 
 const router = useRouter();
 
-const { tt } = useI18n();
+const { tt, te } = useI18n();
 
 const rootStore = useRootStore();
+const desktopPageStore = useDesktopPageStore();
 
 const {
     version,
@@ -228,19 +211,56 @@ const {
 
 const passwordInput = useTemplateRef<VTextField>('passwordInput');
 const passcodeInput = useTemplateRef<VTextField>('passcodeInput');
-const snackbar = useTemplateRef<SnackBarType>('snackbar');
+const backupCodeInput = useTemplateRef<VTextField>('backupCodeInput');
 
 const show2faInput = ref<boolean>(false);
 const showMobileQrCode = ref<boolean>(false);
+const showPassword = ref<boolean>(false);
+const errorMessage = ref<string | null>(null);
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function showError(error: any): void {
+    if (error && error.message) {
+        errorMessage.value = te(error.message);
+    } else {
+        errorMessage.value = te(error) || tt('An error occurred');
+    }
+}
+
+function switch2FAVerifyType(): void {
+    twoFAVerifyType.value = twoFAVerifyType.value === 'passcode' ? 'backupcode' : 'passcode';
+    errorMessage.value = null;
+
+    nextTick(() => {
+        if (twoFAVerifyType.value === 'passcode') {
+            passcodeInput.value?.focus();
+        } else {
+            backupCodeInput.value?.focus();
+        }
+    });
+}
+
+function cancel2FA(): void {
+    show2faInput.value = false;
+    tempToken.value = '';
+    passcode.value = '';
+    backupCode.value = '';
+    twoFAVerifyType.value = 'passcode';
+    errorMessage.value = null;
+
+    nextTick(() => {
+        passwordInput.value?.focus();
+    });
+}
 
 function login(): void {
     if (!username.value) {
-        snackbar.value?.showMessage('Username cannot be blank');
+        errorMessage.value = tt('Username cannot be blank');
         return;
     }
 
     if (!password.value) {
-        snackbar.value?.showMessage('Password cannot be blank');
+        errorMessage.value = tt('Password cannot be blank');
         return;
     }
 
@@ -254,14 +274,15 @@ function login(): void {
     }
 
     loggingInByPassword.value = true;
+    errorMessage.value = null;
+    showPassword.value = false;
 
     rootStore.authorize({
         loginName: username.value,
         password: password.value
     }).then(authResponse => {
-        loggingInByPassword.value = false;
-
         if (authResponse.need2FA) {
+            loggingInByPassword.value = false;
             tempToken.value = authResponse.token;
             show2faInput.value = true;
 
@@ -275,8 +296,12 @@ function login(): void {
             return;
         }
 
-        doAfterLogin(authResponse);
-        router.replace('/');
+        doAfterLogin(authResponse).then(loginHint => {
+            desktopPageStore.addToast(loginHint);
+            router.replace('/');
+        }).finally(() => {
+            loggingInByOAuth2.value = false;
+        });
     }).catch(error => {
         loggingInByPassword.value = false;
 
@@ -286,7 +311,7 @@ function login(): void {
         }
 
         if (!error.processed) {
-            snackbar.value?.showError(error);
+            showError(error);
         }
     });
 }
@@ -297,29 +322,32 @@ function verify(): void {
     }
 
     if (twoFAVerifyType.value === 'passcode' && !passcode.value) {
-        snackbar.value?.showMessage('Passcode cannot be blank');
+        errorMessage.value = tt('Passcode cannot be blank');
         return;
     } else if (twoFAVerifyType.value === 'backupcode' && !backupCode.value) {
-        snackbar.value?.showMessage('Backup code cannot be blank');
+        errorMessage.value = tt('Backup code cannot be blank');
         return;
     }
 
     verifying.value = true;
+    errorMessage.value = null;
 
     rootStore.authorize2FA({
         token: tempToken.value,
         passcode: twoFAVerifyType.value === 'passcode' ? passcode.value : null,
         recoveryCode: twoFAVerifyType.value === 'backupcode' ? backupCode.value : null
     }).then(authResponse => {
-        verifying.value = false;
-
-        doAfterLogin(authResponse);
-        router.replace('/');
+        doAfterLogin(authResponse).then(loginHint => {
+            desktopPageStore.addToast(loginHint);
+            router.replace('/');
+        }).finally(() => {
+            verifying.value = false;
+        });
     }).catch(error => {
         verifying.value = false;
 
         if (!error.processed) {
-            snackbar.value?.showError(error);
+            showError(error);
         }
     });
 }

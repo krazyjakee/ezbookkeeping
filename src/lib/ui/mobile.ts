@@ -57,16 +57,6 @@ export function openPopover(selector: string, targetEl: HTMLElement): void {
     });
 }
 
-export function closePopover(selector: string): void {
-    f7ready((f7) => {
-        const popover = f7.popover.get(selector);
-
-        if (popover) {
-            popover.close();
-        }
-    });
-}
-
 export function closeAllDialog(): void {
     f7ready((f7) => {
         return f7.dialog.close();

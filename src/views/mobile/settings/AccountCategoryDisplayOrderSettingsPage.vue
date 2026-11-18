@@ -14,7 +14,22 @@
             <f7-list-item :id="getAccountCategoryDomId(accountCategory)"
                           :key="accountCategory.type"
                           :title="tt(accountCategory.name)"
-                          v-for="accountCategory in accountCategories">
+                          v-for="(accountCategory, index) in accountCategories">
+                <template #media>
+                    <ItemIcon icon-type="account" :icon-id="accountCategory.defaultAccountIconId" />
+                </template>
+                <template #after>
+                    <span class="ebk-m-move-buttons">
+                        <f7-link :class="{ 'disabled': index <= 0 }"
+                                 :aria-label="tt('Move Up')" @click.stop.prevent="moveAccountCategory(index, -1)">
+                            <f7-icon f7="arrow_up"></f7-icon>
+                        </f7-link>
+                        <f7-link :class="{ 'disabled': index >= accountCategories.length - 1 }"
+                                 :aria-label="tt('Move Down')" @click.stop.prevent="moveAccountCategory(index, 1)">
+                            <f7-icon f7="arrow_down"></f7-icon>
+                        </f7-link>
+                    </span>
+                </template>
             </f7-list-item>
         </f7-list>
 
@@ -81,6 +96,17 @@ function saveDisplayOrder(): void {
 function resetToDefault() {
     resetDisplayOrderToDefault();
     showMoreActionSheet.value = false;
+}
+
+// non-drag alternative to the sort handle (guidelines §6.4)
+function moveAccountCategory(index: number, direction: number): void {
+    const to = index + direction;
+
+    if (to < 0 || to >= accountCategories.value.length) {
+        return;
+    }
+
+    accountCategories.value.splice(to, 0, accountCategories.value.splice(index, 1)[0] as AccountCategory);
 }
 
 function onSort(event: { el: { id: string }, from: number, to: number }): void {

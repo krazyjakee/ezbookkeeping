@@ -28,16 +28,24 @@
             </f7-segmented>
         </f7-block>
 
+        <section class="ebk-panel transaction-edit-amount-panel margin-vertical-half skeleton-text" v-if="loading">
+            <header class="ebk-panel-header-strip">
+                <span>Amount · USD</span>
+            </header>
+            <f7-list dividers class="no-margin transaction-edit-amount-list">
+                <f7-list-item
+                    class="transaction-edit-amount ebk-large-amount"
+                    header="Expense Amount" title="0.00">
+                </f7-list-item>
+                <f7-list-item
+                    class="transaction-edit-amount ebk-large-amount"
+                    header="Transfer In Amount" title="0.00" v-if="transaction.type === TransactionType.Transfer">
+                </f7-list-item>
+            </f7-list>
+        </section>
+
         <f7-list strong inset dividers class="margin-vertical-half skeleton-text" v-if="loading">
             <f7-list-input label="Template Name" placeholder="Template Name" v-if="pageTypeAndMode?.type === TransactionEditPageType.Template"></f7-list-input>
-            <f7-list-item
-                class="transaction-edit-amount ebk-large-amount"
-                header="Expense Amount" title="0.00">
-            </f7-list-item>
-            <f7-list-item
-                class="transaction-edit-amount ebk-large-amount"
-                header="Transfer In Amount" title="0.00" v-if="transaction.type === TransactionType.Transfer">
-            </f7-list-item>
             <f7-list-item class="list-item-with-header-and-title list-item-title-hide-overflow" header="Category" title="Category Names" v-if="transaction.type !== TransactionType.ModifyBalance"></f7-list-item>
             <f7-list-item class="list-item-with-header-and-title" header="Account" title="Account Name"></f7-list-item>
             <f7-list-item class="list-item-with-header-and-title" header="Destination Account" title="Account Name" v-if="transaction.type === TransactionType.Transfer"></f7-list-item>
@@ -55,7 +63,49 @@
             <f7-list-input type="textarea" label="Description" placeholder="Your transaction description (optional)"></f7-list-input>
         </f7-list>
 
-        <f7-list form strong inset dividers class="margin-vertical-half" v-else-if="!loading">
+        <template v-if="!loading">
+        <section class="ebk-panel transaction-edit-amount-panel margin-vertical-half">
+            <header class="ebk-panel-header-strip">
+                <span class="transaction-edit-amount-panel-title">{{ tt('Amount') }}<template v-if="sourceAccountCurrency"> · {{ sourceAccountCurrency }}</template></span>
+                <span class="ebk-panel-header-actions transaction-edit-amount-type" :class="amountTypeLabelClass">{{ amountTypeLabel }}</span>
+            </header>
+            <f7-list dividers class="no-margin transaction-edit-amount-list">
+                <f7-list-item
+                    class="transaction-edit-amount"
+                    link="#" no-chevron
+                    :class="sourceAmountClass"
+                    :header="sourceAmountTitle"
+                    :title="getDisplayAmount(parseBigDecimal(transaction.sourceAmount), transaction.hideAmount, sourceAccountCurrency)"
+                    @click="showSourceAmountSheet = true"
+                >
+                    <number-pad-sheet :min-value="TRANSACTION_MIN_AMOUNT"
+                                      :max-value="TRANSACTION_MAX_AMOUNT"
+                                      :currency="sourceAccountCurrency"
+                                      v-model:show="showSourceAmountSheet"
+                                      v-model="transaction.sourceAmount"
+                    ></number-pad-sheet>
+                </f7-list-item>
+
+                <f7-list-item
+                    class="transaction-edit-amount text-color-primary"
+                    link="#" no-chevron
+                    :class="destinationAmountClass"
+                    :header="transferInAmountTitle"
+                    :title="getDisplayAmount(parseBigDecimal(transaction.destinationAmount), transaction.hideAmount, destinationAccountCurrency)"
+                    @click="showDestinationAmountSheet = true"
+                    v-if="transaction.type === TransactionType.Transfer"
+                >
+                    <number-pad-sheet :min-value="TRANSACTION_MIN_AMOUNT"
+                                      :max-value="TRANSACTION_MAX_AMOUNT"
+                                      :currency="destinationAccountCurrency"
+                                      v-model:show="showDestinationAmountSheet"
+                                      v-model="transaction.destinationAmount"
+                    ></number-pad-sheet>
+                </f7-list-item>
+            </f7-list>
+        </section>
+
+        <f7-list form strong inset dividers class="margin-vertical-half transaction-edit-details-list">
             <f7-list-input
                 type="text"
                 autocomplete="off"
@@ -65,45 +115,11 @@
                 v-model:value="transaction.name"
                 v-if="pageTypeAndMode?.type === TransactionEditPageType.Template && transaction instanceof TransactionTemplate"
             ></f7-list-input>
-
-            <f7-list-item
-                class="transaction-edit-amount"
-                link="#" no-chevron
-                :class="sourceAmountClass"
-                :header="sourceAmountTitle"
-                :title="getDisplayAmount(parseBigDecimal(transaction.sourceAmount), transaction.hideAmount, sourceAccountCurrency)"
-                @click="showSourceAmountSheet = true"
-            >
-                <number-pad-sheet :min-value="TRANSACTION_MIN_AMOUNT"
-                                  :max-value="TRANSACTION_MAX_AMOUNT"
-                                  :currency="sourceAccountCurrency"
-                                  v-model:show="showSourceAmountSheet"
-                                  v-model="transaction.sourceAmount"
-                ></number-pad-sheet>
-            </f7-list-item>
-
-            <f7-list-item
-                class="transaction-edit-amount text-color-primary"
-                link="#" no-chevron
-                :class="destinationAmountClass"
-                :header="transferInAmountTitle"
-                :title="getDisplayAmount(parseBigDecimal(transaction.destinationAmount), transaction.hideAmount, destinationAccountCurrency)"
-                @click="showDestinationAmountSheet = true"
-                v-if="transaction.type === TransactionType.Transfer"
-            >
-                <number-pad-sheet :min-value="TRANSACTION_MIN_AMOUNT"
-                                  :max-value="TRANSACTION_MAX_AMOUNT"
-                                  :currency="destinationAccountCurrency"
-                                  v-model:show="showDestinationAmountSheet"
-                                  v-model="transaction.destinationAmount"
-                ></number-pad-sheet>
-            </f7-list-item>
-
             <f7-list-item
                 class="list-item-with-header-and-title list-item-title-hide-overflow"
                 key="expenseCategorySelection"
-                link="#" no-chevron
-                :class="{ 'disabled': !hasVisibleExpenseCategories, 'readonly': mode === TransactionEditPageMode.View }"
+                link="#" :no-chevron="mode === TransactionEditPageMode.View"
+                :class="{ 'disabled': !hasVisibleExpenseCategories && !canAddNewCategory, 'readonly': mode === TransactionEditPageMode.View }"
                 :header="tt('Category')"
                 @click="showCategorySheet = true"
                 v-if="transaction.type === TransactionType.Expense"
@@ -126,16 +142,20 @@
                                            secondary-hidden-field="hidden"
                                            :enable-filter="true" :filter-placeholder="tt('Find category')" :filter-no-items-text="tt('No available category')"
                                            :items="allCategories[CategoryType.Expense]"
+                                           :add-primary-item-text="canAddNewCategory ? tt('Add Primary Category') : undefined"
+                                           :add-secondary-item-text="canAddNewCategory ? tt('Add Secondary Category') : undefined"
                                            v-model:show="showCategorySheet"
-                                           v-model="transaction.expenseCategoryId">
+                                           v-model="transaction.expenseCategoryId"
+                                           @add:primary="addNewCategory(CategoryType.Expense, undefined, $event)"
+                                           @add:secondary="(primaryItem: unknown, name: string) => addNewCategory(CategoryType.Expense, primaryItem, name)">
                 </tree-view-selection-sheet>
             </f7-list-item>
 
             <f7-list-item
                 class="list-item-with-header-and-title list-item-title-hide-overflow"
                 key="incomeCategorySelection"
-                link="#" no-chevron
-                :class="{ 'disabled': !hasVisibleIncomeCategories, 'readonly': mode === TransactionEditPageMode.View }"
+                link="#" :no-chevron="mode === TransactionEditPageMode.View"
+                :class="{ 'disabled': !hasVisibleIncomeCategories && !canAddNewCategory, 'readonly': mode === TransactionEditPageMode.View }"
                 :header="tt('Category')"
                 @click="showCategorySheet = true"
                 v-if="transaction.type === TransactionType.Income"
@@ -158,16 +178,20 @@
                                            secondary-hidden-field="hidden"
                                            :enable-filter="true" :filter-placeholder="tt('Find category')" :filter-no-items-text="tt('No available category')"
                                            :items="allCategories[CategoryType.Income]"
+                                           :add-primary-item-text="canAddNewCategory ? tt('Add Primary Category') : undefined"
+                                           :add-secondary-item-text="canAddNewCategory ? tt('Add Secondary Category') : undefined"
                                            v-model:show="showCategorySheet"
-                                           v-model="transaction.incomeCategoryId">
+                                           v-model="transaction.incomeCategoryId"
+                                           @add:primary="addNewCategory(CategoryType.Income, undefined, $event)"
+                                           @add:secondary="(primaryItem: unknown, name: string) => addNewCategory(CategoryType.Income, primaryItem, name)">
                 </tree-view-selection-sheet>
             </f7-list-item>
 
             <f7-list-item
                 class="list-item-with-header-and-title list-item-title-hide-overflow"
                 key="transferCategorySelection"
-                link="#" no-chevron
-                :class="{ 'disabled': !hasVisibleTransferCategories, 'readonly': mode === TransactionEditPageMode.View }"
+                link="#" :no-chevron="mode === TransactionEditPageMode.View"
+                :class="{ 'disabled': !hasVisibleTransferCategories && !canAddNewCategory, 'readonly': mode === TransactionEditPageMode.View }"
                 :header="tt('Category')"
                 @click="showCategorySheet = true"
                 v-if="transaction.type === TransactionType.Transfer"
@@ -190,14 +214,18 @@
                                            secondary-hidden-field="hidden"
                                            :enable-filter="true" :filter-placeholder="tt('Find category')" :filter-no-items-text="tt('No available category')"
                                            :items="allCategories[CategoryType.Transfer]"
+                                           :add-primary-item-text="canAddNewCategory ? tt('Add Primary Category') : undefined"
+                                           :add-secondary-item-text="canAddNewCategory ? tt('Add Secondary Category') : undefined"
                                            v-model:show="showCategorySheet"
-                                           v-model="transaction.transferCategoryId">
+                                           v-model="transaction.transferCategoryId"
+                                           @add:primary="addNewCategory(CategoryType.Transfer, undefined, $event)"
+                                           @add:secondary="(primaryItem: unknown, name: string) => addNewCategory(CategoryType.Transfer, primaryItem, name)">
                 </tree-view-selection-sheet>
             </f7-list-item>
 
             <f7-list-item
                 class="list-item-with-header-and-title"
-                link="#" no-chevron
+                link="#" :no-chevron="mode === TransactionEditPageMode.View"
                 :class="{ 'disabled': !allVisibleAccounts.length || (mode === TransactionEditPageMode.Edit && transaction.type === TransactionType.ModifyBalance), 'readonly': mode === TransactionEditPageMode.View }"
                 :header="tt(sourceAccountTitle)"
                 :title="sourceAccountName"
@@ -220,7 +248,7 @@
 
             <f7-list-item
                 class="list-item-with-header-and-title"
-                link="#" no-chevron
+                link="#" :no-chevron="mode === TransactionEditPageMode.View"
                 :class="{ 'disabled': !allVisibleAccounts.length, 'readonly': mode === TransactionEditPageMode.View }"
                 :header="tt('Destination Account')"
                 :title="destinationAccountName"
@@ -244,7 +272,7 @@
 
             <f7-list-item
                 class="transaction-edit-datetime list-item-with-header-and-title"
-                link="#" no-chevron
+                link="#" :no-chevron="mode === TransactionEditPageMode.View"
                 :class="{ 'disabled': mode === TransactionEditPageMode.Edit && transaction.type === TransactionType.ModifyBalance, 'readonly': mode === TransactionEditPageMode.View && transaction.utcOffset === currentTimezoneOffsetMinutes }"
                 v-if="pageTypeAndMode?.type === TransactionEditPageType.Transaction"
             >
@@ -266,7 +294,7 @@
 
             <f7-list-item
                 class="list-item-with-header-and-title"
-                link="#" no-chevron
+                link="#" :no-chevron="mode === TransactionEditPageMode.View"
                 :class="{ 'readonly': mode === TransactionEditPageMode.View }"
                 :header="tt('Scheduled Transaction Frequency')"
                 :title="transactionDisplayScheduledFrequency"
@@ -281,7 +309,7 @@
 
             <f7-list-item
                 class="transaction-edit-datetime list-item-with-header-and-title"
-                link="#" no-chevron
+                link="#" :no-chevron="mode === TransactionEditPageMode.View"
                 :class="{ 'readonly': mode === TransactionEditPageMode.View }"
                 :header="tt('Start Date')"
                 :title="transactionDisplayScheduledStartDate"
@@ -295,7 +323,7 @@
 
             <f7-list-item
                 class="transaction-edit-datetime list-item-with-header-and-title"
-                link="#" no-chevron
+                link="#" :no-chevron="mode === TransactionEditPageMode.View"
                 :class="{ 'readonly': mode === TransactionEditPageMode.View }"
                 :header="tt('End Date')"
                 :title="transactionDisplayScheduledEndDate"
@@ -338,7 +366,7 @@
             </f7-list-item>
 
             <f7-list-item
-                link="#" no-chevron
+                link="#" :no-chevron="mode === TransactionEditPageMode.View"
                 class="list-item-with-header-and-title list-item-title-hide-overflow"
                 :class="{ 'readonly': mode === TransactionEditPageMode.View && !transaction.geoLocation }"
                 :header="tt('Geographic Location')"
@@ -360,7 +388,7 @@
             </f7-list-item>
 
             <f7-list-item
-                link="#" no-chevron
+                link="#" :no-chevron="mode === TransactionEditPageMode.View"
                 :class="{ 'readonly': mode === TransactionEditPageMode.View }"
                 :header="tt('Tags')"
                 @click="showTransactionTagSheet = true"
@@ -388,8 +416,20 @@
                 </template>
             </f7-list-item>
 
+            <f7-list-input
+                type="textarea"
+                class="transaction-edit-comment"
+                style="height: auto"
+                autocomplete="off"
+                :class="{ 'readonly': mode === TransactionEditPageMode.View }"
+                :label="transactionDescriptionTitle"
+                :placeholder="mode !== TransactionEditPageMode.View ? tt('Your transaction description (optional)') : ''"
+                v-textarea-auto-size
+                v-model:value="transaction.comment"
+            ></f7-list-input>
             <f7-list-item
                 link="#" no-chevron
+                class="transaction-edit-pictures"
                 :header="tt('Pictures')"
                 v-if="showTransactionPictures || (transaction.pictures && transaction.pictures.length > 0)"
             >
@@ -410,7 +450,12 @@
                                         <f7-icon class="picture-control-icon picture-remove-icon" f7="trash" :aria-label="tt('Remove Picture')" v-if="pictureInfo.pictureId !== removingPictureId"></f7-icon>
                                         <f7-preloader color="white" :size="28" v-if="pictureInfo.pictureId === removingPictureId" />
                                     </div>
-                                    <image-box style="height: 100%" alt="picture" :src="getTransactionPictureUrl(pictureInfo)">
+                                    <div class="display-flex flex-direction-column justify-content-center align-items-center transaction-picture-document"
+                                         v-if="isPdfFileUrl(getTransactionPictureUrl(pictureInfo))">
+                                        <f7-icon class="picture-document-icon" f7="doc_text"></f7-icon>
+                                        <span class="picture-document-text">{{ tt('PDF Document') }}</span>
+                                    </div>
+                                    <image-box style="height: 100%" alt="picture" :src="getTransactionPictureUrl(pictureInfo)" v-else>
                                         <template #error>
                                             {{ tt('Failed to load image, please check whether the config "domain" and "root_url" are set correctly.') }}
                                         </template>
@@ -419,7 +464,7 @@
                             </swiper-slide>
                             <swiper-slide @click="showOpenPictureDialog" v-if="canAddTransactionPicture">
                                 <div class="display-flex justify-content-center align-items-center transaction-picture transaction-picture-add">
-                                    <f7-icon class="picture-control-icon" f7="plus" :aria-label="tt('Add Picture')" v-if="!uploadingPicture"></f7-icon>
+                                    <f7-icon class="picture-control-icon" f7="plus" :aria-label="tt('Add Picture or PDF Document')" v-if="!uploadingPicture"></f7-icon>
                                     <f7-preloader :size="28" v-if="uploadingPicture" />
                                 </div>
                             </swiper-slide>
@@ -428,18 +473,21 @@
                 </template>
             </f7-list-item>
 
-            <f7-list-input
-                type="textarea"
-                class="transaction-edit-comment"
-                style="height: auto"
-                autocomplete="off"
-                :class="{ 'readonly': mode === TransactionEditPageMode.View }"
-                :label="transactionDescriptionTitle"
-                :placeholder="mode !== TransactionEditPageMode.View ? tt('Your transaction description (optional)') : ''"
-                v-textarea-auto-size
-                v-model:value="transaction.comment"
-            ></f7-list-input>
+            <f7-list-item
+                link="#"
+                class="transaction-edit-attach-receipt"
+                :title="tt('Attach receipt — PDF or image')"
+                @click="showTransactionPictures = true; showOpenPictureDialog()"
+                v-if="pageTypeAndMode?.type === TransactionEditPageType.Transaction && isTransactionPicturesEnabled() && canAddTransactionPicture && !showTransactionPictures && (!transaction.pictures || !transaction.pictures.length)"
+            >
+                <template #media>
+                    <span class="transaction-edit-attach-receipt-icon" aria-hidden="true">
+                        <f7-icon f7="paperclip"></f7-icon>
+                    </span>
+                </template>
+            </f7-list-item>
         </f7-list>
+        </template>
 
         <f7-actions close-by-outside-click close-on-escape :opened="showGeoLocationActionSheet" @actions:closed="showGeoLocationActionSheet = false">
             <f7-actions-group>
@@ -448,6 +496,26 @@
             </f7-actions-group>
             <f7-actions-group v-if="!!getMapProvider()">
                 <f7-actions-button :class="{ 'disabled': !transaction.geoLocation }" @click="setGeoLocationByClickMap = false; showGeoLocationMapSheet = true">{{ tt('Show on the map') }}</f7-actions-button>
+            </f7-actions-group>
+            <f7-actions-group>
+                <f7-actions-button bold close>{{ tt('Cancel') }}</f7-actions-button>
+            </f7-actions-group>
+        </f7-actions>
+
+        <f7-actions close-by-outside-click close-on-escape :opened="showAddPictureActionSheet" @actions:closed="showAddPictureActionSheet = false">
+            <f7-actions-group>
+                <f7-actions-button @click="openPictureInput(true)">{{ tt('Take Photo') }}</f7-actions-button>
+                <f7-actions-button @click="openPictureInput(false)">{{ tt('Choose Picture or PDF Document') }}</f7-actions-button>
+            </f7-actions-group>
+            <f7-actions-group>
+                <f7-actions-button bold close>{{ tt('Cancel') }}</f7-actions-button>
+            </f7-actions-group>
+        </f7-actions>
+
+        <f7-actions close-by-outside-click close-on-escape :opened="showDocumentActionSheet" @actions:closed="showDocumentActionSheet = false">
+            <f7-actions-group>
+                <f7-actions-button @click="openDocument(false)">{{ tt('Open') }}</f7-actions-button>
+                <f7-actions-button @click="openDocument(true)">{{ tt('Download') }}</f7-actions-button>
             </f7-actions-group>
             <f7-actions-group>
                 <f7-actions-button bold close>{{ tt('Cancel') }}</f7-actions-button>
@@ -515,7 +583,8 @@
         <f7-photo-browser ref="pictureBrowser" type="popup" navbar-of-text="/"
                           :navbar-show-count="true" :exposition="false"
                           :photos="transactionPictures" :thumbs="transactionThumbs" />
-        <input ref="pictureInput" type="file" style="display: none" :accept="`${SUPPORTED_IMAGE_EXTENSIONS};capture=camera`" @change="onUploadPicture($event)" />
+        <input ref="pictureInput" type="file" style="display: none" :accept="SUPPORTED_TRANSACTION_PICTURE_EXTENSIONS" @change="onUploadPicture($event)" />
+        <input ref="cameraInput" type="file" style="display: none" :accept="CAMERA_CAPTURE_IMAGE_ACCEPT" capture="environment" @change="onUploadPicture($event)" />
     </f7-page>
 </template>
 
@@ -553,8 +622,9 @@ import { KnownFileType } from '@/core/file.ts';
 
 import { TRANSACTION_MAX_AMOUNT, TRANSACTION_MIN_AMOUNT } from '@/consts/transaction.ts';
 import { KnownErrorCode } from '@/consts/api.ts';
-import { SUPPORTED_IMAGE_EXTENSIONS } from '@/consts/file.ts';
+import { SUPPORTED_TRANSACTION_PICTURE_EXTENSIONS, CAMERA_CAPTURE_IMAGE_ACCEPT } from '@/consts/file.ts';
 
+import { TransactionCategory } from '@/models/transaction_category.ts';
 import { TransactionTemplate } from '@/models/transaction_template.ts';
 import type { TransactionPictureInfoBasicResponse } from '@/models/transaction_picture_info.ts';
 import { Transaction } from '@/models/transaction.ts';
@@ -574,6 +644,7 @@ import {
     isTransactionPicturesEnabled,
     getMapProvider
 } from '@/lib/server_settings.ts';
+import { isPdfFile, isPdfFileUrl, getFileDownloadUrl } from '@/lib/file.ts';
 import { compressJpgImageByQuality } from '@/lib/ui/common.ts';
 import logger from '@/lib/logger.ts';
 
@@ -667,6 +738,7 @@ const transactionTemplatesStore = useTransactionTemplatesStore();
 
 const pictureBrowser = useTemplateRef<PhotoBrowser.PhotoBrowser>('pictureBrowser');
 const pictureInput = useTemplateRef<HTMLInputElement>('pictureInput');
+const cameraInput = useTemplateRef<HTMLInputElement>('cameraInput');
 
 const loadingError = ref<unknown | null>(null);
 const removingPictureId = ref<string | null>(null);
@@ -677,6 +749,9 @@ const showQuickSavePopover = ref<boolean>(false);
 const showTimezonePopup = ref<boolean>(false);
 const showGeoLocationActionSheet = ref<boolean>(false);
 const showMoreActionSheet = ref<boolean>(false);
+const showAddPictureActionSheet = ref<boolean>(false);
+const showDocumentActionSheet = ref<boolean>(false);
+const selectedDocumentPicture = ref<TransactionPictureInfoBasicResponse | null>(null);
 const showSourceAmountSheet = ref<boolean>(false);
 const showDestinationAmountSheet = ref<boolean>(false);
 const showCategorySheet = ref<boolean>(false);
@@ -692,6 +767,10 @@ const showTransactionPictures = ref<boolean>(pageTypeAndMode?.type === Transacti
     && (pageTypeAndMode?.mode === TransactionEditPageMode.Add || pageTypeAndMode?.mode === TransactionEditPageMode.Edit)
     && settingsStore.appSettings.alwaysShowTransactionPicturesInMobileTransactionEditPage);
 const showAITextRecognitionSheet = ref<boolean>(false);
+
+let pendingNewCategory: { type: CategoryType, parentId: string, existingCategoryIds: Record<string, boolean> } | null = null;
+
+const canAddNewCategory = computed<boolean>(() => mode.value === TransactionEditPageMode.Add || mode.value === TransactionEditPageMode.Edit);
 
 const quickSaveButtonStyleType = computed<number>(() => settingsStore.appSettings.quickSaveButtonStyleInMobileTransactionListPage);
 const quickSaveButtonFloatingPosition = computed<string>(() => {
@@ -719,6 +798,26 @@ const sourceAmountClass = computed<Record<string, boolean>>(() => {
 
     return classes;
 });
+
+const amountTypeLabel = computed<string>(() => {
+    switch (transaction.value.type) {
+        case TransactionType.Expense:
+            return tt('Expense');
+        case TransactionType.Income:
+            return tt('Income');
+        case TransactionType.Transfer:
+            return tt('Transfer');
+        case TransactionType.ModifyBalance:
+            return tt('Modify Balance');
+        default:
+            return '';
+    }
+});
+
+const amountTypeLabelClass = computed<Record<string, boolean>>(() => ({
+    'text-expense': transaction.value.type === TransactionType.Expense,
+    'text-income': transaction.value.type === TransactionType.Income
+}));
 
 const destinationAmountClass = computed<Record<string, boolean>>(() => {
     const classes: Record<string, boolean> = {
@@ -769,8 +868,14 @@ const transactionPictures = computed<Record<string, string | undefined>[]>(() =>
     }
 
     for (const picture of transaction.value.pictures) {
+        const pictureUrl = getTransactionPictureUrl(picture);
+
+        if (isPdfFileUrl(pictureUrl)) {
+            continue;
+        }
+
         thumbs.push({
-            url: getTransactionPictureUrl(picture)
+            url: pictureUrl
         });
     }
 
@@ -785,7 +890,13 @@ const transactionThumbs = computed<(string | undefined)[]>(() => {
     }
 
     for (const picture of transaction.value.pictures) {
-        thumbs.push(getTransactionPictureUrl(picture));
+        const pictureUrl = getTransactionPictureUrl(picture);
+
+        if (isPdfFileUrl(pictureUrl)) {
+            continue;
+        }
+
+        thumbs.push(pictureUrl);
     }
 
     return thumbs;
@@ -1367,7 +1478,35 @@ function showOpenPictureDialog(): void {
         return;
     }
 
-    pictureInput.value?.click();
+    showAddPictureActionSheet.value = true;
+}
+
+function openPictureInput(fromCamera: boolean): void {
+    showAddPictureActionSheet.value = false;
+
+    if (!canAddTransactionPicture.value || submitting.value) {
+        return;
+    }
+
+    if (fromCamera) {
+        cameraInput.value?.click();
+    } else {
+        pictureInput.value?.click();
+    }
+}
+
+function openDocument(download: boolean): void {
+    const pictureUrl = getTransactionPictureUrl(selectedDocumentPicture.value);
+    const documentUrl = download ? getFileDownloadUrl(pictureUrl) : pictureUrl;
+
+    showDocumentActionSheet.value = false;
+    selectedDocumentPicture.value = null;
+
+    if (!documentUrl) {
+        return;
+    }
+
+    window.open(documentUrl, '_blank');
 }
 
 function uploadPicture(file: File): void {
@@ -1378,9 +1517,13 @@ function uploadPicture(file: File): void {
     uploadingPicture.value = true;
     submitting.value = true;
 
-    compressJpgImageByQuality(file, imageUploadQualityType.value).then(blob => {
+    const pictureFilePromise: Promise<File> = isPdfFile(file)
+        ? Promise.resolve(KnownFileType.PDF.createFileFromBlob(file, 'document'))
+        : compressJpgImageByQuality(file, imageUploadQualityType.value).then(blob => KnownFileType.JPG.createFileFromBlob(blob, 'image'));
+
+    pictureFilePromise.then(pictureFile => {
         return transactionsStore.uploadTransactionPicture({
-            pictureFile: KnownFileType.JPG.createFileFromBlob(blob, "image")
+            pictureFile: pictureFile
         });
     }).then(response => {
         transaction.value.addPicture(response);
@@ -1398,7 +1541,25 @@ function uploadPicture(file: File): void {
 
 function viewOrRemovePicture(pictureInfo: TransactionPictureInfoBasicResponse): void {
     if (mode.value !== TransactionEditPageMode.Add && mode.value !== TransactionEditPageMode.Edit && transaction.value.pictures && transaction.value.pictures.length) {
-        pictureBrowser.value?.open();
+        if (isPdfFileUrl(getTransactionPictureUrl(pictureInfo))) {
+            selectedDocumentPicture.value = pictureInfo;
+            showDocumentActionSheet.value = true;
+            return;
+        }
+
+        let imageIndex = 0;
+
+        for (const picture of transaction.value.pictures) {
+            if (picture.pictureId === pictureInfo.pictureId) {
+                break;
+            }
+
+            if (!isPdfFileUrl(getTransactionPictureUrl(picture))) {
+                imageIndex++;
+            }
+        }
+
+        pictureBrowser.value?.open(imageIndex);
         return;
     }
 
@@ -1447,8 +1608,80 @@ function onUploadPicture(event: Event): void {
     uploadPicture(pictureFile);
 }
 
+function setTransactionCategoryId(categoryType: CategoryType, categoryId: string): void {
+    if (categoryType === CategoryType.Expense) {
+        transaction.value.expenseCategoryId = categoryId;
+    } else if (categoryType === CategoryType.Income) {
+        transaction.value.incomeCategoryId = categoryId;
+    } else if (categoryType === CategoryType.Transfer) {
+        transaction.value.transferCategoryId = categoryId;
+    }
+}
+
+function addNewCategory(categoryType: CategoryType, primaryCategory: unknown, categoryName?: string): void {
+    const parentCategory = primaryCategory instanceof TransactionCategory ? primaryCategory : undefined;
+    const parentId = parentCategory ? parentCategory.id : '0';
+    const existingCategoryIds: Record<string, boolean> = {};
+
+    for (const categoryId of Object.keys(transactionCategoriesStore.allTransactionCategoriesMap)) {
+        existingCategoryIds[categoryId] = true;
+    }
+
+    pendingNewCategory = {
+        type: categoryType,
+        parentId: parentId,
+        existingCategoryIds: existingCategoryIds
+    };
+
+    let url = `/category/add?type=${categoryType}&parentId=${parentId}`;
+
+    if (parentCategory) {
+        url += `&color=${parentCategory.color}&icon=${parentCategory.icon}`;
+    }
+
+    if (categoryName) {
+        url += `&name=${encodeURIComponent(categoryName)}`;
+    }
+
+    props.f7router.navigate(url);
+}
+
+function onReturnFromAddingNewCategory(): void {
+    if (!pendingNewCategory) {
+        return;
+    }
+
+    const pending = pendingNewCategory;
+    pendingNewCategory = null;
+
+    let newCategory: TransactionCategory | null = null;
+
+    for (const category of Object.values(transactionCategoriesStore.allTransactionCategoriesMap)) {
+        if (!pending.existingCategoryIds[category.id] && category.type === pending.type && category.parentId === pending.parentId) {
+            newCategory = category;
+            break;
+        }
+    }
+
+    if (!newCategory) {
+        return;
+    }
+
+    if (newCategory.parentId && newCategory.parentId !== '0') {
+        setTransactionCategoryId(pending.type, newCategory.id);
+    } else {
+        const newPrimaryCategory = newCategory;
+
+        // transactions can only use secondary categories, so offer to add a secondary category under the new primary category
+        showConfirm('Transactions require a secondary category. Do you want to add a secondary category under this primary category now?', () => {
+            addNewCategory(pending.type, newPrimaryCategory);
+        });
+    }
+}
+
 function onPageAfterIn(): void {
     routeBackOnError(props.f7router, loadingError);
+    onReturnFromAddingNewCategory();
 
     if (settingsStore.appSettings.autoGetCurrentGeoLocation && mode.value === TransactionEditPageMode.Add
         && !geoLocationStatus.value && !transaction.value.geoLocation) {
@@ -1457,6 +1690,10 @@ function onPageAfterIn(): void {
 }
 
 function onPageBeforeOut(): void {
+    if (pendingNewCategory) { // navigating to the add category page, the current page will be kept
+        return;
+    }
+
     if (submitted.value || pageTypeAndMode?.type !== TransactionEditPageType.Transaction || mode.value !== TransactionEditPageMode.Add || query['noTransactionDraft'] === 'true' || addByTemplateId.value || duplicateFromId.value) {
         return;
     }
@@ -1487,7 +1724,41 @@ init();
     margin-inline-end: 5px;
     font-size: var(--ebk-category-separate-icon-font-size);
     line-height: 16px;
-    color: var(--f7-color-gray-tint);
+    color: var(--ebk-color-text-secondary);
+}
+
+/* Amount panel (design guidelines §6.2): the largest element of the editor, labelled with currency and type */
+.transaction-edit-amount-panel {
+    margin-inline: var(--f7-list-inset-side-margin, 16px);
+    border-radius: var(--f7-list-inset-border-radius, var(--ebk-radius-lg));
+    overflow: visible;
+}
+
+.transaction-edit-amount-panel .transaction-edit-amount-panel-title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.transaction-edit-amount-panel .transaction-edit-amount-type {
+    font-size: var(--ebk-font-technical-size);
+    font-weight: var(--ebk-font-technical-weight);
+}
+
+.transaction-edit-amount-panel .list.transaction-edit-amount-list {
+    --f7-list-bg-color: transparent;
+    --f7-list-strong-bg-color: transparent;
+}
+
+.transaction-edit-amount-panel .list.transaction-edit-amount-list > ul {
+    background: transparent;
+    border-radius: 0 0 var(--f7-list-inset-border-radius, var(--ebk-radius-lg)) var(--f7-list-inset-border-radius, var(--ebk-radius-lg));
+}
+
+.transaction-edit-amount-panel .list.transaction-edit-amount-list > ul::before,
+.transaction-edit-amount-panel .list.transaction-edit-amount-list > ul::after {
+    display: none;
 }
 
 .transaction-edit-amount {
@@ -1495,11 +1766,33 @@ init();
 }
 
 .transaction-edit-amount .item-title {
-    font-weight: bolder;
+    font-weight: 600;
+    font-variant-numeric: var(--ebk-font-numeric);
 }
 
 .transaction-edit-amount .item-header {
     padding-top: calc(var(--f7-typography-padding) / 2);
+}
+
+/* Attach receipt row: reuses the existing picture / PDF / camera action sheet */
+.transaction-edit-attach-receipt .item-title {
+    color: var(--ebk-color-primary-text);
+    font-weight: 500;
+}
+
+.transaction-edit-attach-receipt-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px dashed var(--ebk-color-copper-line);
+    border-radius: var(--ebk-radius-control);
+    color: var(--ebk-color-primary-text);
+}
+
+.transaction-edit-attach-receipt-icon .icon {
+    font-size: 18px;
 }
 
 .transaction-edit-datetime .item-title {
@@ -1562,8 +1855,8 @@ init();
     height: 100%;
     position: absolute;
     z-index: 10;
-    background-color: rgba(0, 0, 0, 0.4);
-    border-radius: 8px;
+    background-color: rgba(0, 0, 0, 0.45);
+    border-radius: var(--ebk-radius-control);
 }
 
 .transaction-pictures .transaction-picture-container .transaction-picture .picture-control-icon {
@@ -1584,13 +1877,41 @@ init();
     left: 0;
     width: 100%;
     height: 100%;
-    border-radius: 8px;
+    border-radius: var(--ebk-radius-control);
+}
+
+.transaction-pictures .transaction-picture-container .transaction-picture {
+    position: relative;
+    border: 1px solid var(--ebk-color-hairline);
+    border-radius: var(--ebk-radius-control);
+    box-sizing: border-box;
+}
+
+.transaction-pictures .transaction-picture-container .transaction-picture .transaction-picture-document {
+    width: 100%;
+    height: 100%;
+    border-radius: var(--ebk-radius-control);
+    background-color: var(--ebk-color-surface-sunken);
+    box-sizing: border-box;
+}
+
+.transaction-pictures .transaction-picture-container .transaction-picture .transaction-picture-document .picture-document-icon {
+    font-size: var(--ebk-transaction-picture-add-icon-size);
+    color: var(--f7-theme-color);
+}
+
+.transaction-pictures .transaction-picture-container .transaction-picture .transaction-picture-document .picture-document-text {
+    margin-top: 4px;
+    font-size: var(--f7-list-item-footer-font-size);
+    color: var(--f7-list-item-footer-text-color);
 }
 
 .transaction-pictures .transaction-picture-add {
     width: calc(var(--ebk-transaction-picture-size) - 2px);
     height: calc(var(--ebk-transaction-picture-size) - 4px);
-    border: 2px dashed #ccc;
-    border-radius: 8px;
+    border: 1px dashed var(--ebk-color-copper-line);
+    border-radius: var(--ebk-radius-control);
+    background-color: rgba(var(--ebk-color-surface-sunken-rgb), 0.6);
+    color: var(--ebk-color-primary-text);
 }
 </style>

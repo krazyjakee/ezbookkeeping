@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"net/http"
+	"sort"
 	"strings"
 
 	"github.com/minio/minio-go/v7"
@@ -106,6 +107,31 @@ func (s *MinIOObjectStorage) Save(ctx core.Context, path string, object ObjectIn
 // Delete returns whether delete the object according to specified the file path successfully
 func (s *MinIOObjectStorage) Delete(ctx core.Context, path string) error {
 	return s.minIOClient.RemoveObject(ctx, s.minIOConfig.Bucket, s.getFinalPath(path), minio.RemoveObjectOptions{})
+}
+
+// List returns the paths of all the objects in this storage
+func (s *MinIOObjectStorage) List(ctx core.Context) ([]string, error) {
+	prefix := s.getFinalPath("")
+	paths := make([]string, 0)
+
+	for objectInfo := range s.minIOClient.ListObjects(ctx, s.minIOConfig.Bucket, minio.ListObjectsOptions{
+		Prefix:    prefix,
+		Recursive: true,
+	}) {
+		if objectInfo.Err != nil {
+			return nil, objectInfo.Err
+		}
+
+		if objectInfo.IsDeleteMarker || strings.HasSuffix(objectInfo.Key, "/") || !strings.HasPrefix(objectInfo.Key, prefix) {
+			continue
+		}
+
+		paths = append(paths, objectInfo.Key[len(prefix):])
+	}
+
+	sort.Strings(paths)
+
+	return paths, nil
 }
 
 func (s *MinIOObjectStorage) getFinalPath(path string) string {

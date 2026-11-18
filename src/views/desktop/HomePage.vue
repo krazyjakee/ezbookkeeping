@@ -1,30 +1,23 @@
 <template>
     <main-page-layout no-navbar>
         <template #content>
-            <div class="d-flex align-center flex-wrap ga-2 mb-4" v-if="showQuickSwitch">
-                <v-chip :key="currency" v-for="currency in quickSwitchCurrencies"
-                        :color="currency === defaultCurrency ? 'primary' : 'default'"
-                        :variant="currency === defaultCurrency ? 'flat' : 'outlined'"
-                        :disabled="!!switchingCurrency || loadingOverview"
-                        :title="getCurrencyName(currency)"
-                        @click="onSwitchCurrency(currency)">
-                    {{ currency }}
-                    <v-progress-circular class="ms-2" indeterminate size="14" width="2"
-                                         v-if="switchingCurrency === currency" />
-                </v-chip>
+            <div class="overview-currency-quick-switch-bar" v-if="showQuickSwitch">
+                <currency-quick-switch :currencies="quickSwitchCurrencies"
+                                       :selected-currency="selectedCurrency"
+                                       :switching-currency="switchingCurrency"
+                                       :disabled="loadingOverview"
+                                       @switch="onSwitchCurrency" />
             </div>
-            <overview-dashboard :layout="layout" :loading="loadingOverview" @refresh="reload" />
+            <overview-dashboard :layout="layout" :loading="loadingOverview" :load-failed="loadingFailed" @refresh="reload" />
         </template>
     </main-page-layout>
-
-    <snack-bar ref="snackbar" />
 </template>
 
 <script setup lang="ts">
-import SnackBar from '@/components/desktop/SnackBar.vue';
+import CurrencyQuickSwitch from '@/components/common/CurrencyQuickSwitch.vue';
 import OverviewDashboard from './overview/OverviewDashboard.vue';
 
-import { ref, computed, useTemplateRef } from 'vue';
+import { ref, computed } from 'vue';
 
 import { useI18n } from '@/locales/helpers.ts';
 import { useCurrencyQuickSwitchBase } from '@/views/base/overview/CurrencyQuickSwitchBase.ts';
@@ -33,6 +26,7 @@ import { useSettingsStore } from '@/stores/setting.ts';
 import { useAccountsStore } from '@/stores/account.ts';
 import { useTransactionCategoriesStore } from '@/stores/transactionCategory.ts';
 import { useOverviewStore } from '@/stores/overview.ts';
+import { useDesktopPageStore } from '@/stores/desktopPage.ts';
 
 import type { PartialRecord } from '@/core/base.ts';
 import { type DesktopOverviewLayout, OverviewWidgetDataRequirement } from '@/core/overview_layout.ts';
@@ -52,19 +46,17 @@ import {
 } from '@/lib/overview_layout.ts';
 import logger from '@/lib/logger.ts';
 
-type SnackBarType = InstanceType<typeof SnackBar>;
-
 const { getCurrencyName } = useI18n();
-const { switchingCurrency, quickSwitchCurrencies, defaultCurrency, showQuickSwitch, switchCurrency } = useCurrencyQuickSwitchBase();
+const { switchingCurrency, quickSwitchCurrencies, selectedCurrency, showQuickSwitch, switchCurrency } = useCurrencyQuickSwitchBase();
 
 const settingsStore = useSettingsStore();
 const accountsStore = useAccountsStore();
 const transactionCategoriesStore = useTransactionCategoriesStore();
 const overviewStore = useOverviewStore();
-
-const snackbar = useTemplateRef<SnackBarType>('snackbar');
+const desktopPageStore = useDesktopPageStore();
 
 const loadingOverview = ref<boolean>(true);
+const loadingFailed = ref<boolean>(false);
 
 const layout = computed<DesktopOverviewLayout>(() => {
     try {
@@ -144,25 +136,33 @@ function reload(force: boolean): void {
 
     Promise.all(promises).then(() => {
         loadingOverview.value = false;
+        loadingFailed.value = false;
 
         if (force) {
-            snackbar.value?.showMessage('Data has been updated');
+            desktopPageStore.addToast('Data has been updated');
         }
     }).catch(error => {
         loadingOverview.value = false;
+        loadingFailed.value = !error.isUpToDate;
 
         if (!error.processed) {
-            snackbar.value?.showError(error);
+            desktopPageStore.addErrorToast(error);
         }
     });
 }
 
 function onSwitchCurrency(currency: string): void {
-    switchCurrency(currency).then(() => {
+    switchCurrency(currency).then(switched => {
+        if (!switched) {
+            return;
+        }
+
+        desktopPageStore.addToast('format.misc.defaultCurrencyChangedTo', { currency: `${getCurrencyName(currency)} (${currency})` });
         reload(false);
     }).catch(error => {
+        // the default currency has not been changed, the selection has already gone back to the saved currency
         if (!error.processed) {
-            snackbar.value?.showError(error);
+            desktopPageStore.addErrorToast(error);
         }
     });
 }
@@ -175,17 +175,8 @@ if (isUserLogined() && isUserUnlocked()) {
 </script>
 
 <style>
-.overview-card-background {
-    position: absolute;
-    inline-size: 9rem;
-    inset-block-end: 0;
-    inset-inline-end: 0;
-}
-
-.overview-card-background-image {
-    position: absolute;
-    inline-size: 5rem;
-    inset-block-end: 0.5rem;
-    inset-inline-end: 1rem;
+.overview-currency-quick-switch-bar {
+    display: flex;
+    margin-block-end: var(--ebk-space-4);
 }
 </style>

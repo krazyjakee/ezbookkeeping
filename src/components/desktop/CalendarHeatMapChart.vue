@@ -30,6 +30,12 @@ import {
     isBigDecimal
 } from '@/lib/numeral.ts';
 import { parseDateTimeFromKnownDateTimeFormat } from '@/lib/datetime.ts';
+import { getChartAnimationOptions } from '@/lib/motion.ts';
+import {
+    getChartAxisLabelStyleOptions,
+    getChartThemePalette,
+    getChartTooltipStyleOptions
+} from '@/components/base/ChartThemeBase.ts';
 
 interface HeatMapData {
     allOriginalDataMap: Record<string, BigDecimal>;
@@ -157,11 +163,7 @@ const heatMapData = computed<HeatMapData>(() => {
 const chartOptions = computed<object>(() => {
     return {
         tooltip: {
-            backgroundColor: isDarkMode.value ? '#333' : '#fff',
-            borderColor: isDarkMode.value ? '#333' : '#fff',
-            textStyle: {
-                color: isDarkMode.value ? '#eee' : '#333'
-            },
+            ...getChartTooltipStyleOptions(isDarkMode.value),
             formatter: (params: CallbackDataParams) => {
                 if (!props.showValue) {
                     return '';
@@ -194,7 +196,7 @@ const chartOptions = computed<object>(() => {
                     color: isDarkMode.value ? [ '#1a1a1a', '#c67e48' ] : [ '#faf8f4', '#c67e48' ]
                 },
                 textStyle: {
-                    color: isDarkMode.value ? '#888' : '#666'
+                    ...getChartAxisLabelStyleOptions(isDarkMode.value)
                 },
                 formatter: (value: number) => {
                     if (!props.showValue) {
@@ -222,8 +224,8 @@ const chartOptions = computed<object>(() => {
                 right: 20,
                 cellSize: ['auto', 20],
                 itemStyle: {
-                    color: isDarkMode.value ? '#060504' : '#ffffff',
-                    borderColor: isDarkMode.value ? '#4f4f4f' : '#e1e6f2'
+                    color: getChartThemePalette(isDarkMode.value).surface,
+                    borderColor: getChartThemePalette(isDarkMode.value).gridLine
                 },
                 splitLine: {
                     show: false
@@ -231,22 +233,22 @@ const chartOptions = computed<object>(() => {
                 dayLabel: {
                     firstDay: firstDayOfWeek.value,
                     nameMap: dayNames.value,
-                    color: isDarkMode.value ? '#888' : '#666'
+                    ...getChartAxisLabelStyleOptions(isDarkMode.value)
                 },
                 monthLabel: {
                     nameMap: monthNames.value,
-                    color: isDarkMode.value ? '#888' : '#666'
+                    ...getChartAxisLabelStyleOptions(isDarkMode.value)
                 },
                 yearLabel: {
                     formatter: item.displayYear,
-                    color: isDarkMode.value ? '#888' : '#666'
+                    ...getChartAxisLabelStyleOptions(isDarkMode.value)
                 }
             };
         }),
         series: mapObjectToArray(heatMapData.value.data, (item, _, index) => {
             return {
                 type: 'heatmap',
-                animation: !props.skeleton,
+                ...getChartAnimationOptions(!props.skeleton),
                 coordinateSystem: 'calendar',
                 calendarIndex: index,
                 data: item.data,

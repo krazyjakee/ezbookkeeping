@@ -8,7 +8,7 @@
             <f7-nav-title>
                 <f7-link popover-open=".tag-group-popover-menu" :class="{ 'disabled': loading || sortable || displayOrderModified || hasEditingTag }">
                     <span style="color: var(--f7-text-color)">{{ displayTagGroupName }}</span>
-                    <f7-icon class="page-title-bar-icon" color="gray" style="opacity: 0.5" f7="chevron_down_circle_fill"></f7-icon>
+                    <f7-icon class="page-title-bar-icon" color="gray" f7="chevron_down_circle_fill"></f7-icon>
                 </f7-link>
             </f7-nav-title>
             <f7-nav-right :class="{ 'navbar-compact-icons': true, 'disabled': loading }">
@@ -47,32 +47,33 @@
             </f7-list-item>
         </f7-list>
 
-        <f7-list strong inset dividers class="tag-item-list margin-top-half" v-if="!loading && noAvailableTag && !newTag">
-            <f7-list-item :title="tt('No available tag')"></f7-list-item>
-        </f7-list>
+        <div class="margin-horizontal margin-top-half" v-if="!loading && noAvailableTag && !newTag">
+            <state-panel type="empty" :title="tt('No available tag')">
+                <template #actions>
+                    <f7-button outline :class="{ 'disabled': hasEditingTag }" @click="add">{{ tt('Add') }}</f7-button>
+                </template>
+            </state-panel>
+        </div>
 
         <f7-list strong inset dividers sortable class="tag-item-list margin-top-half"
                  :sortable-enabled="sortable" @sortable:sort="onSort"
                  v-if="!loading">
             <f7-list-item swipeout
-                          :class="{ 'actual-first-child': tag.id === firstShowingId, 'actual-last-child': tag.id === lastShowingId && !newTag, 'editing-list-item': editingTag.id === tag.id }"
+                          :class="{ 'actual-first-child': tag.id === firstShowingId, 'actual-last-child': tag.id === lastShowingId && !newTag, 'editing-list-item': editingTag.id === tag.id, 'ebk-m-row-hidden': tag.hidden && editingTag.id !== tag.id }"
                           :id="getTagDomId(tag)"
                           :key="tag.id"
                           v-for="tag in tags"
                           v-show="showHidden || !tag.hidden"
                           @taphold="setSortable()">
                 <template #media>
-                    <f7-icon class="transaction-tag-icon" f7="number">
-                        <f7-badge color="gray" class="right-bottom-icon" v-if="tag.hidden">
-                            <f7-icon f7="eye_slash_fill"></f7-icon>
-                        </f7-badge>
-                    </f7-icon>
+                    <f7-icon class="transaction-tag-icon" f7="number"></f7-icon>
                 </template>
                 <template #title>
                     <div class="display-flex">
-                        <div class="transaction-tag-list-item-content list-item-valign-middle padding-inline-start-half"
+                        <div class="transaction-tag-list-item-content list-item-valign-middle padding-inline-start-half ebk-m-title-line"
                              v-if="editingTag.id !== tag.id">
-                            {{ tag.name }}
+                            <span class="ebk-m-title-text ebk-m-dimmable">{{ tag.name }}</span>
+                            <span class="ebk-m-hidden-chip" v-if="tag.hidden">{{ tt('Hidden') }}</span>
                         </div>
                         <f7-input class="list-title-input padding-inline-start-half"
                                   type="text"
@@ -84,6 +85,16 @@
                     </div>
                 </template>
                 <template #after>
+                    <span class="ebk-m-move-buttons" v-if="sortable && editingTag.id !== tag.id">
+                        <f7-link :class="{ 'disabled': displayOrderSaving || !canMoveTag(tag, -1) }"
+                                 :aria-label="tt('Move Up')" @click.stop.prevent="moveTag(tag, -1)">
+                            <f7-icon f7="arrow_up"></f7-icon>
+                        </f7-link>
+                        <f7-link :class="{ 'disabled': displayOrderSaving || !canMoveTag(tag, 1) }"
+                                 :aria-label="tt('Move Down')" @click.stop.prevent="moveTag(tag, 1)">
+                            <f7-icon f7="arrow_down"></f7-icon>
+                        </f7-link>
+                    </span>
                     <f7-button raised fill icon-f7="checkmark_alt" color="blue"
                                :class="{ 'no-padding': true, 'disabled': !isTagModified(tag) }"
                                :aria-label="tt('Save')"
@@ -218,6 +229,8 @@
 </template>
 
 <script setup lang="ts">
+import StatePanel from '@/components/common/StatePanel.vue';
+
 import { ref, computed, useTemplateRef, nextTick } from 'vue';
 import type { Router } from 'framework7/types';
 
@@ -640,6 +653,46 @@ function removeTagGroup(): void {
 
 function changeTagGroupDisplayOrder(): void {
     props.f7router.navigate('/tag/group/list');
+}
+
+function getAdjacentVisibleTagIndex(tag: TransactionTag, direction: number): { from: number, to: number } | null {
+    const list = tags.value;
+    const from = list.findIndex(item => item.id === tag.id);
+
+    if (from < 0) {
+        return null;
+    }
+
+    for (let to = from + direction; to >= 0 && to < list.length; to += direction) {
+        if (showHidden.value || !list[to]!.hidden) {
+            return { from, to };
+        }
+    }
+
+    return null;
+}
+
+function canMoveTag(tag: TransactionTag, direction: number): boolean {
+    return !!getAdjacentVisibleTagIndex(tag, direction);
+}
+
+// non-drag alternative to the sort handle (guidelines §6.4), uses the same display order update as dragging
+function moveTag(tag: TransactionTag, direction: number): void {
+    const position = getAdjacentVisibleTagIndex(tag, direction);
+
+    if (!position) {
+        return;
+    }
+
+    transactionTagsStore.changeTagDisplayOrder({
+        tagId: tag.id,
+        from: position.from,
+        to: position.to
+    }).then(() => {
+        displayOrderModified.value = true;
+    }).catch(error => {
+        showToast(error.message || error);
+    });
 }
 
 function onSort(event: { el: { id: string }, from: number, to: number }): void {

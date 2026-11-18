@@ -1,9 +1,13 @@
 import { defineStore } from 'pinia';
 
-import type {UserExternalAuthInfoResponse, UserExternalAuthUnlinkRequest} from '@/models/user_external_auth.ts';
+import type {
+    UserExternalAuthUnlinkRequest,
+    UserExternalAuthInfoResponse,
+    OAuth2LinkRequest
+} from '@/models/user_external_auth.ts';
 
 import logger from '@/lib/logger.ts';
-import services from '@/lib/services.ts';
+import services, { toStoreError } from '@/lib/services.ts';
 
 export const useUserExternalAuthStore = defineStore('userExternalAUth', () => {
     function getExternalAuths(): Promise<UserExternalAuthInfoResponse[]> {
@@ -20,13 +24,7 @@ export const useUserExternalAuthStore = defineStore('userExternalAUth', () => {
             }).catch(error => {
                 logger.error('failed to load third-party login list', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve third-party login list' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve third-party login list'));
             });
         });
     }
@@ -45,13 +43,26 @@ export const useUserExternalAuthStore = defineStore('userExternalAUth', () => {
             }).catch(error => {
                 logger.error('failed to revoke token', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to unlink third-party login' });
-                } else {
-                    reject(error);
+                reject(toStoreError(error, 'Unable to unlink third-party login'));
+            });
+        });
+    }
+
+    function linkExternalOAuth2(req: OAuth2LinkRequest): Promise<string> {
+        return new Promise((resolve, reject) => {
+            services.linkExternalOAuth2(req).then(response => {
+                const data = response.data;
+
+                if (!data || !data.success || !data.result) {
+                    reject({ message: 'An error occurred' });
+                    return;
                 }
+
+                resolve(data.result);
+            }).catch(error => {
+                logger.error('failed to get external auth link url', error);
+
+                reject(toStoreError(error, 'An error occurred'));
             });
         });
     }
@@ -59,6 +70,7 @@ export const useUserExternalAuthStore = defineStore('userExternalAUth', () => {
     return {
         // functions
         getExternalAuths,
-        unlinkExternalAuth
+        unlinkExternalAuth,
+        linkExternalOAuth2
     };
 });

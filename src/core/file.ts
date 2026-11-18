@@ -11,6 +11,7 @@ export class KnownFileType {
     public static readonly JS = new KnownFileType('js', 'application/javascript');
     public static readonly JPG = new KnownFileType('jpg', 'image/jpeg');
     public static readonly PNG = new KnownFileType('png', 'image/png');
+    public static readonly PDF = new KnownFileType('pdf', 'application/pdf');
 
     public readonly extension: string;
     public readonly contentType: string;
@@ -59,81 +60,4 @@ export class KnownFileType {
     public static parse(extension: string): KnownFileType | undefined {
         return KnownFileType.allInstancesByExtension[extension];
     }
-}
-
-export interface ImportFileTypeAndExtensions {
-    readonly type: string;
-    readonly extensions?: string;
-}
-
-export interface ImportFileCategoryAndTypes {
-    readonly categoryName: string;
-    readonly fileTypes: ImportFileType[];
-}
-
-export interface ImportFileTypeSupportedAdditionalOptions extends Record<string, boolean | undefined> {
-    readonly payeeAsTag?: boolean;
-    readonly payeeAsDescription?: boolean;
-    readonly memberAsTag?: boolean;
-    readonly projectAsTag?: boolean;
-    readonly merchantAsTag?: boolean;
-}
-
-export interface ImportFileType extends ImportFileTypeAndExtensions {
-    readonly type: string;
-    readonly name: string;
-    readonly extensions: string;
-    readonly subTypes?: ImportFileTypeSubType[];
-    readonly supportedEncodings?: string[];
-    readonly dataFromTextbox?: boolean;
-    readonly needAITextRecognition?: boolean;
-    readonly needAIImageRecognition?: boolean;
-    readonly supportedAdditionalOptions?: ImportFileTypeSupportedAdditionalOptions;
-    readonly supportedAIAdditionalPrompt?: boolean;
-    readonly document?: {
-        readonly supportMultiLanguages: boolean | string;
-        readonly anchor: string;
-    };
-}
-
-export interface ImportFileTypeSubType extends ImportFileTypeAndExtensions {
-    readonly type: string;
-    readonly name: string;
-    readonly extensions?: string;
-}
-
-export interface LocalizedImportFileCategoryAndTypes {
-    readonly displayCategoryName: string;
-    readonly fileTypes: LocalizedImportFileType[];
-}
-
-export interface LocalizedImportFileType extends ImportFileTypeAndExtensions {
-    readonly type: string;
-    readonly displayName: string;
-    readonly extensions: string;
-    readonly subTypes?: LocalizedImportFileTypeSubType[];
-    readonly supportedEncodings?: LocalizedImportFileTypeSupportedEncodings[];
-    readonly dataFromTextbox?: boolean;
-    readonly needAITextRecognition?: boolean;
-    readonly needAIImageRecognition?: boolean;
-    readonly supportedAdditionalOptions?: ImportFileTypeSupportedAdditionalOptions;
-    readonly supportedAIAdditionalPrompt?: boolean;
-    readonly document?: LocalizedImportFileDocument;
-}
-
-export interface LocalizedImportFileTypeSubType extends ImportFileTypeAndExtensions {
-    readonly type: string;
-    readonly displayName: string;
-    readonly extensions?: string;
-}
-
-export interface LocalizedImportFileTypeSupportedEncodings {
-    readonly encoding: string;
-    readonly displayName: string;
-}
-
-export interface LocalizedImportFileDocument {
-    readonly language: string;
-    readonly displayLanguageName: string;
-    readonly anchor: string;
 }

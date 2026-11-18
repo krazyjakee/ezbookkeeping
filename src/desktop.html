@@ -4,15 +4,15 @@
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimal-ui, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes"/>
-    <meta name="apple-mobile-web-app-title" content="ezBookkeeping"/>
+    <meta name="apple-mobile-web-app-title" content="ezrbookkeeping"/>
     <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
-    <meta name="theme-color" content="#faf8f4">
+    <meta name="theme-color" content="#f7f4ef">
     <meta name="format-detection" content="telephone=no"/>
-    <meta name="description" content="ezBookkeeping is an open source, powerful, self-hosted personal finance app that is easy to use.">
-    <title>ezBookkeeping</title>
+    <meta name="description" content="ezrbookkeeping is a business-focused fork of ezBookkeeping, an open source, self-hosted bookkeeping app that is easy to use.">
+    <title>ezrbookkeeping</title>
     <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
     <link rel="apple-touch-icon" href="touchicon.png">
     <link rel="apple-touch-startup-image" media="screen and (device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="img/splash_screens/iPhone_17_Pro_Max__iPhone_16_Pro_Max_landscape.png">
@@ -58,11 +58,42 @@
     <link rel="apple-touch-startup-image" media="screen and (device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="img/splash_screens/9.7__iPad_Pro__7.9__iPad_mini__9.7__iPad_Air__9.7__iPad_portrait.png">
     <link rel="apple-touch-startup-image" media="screen and (device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="img/splash_screens/8.3__iPad_Mini_portrait.png">
     <link rel="manifest" href="manifest.json">
+    <script>
+        /* apply the persisted (or system) theme and motion preference before the first paint, see docs/design/tokens.md */
+        (function () {
+            var root = document.documentElement;
+            var settings = {};
+
+            try {
+                settings = JSON.parse(localStorage.getItem('ebk_app_settings') || '{}') || {};
+            } catch (ex) {
+                settings = {};
+            }
+
+            var theme = settings.theme;
+            var motion = settings.motionPreference;
+            var matches = function (query) {
+                return !!(window.matchMedia && window.matchMedia(query).matches);
+            };
+            var dark = theme === 'dark' || (theme !== 'light' && matches('(prefers-color-scheme: dark)'));
+            var reduced = motion === 'reduce' || (motion !== 'full' && matches('(prefers-reduced-motion: reduce)'));
+
+            root.setAttribute('data-ebk-theme', dark ? 'dark' : 'light');
+            root.classList.toggle('ebk-reduce-motion', reduced);
+            root.classList.toggle('ebk-motion-full', motion === 'full');
+
+            var themeColorMeta = document.querySelector('meta[name=theme-color]');
+
+            if (themeColorMeta && dark) {
+                themeColorMeta.setAttribute('content', '#0b0a09');
+            }
+        })();
+    </script>
     <script src="./server_settings.js"></script>
 </head>
 <body>
     <noscript>
-        <strong>We're sorry but ezBookkeeping doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
+        <strong>We're sorry but ezrbookkeeping doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
     </noscript>
     <div id="app"></div>
 

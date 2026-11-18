@@ -11,12 +11,26 @@
             </f7-nav-right>
         </f7-navbar>
 
-        <f7-list sortable sortable-enabled sortable-tap-hold class="overview-layout-editor no-margin margin-bottom"
+        <f7-list sortable sortable-enabled sortable-tap-hold class="overview-layout-editor no-margin"
                  :class="{ 'disabled': loadingOverview }"
                  :sortable-move-elements="false" @sortable:sort="onSort" v-if="draftLayout.widgets.length">
-            <li class="mobile-overview-dashboard-item cursor-pointer" :key="widget.id" v-for="widget in draftLayout.widgets">
-                <overview-widget editing class="overview-widget-editor-content" :widget="widget" :loading="loadingOverview" />
-                <div class="overview-widget-drag-area" @click="showWidgetActions(widget)"></div>
+            <li class="mobile-overview-dashboard-item overview-layout-editor-item" :key="widget.id" v-for="(widget, index) in draftLayout.widgets">
+                <div class="overview-layout-editor-bar">
+                    <f7-icon class="overview-layout-editor-grip" f7="line_horizontal_3" aria-hidden="true"></f7-icon>
+                    <span class="overview-layout-editor-name ebk-technical-heading" @click="showWidgetActions(widget)">{{ tt(getMobileWidgetName(widget.type)) }}</span>
+                    <f7-link class="overview-layout-editor-button" icon-f7="arrow_up"
+                             :class="{ 'disabled': index === 0 }" :aria-label="tt('Move Up')"
+                             @click="moveWidget(index, -1)"></f7-link>
+                    <f7-link class="overview-layout-editor-button" icon-f7="arrow_down"
+                             :class="{ 'disabled': index === draftLayout.widgets.length - 1 }" :aria-label="tt('Move Down')"
+                             @click="moveWidget(index, 1)"></f7-link>
+                    <f7-link class="overview-layout-editor-button" icon-f7="ellipsis" :aria-label="tt('More')"
+                             @click="showWidgetActions(widget)"></f7-link>
+                </div>
+                <div class="overview-layout-editor-frame">
+                    <overview-widget editing class="overview-widget-editor-content" :widget="widget" :loading="loadingOverview" />
+                    <div class="overview-widget-drag-area" @click="showWidgetActions(widget)"></div>
+                </div>
             </li>
         </f7-list>
 
@@ -29,6 +43,8 @@
             <f7-actions-group>
                 <f7-actions-label v-if="selectedWidget">{{ tt(getMobileWidgetName(selectedWidget.type)) }}</f7-actions-label>
                 <f7-actions-button @click="showConfigureWidgetPopup = true" v-if="selectedWidget && hasWidgetSettings(selectedWidget.type)">{{ tt('Settings') }}</f7-actions-button>
+                <f7-actions-button :class="{ disabled: selectedWidgetIndex <= 0 }" @click="moveSelectedWidget(-1)">{{ tt('Move Up') }}</f7-actions-button>
+                <f7-actions-button :class="{ disabled: selectedWidgetIndex < 0 || selectedWidgetIndex >= draftLayout.widgets.length - 1 }" @click="moveSelectedWidget(1)">{{ tt('Move Down') }}</f7-actions-button>
                 <f7-actions-button @click="duplicateSelectedWidget">{{ tt('Duplicate') }}</f7-actions-button>
                 <f7-actions-button color="red" @click="removeSelectedWidget">{{ tt('Delete') }}</f7-actions-button>
             </f7-actions-group>
@@ -121,7 +137,7 @@
 import OverviewWidget from './OverviewWidget.vue';
 import WidgetSettingsPopup from './WidgetSettingsPopup.vue';
 
-import { ref, computed, useTemplateRef } from 'vue';
+import { ref, computed } from 'vue';
 import type { Router } from 'framework7/types';
 
 import { useI18n } from '@/locales/helpers.ts';
@@ -159,8 +175,6 @@ import { generateRandomUUID } from '@/lib/misc.ts';
 import { useI18nUIComponents } from '@/lib/ui/mobile.ts';
 import logger from '@/lib/logger.ts';
 
-type WidgetSettingsPopupType = InstanceType<typeof WidgetSettingsPopup>;
-
 const props = defineProps<{
     f7router: Router.Router
 }>();
@@ -183,8 +197,6 @@ const layoutJsonPlaceholder: string = `{
     ]
 }`;
 
-const widgetSettingsPopup = useTemplateRef<WidgetSettingsPopupType>('widgetSettingsPopup');
-
 const loadingOverview = ref<boolean>(true);
 const showMoreActionSheet = ref<boolean>(false);
 const showImportSheet = ref<boolean>(false);
@@ -199,6 +211,7 @@ const selectedWidget = ref<MobileOverviewWidgetLayout | null>(null);
 const importText = ref<string>('');
 
 const isModified = computed<boolean>(() => serializeMobileOverviewLayout(draftLayout.value) !== initialJson.value);
+const selectedWidgetIndex = computed<number>(() => selectedWidget.value ? draftLayout.value.widgets.findIndex(widget => widget.id === selectedWidget.value?.id) : -1);
 const exportText = computed<string>(() => serializeMobileOverviewLayout(draftLayout.value, true));
 const mobileWidgetDefinitions = computed<MobileOverviewWidgetDefinition[]>(() => Object.values(MOBILE_OVERVIEW_WIDGET_DEFINITIONS).filter(Boolean) as MobileOverviewWidgetDefinition[]);
 
@@ -424,6 +437,26 @@ function onSort(event: { from: number, to: number }): void {
     draftLayout.value.widgets.splice(event.to, 0, widget);
 }
 
+function moveWidget(index: number, offset: number): void {
+    const targetIndex = index + offset;
+
+    if (index < 0 || targetIndex < 0 || targetIndex >= draftLayout.value.widgets.length) {
+        return;
+    }
+
+    const widget = draftLayout.value.widgets.splice(index, 1)[0];
+
+    if (!widget) {
+        return;
+    }
+
+    draftLayout.value.widgets.splice(targetIndex, 0, widget);
+}
+
+function moveSelectedWidget(offset: number): void {
+    moveWidget(selectedWidgetIndex.value, offset);
+}
+
 function onLayoutCopied(): void {
     showToast('Data copied');
 }
@@ -436,57 +469,104 @@ reload(false);
     --f7-list-bg-color: transparent;
     --f7-sortable-sorting-item-bg-color: transparent;
     --f7-sortable-sorting-item-box-shadow: none;
-    --f7-sortable-handler-width: var(--f7-list-item-padding-horizontal);
-
-    .overview-widget-drag-area {
-        position: absolute;
-        z-index: 1;
-        inset: 0;
-        width: auto;
-        height: auto;
-        cursor: grab;
-
-        &::after {
-            display: none;
-        }
-    }
-
-    > ul > li .overview-widget-editor-content {
-        transition: transform 180ms ease, filter 180ms ease;
-        transform-origin: center;
-    }
-
-    > ul > li.sorting .overview-widget-editor-content {
-        transform: translateY(-4px) scale(1.015);
-        filter: drop-shadow(0 10px 12px rgba(0, 0, 0, 0.22));
-    }
-
-    li.sorting .overview-widget-drag-area {
-        cursor: grabbing;
-    }
-
-    .overview-widget-editor-content {
-        pointer-events: none;
-    }
-
-    &.sortable-enabled:not(.sortable-opposite) > ul > li .overview-widget-editor-content .item-link .item-inner::before {
-        display: block;
-    }
+    --f7-sortable-handler-width: 0px;
+    padding-block: var(--ebk-space-3) var(--ebk-space-4);
+    padding-inline: calc(var(--ebk-space-3) + var(--f7-safe-area-left)) calc(var(--ebk-space-3) + var(--f7-safe-area-right));
 }
 
-.overview-layout-editor > ul > li > .list > ul {
-    padding-inline-start: 0;
+.overview-layout-editor > ul {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ebk-space-4);
+    background: transparent;
 }
 
-html:not([dir="rtl"]) .overview-layout-editor {
-    &.sortable-enabled:not(.sortable-opposite) > ul > li .overview-widget-editor-content .item-link .item-inner {
-        padding-right: calc(var(--f7-list-chevron-icon-area) + var(--f7-list-item-padding-horizontal) + var(--f7-safe-area-right));
-    }
+.overview-layout-editor > ul::before,
+.overview-layout-editor > ul::after {
+    display: none !important;
 }
 
-html[dir="rtl"] .overview-layout-editor {
-    &.sortable-enabled:not(.sortable-opposite) > ul > li .overview-widget-editor-content .item-link .item-inner {
-        padding-left: calc(var(--f7-list-chevron-icon-area) + var(--f7-list-item-padding-horizontal) + var(--f7-safe-area-left));
-    }
+.overview-layout-editor > ul > li.overview-layout-editor-item {
+    padding: var(--ebk-space-2);
+    border: 1px dashed var(--ebk-color-copper-line);
+    border-radius: calc(var(--ebk-radius-panel) + var(--ebk-space-2));
+    background-color: rgba(var(--ebk-color-surface-sunken-rgb), 0.6);
+}
+
+/* the dragged item keeps Framework7's own translate; only a static lift shadow is added */
+.overview-layout-editor > ul > li.overview-layout-editor-item.sorting {
+    z-index: 10;
+    border-style: solid;
+    background-color: var(--ebk-color-surface-raised);
+    box-shadow: var(--ebk-shadow-lg);
+}
+
+.overview-layout-editor-bar {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: var(--ebk-space-1);
+    min-height: var(--ebk-touch-target-min);
+    padding-inline-start: var(--ebk-space-1);
+    margin-block-end: var(--ebk-space-2);
+    color: var(--ebk-color-text-secondary);
+}
+
+.overview-layout-editor-grip {
+    flex: 0 0 auto;
+    font-size: 18px !important;
+    cursor: grab;
+}
+
+.overview-layout-editor-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.overview-layout-editor-bar .link.overview-layout-editor-button {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: var(--ebk-touch-target-min);
+    height: var(--ebk-touch-target-min);
+    border: 1px solid var(--ebk-color-hairline);
+    border-radius: var(--ebk-radius-control);
+    background-color: var(--ebk-color-surface);
+    color: var(--ebk-color-primary-text);
+}
+
+.overview-layout-editor-bar .link.overview-layout-editor-button .icon {
+    font-size: 18px;
+}
+
+.overview-layout-editor-bar .link.overview-layout-editor-button.disabled {
+    opacity: 0.4;
+}
+
+.overview-layout-editor-frame {
+    position: relative;
+}
+
+.overview-layout-editor .overview-widget-drag-area {
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    width: auto;
+    height: auto;
+    cursor: grab;
+}
+
+.overview-layout-editor li.sorting .overview-widget-drag-area,
+.overview-layout-editor li.sorting .overview-layout-editor-grip {
+    cursor: grabbing;
+}
+
+.overview-layout-editor .overview-widget-editor-content {
+    pointer-events: none;
 }
 </style>

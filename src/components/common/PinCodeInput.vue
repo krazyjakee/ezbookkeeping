@@ -1,9 +1,10 @@
 <template>
-    <div class="pin-codes-input" :style="`grid-template-columns: repeat(${length}, minmax(0, 1fr))`">
+    <div class="pin-codes-input" role="group" :aria-label="tt('PIN Code')" :style="`grid-template-columns: repeat(${length}, minmax(0, 1fr))`">
         <div class="pin-code-input pin-code-input-outline"
              :class="{ 'pin-code-input-focued': codes[index]!.focused }" :key="index"
              v-for="(_, index) in codes">
             <input ref="pin-code-input" min="0" maxlength="1" pattern="[0-9]*"
+                   :aria-label="`${tt('PIN Code')} ${index + 1}/${codes.length}`"
                    :value="codes[index]!.value"
                    :type="codes[index]!.inputType"
                    :disabled="disabled ? true : undefined"
@@ -46,7 +47,7 @@ const emit = defineEmits<{
     (e: 'pincode:confirm', value: string): void;
 }>();
 
-const { getCurrentNumeralSystemType } = useI18n();
+const { tt, getCurrentNumeralSystemType } = useI18n();
 
 const pinCodeInputs = useTemplateRef<HTMLInputElement[]>('pin-code-input');
 

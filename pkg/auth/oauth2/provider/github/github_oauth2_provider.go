@@ -53,7 +53,6 @@ func (p *GithubOAuth2Provider) GetOAuth2Token(c core.Context, code string, opts 
 
 // GetUserInfo returns the user info by the Github OAuth 2.0 provider
 func (p *GithubOAuth2Provider) GetUserInfo(c core.Context, oauth2Token *oauth2.Token) (*data.OAuth2UserInfo, error) {
-	// first get user name and nick name from user profile
 	req, err := p.buildAPIRequest(githubUserProfileApiUrl)
 
 	if err != nil {
@@ -88,7 +87,6 @@ func (p *GithubOAuth2Provider) GetUserInfo(c core.Context, oauth2Token *oauth2.T
 		return nil, err
 	}
 
-	// then get user primary email
 	req, err = p.buildAPIRequest(githubUserEmailApiUrl)
 
 	if err != nil {

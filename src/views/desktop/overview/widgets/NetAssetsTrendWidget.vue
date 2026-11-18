@@ -1,15 +1,16 @@
 <template>
-    <v-card class="overview-widget net-assets-trend-card h-100" :class="{ disabled: loading }">
-        <template #title>
-            <overview-widget-header :title="title || tt('Net Assets Trends')" :icon="mdiChartTimelineVariant" />
-        </template>
-
+    <overview-widget-panel chart class="overview-widget--chart net-assets-trend-card"
+                           :title="title || tt('Net Assets Trends')"
+                           :meta="tt('format.misc.nMonths', { n: months })"
+                           :loading="loading" :empty="!hasData"
+                           :data-table="dataTable"
+                           body-class="overview-widget__chart-body">
         <trends-chart hide-x-axis-line hide-y-axis-labels hide-horizontal-grid-lines hide-line-symbols no-animation
                       chart-mode="daily" :type="TrendChartType.Area.type"
                       :start-time="startTime" :end-time="endTime"
                       :start-year-month="undefined" :end-year-month="undefined"
                       :sorting-type="ChartSortingType.Amount.type"
-                      :data-aggregation-type="ChartDataAggregationType.Last"
+                      :data-aggregation-type="ChartDataAggregationType.Last" legend-value-mode="last"
                       :date-aggregation-type="ChartDateAggregationType.Month.type"
                       :fiscal-year-start="fiscalYearStart" :items="items"
                       :value-type="ChartValueType.Amount" :show-value="showAmountInHomePage"
@@ -20,12 +21,18 @@
                       :no-margin="!showLegend && !showXAxisLabels"
                       :enable-click-item="true"
                       @click="clickMonth" />
-    </v-card>
+
+        <template #footer v-if="hasData">
+            <span class="overview-widget__summary-label ebk-technical-heading">{{ tt('Net assets') }}</span>
+            <span class="overview-widget__summary-item ebk-numeric">{{ displayLatestNetAssets }}</span>
+        </template>
+    </overview-widget-panel>
 </template>
 
 <script setup lang="ts">
-import OverviewWidgetHeader from './OverviewWidgetHeader.vue';
+import OverviewWidgetPanel from './OverviewWidgetPanel.vue';
 import type { TrendsBarChartClickEvent } from '@/components/base/TrendsChartBase.ts';
+import type { ChartDataTable, ChartDataTableRow } from '@/components/base/ChartDataTableBase.ts';
 
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
@@ -45,11 +52,8 @@ import { ChartSortingType, ChartDataAggregationType, ChartDateAggregationType, T
 import type { TransactionAssetTrendsAnalysisDataItem, TransactionAssetTrendsAnalysisDataAmount } from '@/models/transaction.ts';
 
 import { BIG_DECIMAL_ZERO, parseBigDecimal } from '@/lib/numeral.ts';
-import { getUnixTimeBeforeUnixTime } from '@/lib/datetime.ts';
-
-import {
-    mdiChartTimelineVariant
-} from '@mdi/js';
+import { getUnixTimeBeforeUnixTime, getYearMonthFirstUnixTime, parseDateTimeFromUnixTime } from '@/lib/datetime.ts';
+import { DISPLAY_HIDDEN_AMOUNT } from '@/consts/numeral.ts';
 
 const props = defineProps<{
     loading: boolean;
@@ -62,7 +66,7 @@ const props = defineProps<{
 
 const router = useRouter();
 
-const { tt } = useI18n();
+const { tt, formatAmountToLocalizedNumeralsWithCurrency, formatDateTimeToGregorianLikeLongYearMonth } = useI18n();
 
 const settingsStore = useSettingsStore();
 const userStore = useUserStore();
@@ -138,6 +142,65 @@ const items = computed<TransactionAssetTrendsAnalysisDataItem[]>(() => {
     }];
 });
 
+const hasData = computed<boolean>(() => overviewStore.transactionAssetTrendsData.length > 0);
+
+// text summary with the exact latest value of the chart (design guidelines D7)
+const displayLatestNetAssets = computed<string>(() => {
+    const latest = items.value[0]?.value ?? BIG_DECIMAL_ZERO;
+    return formatAmountToLocalizedNumeralsWithCurrency(showAmountInHomePage.value ? latest : DISPLAY_HIDDEN_AMOUNT, defaultCurrency.value);
+});
+
+// data table with the month-end net assets drawn by the chart (last value of each month, design guidelines D7)
+const dataTable = computed<ChartDataTable | null>(() => {
+    const amounts = items.value[0]?.items ?? [];
+
+    if (!hasData.value || !amounts.length) {
+        return null;
+    }
+
+    const firstMonth = parseDateTimeFromUnixTime(startTime.value);
+    const firstYearMonth = firstMonth.getGregorianCalendarYear() * 12 + firstMonth.getGregorianCalendarMonth();
+    const rows: ChartDataTableRow[] = [];
+    const monthEndAmounts: Record<string, TransactionAssetTrendsAnalysisDataAmount> = {};
+    const monthKeys: string[] = [];
+
+    for (const amount of amounts) {
+        if (amount.year * 12 + amount.month < firstYearMonth) {
+            continue;
+        }
+
+        const monthKey = `${amount.year}-${amount.month}`;
+
+        if (!monthEndAmounts[monthKey]) {
+            monthKeys.push(monthKey);
+        }
+
+        monthEndAmounts[monthKey] = amount;
+    }
+
+    for (const monthKey of monthKeys) {
+        const amount = monthEndAmounts[monthKey] as TransactionAssetTrendsAnalysisDataAmount;
+        const monthStartTime = getYearMonthFirstUnixTime({ year: amount.year, month1base: amount.month });
+
+        rows.push({
+            key: `month-${monthKey}`,
+            name: formatDateTimeToGregorianLikeLongYearMonth(parseDateTimeFromUnixTime(monthStartTime)),
+            cells: [{
+                text: formatAmountToLocalizedNumeralsWithCurrency(showAmountInHomePage.value ? amount.value : DISPLAY_HIDDEN_AMOUNT, defaultCurrency.value),
+                type: 'none'
+            }]
+        });
+    }
+
+    return {
+        columns: [
+            { key: 'date', name: tt('Date'), numeric: false },
+            { key: 'netAssets', name: tt('Net assets'), numeric: true }
+        ],
+        rows: rows
+    };
+});
+
 function clickMonth(e: TrendsBarChartClickEvent): void {
     router.push(`/transaction/list?${overviewStore.getTransactionListPageParams({
         dateType: e.dateRange.dateType,
@@ -146,16 +209,3 @@ function clickMonth(e: TrendsBarChartClickEvent): void {
     })}`);
 }
 </script>
-
-<style scoped>
-.net-assets-trend-card {
-    display: flex;
-    flex-direction: column;
-}
-
-.trends-chart-container {
-    flex: 1 1 0;
-    min-height: 0;
-    height: auto;
-}
-</style>

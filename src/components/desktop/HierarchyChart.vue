@@ -23,6 +23,10 @@ import { type AxisChartSourceDataItem, ChartValueType } from '@/core/chart.ts';
 import { isArray, isString, isNumber } from '@/lib/common.ts';
 import { BIG_DECIMAL_ZERO, parseBigDecimal, isBigDecimal } from '@/lib/numeral.ts';
 import { getDisplayColor } from '@/lib/color.ts';
+import { getChartAnimationOptions } from '@/lib/motion.ts';
+import {
+    getChartTooltipStyleOptions
+} from '@/components/base/ChartThemeBase.ts';
 
 export type HierarchyChartDisplayType = 'treemap' | 'sunburst';
 
@@ -182,7 +186,7 @@ const chartOptions = computed<object>(() => {
                 }
             }
         ],
-        animation: !props.skeleton,
+        ...getChartAnimationOptions(!props.skeleton),
         nodeClick: false
     };
 
@@ -212,11 +216,7 @@ const chartOptions = computed<object>(() => {
 
     return {
         tooltip: {
-            backgroundColor: isDarkMode.value ? '#333' : '#fff',
-            borderColor: isDarkMode.value ? '#333' : '#fff',
-            textStyle: {
-                color: isDarkMode.value ? '#eee' : '#333'
-            },
+            ...getChartTooltipStyleOptions(isDarkMode.value),
             formatter: (params: CallbackDataParams) => {
                 if (!props.showValue || !params.name) {
                     return '';

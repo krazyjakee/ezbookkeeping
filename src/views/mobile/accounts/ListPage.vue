@@ -42,22 +42,26 @@
             </f7-list>
         </div>
 
-        <f7-list strong inset dividers class="margin-vertical" v-if="!loading && noAvailableAccount">
-            <f7-list-item :title="tt('No available account')"></f7-list-item>
-        </f7-list>
+        <div class="margin-horizontal margin-vertical" v-if="!loading && noAvailableAccount">
+            <state-panel type="empty" :title="tt('No available account')">
+                <template #actions>
+                    <f7-button outline href="/account/add">{{ tt('Add') }}</f7-button>
+                </template>
+            </state-panel>
+        </div>
 
         <div :key="accountCategory.type"
              v-for="accountCategory in AccountCategory.values(customAccountCategoryOrder)"
              v-show="!loading && ((showHidden && hasAccount(accountCategory, false)) || hasAccount(accountCategory, true))">
-            <f7-list strong inset dividers sortable class="list-has-group-title account-list margin-vertical"
+            <f7-list strong inset dividers sortable class="list-has-group-title account-list ebk-m-mgmt-list margin-vertical"
                      :sortable-enabled="sortable"
                      v-if="allCategorizedAccountsMap[accountCategory.type]"
                      @sortable:sort="onSort">
                 <f7-list-item group-title class="justify-content-space-between" :sortable="false">
-                    <small>
-                        <span>{{ tt(accountCategory.name) }}</span>
-                        <span style="margin-inline-start: 10px">{{ accountCategoryTotalBalance(accountCategory, showAvailableCreditForCreditCard) }}</span>
-                    </small>
+                    <span class="ebk-m-group-title">
+                        <span class="ebk-m-group-title-label ebk-technical-heading">{{ tt(accountCategory.name) }}</span>
+                        <span class="ebk-m-group-title-value">{{ accountCategoryTotalBalance(accountCategory, showAvailableCreditForCreditCard) }}</span>
+                    </span>
                     <small class="account-list-credit-card-amount-link" :class="{ 'disabled': sortable }"
                          v-if="accountCategory.type === AccountCategory.CreditCard.type">
                         <f7-link href="#" class="text-color-gray" popover-open=".credit-card-amount-popover">
@@ -69,44 +73,62 @@
                 <f7-list-item swipeout
                               class="nested-list-item"
                               :id="getAccountDomId(account)"
-                              :class="{ 'has-child-list-item': account.type === AccountType.MultiSubAccounts.type && hasVisibleSubAccount(account), 'actual-first-child': account.id === firstShowingIds.accounts[accountCategory.type], 'actual-last-child': account.id === lastShowingIds.accounts[accountCategory.type] }"
-                              :after="account.type === AccountType.SingleAccount.type ? accountBalanceOrAvailableCredit(account, undefined, showAvailableCreditForCreditCard, showAccountBalance) : ''"
+                              :class="{ 'has-child-list-item': canShowSubAccounts(account), 'actual-first-child': account.id === firstShowingIds.accounts[accountCategory.type], 'actual-last-child': account.id === lastShowingIds.accounts[accountCategory.type], 'ebk-m-row-hidden': account.hidden }"
+                              :after="account.type === AccountType.SingleAccount.type && !sortable ? accountBalanceOrAvailableCredit(account, undefined, showAvailableCreditForCreditCard, showAccountBalance) : ''"
                               :link="!sortable ? '/transaction/list?accountIds=' + account.id : null"
                               :key="account.id"
                               v-for="account in allCategorizedAccountsMap[accountCategory.type]!.accounts"
                               v-show="showHidden || !account.hidden"
                               @taphold="setSortable()"
                 >
-                    <template #media v-if="account.type !== AccountType.MultiSubAccounts.type || !hasVisibleSubAccount(account)">
-                        <ItemIcon :icon-type="getAccountIconType(account.iconType)" :icon-id="account.icon" :color="account.color">
-                            <f7-badge color="gray" class="right-bottom-icon" v-if="account.hidden">
-                                <f7-icon f7="eye_slash_fill"></f7-icon>
-                            </f7-badge>
-                        </ItemIcon>
+                    <template #media v-if="!canShowSubAccounts(account)">
+                        <ItemIcon :icon-type="getAccountIconType(account.iconType)" :icon-id="account.icon" :color="account.color" />
+                    </template>
+
+                    <template #after v-if="sortable">
+                        <span class="ebk-m-move-buttons">
+                            <f7-link :class="{ 'disabled': displayOrderSaving || !canMoveAccount(account, -1) }"
+                                     :aria-label="tt('Move Up')" @click.stop.prevent="moveAccount(account, -1)">
+                                <f7-icon f7="arrow_up"></f7-icon>
+                            </f7-link>
+                            <f7-link :class="{ 'disabled': displayOrderSaving || !canMoveAccount(account, 1) }"
+                                     :aria-label="tt('Move Down')" @click.stop.prevent="moveAccount(account, 1)">
+                                <f7-icon f7="arrow_down"></f7-icon>
+                            </f7-link>
+                        </span>
                     </template>
 
                     <template #title>
                         <div class="nested-list-item-inner display-flex padding-top-half padding-bottom-half">
-                            <ItemIcon :icon-type="getAccountIconType(account.iconType)" :icon-id="account.icon" :color="account.color"
-                                      v-if="account.type === AccountType.MultiSubAccounts.type && hasVisibleSubAccount(account)">
-                                <f7-badge color="gray" class="right-bottom-icon" v-if="account.hidden">
-                                    <f7-icon f7="eye_slash_fill"></f7-icon>
-                                </f7-badge>
-                            </ItemIcon>
+                            <ItemIcon class="ebk-m-dimmable" :icon-type="getAccountIconType(account.iconType)" :icon-id="account.icon" :color="account.color"
+                                      v-if="canShowSubAccounts(account)" />
                             <div class="nested-list-item-title">
-                                <span>{{ account.name }}</span>
-                                <div class="item-footer" v-if="account.comment">{{ account.comment }}</div>
+                                <span class="ebk-m-title-line">
+                                    <span class="ebk-m-title-text ebk-m-dimmable">{{ account.name }}</span>
+                                    <span class="ebk-m-hidden-chip" v-if="account.hidden">{{ tt('Hidden') }}</span>
+                                </span>
+                                <div class="item-footer ebk-m-dimmable" v-if="account.comment">{{ account.comment }}</div>
                             </div>
-                            <div class="nested-list-item-after" v-if="account.type === AccountType.MultiSubAccounts.type">
+                            <div class="nested-list-item-after" v-if="account.type === AccountType.MultiSubAccounts.type && !sortable">
                                 <span>{{ accountBalanceOrAvailableCredit(account, undefined, showAvailableCreditForCreditCard, showAccountBalance) }}</span>
+                                <span class="account-list-sub-account-toggle" role="button" tabindex="0"
+                                      :class="{ 'disabled': sortable }"
+                                      :aria-label="isSubAccountsExpanded(account) ? tt('Collapse Sub-accounts') : tt('Expand Sub-accounts')"
+                                      :aria-expanded="isSubAccountsExpanded(account) ? 'true' : 'false'"
+                                      v-if="hasVisibleSubAccount(account)"
+                                      @click.stop.prevent="toggleSubAccounts(account)"
+                                      @keydown.enter.stop.prevent="toggleSubAccounts(account)"
+                                      @keydown.space.stop.prevent="toggleSubAccounts(account)">
+                                    <f7-icon :f7="isSubAccountsExpanded(account) ? 'chevron_up' : 'chevron_down'"></f7-icon>
+                                </span>
                             </div>
                         </div>
-                        <li v-if="account.type === AccountType.MultiSubAccounts.type">
+                        <li role="none" v-if="account.type === AccountType.MultiSubAccounts.type && isSubAccountsExpanded(account)">
                             <ul class="no-padding">
-                                <f7-list-item class="no-sortable nested-list-item-child"
-                                              :class="{ 'actual-first-child': subAccount.id === firstShowingIds.subAccounts[account.id], 'actual-last-child': subAccount.id === lastShowingIds.subAccounts[account.id] }"
+                                <f7-list-item class="no-sortable nested-list-item-child ebk-m-nested-child"
+                                              :class="{ 'actual-first-child': subAccount.id === firstShowingIds.subAccounts[account.id], 'actual-last-child': subAccount.id === lastShowingIds.subAccounts[account.id], 'ebk-m-row-hidden': subAccount.hidden }"
                                               :id="getAccountDomId(subAccount)"
-                                              :title="subAccount.name" :footer="subAccount.comment"
+                                              :footer="subAccount.comment"
                                               :after="!showAvailableCreditForCreditCard || account.category !== AccountCategory.CreditCard.type ? accountBalance(account, subAccount.id, showAccountBalance) : ''"
                                               :link="!sortable ? '/transaction/list?accountIds=' + subAccount.id : null"
                                               :key="subAccount.id"
@@ -114,11 +136,13 @@
                                               v-show="showHidden || !subAccount.hidden"
                                 >
                                     <template #media>
-                                        <ItemIcon :icon-type="getAccountIconType(subAccount.iconType)" :icon-id="subAccount.icon" :color="subAccount.color">
-                                            <f7-badge color="gray" class="right-bottom-icon" v-if="subAccount.hidden">
-                                                <f7-icon f7="eye_slash_fill"></f7-icon>
-                                            </f7-badge>
-                                        </ItemIcon>
+                                        <ItemIcon :icon-type="getAccountIconType(subAccount.iconType)" :icon-id="subAccount.icon" :color="subAccount.color" />
+                                    </template>
+                                    <template #title>
+                                        <span class="ebk-m-title-line">
+                                            <span class="ebk-m-title-text ebk-m-dimmable">{{ subAccount.name }}</span>
+                                            <span class="ebk-m-hidden-chip" v-if="subAccount.hidden">{{ tt('Hidden') }}</span>
+                                        </span>
                                     </template>
                                 </f7-list-item>
                             </ul>
@@ -231,6 +255,7 @@
 
 <script setup lang="ts">
 import AssetSummaryWidget from '@/views/mobile/overview/widgets/AssetSummaryWidget.vue';
+import StatePanel from '@/components/common/StatePanel.vue';
 
 import { ref, computed } from 'vue';
 import type { Router } from 'framework7/types';
@@ -290,6 +315,7 @@ const showMoreActionSheet = ref<boolean>(false);
 const showDeleteActionSheet = ref<boolean>(false);
 const showInputPasswordSheetForClearAllTransactions = ref<boolean>(false);
 const displayOrderSaving = ref<boolean>(false);
+const subAccountsExpandedStates = ref<Record<string, boolean>>({});
 
 const textDirection = computed<TextDirection>(() => getCurrentLanguageTextDirection());
 const showAvailableCreditForCreditCard = ref<boolean>(settingsStore.appSettings.defaultCreditCardAmountDisplayTypeInMobile === CreditCardAmountDisplayType.AvailableCredit.type);
@@ -310,6 +336,22 @@ function hasAccount(accountCategory: AccountCategory, visibleOnly: boolean): boo
 
 function hasVisibleSubAccount(account: Account): boolean {
     return accountsStore.hasVisibleSubAccount(showHidden.value, account);
+}
+
+function isSubAccountsExpanded(account: Account): boolean {
+    return subAccountsExpandedStates.value[account.id] ?? !settingsStore.appSettings.collapseSubAccountsByDefault;
+}
+
+function canShowSubAccounts(account: Account): boolean {
+    return account.type === AccountType.MultiSubAccounts.type && hasVisibleSubAccount(account) && isSubAccountsExpanded(account);
+}
+
+function toggleSubAccounts(account: Account): void {
+    if (sortable.value) {
+        return;
+    }
+
+    subAccountsExpandedStates.value[account.id] = !isSubAccountsExpanded(account);
 }
 
 function getAccountDomId(account: Account): string {
@@ -590,6 +632,53 @@ function setAccountsIncludedInTotal(): void {
     props.f7router.navigate('/settings/filter/account?type=accountListTotalAmount');
 }
 
+function getAdjacentVisibleAccountIndex(account: Account, direction: number): { from: number, to: number } | null {
+    const accounts = allCategorizedAccountsMap.value[account.category]?.accounts;
+
+    if (!accounts) {
+        return null;
+    }
+
+    const from = accounts.findIndex(item => item.id === account.id);
+
+    if (from < 0) {
+        return null;
+    }
+
+    for (let to = from + direction; to >= 0 && to < accounts.length; to += direction) {
+        if (showHidden.value || !accounts[to]!.hidden) {
+            return { from, to };
+        }
+    }
+
+    return null;
+}
+
+function canMoveAccount(account: Account, direction: number): boolean {
+    return !!getAdjacentVisibleAccountIndex(account, direction);
+}
+
+// non-drag alternative to the sort handle (guidelines §6.4), uses the same display order update as dragging
+function moveAccount(account: Account, direction: number): void {
+    const position = getAdjacentVisibleAccountIndex(account, direction);
+
+    if (!position) {
+        return;
+    }
+
+    accountsStore.changeAccountDisplayOrder({
+        accountId: account.id,
+        from: position.from,
+        to: position.to,
+        updateListOrder: true,
+        updateGlobalListOrder: true
+    }).then(() => {
+        displayOrderModified.value = true;
+    }).catch(error => {
+        showToast(error.message || error);
+    });
+}
+
 function onSort(event: { el: { id: string }; from: number; to: number }): void {
     if (!event || !event.el || !event.el.id) {
         showToast('Unable to move account');
@@ -663,6 +752,22 @@ init();
 
 .account-list .item-footer {
     padding-top: 4px;
+}
+
+.account-list-sub-account-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* at least a 24px target (WCAG 2.5.8), it is keyboard focusable since #36 */
+    min-width: 24px;
+    min-height: 24px;
+    padding-inline-start: 8px;
+
+    > .icon {
+        font-size: var(--f7-list-chevron-icon-font-size, 14px);
+        font-weight: bold;
+        color: var(--ebk-chevron-icon-color);
+    }
 }
 
 .account-list-credit-card-amount-link {

@@ -113,16 +113,3 @@ function onNavigate(type: MobileOverviewWidgetNavigationType, path?: string): vo
 }
 </script>
 
-<style>
-.overview-widget-list .item-after {
-    max-width: 50%;
-}
-
-.overview-widget-primary-amount {
-    margin-top: 2px;
-    margin-bottom: 6px;
-    font-size: 1.5em;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-</style>

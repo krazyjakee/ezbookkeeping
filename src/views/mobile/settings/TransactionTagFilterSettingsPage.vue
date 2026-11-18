@@ -85,7 +85,6 @@
                         </f7-list-item>
                         <f7-list-item link="#"
                                       popover-open=".tag-filter-state-popover-menu"
-                                      :title="transactionTag.name"
                                       :value="transactionTag.id"
                                       :key="transactionTag.id"
                                       :after="tt(tagFilterStateMap[transactionTag.id] === TransactionTagFilterState.Include ? 'Included' : tagFilterStateMap[transactionTag.id] === TransactionTagFilterState.Exclude ? 'Excluded' : 'Default')"
@@ -93,11 +92,13 @@
                                       v-show="showHidden || !transactionTag.hidden"
                                       @click="currentTransactionTagId = transactionTag.id">
                             <template #media>
-                                <f7-icon class="transaction-tag-icon" f7="number">
-                                    <f7-badge color="gray" class="right-bottom-icon" v-if="transactionTag.hidden">
-                                        <f7-icon f7="eye_slash_fill"></f7-icon>
-                                    </f7-badge>
-                                </f7-icon>
+                                <f7-icon class="transaction-tag-icon" f7="number" :class="{ 'ebk-m-dimmed': transactionTag.hidden }"></f7-icon>
+                            </template>
+                            <template #title>
+                                <span class="ebk-m-title-line">
+                                    <span class="ebk-m-title-text" :class="{ 'ebk-m-dimmed': transactionTag.hidden }">{{ transactionTag.name }}</span>
+                                    <span class="ebk-m-hidden-chip" v-if="transactionTag.hidden">{{ tt('Hidden') }}</span>
+                                </span>
                             </template>
                         </f7-list-item>
                     </f7-list>

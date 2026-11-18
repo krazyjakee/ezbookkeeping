@@ -1,19 +1,23 @@
 <template>
     <v-row>
         <v-col cols="12">
-            <v-card class="setting-items" :title="tt('Common Settings')">
+            <v-card class="ebk-settings-panel setting-items">
+                <header class="ebk-panel-header-strip ebk-settings-panel-header">
+                    <h2 class="ebk-settings-panel-title">{{ tt('Common Settings') }}</h2>
+                </header>
                 <v-form>
                     <v-card-text class="pa-0 text-body-medium">
                         <div class="setting-item">
                             <span>{{ tt('Default Chart Data Type') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Default Chart Data Type')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
                                 item-value="type"
                                 persistent-placeholder
                                 max-width="400px"
+                                :menu-props="{ contentClass: 'select-menu-large' }"
                                 :placeholder="tt('Default Chart Data Type')"
                                 :items="allChartDataTypes"
                                 v-model="defaultChartDataType"
@@ -23,7 +27,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Timezone Used for Date Range') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Timezone Used for Date Range')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -39,7 +43,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Default Keyword Search Matching Mode') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Default Keyword Search Matching Mode')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -81,7 +85,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Default Sort Order') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Default Sort Order')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -99,13 +103,16 @@
         </v-col>
 
         <v-col cols="12">
-            <v-card class="setting-items" :title="tt('Categorical Analysis Settings')">
+            <v-card class="ebk-settings-panel setting-items">
+                <header class="ebk-panel-header-strip ebk-settings-panel-header">
+                    <h2 class="ebk-settings-panel-title">{{ tt('Categorical Analysis Settings') }}</h2>
+                </header>
                 <v-form>
                     <v-card-text class="pa-0 text-body-medium">
                         <div class="setting-item">
                             <span>{{ tt('Default Chart Type') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Default Chart Type')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -121,13 +128,14 @@
                         <div class="setting-item">
                             <span>{{ tt('Default Date Range') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Default Date Range')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
                                 item-value="type"
                                 persistent-placeholder
                                 max-width="400px"
+                                :menu-props="{ contentClass: 'select-menu-medium' }"
                                 :placeholder="tt('Default Date Range')"
                                 :items="allCategoricalChartDateRanges"
                                 v-model="defaultCategoricalChartDateRange"
@@ -139,13 +147,16 @@
         </v-col>
 
         <v-col cols="12">
-            <v-card class="setting-items" :title="tt('Trend Analysis Settings')">
+            <v-card class="ebk-settings-panel setting-items">
+                <header class="ebk-panel-header-strip ebk-settings-panel-header">
+                    <h2 class="ebk-settings-panel-title">{{ tt('Trend Analysis Settings') }}</h2>
+                </header>
                 <v-form>
                     <v-card-text class="pa-0 text-body-medium">
                         <div class="setting-item">
                             <span>{{ tt('Default Chart Type') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Default Chart Type')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -161,13 +172,14 @@
                         <div class="setting-item">
                             <span>{{ tt('Default Date Range') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Default Date Range')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
                                 item-value="type"
                                 persistent-placeholder
                                 max-width="400px"
+                                :menu-props="{ contentClass: 'select-menu-medium' }"
                                 :placeholder="tt('Default Date Range')"
                                 :items="allTrendChartDateRanges"
                                 v-model="defaultTrendChartDateRange"
@@ -179,13 +191,16 @@
         </v-col>
 
         <v-col cols="12">
-            <v-card class="setting-items" :title="tt('Asset Trends Settings')">
+            <v-card class="ebk-settings-panel setting-items">
+                <header class="ebk-panel-header-strip ebk-settings-panel-header">
+                    <h2 class="ebk-settings-panel-title">{{ tt('Asset Trends Settings') }}</h2>
+                </header>
                 <v-form>
                     <v-card-text class="pa-0 text-body-medium">
                         <div class="setting-item">
                             <span>{{ tt('Default Chart Type') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Default Chart Type')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -201,13 +216,14 @@
                         <div class="setting-item">
                             <span>{{ tt('Default Date Range') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Default Date Range')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
                                 item-value="type"
                                 persistent-placeholder
                                 max-width="400px"
+                                :menu-props="{ contentClass: 'select-menu-medium' }"
                                 :placeholder="tt('Default Date Range')"
                                 :items="allAssetTrendsChartDateRanges"
                                 v-model="defaultAssetTrendsChartDateRange"
@@ -223,30 +239,26 @@
                                     v-model:show="showFilterAccountDialog"
                                     @settings:change="showFilterAccountDialog = false" />
 
-
     <category-filter-settings-dialog type="statisticsDefault"
                                      v-model:show="showFilterCategoryDialog"
                                      @settings:change="showFilterCategoryDialog = false" />
-
-    <snack-bar ref="snackbar" />
 </template>
 
 <script setup lang="ts">
-import SnackBar from '@/components/desktop/SnackBar.vue';
 import AccountFilterSettingsDialog from '@/views/desktop/common/dialogs/AccountFilterSettingsDialog.vue';
 import CategoryFilterSettingsDialog from '@/views/desktop/common/dialogs/CategoryFilterSettingsDialog.vue';
 
-import { ref, computed, useTemplateRef } from 'vue';
+import { ref, computed, watch } from 'vue';
 
 import { useI18n } from '@/locales/helpers.ts';
 import { useStatisticsSettingPageBase } from '@/views/base/statistics/StatisticsSettingPageBase.ts';
 
+import { useSettingsStore } from '@/stores/setting.ts';
 import { useAccountsStore } from '@/stores/account.ts';
 import { useTransactionCategoriesStore } from '@/stores/transactionCategory.ts';
+import { useDesktopPageStore } from '@/stores/desktopPage.ts';
 
 import { isObjectEmpty } from '@/lib/common.ts';
-
-type SnackBarType = InstanceType<typeof SnackBar>;
 
 const { tt } = useI18n();
 const {
@@ -277,8 +289,7 @@ const {
 
 const accountsStore = useAccountsStore();
 const transactionCategoriesStore = useTransactionCategoriesStore();
-
-const snackbar = useTemplateRef<SnackBarType>('snackbar');
+const desktopPageStore = useDesktopPageStore();
 
 const showFilterAccountDialog = ref<boolean>(false);
 const showFilterCategoryDialog = ref<boolean>(false);
@@ -298,7 +309,7 @@ function init(): void {
         loadingAccounts.value = false;
 
         if (!error.processed) {
-            snackbar.value?.showError(error);
+            desktopPageStore.addErrorToast(error);
         }
     });
 
@@ -310,11 +321,18 @@ function init(): void {
         loadingTransactionCategories.value = false;
 
         if (!error.processed) {
-            snackbar.value?.showError(error);
+            desktopPageStore.addErrorToast(error);
         }
     });
 }
 
 init();
+
+const settingsStore = useSettingsStore();
+
+// Statistics settings apply and save immediately; confirm each save with a snackbar (§6.5)
+watch(() => settingsStore.appSettings, () => {
+    desktopPageStore.addToast('Settings saved');
+}, { deep: true });
 </script>
 

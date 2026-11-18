@@ -1,51 +1,32 @@
 <template>
-    <v-card class="overview-widget asset-summary-widget h-100" :class="{ disabled: loading }">
-        <template #title>
-            <overview-widget-header :title="title || tt('Asset Summary')" :icon="mdiBankOutline" />
-        </template>
-
-        <v-card-text class="overview-widget__body mt-3">
-            <div class="overview-widget__caption">
-                <span class="text-body-medium" v-if="!loading || (allAccounts && allAccounts.length)">{{ tt('format.misc.youHaveAccounts', { count: displayAccountCount }) }}</span>
-                <v-skeleton-loader class="skeleton-no-margin py-1" width="200px" type="text" v-else-if="loading && (!allAccounts || !allAccounts.length)"></v-skeleton-loader>
+    <overview-widget-panel class="asset-summary-widget"
+                           :title="title || tt('Asset Summary')"
+                           :meta="hasData ? tt('format.misc.youHaveAccounts', { count: displayAccountCount }) : ''"
+                           :loading="loading" :empty="!hasData">
+        <div class="asset-summary-widget__metrics">
+            <div class="asset-summary-widget__metric" :class="{ 'asset-summary-widget__metric--primary': item.primary }"
+                 :key="item.title" v-for="item in summaryItems">
+                <span class="overview-widget__label ebk-technical-heading">{{ tt(item.title) }}</span>
+                <span class="overview-widget__kpi-amount ebk-numeric" :class="{ 'overview-widget__hero-amount': item.primary }"
+                      v-if="hasData">{{ item.value }}</span>
+                <v-skeleton-loader class="skeleton-no-margin overview-widget__skeleton-amount" type="text" width="140px" v-else />
             </div>
-
-            <div class="asset-summary-widget__metrics mt-5">
-                <div class="asset-summary-widget__metric" :class="{ 'asset-summary-widget__metric--primary': item.color === 'primary' }"
-                     :key="item.title" v-for="item in summaryItems">
-                    <v-avatar rounded="lg" variant="tonal" :color="item.color" size="40">
-                        <v-icon size="24" :icon="item.icon" />
-                    </v-avatar>
-                    <div class="d-flex flex-column gap-1 text-truncate">
-                        <span class="overview-widget__caption text-body-medium">{{ tt(item.title) }}</span>
-                        <span class="overview-widget__amount text-title-large text-truncate" :class="{ 'text-primary': item.color === 'primary' }" v-if="!loading || (allAccounts && allAccounts.length)">{{ item.value }}</span>
-                        <v-skeleton-loader class="skeleton-no-margin pb-2" style="margin-top: 6px" width="120px" type="text" :loading="true" v-else-if="loading && (!allAccounts || !allAccounts.length)"></v-skeleton-loader>
-                    </div>
-                </div>
-            </div>
-        </v-card-text>
-    </v-card>
+        </div>
+    </overview-widget-panel>
 </template>
 
 <script setup lang="ts">
-import OverviewWidgetHeader from './OverviewWidgetHeader.vue';
+import OverviewWidgetPanel from './OverviewWidgetPanel.vue';
 
 import { computed } from 'vue';
 
 import { useI18n } from '@/locales/helpers.ts';
 import { useAssetSummaryWidgetBase } from '@/views/base/overview/AssetSummaryWidgetBase.ts';
 
-import {
-    mdiBankOutline,
-    mdiCreditCardOutline,
-    mdiPiggyBankOutline
-} from '@mdi/js';
-
 interface SummaryItem {
     title: string;
     value: string;
-    icon: string;
-    color: string;
+    primary: boolean;
 }
 
 defineProps<{
@@ -62,26 +43,24 @@ const {
     totalLiabilities
 } = useAssetSummaryWidgetBase('overview');
 
+const hasData = computed<boolean>(() => !!allAccounts.value && allAccounts.value.length > 0);
 const displayAccountCount = computed<string>(() => formatNumberToLocalizedNumerals(allAccounts.value?.length ?? 0));
 
 const summaryItems = computed<SummaryItem[]>(() => [
     {
         title: 'Total assets',
         value: totalAssets.value,
-        icon: mdiBankOutline,
-        color: 'grey'
+        primary: false
     },
     {
         title: 'Total liabilities',
         value: totalLiabilities.value,
-        icon: mdiCreditCardOutline,
-        color: 'expense'
+        primary: false
     },
     {
         title: 'Net assets',
         value: netAssets.value,
-        icon: mdiPiggyBankOutline,
-        color: 'primary'
+        primary: true
     }
 ]);
 </script>

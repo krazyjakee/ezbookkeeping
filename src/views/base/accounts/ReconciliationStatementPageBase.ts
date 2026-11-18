@@ -145,6 +145,23 @@ export function useReconciliationStatementPageBase() {
         return formatAmount((reconciliationStatements.value?.totalInflows ?? BIG_DECIMAL_ZERO).subtract(reconciliationStatements.value?.totalOutflows ?? BIG_DECIMAL_ZERO), false, currentAccountCurrency.value, true);
     });
 
+    // net cash flow shown with an explicit sign and the user amount colours (design guideline D1 / D2)
+    const netCashFlowAmountType = computed<'income' | 'expense' | 'none'>(() => {
+        const netCashFlow = (reconciliationStatements.value?.totalInflows ?? BIG_DECIMAL_ZERO).subtract(reconciliationStatements.value?.totalOutflows ?? BIG_DECIMAL_ZERO);
+
+        if (netCashFlow.isPositive()) {
+            return 'income';
+        } else if (netCashFlow.isNegative()) {
+            return 'expense';
+        } else {
+            return 'none';
+        }
+    });
+
+    const displayAbsoluteTotalBalance = computed<string>(() => {
+        return formatAmount((reconciliationStatements.value?.totalInflows ?? BIG_DECIMAL_ZERO).subtract(reconciliationStatements.value?.totalOutflows ?? BIG_DECIMAL_ZERO).abs(), false, currentAccountCurrency.value);
+    });
+
     const displayOpeningBalance = computed<string>(() => {
         if (isCurrentLiabilityAccount.value) {
             return formatAmount((reconciliationStatements.value?.openingBalance ?? BIG_DECIMAL_ZERO).negate(), false, currentAccountCurrency.value);
@@ -275,6 +292,19 @@ export function useReconciliationStatementPageBase() {
         return `${formatDateTimeToLongDateTime(dateTime)} (UTC${utcOffset})`;
     }
 
+    // amount type used to sign and label transaction amounts, transfers have no sign (design guideline D1)
+    function getTransactionAmountType(transaction: TransactionReconciliationStatementResponseItemWithInfo): 'income' | 'expense' | 'transfer' | 'none' {
+        if (transaction.type === TransactionType.Income) {
+            return 'income';
+        } else if (transaction.type === TransactionType.Expense) {
+            return 'expense';
+        } else if (transaction.type === TransactionType.Transfer) {
+            return 'transfer';
+        } else {
+            return 'none';
+        }
+    }
+
     function getDisplaySourceAmount(transaction: TransactionReconciliationStatementResponseItemWithInfo, inDefaultCurrency?: boolean): string {
         return formatAmount(parseBigDecimal(transaction.sourceAmount), transaction.hideAmount, transaction.sourceAccount?.currency ?? defaultCurrency.value, inDefaultCurrency);
     }
@@ -403,11 +433,14 @@ export function useReconciliationStatementPageBase() {
         displayOpeningBalanceInDefaultCurrency,
         displayClosingBalance,
         displayClosingBalanceInDefaultCurrency,
+        netCashFlowAmountType,
+        displayAbsoluteTotalBalance,
         // functions
         updatePageOpenTime,
         isReconciliationStatementsResponseEquals,
         setReconciliationStatements,
         getDisplayTransactionType,
+        getTransactionAmountType,
         getDisplayDateTime,
         getDisplayDate,
         getDisplayTime,

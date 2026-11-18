@@ -112,7 +112,7 @@ func (t *qifTransactionDataRowIterator) Next(ctx core.Context, user *models.User
 	t.currentIndex++
 
 	data := t.dataTable.allData[t.currentIndex]
-	rowItems, err := t.parseTransaction(ctx, user, data)
+	rowItems, err := t.parseTransaction(ctx, data)
 
 	if err != nil {
 		log.Errorf(ctx, "[qif_transaction_data_table.Next] cannot parsing transaction in %s, because %s", t.CurrentRowId(), err.Error())
@@ -126,7 +126,7 @@ func (t *qifTransactionDataRowIterator) Next(ctx core.Context, user *models.User
 	}, nil
 }
 
-func (t *qifTransactionDataRowIterator) parseTransaction(ctx core.Context, user *models.User, qifTransaction *qifTransactionData) (map[datatable.TransactionDataTableColumn]string, error) {
+func (t *qifTransactionDataRowIterator) parseTransaction(ctx core.Context, qifTransaction *qifTransactionData) (map[datatable.TransactionDataTableColumn]string, error) {
 	data := make(map[datatable.TransactionDataTableColumn]string, len(qifTransactionSupportedColumns))
 
 	if qifTransaction.Date == "" {
@@ -206,6 +206,9 @@ func (t *qifTransactionDataRowIterator) parseTransaction(ctx core.Context, user 
 
 func (t *qifTransactionDataRowIterator) parseTransactionTime(ctx core.Context, date string) (string, error) {
 	var year, month, day string
+
+	// Quicken pads a one-digit day or year with a space ("1/ 5' 8")
+	date = strings.ReplaceAll(strings.TrimSpace(date), " ", "0")
 
 	if (t.dataTable.dateFormatType == qifYearMonthDayDateFormat && utils.IsValidYearMonthDayLongOrShortDateFormat(date)) ||
 		(t.dataTable.dateFormatType == qifMonthDayYearDateFormat && utils.IsValidMonthDayYearLongOrShortDateFormat(date)) ||

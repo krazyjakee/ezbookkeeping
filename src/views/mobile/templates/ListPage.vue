@@ -17,18 +17,50 @@
             <f7-list-item title="Template Name"
                           :key="itemIdx" v-for="itemIdx in [ 1, 2, 3 ]">
                 <template #media>
-                    <f7-icon f7="app_fill"></f7-icon>
+                    <span class="template-icon-tile">
+                        <f7-icon f7="app_fill"></f7-icon>
+                    </span>
                 </template>
             </f7-list-item>
         </f7-list>
 
-        <f7-list strong inset dividers class="margin-top-half" v-if="!loading && noAvailableTemplate">
-            <f7-list-item :title="tt('No available template')"
-                          :footer="tt('Once you add templates, you can long-press the Add button on the home page to quickly add a new transaction')"
-                          v-if="templateType === TemplateType.Normal.type"></f7-list-item>
-            <f7-list-item :title="tt('No available scheduled transactions')" v-else-if="templateType === TemplateType.Schedule.type"></f7-list-item>
-            <f7-list-item :title="tt('No available template')" v-else></f7-list-item>
+        <div class="template-list-state margin-top-half" v-if="!loading && noAvailableTemplate">
+            <state-panel type="empty" :title="tt('No available template')"
+                         :text="tt('Once you add templates, you can long-press the Add button on the home page to quickly add a new transaction')"
+                         v-if="templateType === TemplateType.Normal.type">
+                <template #actions>
+                    <f7-button tonal :text="tt('Add')" :href="'/template/add?templateType=' + templateType"></f7-button>
+                </template>
+            </state-panel>
+            <state-panel type="empty" :title="tt('No available scheduled transactions')" v-else-if="templateType === TemplateType.Schedule.type">
+                <template #actions>
+                    <f7-button tonal :text="tt('Add')" :href="'/template/add?templateType=' + templateType"></f7-button>
+                </template>
+            </state-panel>
+            <state-panel type="empty" :title="tt('No available template')" v-else />
+        </div>
+
+        <f7-list strong inset dividers class="margin-top-half margin-bottom-half"
+                 v-if="!loading && !noAvailableTemplate && isScheduledTransaction && !sortable">
+            <f7-list-item link="#" popover-open=".schedule-status-filter-popover-menu"
+                          :title="tt('Status')" :after="statusFilterDisplayName">
+            </f7-list-item>
         </f7-list>
+
+        <f7-popover class="schedule-status-filter-popover-menu">
+            <f7-list dividers>
+                <f7-list-item link="#" no-chevron popover-close
+                              :title="option.displayName"
+                              :class="{ 'list-item-selected': statusFilter === option.type }"
+                              :key="option.type"
+                              v-for="option in allStatusFilterTypes"
+                              @click="statusFilter = option.type">
+                    <template #after>
+                        <f7-icon class="list-item-checked-icon" f7="checkmark_alt" v-if="statusFilter === option.type"></f7-icon>
+                    </template>
+                </f7-list-item>
+            </f7-list>
+        </f7-popover>
 
         <f7-list strong inset dividers sortable class="margin-top-half template-list"
                  :sortable-enabled="sortable"
@@ -38,16 +70,25 @@
                           :class="{ 'actual-first-child': template.id === firstShowingId, 'actual-last-child': template.id === lastShowingId }"
                           :id="getTemplateDomId(template)"
                           :title="template.name"
+                          :footer="isScheduledTransaction ? getScheduleOccurrenceDisplayText(template) : undefined"
                           :key="template.id"
                           v-for="template in templates"
-                          v-show="showHidden || !template.hidden"
+                          v-show="(showHidden || !template.hidden) && isShownByStatusFilter(template)"
                           @taphold="setSortable()">
+                <template #after v-if="isScheduledTransaction">
+                    <span class="template-status-badge" :class="`template-status-badge--${getStatusColor(template)}`">
+                        <span class="template-status-badge-dot" aria-hidden="true"></span>
+                        <span>{{ getStatusDisplayName(template) }}</span>
+                    </span>
+                </template>
                 <template #media>
-                    <f7-icon :f7="templateType === TemplateType.Schedule.type ? 'clock' : 'doc_plaintext'">
-                        <f7-badge color="gray" class="right-bottom-icon" v-if="template.hidden">
-                            <f7-icon f7="eye_slash_fill"></f7-icon>
-                        </f7-badge>
-                    </f7-icon>
+                    <span class="template-icon-tile">
+                        <f7-icon :f7="templateType === TemplateType.Schedule.type ? 'clock' : 'doc_plaintext'">
+                            <f7-badge color="gray" class="right-bottom-icon" v-if="template.hidden">
+                                <f7-icon f7="eye_slash_fill"></f7-icon>
+                            </f7-badge>
+                        </f7-icon>
+                    </span>
                 </template>
                 <f7-swipeout-actions :left="textDirection === TextDirection.LTR"
                                      :right="textDirection === TextDirection.RTL"
@@ -94,11 +135,14 @@
 </template>
 
 <script setup lang="ts">
+import StatePanel from '@/components/common/StatePanel.vue';
+
 import { ref, computed } from 'vue';
 import type { Router } from 'framework7/types';
 
 import { useI18n } from '@/locales/helpers.ts';
 import { useI18nUIComponents, showLoading, hideLoading, onSwipeoutDeleted } from '@/lib/ui/mobile.ts';
+import { useScheduledTransactionListPageBase } from '@/views/base/templates/ScheduledTransactionListPageBase.ts';
 
 import { useTransactionTemplatesStore } from '@/stores/transactionTemplate.ts';
 
@@ -136,9 +180,34 @@ const displayOrderSaving = ref<boolean>(false);
 
 const textDirection = computed<TextDirection>(() => getCurrentLanguageTextDirection());
 const templates = computed<TransactionTemplate[]>(() => transactionTemplatesStore.allTransactionTemplates[templateType.value] || []);
-const firstShowingId = computed<string | null>(() => getFirstShowingId(templates.value, showHidden.value));
-const lastShowingId = computed<string | null>(() => getLastShowingId(templates.value, showHidden.value));
 const noAvailableTemplate = computed<boolean>(() => isNoAvailableTemplate(templates.value, showHidden.value));
+
+const {
+    statusFilter,
+    isScheduledTransaction,
+    allStatusFilterTypes,
+    statusFilterDisplayName,
+    getStatusDisplayName,
+    getStatusColor,
+    getNextOccurrenceDisplayText,
+    getRemainingOccurrencesDisplayText,
+    isShownByStatusFilter
+} = useScheduledTransactionListPageBase(templateType, templates);
+
+const statusFilteredTemplates = computed<TransactionTemplate[]>(() => templates.value.filter(template => isShownByStatusFilter(template)));
+const firstShowingId = computed<string | null>(() => getFirstShowingId(statusFilteredTemplates.value, showHidden.value));
+const lastShowingId = computed<string | null>(() => getLastShowingId(statusFilteredTemplates.value, showHidden.value));
+
+function getScheduleOccurrenceDisplayText(template: TransactionTemplate): string {
+    const nextOccurrence = getNextOccurrenceDisplayText(template);
+    const remainingOccurrences = getRemainingOccurrencesDisplayText(template);
+
+    if (nextOccurrence && remainingOccurrences) {
+        return `${nextOccurrence} (${remainingOccurrences})`;
+    }
+
+    return nextOccurrence || remainingOccurrences;
+}
 
 function getTemplateDomId(template: TransactionTemplate): string {
     return 'template_' + template.id;
@@ -261,6 +330,7 @@ function setSortable(): void {
     }
 
     showHidden.value = true;
+    statusFilter.value = 'all';
     sortable.value = true;
     displayOrderModified.value = false;
 }
@@ -361,6 +431,79 @@ init();
 </script>
 
 <style>
+.template-list-state {
+    margin-inline: var(--f7-list-inset-side-margin, 16px);
+}
+
+.template-list li > .item-content,
+.template-list li > .swipeout-content > .item-content {
+    min-height: 52px;
+}
+
+.template-icon-tile {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--ebk-color-hairline);
+    border-radius: var(--ebk-radius-control);
+    background-color: var(--ebk-color-surface-sunken);
+    color: var(--ebk-color-text-secondary);
+}
+
+.template-icon-tile > .icon {
+    font-size: 20px;
+}
+
+/* Scheduled transaction status (#14): label plus colour, never colour alone */
+.template-status-badge {
+    --template-status-color: var(--ebk-color-text-secondary);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+    padding: 2px 10px;
+    border: 1px solid color-mix(in srgb, var(--template-status-color) 45%, transparent);
+    border-radius: var(--ebk-radius-pill);
+    background-color: color-mix(in srgb, var(--template-status-color) 12%, transparent);
+    color: var(--ebk-color-text-primary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+
+.template-status-badge--green {
+    --template-status-color: var(--ebk-color-success);
+}
+
+.template-status-badge--blue {
+    --template-status-color: var(--ebk-color-info);
+}
+
+.template-status-badge--orange {
+    --template-status-color: var(--ebk-color-warning);
+}
+
+.template-status-badge-dot {
+    flex: 0 0 auto;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--template-status-color);
+}
+
+@media (forced-colors: active) {
+    .template-status-badge {
+        border-color: CanvasText;
+    }
+
+    .template-status-badge-dot {
+        background-color: CanvasText;
+    }
+}
+
 .template-list {
     --f7-list-item-footer-font-size: var(--ebk-large-footer-font-size);
 }

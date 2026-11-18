@@ -21,11 +21,19 @@ import {
     DEFAULT_RECONCILIATION_STATEMENT_DATE_RANGE_IN_MOBILE,
 } from './statistics.ts';
 import { DEFAULT_TRANSACTION_EXPLORER_DATE_RANGE } from './explorer.ts';
+
+import { PresetAmountColor } from '@/core/color.ts';
 import { DEFAULT_CURRENCY_CODE } from '@/consts/currency.ts';
 
 export type ApplicationSettingKey = string;
 export type ApplicationSettingValue = string | number | boolean | Record<string, ApplicationSettingSubValue>;
 export type ApplicationSettingSubValue = string | number | boolean | Record<string, boolean> | Record<string, number>;
+
+export enum MotionPreference {
+    System = 'system',
+    Reduce = 'reduce',
+    Full = 'full'
+}
 
 export interface BaseApplicationSetting {
     [key: ApplicationSettingKey]: ApplicationSettingValue;
@@ -44,6 +52,7 @@ export interface ApplicationSettings extends BaseApplicationSetting {
     chartColors: string;
     swipeBack: boolean;
     animate: boolean;
+    motionPreference: string;
     // Application Lock
     applicationLock: boolean;
     applicationLockWebAuthn: boolean;
@@ -65,6 +74,7 @@ export interface ApplicationSettings extends BaseApplicationSetting {
     showTotalAmountInTransactionListPage: boolean;
     totalAmountTypeInTransactionListPage: number;
     showTagInTransactionListPage: boolean;
+    showPictureIndicatorInTransactionListPage: boolean;
     defaultKeywordMatchModeInTransactionListPage: number;
     // Transaction Edit Page
     autoSaveTransactionDraft: string;
@@ -85,6 +95,7 @@ export interface ApplicationSettings extends BaseApplicationSetting {
     // Account List Page
     totalAmountExcludeAccountIds: Record<string, boolean>;
     hideCategoriesWithoutAccounts: boolean;
+    collapseSubAccountsByDefault: boolean;
     defaultCreditCardAmountDisplayTypeInMobile: number;
     reconciliationStatementButtonDefaultDateRangeTypeInDesktop: number;
     reconciliationStatementPageDefaultDateRangeTypeInMobile: number;
@@ -92,6 +103,7 @@ export interface ApplicationSettings extends BaseApplicationSetting {
     currencySortByInExchangeRatesPage: number;
     // Browser Cache Management
     mapCacheExpiration: number,
+    transactionPictureCacheExpiration: number,
     exchangeRatesDataCacheExpiration: number,
     // Statistics Settings
     statistics: {
@@ -125,6 +137,8 @@ export interface ApplicationCloudSetting {
 export interface LocaleDefaultSettings {
     currency: string;
     firstDayOfWeek: WeekDayValue;
+    preferredExpenseAmountColor: PresetAmountColor;
+    preferredIncomeAmountColor: PresetAmountColor;
 }
 
 export interface ApplicationLockState {
@@ -158,6 +172,7 @@ export const ALL_ALLOWED_CLOUD_SYNC_APP_SETTING_KEY_TYPES: Record<string, UserAp
     'showTotalAmountInTransactionListPage': UserApplicationCloudSettingType.Boolean,
     'totalAmountTypeInTransactionListPage': UserApplicationCloudSettingType.Number,
     'showTagInTransactionListPage': UserApplicationCloudSettingType.Boolean,
+    'showPictureIndicatorInTransactionListPage': UserApplicationCloudSettingType.Boolean,
     'defaultKeywordMatchModeInTransactionListPage': UserApplicationCloudSettingType.Number,
     // Transaction Edit Page
     'quickSaveButtonStyleInMobileTransactionListPage': UserApplicationCloudSettingType.Number,
@@ -180,6 +195,7 @@ export const ALL_ALLOWED_CLOUD_SYNC_APP_SETTING_KEY_TYPES: Record<string, UserAp
     // Account List Page
     'totalAmountExcludeAccountIds': UserApplicationCloudSettingType.StringBooleanMap,
     'hideCategoriesWithoutAccounts': UserApplicationCloudSettingType.Boolean,
+    'collapseSubAccountsByDefault': UserApplicationCloudSettingType.Boolean,
     'defaultCreditCardAmountDisplayTypeInMobile': UserApplicationCloudSettingType.Number,
     'reconciliationStatementButtonDefaultDateRangeTypeInDesktop': UserApplicationCloudSettingType.Number,
     'reconciliationStatementPageDefaultDateRangeTypeInMobile': UserApplicationCloudSettingType.Number,
@@ -187,6 +203,7 @@ export const ALL_ALLOWED_CLOUD_SYNC_APP_SETTING_KEY_TYPES: Record<string, UserAp
     'currencySortByInExchangeRatesPage': UserApplicationCloudSettingType.Number,
     // Browser Cache Management
     'mapCacheExpiration': UserApplicationCloudSettingType.Number,
+    'transactionPictureCacheExpiration': UserApplicationCloudSettingType.Number,
     'exchangeRatesDataCacheExpiration': UserApplicationCloudSettingType.Number,
     // Statistics Settings
     'statistics.defaultChartDataType': UserApplicationCloudSettingType.Number,
@@ -216,6 +233,7 @@ export const DEFAULT_APPLICATION_SETTINGS: ApplicationSettings = {
     chartColors: '',
     swipeBack: true,
     animate: true,
+    motionPreference: MotionPreference.System,
     // Application Lock
     applicationLock: false,
     applicationLockWebAuthn: false,
@@ -235,6 +253,7 @@ export const DEFAULT_APPLICATION_SETTINGS: ApplicationSettings = {
     showTotalAmountInTransactionListPage: true,
     totalAmountTypeInTransactionListPage: TransactionAmountType.InflowsAndOutflows,
     showTagInTransactionListPage: true,
+    showPictureIndicatorInTransactionListPage: false,
     defaultKeywordMatchModeInTransactionListPage: KeywordMatchMode.Default.type,
     // Transaction Edit Page
     quickSaveButtonStyleInMobileTransactionListPage: TransactionQuickSaveButtonStyle.Default.type,
@@ -257,6 +276,7 @@ export const DEFAULT_APPLICATION_SETTINGS: ApplicationSettings = {
     // Account List Page
     totalAmountExcludeAccountIds: {},
     hideCategoriesWithoutAccounts: false,
+    collapseSubAccountsByDefault: false,
     defaultCreditCardAmountDisplayTypeInMobile: CreditCardAmountDisplayType.Default.type,
     reconciliationStatementButtonDefaultDateRangeTypeInDesktop: DEFAULT_RECONCILIATION_STATEMENT_DATE_RANGE_IN_DESKTOP.type,
     reconciliationStatementPageDefaultDateRangeTypeInMobile: DEFAULT_RECONCILIATION_STATEMENT_DATE_RANGE_IN_MOBILE.type,
@@ -264,6 +284,7 @@ export const DEFAULT_APPLICATION_SETTINGS: ApplicationSettings = {
     currencySortByInExchangeRatesPage: CurrencySortingType.Default.type,
     // Browser Cache Management
     mapCacheExpiration: -1,
+    transactionPictureCacheExpiration: 2592000,
     exchangeRatesDataCacheExpiration: 0,
     // Statistics Settings
     statistics: {
@@ -284,5 +305,7 @@ export const DEFAULT_APPLICATION_SETTINGS: ApplicationSettings = {
 
 export const DEFAULT_LOCALE_SETTINGS: LocaleDefaultSettings = {
     currency: DEFAULT_CURRENCY_CODE,
-    firstDayOfWeek: WeekDay.DefaultFirstDay.type
+    firstDayOfWeek: WeekDay.DefaultFirstDay.type,
+    preferredExpenseAmountColor: PresetAmountColor.DefaultExpenseColor,
+    preferredIncomeAmountColor: PresetAmountColor.DefaultIncomeColor
 };

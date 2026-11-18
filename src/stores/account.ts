@@ -20,10 +20,10 @@ import {
     Account
 } from '@/models/account.ts';
 
-import { isDefined, isArray, isEquals, arrayItemToObjectField } from '@/lib/common.ts';
+import { isDefined, isArray, arrayItemToObjectField } from '@/lib/common.ts';
 import { BIG_DECIMAL_ZERO, isBigDecimal, parseBigDecimal } from '@/lib/numeral.ts';
 import { getCategorizedAccountsMap, getAllFilteredAccountsBalance } from '@/lib/account.ts';
-import services from '@/lib/services.ts';
+import services, { toStoreError } from '@/lib/services.ts';
 import logger from '@/lib/logger.ts';
 
 export const useAccountsStore = defineStore('accounts', () => {
@@ -929,7 +929,7 @@ export const useAccountsStore = defineStore('accounts', () => {
 
                 const accounts = Account.sortAccounts(Account.ofMulti(data.result), settingsStore.accountCategoryDisplayOrders);
 
-                if (force && data.result && isEquals(allAccounts.value, accounts)) {
+                if (force && data.result && Account.equalsMulti(allAccounts.value, accounts)) {
                     loadingPromise = null;
                     reject({ message: 'Account list is up to date', isUpToDate: true });
                     return;
@@ -950,13 +950,7 @@ export const useAccountsStore = defineStore('accounts', () => {
                     logger.error('failed to load account list', error);
                 }
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve account list' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve account list'));
             });
         });
 
@@ -981,13 +975,7 @@ export const useAccountsStore = defineStore('accounts', () => {
             }).catch(error => {
                 logger.error('failed to load account info', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve account' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve account'));
             });
         });
     }
@@ -1033,17 +1021,7 @@ export const useAccountsStore = defineStore('accounts', () => {
             }).catch(error => {
                 logger.error('failed to save account', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    if (!isEdit) {
-                        reject({ message: 'Unable to add account' });
-                    } else {
-                        reject({ message: 'Unable to save account' });
-                    }
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, !isEdit ? 'Unable to add account' : 'Unable to save account'));
             });
         });
     }
@@ -1075,13 +1053,7 @@ export const useAccountsStore = defineStore('accounts', () => {
             }).catch(error => {
                 logger.error('failed to update last reconciled time', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to update last reconciled time' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to update last reconciled time'));
             });
         });
     }
@@ -1141,13 +1113,7 @@ export const useAccountsStore = defineStore('accounts', () => {
             }).catch(error => {
                 logger.error('failed to save accounts display order', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to move account' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to move account'));
             });
         });
     }
@@ -1176,17 +1142,7 @@ export const useAccountsStore = defineStore('accounts', () => {
             }).catch(error => {
                 logger.error('failed to change account visibility', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    if (hidden) {
-                        reject({ message: 'Unable to hide this account' });
-                    } else {
-                        reject({ message: 'Unable to unhide this account' });
-                    }
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, hidden ? 'Unable to hide this account' : 'Unable to unhide this account'));
             });
         });
     }
@@ -1217,13 +1173,7 @@ export const useAccountsStore = defineStore('accounts', () => {
             }).catch(error => {
                 logger.error('failed to delete account', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to delete this account' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to delete this account'));
             });
         });
     }
@@ -1254,13 +1204,7 @@ export const useAccountsStore = defineStore('accounts', () => {
             }).catch(error => {
                 logger.error('failed to delete sub-account', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to delete this sub-account' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to delete this sub-account'));
             });
         });
     }

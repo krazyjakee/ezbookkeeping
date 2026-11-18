@@ -24,7 +24,7 @@ func (c *NullContext) GetClientLocale() string {
 	return ""
 }
 
-// NewCronJobContext returns a new null context
+// NewNullContext returns a new null context
 func NewNullContext() *NullContext {
 	return &NullContext{
 		Context: context.Background(),

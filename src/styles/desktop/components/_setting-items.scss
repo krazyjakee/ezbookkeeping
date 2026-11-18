@@ -1,12 +1,180 @@
+/*
+ * Settings panels (§6.5): each section is a panel with a header strip (copper start tick, D3)
+ * and grouped rows. Rows are 52px minimum, divided by hairlines, with a neutral hover tint.
+ */
+.v-card.ebk-settings-panel {
+    border: 1px solid var(--ebk-color-hairline);
+    border-radius: var(--ebk-radius-panel);
+    background-color: var(--ebk-color-surface);
+    box-shadow: var(--ebk-elevation-1);
+}
+
+.ebk-settings-panel-header {
+    flex-wrap: wrap;
+    row-gap: var(--ebk-space-1);
+    padding-block: var(--ebk-space-1);
+    background-color: transparent;
+
+    .ebk-panel-header-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ebk-space-1);
+        color: var(--ebk-color-text-secondary);
+    }
+}
+
+.ebk-settings-panel-title {
+    margin: 0;
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+    letter-spacing: inherit;
+    color: var(--ebk-color-text-secondary);
+}
+
+.ebk-settings-panel-meta {
+    color: var(--ebk-color-text-secondary);
+    font-weight: 400;
+    letter-spacing: normal;
+}
+
+/* On / off state chip in a header strip: an icon plus a text label, never colour alone */
+.ebk-settings-status {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ebk-space-1);
+    min-height: 24px;
+    padding-inline: var(--ebk-space-2);
+    border: 1px solid var(--ebk-color-hairline);
+    border-radius: var(--ebk-radius-pill);
+    color: var(--ebk-color-text-secondary);
+    font-size: 0.75rem;
+    font-weight: 500;
+
+    &.ebk-settings-status--on {
+        border-color: var(--ebk-color-copper-line);
+        background-color: var(--ebk-color-selected-background);
+        color: var(--ebk-color-primary-text);
+    }
+}
+
+.ebk-settings-panel-note {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ebk-space-2);
+    color: var(--ebk-color-text-secondary);
+    font-size: 0.875rem;
+    line-height: 1.5;
+
+    .ebk-settings-panel-note-icon {
+        flex: 0 0 auto;
+        margin-block-start: 2px;
+    }
+}
+
+.ebk-settings-field-label {
+    display: block;
+    margin-block-end: var(--ebk-space-2);
+    color: var(--ebk-color-text-secondary);
+}
+
+/* Read-out (storage size and similar measured values) */
+.ebk-settings-readout {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--ebk-space-3);
+
+    .ebk-settings-readout-label {
+        color: var(--ebk-color-text-secondary);
+    }
+
+    .ebk-settings-readout-value {
+        color: var(--ebk-color-text-primary);
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+}
+
+/* Footer: status text at the start, actions after it (§4.4) */
+.v-card-text.ebk-settings-panel-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ebk-space-3);
+    padding: var(--ebk-space-3) var(--ebk-space-4);
+    border-block-start: 1px solid var(--ebk-color-hairline);
+    background-color: var(--ebk-color-surface-sunken);
+    border-end-start-radius: var(--ebk-radius-panel);
+    border-end-end-radius: var(--ebk-radius-panel);
+}
+
+.ebk-settings-panel-footer--sticky {
+    position: sticky;
+    z-index: var(--ebk-z-sticky);
+    inset-block-end: 0;
+}
+
+.ebk-settings-panel-footer-status {
+    margin-inline-end: auto;
+    color: var(--ebk-color-text-secondary);
+    font-size: 0.8125rem;
+}
+
+.ebk-settings-qrcode-frame {
+    display: inline-flex;
+    padding: var(--ebk-space-2);
+    border: 1px solid var(--ebk-color-hairline);
+    border-radius: var(--ebk-radius-control);
+    background-color: #fff;
+}
+
+/* Appearance selectors (theme and motion) */
+.ebk-settings-segmented {
+    flex-wrap: wrap;
+    height: auto !important;
+    min-height: 36px;
+    border: 1px solid var(--ebk-color-hairline);
+    border-radius: var(--ebk-radius-control) !important;
+    background-color: var(--ebk-color-surface-sunken);
+
+    .v-btn {
+        min-height: 34px;
+        text-transform: none;
+        letter-spacing: normal;
+    }
+
+    .v-btn.v-btn--active {
+        background-color: var(--ebk-color-primary);
+        color: var(--ebk-color-on-primary) !important;
+    }
+}
+
 .setting-items {
     .setting-item {
         display: flex;
         align-items: center;
-        margin-inline: 4px;
-        padding-inline: 12px;
-        padding-block: 6px;
-        border-radius: var(--ebk-radius-lg);
-        transition: background-color 0.15s ease-in-out;
+        min-height: 52px;
+        padding-inline: var(--ebk-space-4);
+        padding-block: var(--ebk-space-1);
+        border-block-end: 1px solid var(--ebk-color-hairline);
+        transition: background-color var(--ebk-motion-duration-xs) var(--ebk-motion-ease-standard);
+
+        > span:first-child {
+            min-width: 0;
+            color: var(--ebk-color-text-primary);
+            overflow-wrap: anywhere;
+        }
+
+        > .v-select,
+        > .v-autocomplete {
+            flex: 0 1 auto;
+            width: max-content;
+        }
+
+        > .v-autocomplete .v-autocomplete__selection {
+            max-width: calc(100% - 2px);
+        }
 
         &:hover,
         &:focus-within {
@@ -14,7 +182,43 @@
         }
 
         &:last-child {
-            margin-bottom: 6px;
+            border-block-end: 0;
         }
+
+        /* rows whose control can grow (multiple selections) wrap under the label on narrow widths */
+        &.setting-item--wrap {
+            flex-wrap: wrap;
+            column-gap: var(--ebk-space-4);
+            row-gap: var(--ebk-space-2);
+            padding-block: var(--ebk-space-2);
+        }
+    }
+}
+
+/* Row label with a secondary hint line under it */
+.ebk-settings-row-label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    color: var(--ebk-color-text-primary);
+    overflow-wrap: anywhere;
+
+    .ebk-settings-row-hint {
+        color: var(--ebk-color-text-secondary);
+        font-size: 0.75rem;
+        line-height: 1.4;
+    }
+}
+
+.ebk-settings-panel > .v-form > .v-card-text + .v-divider,
+.ebk-settings-panel > .v-form > .v-divider {
+    opacity: 1;
+    border-color: var(--ebk-color-hairline);
+}
+
+@media (forced-colors: active) {
+    .ebk-settings-status--on {
+        border-color: Highlight;
     }
 }

@@ -28,6 +28,13 @@ import { AccountBalanceTrendChartType, ChartDateAggregationType } from '@/core/s
 import { isArray } from '@/lib/common.ts';
 import { BIG_DECIMAL_POSITIVE_INFINITY, BIG_DECIMAL_NEGATIVE_INFINITY, parseBigDecimal } from '@/lib/numeral.ts';
 import { getExpenseAndIncomeAmountColor } from '@/lib/ui/common.ts';
+import { getChartAnimationOptions } from '@/lib/motion.ts';
+import {
+    getChartAxisLabelStyleOptions,
+    getChartAxisPointerLabelOptions,
+    getChartThemePalette,
+    getChartTooltipStyleOptions
+} from '@/components/base/ChartThemeBase.ts';
 
 interface DesktopAccountBalanceTrendsChartProps extends CommonAccountBalanceTrendsChartProps {
     legendName: string;
@@ -53,6 +60,7 @@ interface AccountBalanceTrendsChartDataItem {
     type: string;
     areaStyle?: object;
     smooth?: boolean;
+    barMaxWidth?: number;
     stack: string;
     animation: boolean;
     data: (string | string[])[]; // only used for echarts rendering, the actual value is in seriesOriginalData
@@ -92,7 +100,7 @@ const trendsChartData = computed<AccountBalanceTrendsChartData>(() => {
         selected: true,
         type: 'line',
         stack: 'a',
-        animation: !props.skeleton,
+        ...getChartAnimationOptions(!props.skeleton),
         data: []
     };
     const originalData: (BigDecimal | BigDecimal[])[] = [];
@@ -103,6 +111,7 @@ const trendsChartData = computed<AccountBalanceTrendsChartData>(() => {
         series.smooth = props.type === AccountBalanceTrendChartType.SmoothArea.type;
     } else if (props.type === AccountBalanceTrendChartType.Column.type) {
         series.type = 'bar';
+        series.barMaxWidth = 48;
     } else if (props.type === AccountBalanceTrendChartType.Boxplot.type) {
         series.type = 'boxplot';
         series.itemStyle.borderColor = series.itemStyle.color;
@@ -218,16 +227,9 @@ const chartOptions = computed<object>(() => {
             trigger: 'axis',
             axisPointer: {
                 type: 'cross',
-                label: {
-                    backgroundColor: isDarkMode.value ? '#333' : '#fff',
-                    color: isDarkMode.value ? '#eee' : '#333'
-                },
+                label: getChartAxisPointerLabelOptions(isDarkMode.value),
             },
-            backgroundColor: isDarkMode.value ? '#333' : '#fff',
-            borderColor: isDarkMode.value ? '#333' : '#fff',
-            textStyle: {
-                color: isDarkMode.value ? '#eee' : '#333'
-            },
+            ...getChartTooltipStyleOptions(isDarkMode.value),
             formatter: (params: CallbackDataParams[]) => {
                 const dataIndex = params[0]!.dataIndex;
                 const dataItem: AccountBalanceTrendsChartItem = allDataItems.value[dataIndex] as AccountBalanceTrendsChartItem;
@@ -305,7 +307,7 @@ const chartOptions = computed<object>(() => {
                     tooltip += '</tr>';
 
                     if (separatorLineIndex !== undefined && index === separatorLineIndex - 1) {
-                        tooltip += `<tr><td colspan="${totalColumnCount}" style="border-bottom: ${(isDarkMode.value ? '#eee' : '#333')} dashed 1px"></td></tr>`;
+                        tooltip += `<tr><td colspan="${totalColumnCount}" style="border-bottom: ${getChartThemePalette(isDarkMode.value).hairline} solid 1px"></td></tr>`;
                     }
                 }
 
@@ -325,7 +327,7 @@ const chartOptions = computed<object>(() => {
                 data: allDisplayDateRanges.value,
                 inverse: textDirection.value === TextDirection.RTL,
                 axisLabel: {
-                    color: isDarkMode.value ? '#888' : '#666'
+                    ...getChartAxisLabelStyleOptions(isDarkMode.value)
                 }
             }
         ],
@@ -333,7 +335,7 @@ const chartOptions = computed<object>(() => {
             {
                 type: 'value',
                 axisLabel: {
-                    color: isDarkMode.value ? '#888' : '#666',
+                    ...getChartAxisLabelStyleOptions(isDarkMode.value),
                     formatter: (value: number) => {
                         return formatAmountToLocalizedNumeralsWithCurrency(parseBigDecimal(value), props.account.currency);
                     }
@@ -347,7 +349,7 @@ const chartOptions = computed<object>(() => {
                 },
                 splitLine: {
                     lineStyle: {
-                        color: isDarkMode.value ? '#4f4f4f' : '#e1e6f2',
+                        color: getChartThemePalette(isDarkMode.value).gridLine,
                     }
                 }
             }

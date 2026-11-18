@@ -138,7 +138,7 @@ type Transaction struct {
 	RelatedAccountId     int64             `xorm:"NOT NULL"`
 	RelatedAccountAmount int64             `xorm:"NOT NULL"`
 	HideAmount           bool              `xorm:"NOT NULL"`
-	Comment              string            `xorm:"VARCHAR(255) NOT NULL"`
+	Comment              string            `xorm:"VARCHAR(1024) NOT NULL"`
 	GeoLongitude         float64           `xorm:"INDEX(IDX_transaction_uid_deleted_time_longitude_latitude)"`
 	GeoLatitude          float64           `xorm:"INDEX(IDX_transaction_uid_deleted_time_longitude_latitude)"`
 	CreatedIp            string            `xorm:"VARCHAR(39)"`
@@ -174,7 +174,7 @@ type TransactionCreateRequest struct {
 	HideAmount           bool                           `json:"hideAmount"`
 	TagIds               []string                       `json:"tagIds"`
 	PictureIds           []string                       `json:"pictureIds"`
-	Comment              string                         `json:"comment" binding:"max=255"`
+	Comment              string                         `json:"comment" binding:"max=1024"`
 	GeoLocation          *TransactionGeoLocationRequest `json:"geoLocation" binding:"omitempty"`
 	ClientSessionId      string                         `json:"clientSessionId"`
 }
@@ -193,8 +193,13 @@ type TransactionModifyRequest struct {
 	HideAmount           bool                           `json:"hideAmount"`
 	TagIds               []string                       `json:"tagIds"`
 	PictureIds           []string                       `json:"pictureIds"`
-	Comment              string                         `json:"comment" binding:"max=255"`
+	Comment              string                         `json:"comment" binding:"max=1024"`
 	GeoLocation          *TransactionGeoLocationRequest `json:"geoLocation" binding:"omitempty"`
+}
+
+// TransactionCreateBatchRequest represents all parameters of transaction creation batch request
+type TransactionCreateBatchRequest struct {
+	Transactions    []*TransactionCreateRequest `json:"transactions"`
 }
 
 // TransactionImportRequest represents all parameters of transaction import request

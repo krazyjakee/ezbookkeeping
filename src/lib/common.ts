@@ -151,6 +151,50 @@ export function isEquals<T>(obj1: T, obj2: T): boolean {
     }
 }
 
+export function isArrayEquals<T>(array1: T[], array2: T[], getItemKey: (item: T) => string, isItemEquals: (item1: T, item2: T) => boolean): boolean {
+    if (array1.length !== array2.length) {
+        return false;
+    }
+
+    const items2Map = new Map<string, T[]>();
+
+    for (const item of array2) {
+        const itemKey = getItemKey(item);
+        const items = items2Map.get(itemKey);
+
+        if (items) {
+            items.push(item);
+        } else {
+            items2Map.set(itemKey, [item]);
+        }
+    }
+
+    for (const item1 of array1) {
+        const items2 = items2Map.get(getItemKey(item1));
+
+        if (!items2 || !items2.length) {
+            return false;
+        }
+
+        let matchedIndex = -1;
+
+        for (let i = 0; i < items2.length; i++) {
+            if (isItemEquals(item1, items2[i]!)) {
+                matchedIndex = i;
+                break;
+            }
+        }
+
+        if (matchedIndex < 0) {
+            return false;
+        }
+
+        items2.splice(matchedIndex, 1);
+    }
+
+    return true;
+}
+
 export function isYearMonthEquals(val1: string, val2: string): boolean {
     const items1 = val1.split('-');
     const items2 = val2.split('-');
@@ -198,16 +242,6 @@ export function ofObject<T>(object: T): T {
     return object;
 }
 
-export function getNumberValue(value: unknown, defaultValue: number): number {
-    if (isString(value)) {
-        return parseInt(value, 10);
-    } else if (isNumber(value)) {
-        return value;
-    } else {
-        return defaultValue;
-    }
-}
-
 export function normalizeInteger(value: unknown, defaultValue: number, min: number, max: number): number {
     if (!isInteger(value)) {
         return defaultValue;
@@ -253,9 +287,7 @@ export function getObjectOwnFieldWithValueCount(object: object, value: unknown):
 }
 
 export function replaceAll(value: string, originalValue: string, targetValue: string): string {
-    // Escape special characters in originalValue to safely use it in a regex pattern.
-    // This ensures that characters like . (dot), * (asterisk), +, ?, etc. are treated literally,
-    // rather than as special regex symbols.
+    // escape regex metacharacters so originalValue matches literally
     const escapedOriginalValue = originalValue.replace(/([.*+?^=!:${}()|\-/\\])/g, '\\$1');
 
     return value.replace(new RegExp(escapedOriginalValue, 'g'), targetValue);
@@ -539,36 +571,6 @@ export function categorizedArrayToPlainArray<T>(object: Record<string, T[]>): T[
     }
 
     return ret;
-}
-
-export function selectAll(filterItemIds: Record<string, boolean>, allItemsMap: { [key: string]: { id: string } }): void {
-    for (const itemId of keys(filterItemIds)) {
-        const item = allItemsMap[itemId];
-
-        if (item) {
-            filterItemIds[item.id] = false;
-        }
-    }
-}
-
-export function selectNone(filterItemIds: Record<string, boolean>, allItemsMap: { [key: string]: { id: string } }): void {
-    for (const itemId of keys(filterItemIds)) {
-        const item = allItemsMap[itemId];
-
-        if (item) {
-            filterItemIds[item.id] = true;
-        }
-    }
-}
-
-export function selectInvert(filterItemIds: Record<string, boolean>, allItemsMap: { [key: string]: { id: string } }): void {
-    for (const itemId of keys(filterItemIds)) {
-        const item = allItemsMap[itemId];
-
-        if (item) {
-            filterItemIds[item.id] = !filterItemIds[item.id];
-        }
-    }
 }
 
 export function isPrimaryItemHasSecondaryValue(primaryItem: Record<string, Record<string, unknown>[]>, primarySubItemsField: string, secondaryValueField: string | undefined, secondaryHiddenField: string | undefined, secondaryValue: unknown): boolean {

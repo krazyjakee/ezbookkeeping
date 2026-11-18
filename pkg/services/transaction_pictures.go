@@ -3,15 +3,15 @@ package services
 import (
 	"io"
 	"mime/multipart"
+	"slices"
 	"time"
-
-	"xorm.io/xorm"
 
 	"github.com/mayswind/ezbookkeeping/pkg/core"
 	"github.com/mayswind/ezbookkeeping/pkg/datastore"
 	"github.com/mayswind/ezbookkeeping/pkg/errs"
 	"github.com/mayswind/ezbookkeeping/pkg/models"
 	"github.com/mayswind/ezbookkeeping/pkg/storage"
+	"github.com/mayswind/ezbookkeeping/pkg/utils"
 	"github.com/mayswind/ezbookkeeping/pkg/uuid"
 )
 
@@ -121,14 +121,19 @@ func (s *TransactionPictureService) GetPictureInfosByTransactionIds(c core.Conte
 	}
 
 	var pictureInfos []*models.TransactionPictureInfo
-	err := s.UserDataDB(uid).NewSession(c).Where("uid=? AND deleted=?", uid, false).In("transaction_id", transactionIds).OrderBy("picture_id asc").Find(&pictureInfos)
 
-	if err != nil {
-		return nil, err
+	for chunk := range slices.Chunk(utils.ToUniqueInt64Slice(transactionIds), transactionIdsQueryChunkSize) {
+		var chunkPictureInfos []*models.TransactionPictureInfo
+		err := s.UserDataDB(uid).NewSession(c).Where("uid=? AND deleted=?", uid, false).In("transaction_id", chunk).OrderBy("picture_id asc").Find(&chunkPictureInfos)
+
+		if err != nil {
+			return nil, err
+		}
+
+		pictureInfos = append(pictureInfos, chunkPictureInfos...)
 	}
 
-	pictureInfoMap := s.GetPictureInfoListMapByList(pictureInfos)
-	return pictureInfoMap, err
+	return s.GetPictureInfoListMapByList(pictureInfos), nil
 }
 
 // GetAllPictureInfosOfAllTransactions returns all transaction picture info models
@@ -221,7 +226,7 @@ func (s *TransactionPictureService) UploadPicture(c core.Context, pictureInfo *m
 		return err
 	}
 
-	return s.UserDataDB(pictureInfo.Uid).DoTransaction(c, func(sess *xorm.Session) error {
+	return s.UserDataDB(pictureInfo.Uid).DoTransaction(c, func(sess datastore.DatabaseSession) error {
 		_, err := sess.Insert(pictureInfo)
 		return err
 	})
@@ -244,7 +249,7 @@ func (s *TransactionPictureService) RemoveUnusedTransactionPicture(c core.Contex
 		DeletedUnixTime: now,
 	}
 
-	return s.UserDB().DoTransaction(c, func(sess *xorm.Session) error {
+	return s.UserDB().DoTransaction(c, func(sess datastore.DatabaseSession) error {
 		deletedRows, err := sess.ID(pictureId).Cols("deleted", "deleted_unix_time").Where("uid=? AND deleted=? AND transaction_id=?", uid, false, models.TransactionPictureNewPictureTransactionId).Update(updateModel)
 
 		if err != nil {
@@ -254,6 +259,39 @@ func (s *TransactionPictureService) RemoveUnusedTransactionPicture(c core.Contex
 		}
 
 		return err
+	})
+}
+
+// DetachPictureFromTransaction detaches the transaction picture from the specified transaction of specified user,
+// the picture becomes unused again (as it was just uploaded) and its file is kept, so it can be attached to another transaction or removed later
+func (s *TransactionPictureService) DetachPictureFromTransaction(c core.Context, uid int64, transactionId int64, pictureId int64) error {
+	if uid <= 0 {
+		return errs.ErrUserIdInvalid
+	}
+
+	if transactionId <= 0 {
+		return errs.ErrTransactionIdInvalid
+	}
+
+	if pictureId <= 0 {
+		return errs.ErrTransactionPictureIdInvalid
+	}
+
+	updateModel := &models.TransactionPictureInfo{
+		TransactionId:   models.TransactionPictureNewPictureTransactionId,
+		UpdatedUnixTime: time.Now().Unix(),
+	}
+
+	return s.UserDataDB(uid).DoTransaction(c, func(sess datastore.DatabaseSession) error {
+		updatedRows, err := sess.ID(pictureId).Cols("transaction_id", "updated_unix_time").Where("uid=? AND deleted=? AND transaction_id=?", uid, false, transactionId).Update(updateModel)
+
+		if err != nil {
+			return err
+		} else if updatedRows < 1 {
+			return errs.ErrTransactionPictureNotFound
+		}
+
+		return nil
 	})
 }
 

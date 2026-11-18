@@ -95,73 +95,66 @@
             </template>
 
             <template #subtitle>
-                <v-divider class="mt-2"/>
-                <div class="mt-2 mx-4">
-                    <div class="text-body-large text-wrap" v-if="!startTime && !endTime">
-                        <span>{{ tt('All') }}</span>
+                <section class="reconciliation-statement-summary" aria-labelledby="reconciliation-statement-period">
+                    <div class="reconciliation-statement-period ebk-technical-heading" id="reconciliation-statement-period">
+                        <span v-if="!startTime && !endTime">{{ tt('All') }}</span>
+                        <span v-if="startTime || endTime">{{ formatRange(displayStartDateTime, displayEndDateTime) }}</span>
+                        <span class="reconciliation-statement-currency">· {{ currentAccountCurrency }}</span>
                     </div>
-                    <div class="text-body-large text-wrap" v-if="startTime || endTime">
-                        <span>{{ formatRange(displayStartDateTime, displayEndDateTime) }}</span>
-                    </div>
-
-                    <div class="d-flex align-center mt-1 overflow-x-auto">
-                        <div class="d-flex align-center text-body-large">
-                            <span>{{ tt('Opening Balance') }}</span>
-                            <span class="text-primary" v-if="loading">
-                            <v-skeleton-loader class="skeleton-no-margin ms-2" type="text" style="width: 80px" :loading="true"></v-skeleton-loader>
-                        </span>
-                            <span class="text-primary ms-2" v-else-if="!loading">
-                            {{ displayOpeningBalance }}
-                            <v-tooltip activator="parent" v-if="currentAccountCurrency !== defaultCurrency">
-                                <span>{{ displayOpeningBalanceInDefaultCurrency }}</span>
-                            </v-tooltip>
-                        </span>
-                            <span class="ms-3">{{ tt('Closing Balance') }}</span>
-                            <span class="text-primary" v-if="loading">
-                            <v-skeleton-loader class="skeleton-no-margin ms-2" type="text" style="width: 80px" :loading="true"></v-skeleton-loader>
-                        </span>
-                            <span class="text-primary ms-2" v-else-if="!loading">
-                            {{ displayClosingBalance }}
-                            <v-tooltip activator="parent" v-if="currentAccountCurrency !== defaultCurrency">
-                                <span>{{ displayClosingBalanceInDefaultCurrency }}</span>
-                            </v-tooltip>
-                        </span>
+                    <dl class="reconciliation-statement-kpis">
+                        <div class="reconciliation-statement-kpi">
+                            <dt class="ebk-technical-heading">{{ tt('Opening Balance') }}</dt>
+                            <dd>
+                                <v-skeleton-loader class="skeleton-no-margin" type="text" style="width: 96px" :loading="true" v-if="loading"></v-skeleton-loader>
+                                <span class="ebk-numeric" v-else>
+                                    {{ displayOpeningBalance }}
+                                    <v-tooltip activator="parent" v-if="currentAccountCurrency !== defaultCurrency">{{ displayOpeningBalanceInDefaultCurrency }}</v-tooltip>
+                                </span>
+                            </dd>
                         </div>
-                        <v-spacer/>
-                        <div class="d-flex align-center text-body-large">
-                            <span class="ms-2">{{ tt('Total Inflows') }}</span>
-                            <span class="text-income" v-if="loading">
-                            <v-skeleton-loader class="skeleton-no-margin ms-2" type="text" style="width: 80px" :loading="true"></v-skeleton-loader>
-                        </span>
-                            <span class="text-income ms-2" v-else-if="!loading">
-                            {{ displayTotalInflows }}
-                            <v-tooltip activator="parent" v-if="currentAccountCurrency !== defaultCurrency">
-                                <span>{{ displayTotalInflowsInDefaultCurrency }}</span>
-                            </v-tooltip>
-                        </span>
-                            <span class="ms-3">{{ tt('Total Outflows') }}</span>
-                            <span class="text-expense" v-if="loading">
-                            <v-skeleton-loader class="skeleton-no-margin ms-2" type="text" style="width: 80px" :loading="true"></v-skeleton-loader>
-                        </span>
-                            <span class="text-expense ms-2" v-else-if="!loading">
-                            {{ displayTotalOutflows }}
-                            <v-tooltip activator="parent" v-if="currentAccountCurrency !== defaultCurrency">
-                                <span>{{ displayTotalOutflowsInDefaultCurrency }}</span>
-                            </v-tooltip>
-                        </span>
-                            <span class="ms-3">{{ tt('Net Cash Flow') }}</span>
-                            <span class="text-primary" v-if="loading">
-                            <v-skeleton-loader class="skeleton-no-margin ms-2" type="text" style="width: 80px" :loading="true"></v-skeleton-loader>
-                        </span>
-                            <span class="text-primary ms-2" v-else-if="!loading">
-                            {{ displayTotalBalance }}
-                            <v-tooltip activator="parent" v-if="currentAccountCurrency !== defaultCurrency">
-                                <span>{{ displayTotalBalanceInDefaultCurrency }}</span>
-                            </v-tooltip>
-                        </span>
+                        <div class="reconciliation-statement-kpi">
+                            <dt class="ebk-technical-heading"><span aria-hidden="true">↑ </span>{{ tt('Total Inflows') }}</dt>
+                            <dd>
+                                <v-skeleton-loader class="skeleton-no-margin" type="text" style="width: 96px" :loading="true" v-if="loading"></v-skeleton-loader>
+                                <span v-else>
+                                    <signed-amount :text="displayTotalInflows" :type="reconciliationStatements?.totalInflows?.isZero() === false ? 'income' : 'none'" />
+                                    <v-tooltip activator="parent" v-if="currentAccountCurrency !== defaultCurrency">{{ displayTotalInflowsInDefaultCurrency }}</v-tooltip>
+                                </span>
+                            </dd>
                         </div>
-                    </div>
-                </div>
+                        <div class="reconciliation-statement-kpi">
+                            <dt class="ebk-technical-heading"><span aria-hidden="true">↓ </span>{{ tt('Total Outflows') }}</dt>
+                            <dd>
+                                <v-skeleton-loader class="skeleton-no-margin" type="text" style="width: 96px" :loading="true" v-if="loading"></v-skeleton-loader>
+                                <span v-else>
+                                    <signed-amount :text="displayTotalOutflows" :type="reconciliationStatements?.totalOutflows?.isZero() === false ? 'expense' : 'none'" />
+                                    <v-tooltip activator="parent" v-if="currentAccountCurrency !== defaultCurrency">{{ displayTotalOutflowsInDefaultCurrency }}</v-tooltip>
+                                </span>
+                            </dd>
+                        </div>
+                        <div class="reconciliation-statement-kpi">
+                            <dt class="ebk-technical-heading">{{ tt('Net Cash Flow') }}</dt>
+                            <dd>
+                                <v-skeleton-loader class="skeleton-no-margin" type="text" style="width: 96px" :loading="true" v-if="loading"></v-skeleton-loader>
+                                <span v-else>
+                                    <signed-amount :text="displayAbsoluteTotalBalance" :type="netCashFlowAmountType" />
+                                    <v-tooltip activator="parent" v-if="currentAccountCurrency !== defaultCurrency">{{ displayTotalBalanceInDefaultCurrency }}</v-tooltip>
+                                </span>
+                            </dd>
+                        </div>
+                        <div class="reconciliation-statement-kpi">
+                            <dt class="ebk-technical-heading">{{ tt('Closing Balance') }}</dt>
+                            <dd>
+                                <v-skeleton-loader class="skeleton-no-margin" type="text" style="width: 96px" :loading="true" v-if="loading"></v-skeleton-loader>
+                                <span class="ebk-numeric reconciliation-statement-closing-balance" v-else>
+                                    {{ displayClosingBalance }}
+                                    <v-tooltip activator="parent" v-if="currentAccountCurrency !== defaultCurrency">{{ displayClosingBalanceInDefaultCurrency }}</v-tooltip>
+                                </span>
+                            </dd>
+                        </div>
+                    </dl>
+                    <p class="reconciliation-statement-summary-text" aria-live="polite" v-if="!loading && reconciliationStatements">{{ balanceMovementSummary }}</p>
+                </section>
             </template>
 
             <template #content>
@@ -211,7 +204,7 @@
                         </div>
                     </template>
                     <template #item.sourceAmount="{ item }">
-                        <span :class="{ 'text-expense': item.type === TransactionType.Expense, 'text-income': item.type === TransactionType.Income }">{{ getDisplaySourceAmount(item) }}</span>
+                        <signed-amount :text="getDisplaySourceAmount(item)" :type="getTransactionAmountType(item)" :hide-sign="item.hideAmount" />
                         <v-icon class="icon-with-direction mx-1" size="13" :icon="mdiArrowRight" v-if="item.type === TransactionType.Transfer && item.sourceAccountId !== item.destinationAccountId && getDisplaySourceAmount(item) !== getDisplayDestinationAmount(item)"></v-icon>
                         <span v-if="item.type === TransactionType.Transfer && item.sourceAccountId !== item.destinationAccountId && getDisplaySourceAmount(item) !== getDisplayDestinationAmount(item)">{{ getDisplayDestinationAmount(item) }}</span>
                         <v-tooltip activator="parent" v-if="!item.hideAmount && ((item.type !== TransactionType.Transfer && item.sourceAccount?.currency !== defaultCurrency) || (item.type === TransactionType.Transfer && item.sourceAccount?.currency !== defaultCurrency && item.destinationAccount?.currency !== defaultCurrency))">
@@ -244,9 +237,7 @@
                             <v-skeleton-loader class="skeleton-no-margin mt-3 mb-2" type="text" :loading="true"
                                                :key="idx" v-for="idx in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]"></v-skeleton-loader>
                         </div>
-                        <div class="my-5" v-else>
-                            {{ tt('No transaction data') }}
-                        </div>
+                        <state-panel class="my-4" type="empty" :title="tt('No transaction data')" v-else />
                     </template>
                     <template #bottom></template>
                 </v-data-table>
@@ -313,14 +304,13 @@
 
     <amount-input-dialog ref="amountInputDialog" />
     <edit-dialog ref="editDialog" :type="TransactionEditPageType.Transaction" />
-
-    <snack-bar ref="snackbar" />
 </template>
 
 <script setup lang="ts">
 import OneColumnDialogLayout from '@/components/desktop/OneColumnDialogLayout.vue';
+import SignedAmount from '@/components/common/SignedAmount.vue';
+import StatePanel from '@/components/common/StatePanel.vue';
 import PaginationButtons from '@/components/desktop/PaginationButtons.vue';
-import SnackBar from '@/components/desktop/SnackBar.vue';
 import AmountInputDialog from '@/components/desktop/AmountInputDialog.vue';
 import EditDialog from '@/views/desktop/transactions/list/dialogs/EditDialog.vue';
 import { TransactionEditPageType } from '@/views/base/transactions/TransactionEditPageBase.ts';
@@ -329,10 +319,12 @@ import { ref, computed, useTemplateRef, watch } from 'vue';
 
 import { useI18n } from '@/locales/helpers.ts';
 import { useReconciliationStatementPageBase } from '@/views/base/accounts/ReconciliationStatementPageBase.ts';
+import { useChartTextSummary } from '@/components/base/ChartSummaryBase.ts';
 
 import { useAccountsStore } from '@/stores/account.ts';
 import { useTransactionCategoriesStore } from '@/stores/transactionCategory.ts';
 import { useTransactionsStore } from '@/stores/transaction.ts';
+import { useDesktopPageStore } from '@/stores/desktopPage.ts';
 
 import type { NameNumeralValue } from '@/core/base.ts';
 import { type BigDecimal, DecimalSeparator } from '@/core/numeral.ts';
@@ -378,7 +370,6 @@ import {
 } from '@mdi/js';
 
 type OneColumnDialogLayoutType = InstanceType<typeof OneColumnDialogLayout>;
-type SnackBarType = InstanceType<typeof SnackBar>;
 type AmountInputDialogType = InstanceType<typeof AmountInputDialog>;
 type EditDialogType = InstanceType<typeof EditDialog>;
 
@@ -420,16 +411,18 @@ const {
     displayTotalInflowsInDefaultCurrency,
     displayTotalOutflows,
     displayTotalOutflowsInDefaultCurrency,
-    displayTotalBalance,
     displayTotalBalanceInDefaultCurrency,
     displayOpeningBalance,
     displayOpeningBalanceInDefaultCurrency,
     displayClosingBalance,
     displayClosingBalanceInDefaultCurrency,
+    netCashFlowAmountType,
+    displayAbsoluteTotalBalance,
     updatePageOpenTime,
     isReconciliationStatementsResponseEquals,
     setReconciliationStatements,
     getDisplayTransactionType,
+    getTransactionAmountType,
     getDisplayDateTime,
     isSameAsDefaultTimezoneOffsetMinutes,
     getDisplayTimezone,
@@ -440,9 +433,25 @@ const {
     getExportedData
 } = useReconciliationStatementPageBase();
 
+const { getBalanceMovementSummary } = useChartTextSummary();
+
 const accountsStore = useAccountsStore();
 const transactionCategoriesStore = useTransactionCategoriesStore();
 const transactionsStore = useTransactionsStore();
+const desktopPageStore = useDesktopPageStore();
+
+// one-sentence text summary of the statement (design guideline D7)
+const balanceMovementSummary = computed<string>(() => {
+    const totalInflows = reconciliationStatements.value?.totalInflows;
+    const totalOutflows = reconciliationStatements.value?.totalOutflows;
+
+    return getBalanceMovementSummary(
+        displayOpeningBalance.value,
+        displayClosingBalance.value,
+        totalInflows && !totalInflows.isZero() ? `+${displayTotalInflows.value}` : displayTotalInflows.value,
+        totalOutflows && !totalOutflows.isZero() ? `\u2212${displayTotalOutflows.value}` : displayTotalOutflows.value
+    );
+});
 
 const chartTypeIconMap = {
     [AccountBalanceTrendChartType.Column.type]: mdiChartBar,
@@ -470,7 +479,6 @@ let rejectFunc: ((reason?: unknown) => void) | null = null;
 
 const dialogLayout = useTemplateRef<OneColumnDialogLayoutType>('dialogLayout');
 const amountInputDialog = useTemplateRef<AmountInputDialogType>('amountInputDialog');
-const snackbar = useTemplateRef<SnackBarType>('snackbar');
 const editDialog = useTemplateRef<EditDialogType>('editDialog');
 
 const showState = ref<boolean>(false);
@@ -575,9 +583,9 @@ function reload(force: boolean): void {
     }).then(result => {
         if (force) {
             if (isReconciliationStatementsResponseEquals(result)) {
-                snackbar.value?.showMessage('Data is up to date');
+                desktopPageStore.addToast('Data is up to date');
             } else {
-                snackbar.value?.showMessage('Data has been updated');
+                desktopPageStore.addToast('Data has been updated');
             }
         }
 
@@ -587,7 +595,7 @@ function reload(force: boolean): void {
         loading.value = false;
 
         if (!error.processed) {
-            snackbar.value?.showError(error);
+            desktopPageStore.addErrorToast(error);
         }
     })
 }
@@ -597,13 +605,13 @@ function addTransaction(): void {
         accountId: accountId.value
     }).then(result => {
         if (result && result.message) {
-            snackbar.value?.showMessage(result.message);
+            desktopPageStore.addToast(result.message);
         }
 
         reload(false);
     }).catch(error => {
         if (error) {
-            snackbar.value?.showError(error);
+            desktopPageStore.addErrorToast(error);
         }
     });
 }
@@ -616,7 +624,7 @@ function updateClosingBalance(): void {
     }
 
     if (!currentClosingBalance.between(TRANSACTION_MIN_AMOUNT, TRANSACTION_MAX_AMOUNT)) {
-        snackbar.value?.showError('Numeric Overflow');
+        desktopPageStore.addErrorToast('Numeric Overflow');
         return;
     }
 
@@ -650,7 +658,7 @@ function updateClosingBalance(): void {
         }
 
         if (!newTransactionAmount.between(TRANSACTION_MIN_AMOUNT, TRANSACTION_MAX_AMOUNT)) {
-            snackbar.value?.showError('Numeric Overflow');
+            desktopPageStore.addErrorToast('Numeric Overflow');
             return;
         }
 
@@ -662,13 +670,13 @@ function updateClosingBalance(): void {
             noTransactionDraft: true
         }).then(result => {
             if (result && result.message) {
-                snackbar.value?.showMessage(result.message);
+                desktopPageStore.addToast(result.message);
             }
 
             reload(false);
         }).catch(error => {
             if (error) {
-                snackbar.value?.showError(error);
+                desktopPageStore.addErrorToast(error);
             }
         });
     });
@@ -693,13 +701,13 @@ function showTransaction(transaction: TransactionReconciliationStatementResponse
         currentTransaction: Transaction.of(transaction)
     }).then(result => {
         if (result && result.message) {
-            snackbar.value?.showMessage(result.message);
+            desktopPageStore.addToast(result.message);
         }
 
         reload(false);
     }).catch(error => {
         if (error) {
-            snackbar.value?.showError(error);
+            desktopPageStore.addErrorToast(error);
         }
     });
 }
@@ -714,13 +722,13 @@ function updateLastReconciledTime(): void {
 
     accountsStore.updateAccountLastReconciledTime(accountId.value, reconciledTime).then(() => {
         updatingLastReconciledTime.value = false;
-        snackbar.value?.showMessage('Last reconciled time have been updated');
+        desktopPageStore.addToast('Last reconciled time have been updated');
         emit('update:last-reconciled-time', reconciledTime);
     }).catch(error => {
         updatingLastReconciledTime.value = false;
 
         if (error) {
-            snackbar.value?.showError(error);
+            desktopPageStore.addErrorToast(error);
         }
     });
 }
@@ -779,5 +787,59 @@ defineExpose({
             min-height: 422px;
         }
     }
+}
+
+.reconciliation-statement-summary {
+    margin: var(--ebk-space-2) var(--ebk-space-4) 0;
+    padding-block-start: var(--ebk-space-2);
+    border-block-start: 1px solid var(--ebk-color-hairline);
+}
+
+.reconciliation-statement-period {
+    color: var(--ebk-color-text-secondary);
+    font-variant-numeric: tabular-nums;
+
+    > .reconciliation-statement-currency {
+        margin-inline-start: var(--ebk-space-1);
+    }
+}
+
+.reconciliation-statement-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    margin: var(--ebk-space-2) 0 0;
+    border: 1px solid var(--ebk-color-hairline);
+    border-radius: var(--ebk-radius-panel);
+    overflow: hidden;
+}
+
+.reconciliation-statement-kpi {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ebk-space-1);
+    min-width: 0;
+    padding: var(--ebk-space-2) var(--ebk-space-3);
+    border-inline-start: 1px solid var(--ebk-color-hairline);
+
+    &:first-child {
+        border-inline-start: 0;
+    }
+
+    > dt {
+        color: var(--ebk-color-text-secondary);
+    }
+
+    > dd {
+        margin: 0;
+        font-size: 1.125rem;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+}
+
+.reconciliation-statement-summary-text {
+    margin: var(--ebk-space-2) 0 0;
+    color: var(--ebk-color-text-secondary);
+    font-size: 0.875rem;
 }
 </style>

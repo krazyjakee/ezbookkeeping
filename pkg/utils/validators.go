@@ -1,6 +1,9 @@
 package utils
 
-import "regexp"
+import (
+	"regexp"
+	"strings"
+)
 
 var (
 	usernamePattern                    = regexp.MustCompile("^(?i)[a-z0-9_-]+$")
@@ -22,6 +25,40 @@ func IsValidUsername(username string) bool {
 // IsValidEmail reports whether email is valid
 func IsValidEmail(email string) bool {
 	return len(email) <= 100 && emailPattern.MatchString(email)
+}
+
+// IsEmailDomainAllowed reports whether the domain of the email is in the allowed domain list.
+// An empty allowed domain list allows all domains. A domain beginning with "*." also allows all its subdomains.
+func IsEmailDomainAllowed(email string, allowedDomains []string) bool {
+	if len(allowedDomains) < 1 {
+		return true
+	}
+
+	atIndex := strings.LastIndex(email, "@")
+
+	if atIndex < 0 || atIndex == len(email)-1 {
+		return false
+	}
+
+	emailDomain := strings.ToLower(strings.TrimSpace(email[atIndex+1:]))
+
+	for i := 0; i < len(allowedDomains); i++ {
+		allowedDomain := strings.ToLower(strings.TrimSpace(allowedDomains[i]))
+
+		if allowedDomain == "" {
+			continue
+		}
+
+		if strings.HasPrefix(allowedDomain, "*.") {
+			if strings.HasSuffix(emailDomain, allowedDomain[1:]) {
+				return true
+			}
+		} else if emailDomain == allowedDomain {
+			return true
+		}
+	}
+
+	return false
 }
 
 // IsValidNickName reports whether user nick name is valid

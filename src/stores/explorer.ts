@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue';
+import { ref, shallowRef, computed } from 'vue';
 import { defineStore } from 'pinia';
 
 import { useSettingsStore } from './setting.ts';
@@ -35,10 +35,10 @@ import {
 import {
     type InsightsExplorerNewDisplayOrderRequest,
     type InsightsExplorerInfoResponse,
-    type InsightsExplorerMatchContext,
     InsightsExplorer,
     InsightsExplorerBasicInfo
 } from '@/models/explorer.ts';
+import { type InsightsExplorerMatchContext } from '@/models/explorer_condition.ts';
 import {
     type CodingAssistantResponse,
     CodingAssistantType
@@ -58,9 +58,6 @@ import {
     parseBigDecimal
 } from '@/lib/numeral.ts';
 import {
-    min,
-    max,
-    mean,
     median,
     percentile,
     sumMaxN,
@@ -82,7 +79,9 @@ import {
     getFiscalYearFromUnixTime
 } from '@/lib/datetime.ts';
 import { generateRandomUUID } from '@/lib/misc.ts';
-import services, { type ApiResponsePromise } from '@/lib/services.ts';
+import { calculateAmountRanges } from '@/lib/explorer.ts';
+import { isTransactionsEquals } from '@/lib/transaction.ts';
+import services, { type ApiResponsePromise, toStoreError } from '@/lib/services.ts';
 import logger from '@/lib/logger.ts';
 
 export enum TransactionExplorerDimensionType {
@@ -223,180 +222,6 @@ export const useExplorersStore = defineStore('explorers', () => {
                 return cachedNormalizedDescription;
             }
         };
-    }
-
-    function calculateAmountRanges(sortedAmounts: BigDecimal[], dimension: TransactionExplorerDataDimension, rangeCount: number): BigDecimal[] {
-        const result: BigDecimal[] = [];
-
-        if (sortedAmounts.length < 1 || rangeCount <= 0) {
-            return result;
-        }
-
-        const minAmount = sortedAmounts[0] as BigDecimal;
-        const maxAmount = sortedAmounts[sortedAmounts.length - 1] as BigDecimal;
-        rangeCount = Math.min(rangeCount, sortedAmounts.length);
-
-        // [min1, max1), [min2, max2), ..., [minN, maxN]
-        if (dimension === TransactionExplorerDataDimension.SourceAmountRangeEqualFrequency
-            || dimension === TransactionExplorerDataDimension.DestinationAmountRangeEqualFrequency) {
-            for (let i = 0; i < rangeCount; i++) {
-                result.push(sortedAmounts[Math.floor(i * (sortedAmounts.length - 1) / rangeCount)] as BigDecimal);
-            }
-            result.push(maxAmount);
-        } else if (dimension === TransactionExplorerDataDimension.SourceAmountRangeEqualWidth
-            || dimension === TransactionExplorerDataDimension.DestinationAmountRangeEqualWidth) {
-            if (minAmount.equals(maxAmount)) {
-                return [minAmount, maxAmount];
-            }
-
-            const width: BigDecimal = maxAmount.subtract(minAmount).divide(rangeCount); // (maxAmount - minAmount) / rangeCount
-
-            for (let i = 0; i < rangeCount; i++) {
-                result.push(minAmount.add(width.multiply(i))); // minAmount + i * width
-            }
-            result.push(maxAmount);
-        } else if (dimension === TransactionExplorerDataDimension.SourceAmountRangeLogScale
-            || dimension === TransactionExplorerDataDimension.DestinationAmountRangeLogScale) {
-            const epsilon: number = 1e-9;
-
-            const transform = (x: BigDecimal): BigDecimal => {
-                if (x.isZero()) {
-                    return x;
-                }
-
-                return x.sign().multiply(x.abs().add(epsilon).log()); // sign(x) * log(abs(x) + epsilon)
-            };
-
-            const inverse = (y: BigDecimal): BigDecimal => {
-                if (y.isZero()) {
-                    return y;
-                }
-
-                return y.sign().multiply(y.abs().exp().subtract(epsilon)); // sign(y) * (exp(abs(y)) - epsilon)
-            };
-
-            const transformed: BigDecimal[] = sortedAmounts.map(transform).sort((a, b) => a.compareTo(b));
-
-            const tMin: BigDecimal = transformed[0] as BigDecimal;
-            const tMax: BigDecimal = transformed[transformed.length - 1] as BigDecimal;
-
-            if (tMin.equals(tMax)) {
-                return [minAmount, maxAmount];
-            }
-
-            const width: BigDecimal = tMax.subtract(tMin).divide(rangeCount); // (tMax - tMin) / rangeCount
-
-            result.push(minAmount);
-            for (let i = 1; i < rangeCount; i++) {
-                result.push(inverse(tMin.add(width.multiply(i)))); // inverse(tMin + i * width)
-            }
-            result.push(maxAmount);
-        } else if (dimension === TransactionExplorerDataDimension.SourceAmountRangeStandardDeviation
-            || dimension === TransactionExplorerDataDimension.DestinationAmountRangeStandardDeviation) {
-            if (minAmount.equals(maxAmount)) {
-                return [minAmount, maxAmount];
-            }
-
-            const averageAmountForVarianceCalculation: BigDecimal = mean(sortedAmounts, item => item).divide(AMOUNT_FACTOR);
-            const { standardDeviation } = varianceAndStandardDeviation(sortedAmounts, averageAmountForVarianceCalculation, item => item.divide(AMOUNT_FACTOR));
-
-            if (standardDeviation.isZero()) {
-                return [minAmount, maxAmount];
-            }
-
-            const rawBreaks: BigDecimal[] = [];
-            const halfCount = Math.floor(rangeCount / 2);
-
-            if (rangeCount % 2 === 1) {
-                for (let i = -halfCount; i <= halfCount; i++) {
-                    rawBreaks.push(averageAmountForVarianceCalculation.add(standardDeviation.multiply(i)).multiply(AMOUNT_FACTOR));
-                }
-            } else {
-                for (let i = -halfCount; i <= halfCount; i++) {
-                    if (i === 0) {
-                        continue;
-                    }
-                    rawBreaks.push(averageAmountForVarianceCalculation.add(standardDeviation.multiply(i - 0.5)).multiply(AMOUNT_FACTOR));
-                }
-                rawBreaks.sort((a, b) => a.compareTo(b));
-            }
-
-            const clipped = rawBreaks.map((v) => max(minAmount, min(maxAmount, v)))
-                .filter((v, i, arr) => i === 0 || v.notEquals(arr[i - 1]));
-
-            clipped[0] = minAmount;
-
-            if (clipped[clipped.length - 1]?.notEquals(maxAmount)) {
-                clipped.push(maxAmount);
-            }
-
-            return clipped;
-        } else if (dimension === TransactionExplorerDataDimension.SourceAmountRangeNaturalBreaks
-            || dimension === TransactionExplorerDataDimension.DestinationAmountRangeNaturalBreaks) {
-            if (minAmount.equals(maxAmount)) {
-                return [minAmount, maxAmount];
-            }
-
-            const n = sortedAmounts.length;
-            const k = Math.min(rangeCount, n);
-
-            const lowerClassLimits: number[][] = Array.from({ length: n + 1 }, () => new Array(k + 1).fill(0));
-            const varianceCombinations: BigDecimal[][] = Array.from({ length: n + 1 }, () => new Array(k + 1).fill(BIG_DECIMAL_POSITIVE_INFINITY));
-
-            for (let i = 1; i <= k; i++) {
-                lowerClassLimits[1]![i] = 1;
-                varianceCombinations[1]![i] = BIG_DECIMAL_ZERO;
-            }
-
-            for (let l = 2; l <= n; l++) {
-                let sumZ: BigDecimal = BIG_DECIMAL_ZERO;
-                let sumZ2: BigDecimal = BIG_DECIMAL_ZERO;
-
-                for (let m = 1; m <= l; m++) {
-                    const val = sortedAmounts[l - m] as BigDecimal;
-                    sumZ = sumZ.add(val);
-                    sumZ2 = sumZ2.add(val.pow(2));
-
-                    const variance = sumZ2.subtract(sumZ.pow(2).divide(m));
-
-
-                    if (m === l) {
-                        for (let j = 1; j <= k; j++) {
-                            if (variance.lessThan(varianceCombinations[l]![j]!)) {
-                                lowerClassLimits[l]![j] = 1;
-                                varianceCombinations[l]![j] = variance;
-                            }
-                        }
-                    } else {
-                        for (let j = 2; j <= k; j++) {
-                            const combined = varianceCombinations[l - m]![j - 1]!.add(variance);
-                            if (combined.lessThan(varianceCombinations[l]![j]!)) {
-                                lowerClassLimits[l]![j] = l - m + 1;
-                                varianceCombinations[l]![j] = combined;
-                            }
-                        }
-                    }
-                }
-            }
-
-            const breaks: BigDecimal[] = new Array(k + 1);
-            breaks[k] = maxAmount;
-
-            let currentK = k;
-            let currentIdx = n;
-
-            while (currentK >= 2) {
-                const lowerIdx = lowerClassLimits[currentIdx]![currentK]!;
-                breaks[currentK - 1] = sortedAmounts[lowerIdx - 1] as BigDecimal;
-                currentIdx = lowerIdx - 1;
-                currentK--;
-            }
-
-            breaks[0] = minAmount;
-            return breaks;
-        }
-
-        return result;
     }
 
     function getDataCategoryInfo(timezoneUsedForDateRange: number, dimension: TransactionExplorerDataDimension, sourceAmountRanges: BigDecimal[] | undefined, destinationAmountRanges: BigDecimal[] | undefined, queryName: string, queryIndex: number, transaction: TransactionInsightDataItem): CategoriedInfo {
@@ -932,7 +757,7 @@ export const useExplorersStore = defineStore('explorers', () => {
         endTime: 0
     });
 
-    const transactionExplorerAllData = ref<TransactionInfoResponse[]>([]);
+    const transactionExplorerAllData = shallowRef<TransactionInfoResponse[]>([]);
     const transactionExplorerStateInvalid = ref<boolean>(true);
 
     const allExplorationBasicInfos = ref<InsightsExplorerBasicInfo[]>([]);
@@ -1680,7 +1505,7 @@ export const useExplorersStore = defineStore('explorers', () => {
                     updateTransactionExplorerInvalidState(false);
                 }
 
-                if (force && data.result && isEquals(transactionExplorerAllData.value, data.result)) {
+                if (force && data.result && isTransactionsEquals(transactionExplorerAllData.value, data.result)) {
                     reject({ message: 'Data is up to date', isUpToDate: true });
                     return;
                 }
@@ -1691,13 +1516,7 @@ export const useExplorersStore = defineStore('explorers', () => {
             }).catch(error => {
                 logger.error('failed to load all transactions', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve all transactions' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve all transactions'));
             });
         });
     }
@@ -1739,13 +1558,7 @@ export const useExplorersStore = defineStore('explorers', () => {
                     logger.error('failed to load exploration list', error);
                 }
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve exploration list' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve exploration list'));
             });
         });
     }
@@ -1762,19 +1575,13 @@ export const useExplorersStore = defineStore('explorers', () => {
                     return;
                 }
 
-                const transactionCategory = InsightsExplorer.of(data.result);
+                const insightsExplorer = InsightsExplorer.of(data.result);
 
-                resolve(transactionCategory);
+                resolve(insightsExplorer);
             }).catch(error => {
                 logger.error('failed to load exploration info', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve exploration' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve exploration'));
             });
         });
     }
@@ -1813,17 +1620,7 @@ export const useExplorersStore = defineStore('explorers', () => {
             }).catch(error => {
                 logger.error('failed to save exploration', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    if (!exploration.id) {
-                        reject({ message: 'Unable to add exploration' });
-                    } else {
-                        reject({ message: 'Unable to save exploration' });
-                    }
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, !exploration.id ? 'Unable to add exploration' : 'Unable to save exploration'));
             });
         });
     }
@@ -1885,13 +1682,7 @@ export const useExplorersStore = defineStore('explorers', () => {
             }).catch(error => {
                 logger.error('failed to save explorations display order', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to move exploration' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to move exploration'));
             });
         });
     }
@@ -1920,17 +1711,7 @@ export const useExplorersStore = defineStore('explorers', () => {
             }).catch(error => {
                 logger.error('failed to change exploration visibility', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    if (hidden) {
-                        reject({ message: 'Unable to hide this exploration' });
-                    } else {
-                        reject({ message: 'Unable to unhide this exploration' });
-                    }
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, hidden ? 'Unable to hide this exploration' : 'Unable to unhide this exploration'));
             });
         });
     }
@@ -1959,13 +1740,7 @@ export const useExplorersStore = defineStore('explorers', () => {
             }).catch(error => {
                 logger.error('failed to delete exploration', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to delete this exploration' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to delete this exploration'));
             });
         });
     }
@@ -1992,13 +1767,7 @@ export const useExplorersStore = defineStore('explorers', () => {
 
                 logger.error('failed to generate code', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to generate code' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to generate code'));
             });
         });
     }

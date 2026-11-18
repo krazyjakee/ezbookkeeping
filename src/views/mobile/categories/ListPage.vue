@@ -23,21 +23,29 @@
             </f7-list-item>
         </f7-list>
 
-        <f7-list strong inset dividers class="margin-top-half" v-if="!loading && noAvailableCategory">
-            <f7-list-item :title="tt('No available category')"></f7-list-item>
-            <f7-list-button v-if="hasSubCategories && noCategory"
-                            :title="tt('Add Default Categories')"
-                            :href="'/category/preset?type=' + categoryType"></f7-list-button>
-        </f7-list>
+        <f7-block-title class="ebk-m-section-title ebk-technical-heading category-list-parent"
+                        v-if="!hasSubCategories && currentPrimaryCategory">
+            <ItemIcon size="18px" :icon-type="getCategoryIconType(currentPrimaryCategory.iconType)" :icon-id="currentPrimaryCategory.icon" :color="currentPrimaryCategory.color" />
+            <span>{{ currentPrimaryCategory.name }}</span>
+        </f7-block-title>
+
+        <div class="margin-horizontal margin-top-half" v-if="!loading && noAvailableCategory">
+            <state-panel type="empty" :title="tt('No available category')">
+                <template #actions>
+                    <f7-button outline :href="'/category/preset?type=' + categoryType"
+                               v-if="hasSubCategories && noCategory">{{ tt('Add Default Categories') }}</f7-button>
+                </template>
+            </state-panel>
+        </div>
 
         <f7-list strong inset dividers sortable class="margin-top-half category-list"
+                 :class="{ 'ebk-m-child-list': !hasSubCategories && currentPrimaryCategory }"
                  :sortable-enabled="sortable"
                  v-if="!loading"
                  @sortable:sort="onSort">
             <f7-list-item swipeout
-                          :class="{ 'actual-first-child': category.id === firstShowingId, 'actual-last-child': category.id === lastShowingId }"
+                          :class="{ 'actual-first-child': category.id === firstShowingId, 'actual-last-child': category.id === lastShowingId, 'ebk-m-row-hidden': category.hidden }"
                           :id="getCategoryDomId(category)"
-                          :title="category.name"
                           :footer="category.comment"
                           :link="hasSubCategories ? '/category/list?type=' + categoryType + '&id=' + category.id : null"
                           :key="category.id"
@@ -45,11 +53,25 @@
                           v-show="showHidden || !category.hidden"
                           @taphold="setSortable()">
                 <template #media>
-                    <ItemIcon :icon-type="getCategoryIconType(category.iconType)" :icon-id="category.icon" :color="category.color">
-                        <f7-badge color="gray" class="right-bottom-icon" v-if="category.hidden">
-                            <f7-icon f7="eye_slash_fill"></f7-icon>
-                        </f7-badge>
-                    </ItemIcon>
+                    <ItemIcon :icon-type="getCategoryIconType(category.iconType)" :icon-id="category.icon" :color="category.color" />
+                </template>
+                <template #title>
+                    <span class="ebk-m-title-line">
+                        <span class="ebk-m-title-text ebk-m-dimmable">{{ category.name }}</span>
+                        <span class="ebk-m-hidden-chip" v-if="category.hidden">{{ tt('Hidden') }}</span>
+                    </span>
+                </template>
+                <template #after v-if="sortable">
+                    <span class="ebk-m-move-buttons">
+                        <f7-link :class="{ 'disabled': displayOrderSaving || !canMoveCategory(category, -1) }"
+                                 :aria-label="tt('Move Up')" @click.stop.prevent="moveCategory(category, -1)">
+                            <f7-icon f7="arrow_up"></f7-icon>
+                        </f7-link>
+                        <f7-link :class="{ 'disabled': displayOrderSaving || !canMoveCategory(category, 1) }"
+                                 :aria-label="tt('Move Down')" @click.stop.prevent="moveCategory(category, 1)">
+                            <f7-icon f7="arrow_down"></f7-icon>
+                        </f7-link>
+                    </span>
                 </template>
                 <f7-swipeout-actions :left="textDirection === TextDirection.LTR"
                                      :right="textDirection === TextDirection.RTL"
@@ -96,6 +118,8 @@
 </template>
 
 <script setup lang="ts">
+import StatePanel from '@/components/common/StatePanel.vue';
+
 import { ref, computed } from 'vue';
 import type { Router } from 'framework7/types';
 
@@ -389,6 +413,46 @@ function cancelSort(): void {
     });
 }
 
+function getAdjacentVisibleCategoryIndex(category: TransactionCategory, direction: number): { from: number, to: number } | null {
+    const list = categories.value;
+    const from = list.findIndex(item => item.id === category.id);
+
+    if (from < 0) {
+        return null;
+    }
+
+    for (let to = from + direction; to >= 0 && to < list.length; to += direction) {
+        if (showHidden.value || !list[to]!.hidden) {
+            return { from, to };
+        }
+    }
+
+    return null;
+}
+
+function canMoveCategory(category: TransactionCategory, direction: number): boolean {
+    return !!getAdjacentVisibleCategoryIndex(category, direction);
+}
+
+// non-drag alternative to the sort handle (guidelines §6.4), uses the same display order update as dragging
+function moveCategory(category: TransactionCategory, direction: number): void {
+    const position = getAdjacentVisibleCategoryIndex(category, direction);
+
+    if (!position) {
+        return;
+    }
+
+    transactionCategoriesStore.changeCategoryDisplayOrder({
+        categoryId: category.id,
+        from: position.from,
+        to: position.to
+    }).then(() => {
+        displayOrderModified.value = true;
+    }).catch(error => {
+        showToast(error.message || error);
+    });
+}
+
 function onSort(event: { el: { id: string }; from: number; to: number }): void {
     if (!event || !event.el || !event.el.id) {
         showToast('Unable to move category');
@@ -431,5 +495,27 @@ init();
 
 .category-list .item-footer {
     padding-top: 4px;
+}
+
+.category-list-parent.block-title {
+    display: flex;
+    align-items: center;
+    gap: var(--ebk-space-2);
+    margin-block-end: 0;
+}
+
+/* secondary categories sit indented under their primary category with a hairline guide */
+.category-list.ebk-m-child-list {
+    position: relative;
+    margin-inline-start: calc(var(--f7-list-inset-side-margin) + 14px);
+
+    &::before {
+        content: "";
+        position: absolute;
+        inset-block: 0 50%;
+        inset-inline-start: -8px;
+        border-inline-start: 1px solid var(--ebk-color-hairline);
+        pointer-events: none;
+    }
 }
 </style>

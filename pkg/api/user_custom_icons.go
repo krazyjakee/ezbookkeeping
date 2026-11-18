@@ -24,8 +24,9 @@ const (
 type UserCustomIconsApi struct {
 	ApiUsingConfig
 	ApiUsingDuplicateChecker
-	icons *services.UserCustomIconService
-	users *services.UserService
+	icons  *services.UserCustomIconService
+	users  *services.UserService
+	tokens *services.TokenService
 }
 
 // Initialize a user custom icons api singleton instance
@@ -38,10 +39,11 @@ var (
 			ApiUsingConfig: ApiUsingConfig{
 				container: settings.Container,
 			},
-			container: duplicatechecker.Container,
+			duplicateChecker: duplicatechecker.Container,
 		},
-		icons: services.UserCustomIcons,
-		users: services.Users,
+		icons:  services.UserCustomIcons,
+		users:  services.Users,
+		tokens: services.Tokens,
 	}
 )
 
@@ -55,15 +57,25 @@ func (a *UserCustomIconsApi) CustomIconListHandler(c *core.WebContext) (any, *er
 		return nil, errs.Or(err, errs.ErrOperationFailed)
 	}
 
+	iconToken, expiresAt, err := a.getUserCustomIconToken(c, uid)
+
+	if err != nil {
+		log.Errorf(c, "[user_custom_icons.CustomIconListHandler] failed to get custom icon token for user \"uid:%d\", because %s", uid, err.Error())
+		return nil, errs.Or(err, errs.ErrTokenGenerating)
+	}
+
 	customIconResps := make(models.UserCustomIconInfoResponseSlice, len(customIcons))
 
 	for i := 0; i < len(customIcons); i++ {
-		customIconResps[i] = customIcons[i].ToUserCustomIconInfoResponse()
+		customIconResps[i] = a.GetUserCustomIconInfoResponse(customIcons[i], iconToken)
 	}
 
 	sort.Sort(customIconResps)
 
-	return customIconResps, nil
+	return &models.UserCustomIconListResponse{
+		Items:     customIconResps,
+		ExpiresAt: expiresAt,
+	}, nil
 }
 
 // CustomIconUploadHandler saves a new custom icon for current user
@@ -120,30 +132,27 @@ func (a *UserCustomIconsApi) CustomIconUploadHandler(c *core.WebContext) (any, *
 		log.Errorf(c, "[user_custom_icons.CustomIconUploadHandler] failed to get custom icon file from request for user \"uid:%d\", because %s", uid, err.Error())
 		return nil, errs.ErrOperationFailed
 	}
+	defer customIconFile.Close()
 
 	imageConfig, imageFormat, err := image.DecodeConfig(customIconFile)
 
 	if err != nil {
 		log.Errorf(c, "[user_custom_icons.CustomIconUploadHandler] failed to decode custom icon image config for user \"uid:%d\", because %s", uid, err.Error())
-		_ = customIconFile.Close()
 		return nil, errs.ErrImageTypeNotSupported
 	}
 
 	if imageFormat != models.UserCustomIconFileExtension {
 		log.Warnf(c, "[user_custom_icons.CustomIconUploadHandler] unsupported custom icon image format \"%s\" for user \"uid:%d\"", imageFormat, uid)
-		_ = customIconFile.Close()
 		return nil, errs.ErrUserCustomIconExtensionInvalid
 	}
 
 	if imageConfig.Width < 1 || imageConfig.Height < 1 || imageConfig.Width > maximumUserCustomIconPixels || imageConfig.Height > maximumUserCustomIconPixels {
 		log.Warnf(c, "[user_custom_icons.CustomIconUploadHandler] invalid custom icon image dimensions \"%dx%d\" for user \"uid:%d\"", imageConfig.Width, imageConfig.Height, uid)
-		_ = customIconFile.Close()
 		return nil, errs.ErrUserCustomIconDimensionsInvalid
 	}
 
 	if _, err = customIconFile.Seek(0, 0); err != nil {
 		log.Errorf(c, "[user_custom_icons.CustomIconUploadHandler] failed to seek to the beginning of custom icon file for user \"uid:%d\", because %s", uid, err.Error())
-		_ = customIconFile.Close()
 		return nil, errs.ErrOperationFailed
 	}
 
@@ -181,7 +190,14 @@ func (a *UserCustomIconsApi) CustomIconUploadHandler(c *core.WebContext) (any, *
 					return nil, errs.Or(err, errs.ErrOperationFailed)
 				}
 
-				customIconResp := customIconInfo.ToUserCustomIconInfoResponse()
+				iconToken, _, err := a.getUserCustomIconToken(c, uid)
+
+				if err != nil {
+					log.Errorf(c, "[user_custom_icons.CustomIconUploadHandler] failed to get custom icon token for user \"uid:%d\", because %s", uid, err.Error())
+					return nil, errs.Or(err, errs.ErrTokenGenerating)
+				}
+
+				customIconResp := a.GetUserCustomIconInfoResponse(customIconInfo, iconToken)
 
 				return customIconResp, nil
 			}
@@ -196,7 +212,14 @@ func (a *UserCustomIconsApi) CustomIconUploadHandler(c *core.WebContext) (any, *
 	}
 
 	a.SetSubmissionRemarkIfEnable(duplicatechecker.DUPLICATE_CHECKER_TYPE_NEW_CUSTOM_ICON, uid, clientSessionId, utils.Int64ToString(customIconInfo.IconId))
-	customIconResp := customIconInfo.ToUserCustomIconInfoResponse()
+	iconToken, _, err := a.getUserCustomIconToken(c, uid)
+
+	if err != nil {
+		log.Errorf(c, "[user_custom_icons.CustomIconUploadHandler] failed to get custom icon token for user \"uid:%d\", because %s", uid, err.Error())
+		return nil, errs.Or(err, errs.ErrTokenGenerating)
+	}
+
+	customIconResp := a.GetUserCustomIconInfoResponse(customIconInfo, iconToken)
 
 	return customIconResp, nil
 }
@@ -299,4 +322,26 @@ func (a *UserCustomIconsApi) CustomIconDeleteHandler(c *core.WebContext) (any, *
 
 	log.Infof(c, "[user_custom_icons.CustomIconDeleteHandler] user \"uid:%d\" has deleted custom icon \"id:%d\"", uid, iconDeleteReq.Id)
 	return true, nil
+}
+
+func (a *UserCustomIconsApi) getUserCustomIconToken(c *core.WebContext, uid int64) (string, int64, error) {
+	claims := c.GetTokenClaims()
+
+	if claims == nil {
+		log.Warnf(c, "[user_custom_icons.getUserCustomIconToken] token is invalid, because claims is nil")
+		return "", 0, errs.ErrInvalidToken
+	}
+
+	if claims.Type != core.USER_TOKEN_TYPE_NORMAL {
+		return "", 0, nil
+	}
+
+	iconToken, expiresAt, err := a.tokens.DeriveUserCustomIconToken(c, claims, c.GetTokenRecord())
+
+	if err != nil {
+		log.Errorf(c, "[user_custom_icons.getUserCustomIconToken] failed to derive custom icon token for user \"uid:%d\", because %s", uid, err.Error())
+		return "", 0, errs.Or(err, errs.ErrTokenGenerating)
+	}
+
+	return iconToken, expiresAt, nil
 }

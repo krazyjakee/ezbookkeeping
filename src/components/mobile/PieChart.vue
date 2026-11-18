@@ -19,13 +19,11 @@
 
             <circle class="pie-chart-text-background"
                     cx="0" cy="0"
-                    stroke="#ddd"
-                    :style="{ '--pie-chart-text-background': centerTextBackground ? centerTextBackground : '#7f2020' }"
+                    :style="centerTextBackground ? { '--pie-chart-text-background': centerTextBackground } : undefined"
                     :r="diameter / 2.5"
                     v-if="showCenterText"/>
 
-            <circle cx="0" cy="0"
-                    stroke="#ddd"
+            <circle class="pie-chart-text-border" cx="0" cy="0"
                     fill="transparent"
                     :r="diameter / 2.5"
                     v-if="showCenterText"/>
@@ -40,7 +38,7 @@
         </svg>
         <div class="pie-chart-toolbox-container padding-horizontal" v-if="showSelectedItemInfo">
             <div class="pie-chart-toolbox">
-                <f7-link class="pie-chart-toolbox-button" :class="{ 'disabled': !!skeleton || !validItems || validItems.length <= 1 }" @click="switchSelectedItem(1)">
+                <f7-link class="pie-chart-toolbox-button" :class="{ 'disabled': !!skeleton || !validItems || validItems.length <= 1 }" :aria-label="tt('Previous')" @click="switchSelectedItem(1)">
                     <f7-icon class="icon-with-direction" f7="arrow_left"></f7-icon>
                 </f7-link>
 
@@ -51,7 +49,7 @@
                         </f7-chip>
                         <f7-chip outline
                                  :text="selectedItem.displayPercent"
-                                 :style="getColorStyle(selectedItem?.color, '--f7-chip-outline-border-color')"
+                                 :style="{ '--f7-chip-outline-border-color': selectedItem?.color }"
                                  v-else-if="!skeleton"></f7-chip>
                     </p>
                     <p v-else-if="showPercent && (!validItems || !validItems.length || !selectedItem || selectedItem.value < 0)">
@@ -61,7 +59,7 @@
                         <span class="skeleton-text" v-if="skeleton">Name</span>
                         <span v-else-if="!skeleton && selectedItem.displayName">{{ selectedItem.displayName }}</span>
                         <span class="skeleton-text" v-if="skeleton">Value</span>
-                        <span v-else-if="!skeleton && showValue" :style="getColorStyle(selectedItem?.color)">{{ selectedItem.displayValue }}</span>
+                        <span v-else-if="!skeleton && showValue"><i class="pie-chart-value-swatch" aria-hidden="true" :style="{ backgroundColor: selectedItem?.color }"></i>{{ selectedItem.displayValue }}</span>
                         <f7-icon class="item-navigate-icon icon-with-direction" f7="chevron_right" v-if="enableClickItem"></f7-icon>
                     </f7-link>
                     <f7-link :no-link-class="true" v-else-if="!validItems || !validItems.length">
@@ -69,7 +67,7 @@
                     </f7-link>
                 </div>
 
-                <f7-link class="pie-chart-toolbox-button" :class="{ 'disabled': !!skeleton || !validItems || validItems.length <= 1 }" @click="switchSelectedItem(-1)">
+                <f7-link class="pie-chart-toolbox-button" :class="{ 'disabled': !!skeleton || !validItems || validItems.length <= 1 }" :aria-label="tt('Next')" @click="switchSelectedItem(-1)">
                     <f7-icon class="icon-with-direction" f7="arrow_right"></f7-icon>
                 </f7-link>
             </div>
@@ -147,18 +145,6 @@ const itemCommonDashOffset = computed<number>(() => {
 
     return offset;
 });
-
-function getColorStyle(color: ColorStyleValue, additionalFieldName?: string): Record<string, string> {
-    const ret: Record<string, string> = {
-        color: color
-    };
-
-    if (additionalFieldName) {
-        ret[additionalFieldName] = color;
-    }
-
-    return ret;
-}
 
 function getItemStrokeDash(item: CommonPieChartDataItem): string {
     const length = item.paintPercent * circumference;
@@ -266,6 +252,21 @@ function clickItem(item: CommonPieChartDataItem): void {
     padding-inline-start: 8px;
 }
 
+.pie-chart-value-swatch {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-inline-end: 6px;
+    border-radius: 50%;
+    vertical-align: middle;
+}
+
+@media (forced-colors: active) {
+    .pie-chart-value-swatch {
+        forced-color-adjust: none;
+    }
+}
+
 .pie-chart-toolbox-info .item-navigate-icon {
     color: var(--ebk-chevron-icon-color);
     font-size: 18px;
@@ -287,16 +288,21 @@ function clickItem(item: CommonPieChartDataItem): void {
 }
 
 .pie-chart-background {
-    fill: #f0f0f0;
+    fill: var(--ebk-color-surface-sunken);
 }
 
-.dark .pie-chart-background {
-    fill: #181818;
-}
-
+/* the center of the donut is the panel surface with the total and its label (design guideline §4.5) */
 .pie-chart-text-background {
-    --pie-chart-text-background: #7f2020;
+    --pie-chart-text-background: var(--ebk-color-surface);
     fill: var(--pie-chart-text-background);
+}
+
+.pie-chart-text-border {
+    stroke: var(--ebk-color-hairline);
+}
+
+.pie-chart-item {
+    stroke-linecap: butt;
 }
 
 .pie-chart-text-group {

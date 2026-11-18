@@ -15,8 +15,9 @@ import { type BigDecimal } from '@/core/numeral.ts';
 import { type TextualYearMonth, DateRange } from '@/core/datetime.ts';
 import { KeywordMatchMode } from '@/core/text.ts';
 import { CategoryType } from '@/core/category.ts';
-import type { ImportFileTypeSupportedAdditionalOptions } from '@/core/file.ts';
 import { TransactionType, TransactionTagFilterType } from '@/core/transaction.ts';
+import type { ImportFileTypeSupportedAdditionalOptions } from '@/core/import_transaction.ts';
+
 import { TRANSACTION_MIN_AMOUNT, TRANSACTION_MAX_AMOUNT } from '@/consts/transaction.ts';
 import { KnownErrorCode } from '@/consts/api.ts';
 
@@ -63,7 +64,9 @@ import { parseDateTimeFromUnixTimeWithTimezoneOffset } from '@/lib/datetime.ts';
 import { BIG_DECIMAL_ZERO, parseBigDecimal, getAmountWithDecimalNumberCount } from '@/lib/numeral.ts';
 import { getCurrencyFraction } from '@/lib/currency.ts';
 import { getFirstVisibleCategoryId } from '@/lib/category.ts';
-import services, { type ApiResponsePromise } from '@/lib/services.ts';
+import { clearTransactionPictureCache, deleteTransactionPictureCacheEntries } from '@/lib/cache.ts';
+import { isTransactionsEquals } from '@/lib/transaction.ts';
+import services, { type ApiResponsePromise, toStoreError } from '@/lib/services.ts';
 import logger from '@/lib/logger.ts';
 
 export interface TransactionListPartialFilter {
@@ -115,6 +118,11 @@ export interface TransactionMonthList {
     readonly inflowOutflowDailyTotalAmounts: Record<string, TransactionTotalAmount>;
     readonly incomeExpenseTotalAmount: TransactionTotalAmount;
     readonly incomeExpenseDailyTotalAmounts: Record<string, TransactionTotalAmount>;
+}
+
+export interface TransactionListResult {
+    readonly isUpToDate: boolean;
+    readonly result: TransactionPageWrapper;
 }
 
 export const useTransactionsStore = defineStore('transactions', () => {
@@ -191,6 +199,20 @@ export const useTransactionsStore = defineStore('transactions', () => {
     const hasMoreTransaction = computed<boolean>(() => {
         return transactionsNextTimeId.value > 0;
     });
+
+    function getTransactionListForComparison(): Transaction[] {
+        return transactions.value.flatMap(transactionMonth => transactionMonth.items).sort((transaction1, transaction2) => {
+            if (transaction1.time !== transaction2.time) {
+                return transaction2.time - transaction1.time;
+            }
+
+            if (transaction1.id.length !== transaction2.id.length) {
+                return transaction2.id.length - transaction1.id.length;
+            }
+
+            return transaction1.id === transaction2.id ? 0 : transaction1.id < transaction2.id ? 1 : -1;
+        });
+    }
 
     function loadTransactionList({ transactionPageWrapper, reload, autoExpand, defaultCurrency, nextTimeSequenceId }: { transactionPageWrapper: TransactionPageWrapper, reload: boolean, autoExpand: boolean, defaultCurrency: string, nextTimeSequenceId?: number }): void {
         if (reload) {
@@ -967,7 +989,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
         };
     }
 
-    function loadTransactions({ reload, count, page, mustHavePictures, withCount, withPictures, autoExpand, defaultCurrency }: { reload?: boolean, count?: number, page?: number, mustHavePictures?: boolean, withCount?: boolean, withPictures?: boolean, autoExpand: boolean, defaultCurrency: string }): Promise<TransactionPageWrapper> {
+    function loadTransactions({ reload, force, count, page, mustHavePictures, withCount, withPictures, autoExpand, defaultCurrency }: { reload?: boolean, force?: boolean, count?: number, page?: number, mustHavePictures?: boolean, withCount?: boolean, withPictures?: boolean, autoExpand: boolean, defaultCurrency: string }): Promise<TransactionListResult> {
         let actualMaxTime = transactionsNextTimeId.value;
 
         if (reload && transactionsFilter.value.maxTime > 0) {
@@ -1018,6 +1040,8 @@ export const useTransactionsStore = defineStore('transactions', () => {
                     totalCount: data.result.totalCount
                 };
 
+                const previousTransactions = force ? getTransactionListForComparison() : [];
+
                 loadTransactionList({
                     transactionPageWrapper: transactionPageWrapper,
                     reload: !!reload,
@@ -1026,13 +1050,18 @@ export const useTransactionsStore = defineStore('transactions', () => {
                     nextTimeSequenceId: data.result.nextTimeSequenceId
                 });
 
+                const isUpToDate = !!force && isTransactionsEquals(previousTransactions, getTransactionListForComparison());
+
                 if (reload) {
                     if (transactionListStateInvalid.value) {
                         updateTransactionListInvalidState(false);
                     }
                 }
 
-                resolve(transactionPageWrapper);
+                resolve({
+                    isUpToDate: isUpToDate,
+                    result: transactionPageWrapper
+                });
             }).catch(error => {
                 logger.error('failed to load transaction list', error);
 
@@ -1049,18 +1078,12 @@ export const useTransactionsStore = defineStore('transactions', () => {
                     }
                 }
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve transaction list' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve transaction list'));
             });
         });
     }
 
-    function loadMonthlyAllTransactions({ year, month, mustHavePictures, withPictures, autoExpand, defaultCurrency }: { year: number, month: number, mustHavePictures?: boolean, withPictures?: boolean, autoExpand: boolean, defaultCurrency: string }): Promise<TransactionPageWrapper> {
+    function loadMonthlyAllTransactions({ year, month, force, mustHavePictures, withPictures, autoExpand, defaultCurrency }: { year: number, month: number, force?: boolean, mustHavePictures?: boolean, withPictures?: boolean, autoExpand: boolean, defaultCurrency: string }): Promise<TransactionListResult> {
         return new Promise((resolve, reject) => {
             services.getAllTransactionsByMonth({
                 year: year,
@@ -1098,6 +1121,8 @@ export const useTransactionsStore = defineStore('transactions', () => {
                     totalCount: data.result.totalCount
                 };
 
+                const previousTransactions = force ? getTransactionListForComparison() : [];
+
                 loadTransactionList({
                     transactionPageWrapper: transactionPageWrapper,
                     reload: true,
@@ -1105,11 +1130,16 @@ export const useTransactionsStore = defineStore('transactions', () => {
                     defaultCurrency: defaultCurrency
                 });
 
+                const isUpToDate = !!force && isTransactionsEquals(previousTransactions, getTransactionListForComparison());
+
                 if (transactionListStateInvalid.value) {
                     updateTransactionListInvalidState(false);
                 }
 
-                resolve(transactionPageWrapper);
+                resolve({
+                    isUpToDate: isUpToDate,
+                    result: transactionPageWrapper
+                });
             }).catch(error => {
                 logger.error('failed to load monthly all transaction list', error);
 
@@ -1124,13 +1154,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
                     updateTransactionListInvalidState(true);
                 }
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve transaction list' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve transaction list'));
             });
         });
     }
@@ -1165,13 +1189,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
                     updateTransactionReconciliationStatementInvalidState(true);
                 }
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve reconciliation statements' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve reconciliation statements'));
             });
         });
     }
@@ -1199,13 +1217,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
             }).catch(error => {
                 logger.error('failed to load transaction info', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to retrieve transaction' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to retrieve transaction'));
             });
         });
     }
@@ -1267,17 +1279,37 @@ export const useTransactionsStore = defineStore('transactions', () => {
             }).catch(error => {
                 logger.error('failed to save transaction', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    if (!isEdit) {
-                        reject({ message: 'Unable to add transaction' });
-                    } else {
-                        reject({ message: 'Unable to save transaction' });
-                    }
-                } else {
-                    reject(error);
+                reject(toStoreError(error, !isEdit ? 'Unable to add transaction' : 'Unable to save transaction'));
+            });
+        });
+    }
+
+    function batchCreateTransactions({ transactions }: { transactions: Transaction[] }): Promise<Transaction[]> {
+        return new Promise((resolve, reject) => {
+            services.addTransactionBatch({
+                transactions: transactions.map(transaction => transaction.toCreateRequest(''))
+            }).then(response => {
+                const data = response.data;
+
+                if (!data || !data.success || !data.result) {
+                    reject({ message: 'Unable to add transactions' });
+                    return;
                 }
+
+                updateStoreInvalidState({
+                    transactionList: true,
+                    reconciliationStatement: true,
+                    accountList: true,
+                    overview: true,
+                    statistics: true,
+                    explorer: true
+                });
+
+                resolve(data.result.map(transaction => Transaction.of(transaction)));
+            }).catch(error => {
+                logger.error('Unable to add transactions', error);
+
+                reject(toStoreError(error, 'Unable to add transactions'));
             });
         });
     }
@@ -1304,13 +1336,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
             }).catch(error => {
                 logger.error('failed to update categories for transactions', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to update categories for transactions' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to update categories for transactions'));
             });
         });
     }
@@ -1338,13 +1364,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
             }).catch(error => {
                 logger.error('failed to update accounts for transactions', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to update accounts for transactions' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to update accounts for transactions'));
             });
         });
     }
@@ -1369,13 +1389,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
             }).catch(error => {
                 logger.error('failed to update tags for transactions', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to update tags for transactions' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to update tags for transactions'));
             });
         });
     }
@@ -1400,13 +1414,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
             }).catch(error => {
                 logger.error('failed to update tags for transactions', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to update tags for transactions' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to update tags for transactions'));
             });
         });
     }
@@ -1431,13 +1439,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
             }).catch(error => {
                 logger.error('failed to update tags for transactions', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to update tags for transactions' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to update tags for transactions'));
             });
         });
     }
@@ -1465,13 +1467,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
             }).catch(error => {
                 logger.error('failed to move transactions', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to move transactions' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to move transactions'));
             });
         });
     }
@@ -1510,17 +1506,17 @@ export const useTransactionsStore = defineStore('transactions', () => {
                     explorer: true
                 });
 
+                if (transaction.pictures && transaction.pictures.length > 0) {
+                    deleteTransactionPictureCacheEntries(...transaction.pictures.map(p => p.originalUrl)).catch(error => {
+                        logger.warn('failed to delete transaction picture cache entries', error);
+                    });
+                }
+
                 resolve(data.result);
             }).catch(error => {
                 logger.error('failed to delete transaction', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to delete this transaction' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to delete this transaction'));
             });
         });
     }
@@ -1547,6 +1543,10 @@ export const useTransactionsStore = defineStore('transactions', () => {
                     explorer: true
                 });
 
+                clearTransactionPictureCache().catch(error => {
+                    logger.warn('failed to clear transaction picture cache', error);
+                });
+
                 resolve(data.result);
             }).catch(error => {
                 logger.error('failed to delete transactions', error);
@@ -1560,13 +1560,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
                     explorer: true
                 });
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to delete these transactions' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to delete these transactions'));
             });
         });
     }
@@ -1585,13 +1579,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
             }).catch(error => {
                 logger.error('failed to recognize text', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to recognize text' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to recognize text'));
             });
         });
     }
@@ -1614,13 +1602,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
 
                 logger.error('failed to recognize image', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to recognize image' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to recognize image'));
             });
         });
     }
@@ -1643,13 +1625,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
             }).catch(error => {
                 logger.error('Unable to parse import file', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to parse import file' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to parse import file'));
             });
         });
     }
@@ -1668,13 +1644,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
             }).catch(error => {
                 logger.error('Unable to parse import file', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to parse import file' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to parse import file'));
             });
         });
     }
@@ -1730,13 +1700,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
             }).catch(error => {
                 logger.error('Unable to get transactions import process', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to get transactions import process' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to get transactions import process'));
             });
         });
     }
@@ -1755,13 +1719,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
             }).catch(error => {
                 logger.error('Unable to upload transaction picture', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to upload transaction picture' });
-                } else {
-                    reject(error);
-                }
+                reject(toStoreError(error, 'Unable to upload transaction picture'));
             });
         });
     }
@@ -1776,27 +1734,29 @@ export const useTransactionsStore = defineStore('transactions', () => {
                     return;
                 }
 
+                deleteTransactionPictureCacheEntries(pictureInfo.originalUrl).catch(error => {
+                    logger.warn('failed to delete transaction picture cache entry', error);
+                });
+
                 resolve(data.result);
             }).catch(error => {
                 logger.error('failed to remove transaction picture', error);
 
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to remove transaction picture' });
-                } else {
-                    reject(error);
-                }
+                deleteTransactionPictureCacheEntries(pictureInfo.originalUrl).catch(error => {
+                    logger.warn('failed to delete transaction picture cache entry', error);
+                });
+
+                reject(toStoreError(error, 'Unable to remove transaction picture'));
             });
         });
     }
 
-    function getTransactionPictureUrl(pictureInfo?: TransactionPictureInfoBasicResponse | null, disableBrowserCache?: boolean | string): string | undefined {
+    function getTransactionPictureUrl(pictureInfo?: TransactionPictureInfoBasicResponse | null): string | undefined {
         if (!pictureInfo || !pictureInfo.originalUrl) {
             return undefined;
         }
 
-        return services.getTransactionPictureUrlWithToken(pictureInfo.originalUrl, disableBrowserCache);
+        return pictureInfo.originalUrl;
     }
 
     function collapseMonthInTransactionList({ monthList, collapse }: { monthList: TransactionMonthList, collapse: boolean }): void {
@@ -1842,6 +1802,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
         getReconciliationStatements,
         getTransaction,
         saveTransaction,
+        batchCreateTransactions,
         batchUpdateTransactionCategories,
         batchUpdateTransactionAccounts,
         batchAddTagsToTransaction,

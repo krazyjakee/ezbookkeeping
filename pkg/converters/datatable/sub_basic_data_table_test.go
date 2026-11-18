@@ -289,4 +289,3 @@ func TestSubBasicDataTable_DataRowIteratorWithNilParser(t *testing.T) {
 	assert.Equal(t, "A1", row.GetData(0))
 	assert.Equal(t, "B1", row.GetData(1))
 }
-

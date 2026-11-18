@@ -32,20 +32,6 @@ func TestFormatUnixTimeToLongDate(t *testing.T) {
 	assert.Equal(t, expectedValue, actualValue)
 }
 
-func TestFormatUnixTimeToLongDateTimeWithTimezone(t *testing.T) {
-	unixTime := int64(1617228083)
-	utcTimezone := time.FixedZone("Test Timezone", 0)      // UTC
-	utc8Timezone := time.FixedZone("Test Timezone", 28800) // UTC+8
-
-	expectedValue := "2021-03-31 22:01:23Z"
-	actualValue := FormatUnixTimeToLongDateTimeWithTimezone(unixTime, utcTimezone)
-	assert.Equal(t, expectedValue, actualValue)
-
-	expectedValue = "2021-04-01 06:01:23+08:00"
-	actualValue = FormatUnixTimeToLongDateTimeWithTimezone(unixTime, utc8Timezone)
-	assert.Equal(t, expectedValue, actualValue)
-}
-
 func TestFormatUnixTimeToLongDateTimeWithTimezoneRFC3339Format(t *testing.T) {
 	unixTime := int64(1617228083)
 	utcTimezone := time.FixedZone("Test Timezone", 0)      // UTC
@@ -102,20 +88,6 @@ func TestFormatUnixTimeToLongDateTimeWithoutSecond(t *testing.T) {
 
 	expectedValue = "2021-04-01 06:01"
 	actualValue = FormatUnixTimeToLongDateTimeWithoutSecond(unixTime, utc8Timezone)
-	assert.Equal(t, expectedValue, actualValue)
-}
-
-func TestFormatUnixTimeToYearMonth(t *testing.T) {
-	unixTime := int64(1617228083)
-	utcTimezone := time.FixedZone("Test Timezone", 0)      // UTC
-	utc8Timezone := time.FixedZone("Test Timezone", 28800) // UTC+8
-
-	expectedValue := "2021-03"
-	actualValue := FormatUnixTimeToYearMonth(unixTime, utcTimezone)
-	assert.Equal(t, expectedValue, actualValue)
-
-	expectedValue = "2021-04"
-	actualValue = FormatUnixTimeToYearMonth(unixTime, utc8Timezone)
 	assert.Equal(t, expectedValue, actualValue)
 }
 
@@ -287,9 +259,21 @@ func TestGetDateFirstTimeInTimezone_TimezoneWithMidnightDST(t *testing.T) {
 	assert.Equal(t, expectedValue, actualValue)
 }
 
+// skipIfHavanaDSTEndDiffers skips the test when the time zone database of the host does not end the daylight saving time
+// of America/Havana at midnight on November 1, 2026 (time zone databases of different versions and operating systems differ)
+func skipIfHavanaDSTEndDiffers(t *testing.T, havanaLocation *time.Location) {
+	_, offsetBefore := time.Date(2026, 10, 31, 12, 0, 0, 0, time.UTC).In(havanaLocation).Zone()
+	_, offsetAfter := time.Date(2026, 11, 2, 12, 0, 0, 0, time.UTC).In(havanaLocation).Zone()
+
+	if offsetBefore != -4*60*60 || offsetAfter != -5*60*60 {
+		t.Skipf("the time zone database of the host defines different daylight saving time rules for America/Havana in 2026 (offsets %d and %d)", offsetBefore, offsetAfter)
+	}
+}
+
 func TestGetDateFirstTimeInTimezone_AmbiguousMidnight(t *testing.T) {
 	havanaLocation, err := time.LoadLocation("America/Havana")
 	assert.Equal(t, nil, err)
+	skipIfHavanaDSTEndDiffers(t, havanaLocation)
 
 	// Select the first occurrence of midnight when it occurs twice.
 	expectedValue := "2026-11-01T00:00:00-04:00"
@@ -527,6 +511,7 @@ func TestParseFromLongDateLastTimeInTimezone_AmbiguousMidnight(t *testing.T) {
 	assert.Equal(t, nil, err)
 	cairoLocation, err := time.LoadLocation("Africa/Cairo")
 	assert.Equal(t, nil, err)
+	skipIfHavanaDSTEndDiffers(t, havanaLocation)
 
 	// The previous date ends before the first occurrence of repeated midnight.
 	expectedValue := "2026-10-31T23:59:59.999999999-04:00"
@@ -599,15 +584,6 @@ func TestParseFromLongDateFirstTime(t *testing.T) {
 	assert.Equal(t, expectedValue, actualValue)
 }
 
-func TestParseFromLongDateLastTime(t *testing.T) {
-	expectedValue := int64(1690905599)
-	actualTime, err := ParseFromLongDateLastTime("2023-08-01", 480)
-	assert.Equal(t, nil, err)
-
-	actualValue := actualTime.Unix()
-	assert.Equal(t, expectedValue, actualValue)
-}
-
 func TestParseFromLongDateTimeToMinUnixTime(t *testing.T) {
 	expectedValue := int64(1690797600)
 	actualTime, err := ParseFromLongDateTimeToMinUnixTime("2023-08-01 00:00:00")
@@ -620,15 +596,6 @@ func TestParseFromLongDateTimeToMinUnixTime(t *testing.T) {
 func TestParseFromLongDateTimeToMaxUnixTime(t *testing.T) {
 	expectedValue := int64(1690891200)
 	actualTime, err := ParseFromLongDateTimeToMaxUnixTime("2023-08-01 00:00:00")
-	assert.Equal(t, nil, err)
-
-	actualValue := actualTime.Unix()
-	assert.Equal(t, expectedValue, actualValue)
-}
-
-func TestParseFromLongDateTimeInFixedUtcOffset(t *testing.T) {
-	expectedValue := int64(1617228083)
-	actualTime, err := ParseFromLongDateTimeInFixedUtcOffset("2021-04-01 06:01:23", 480)
 	assert.Equal(t, nil, err)
 
 	actualValue := actualTime.Unix()
@@ -656,15 +623,6 @@ func TestParseFromLongDateTimeInTimeZone(t *testing.T) {
 	assert.Equal(t, expectedValue, actualValue)
 }
 
-func TestParseFromLongDateTimeWithTimezone(t *testing.T) {
-	expectedValue := int64(1617238883)
-	actualTime, err := ParseFromLongDateTimeWithTimezone("2021-04-01 06:01:23+05:00")
-	assert.Equal(t, nil, err)
-
-	actualValue := actualTime.Unix()
-	assert.Equal(t, expectedValue, actualValue)
-}
-
 func TestParseFromLongDateTimeWithTimezone2(t *testing.T) {
 	expectedValue := int64(1617238883)
 	actualTime, err := ParseFromLongDateTimeWithTimezone2("2021-04-01 06:01:23 +0500")
@@ -677,24 +635,6 @@ func TestParseFromLongDateTimeWithTimezone2(t *testing.T) {
 func TestParseFromLongDateTimeWithTimezoneRFC3339Format(t *testing.T) {
 	expectedValue := int64(1617238883)
 	actualTime, err := ParseFromLongDateTimeWithTimezoneRFC3339Format("2021-04-01T06:01:23+05:00")
-	assert.Equal(t, nil, err)
-
-	actualValue := actualTime.Unix()
-	assert.Equal(t, expectedValue, actualValue)
-}
-
-func TestParseFromLongDateTimeWithoutSecondInFixedUtcOffset(t *testing.T) {
-	expectedValue := int64(1691947440)
-	actualTime, err := ParseFromLongDateTimeWithoutSecondInFixedUtcOffset("2023-08-13 17:24", 0)
-	assert.Equal(t, nil, err)
-
-	actualValue := actualTime.Unix()
-	assert.Equal(t, expectedValue, actualValue)
-}
-
-func TestParseFromShortDateTimeInFixedUtcOffset(t *testing.T) {
-	expectedValue := int64(1617228083)
-	actualTime, err := ParseFromShortDateTimeInFixedUtcOffset("2021-4-1 6:1:23", 480)
 	assert.Equal(t, nil, err)
 
 	actualValue := actualTime.Unix()

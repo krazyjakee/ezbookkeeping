@@ -4,27 +4,13 @@
                                   :title="tt('Export Results')"
                                   :cancel-button-title="tt('Close')"
                                   @cancel="cancel">
-            <template #after-title>
-                <div ref="buttonContainer">
-                    <v-btn density="compact" color="default" variant="text" class="ms-2" :aria-label="tt('Copy')" :icon="true"
-                           :disabled="!exportedData" @click="copy">
-                        <v-icon :icon="mdiContentCopy" size="20" />
-                        <v-tooltip activator="parent">{{ tt('Copy') }}</v-tooltip>
-                    </v-btn>
-                    <v-btn density="compact" color="default" variant="text" class="ms-1" :aria-label="tt('Save to File')" :icon="true"
-                           @click="save()">
-                        <v-icon :icon="mdiContentSaveOutline" size="22" />
-                        <v-tooltip activator="parent">{{ tt('Save to File') }}</v-tooltip>
-                    </v-btn>
-                </div>
-            </template>
-
             <template #toolbar>
                 <toggle-button class="ms-2" :false-name="tt('Table')" :true-name="tt('Raw Data')"
                                v-model="showRawData"/>
 
-                <v-btn density="compact" color="default" variant="text" class="ms-2" :aria-label="tt('More')" :icon="true">
+                <v-btn density="comfortable" color="default" variant="text" class="ms-2" :aria-label="tt('File Format')" :icon="true">
                     <v-icon :icon="mdiDotsVertical" size="22" />
+                    <v-tooltip activator="parent">{{ tt('File Format') }}</v-tooltip>
                     <v-menu activator="parent">
                         <v-list>
                             <v-list-subheader class="text-body-small" :title="tt('File Format')"/>
@@ -82,28 +68,44 @@
                         @click="focusTableScrollContainer"
                         v-if="!showRawData"
                     ></v-data-table>
-                    <div class="w-100 h-100 code-container" v-if="showRawData">
+                    <div class="w-100 h-100 code-container data-export-raw" v-if="showRawData">
                         <v-textarea no-resize class="w-100 h-100 ps-3 always-cursor-text"
                                     density="compact" variant="plain"
+                                    :aria-label="tt('Raw Data')"
                                     :readonly="true" :rounded="false"
                                     :value="exportedData"></v-textarea>
                     </div>
                 </div>
             </template>
+
+            <template #footer>
+                <div class="data-export-footer" ref="buttonContainer">
+                    <div class="data-export-status" aria-live="polite">
+                        <span class="ebk-technical-heading">{{ tt('File Format') }}</span>
+                        <span class="data-export-status-value ebk-font-mono">{{ fileFormatDisplayName }}</span>
+                        <span aria-hidden="true">·</span>
+                        <span class="ebk-technical-heading">{{ tt('Rows') }}</span>
+                        <span class="data-export-status-value ebk-numeric">{{ formatNumberToLocalizedNumerals(data.length) }}</span>
+                    </div>
+                    <div class="data-export-actions">
+                        <v-btn color="default" variant="outlined" :prepend-icon="mdiContentCopy"
+                               :disabled="!exportedData" @click="copy">{{ tt('Copy') }}</v-btn>
+                        <v-btn color="primary" :prepend-icon="mdiContentSaveOutline"
+                               :disabled="!exportedData" @click="save()">{{ tt('Save to File') }}</v-btn>
+                    </div>
+                </div>
+            </template>
         </one-column-dialog-layout>
     </v-dialog>
-
-    <snack-bar ref="snackbar" />
 </template>
 
 <script setup lang="ts">
-import SnackBar from '@/components/desktop/SnackBar.vue';
-
 import { ref, computed, useTemplateRef } from 'vue';
 
 import { useI18n } from '@/locales/helpers.ts';
 
 import { useUserStore } from '@/stores/user.ts';
+import { useDesktopPageStore } from '@/stores/desktopPage.ts';
 
 import { type PartialRecord, itemAndIndex } from '@/core/base.ts';
 import { type BigDecimal, DecimalSeparator } from '@/core/numeral.ts';
@@ -130,14 +132,12 @@ import {
     mdiContentSaveOutline
 } from '@mdi/js';
 
-type SnackBarType = InstanceType<typeof SnackBar>;
-
-const { tt, getCurrentDecimalSeparator } = useI18n();
+const { tt, getCurrentDecimalSeparator, formatNumberToLocalizedNumerals } = useI18n();
 
 const userStore = useUserStore();
+const desktopPageStore = useDesktopPageStore();
 
 const buttonContainer = useTemplateRef<HTMLElement>('buttonContainer');
-const snackbar = useTemplateRef<SnackBarType>('snackbar');
 
 const showState = ref<boolean>(false);
 const headers = ref<string[]>([]);
@@ -148,6 +148,16 @@ const mermaidChartType = ref<ExportMermaidChartType | undefined>(undefined);
 const showRawData = ref<boolean>(false);
 
 const useCommaDecimalSeparator = computed<boolean>(() => getCurrentDecimalSeparator() === DecimalSeparator.Comma.symbol);
+
+const fileFormatDisplayName = computed<string>(() => {
+    if (fileFormat.value === KnownFileType.MERMAID.extension) {
+        return 'Mermaid';
+    } else if (fileFormat.value === KnownFileType.MARKDOWN.extension) {
+        return 'Markdown';
+    }
+
+    return fileFormat.value.toUpperCase();
+});
 
 const fileName = computed<string>(() => {
     const nickname = userStore.currentUserNickname;
@@ -303,7 +313,7 @@ function open(options: { headers: string[], data: string[][], supportedMermaidCh
 
 function copy(): void {
     copyTextToClipboard(exportedData.value, buttonContainer.value);
-    snackbar.value?.showMessage('Data copied');
+    desktopPageStore.addToast('Data copied');
 }
 
 function save(): void {
@@ -326,6 +336,40 @@ defineExpose({
 </script>
 
 <style>
+.data-export-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ebk-space-3);
+    width: 100%;
+    padding-inline: var(--ebk-space-2);
+}
+
+.data-export-status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--ebk-space-2);
+    color: var(--ebk-color-text-secondary);
+}
+
+.data-export-status-value {
+    color: var(--ebk-color-text-primary);
+    font-weight: 600;
+}
+
+.data-export-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ebk-space-2);
+}
+
+.data-export-raw .v-field__input {
+    font-family: var(--ebk-font-mono);
+    font-size: 0.8125rem;
+}
+
 .data-export-dialog-content {
     min-width: min(560px, calc(100% - 48px));
     min-height: 150px;

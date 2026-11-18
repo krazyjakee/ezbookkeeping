@@ -1,7 +1,14 @@
 <template>
-    <v-chart autoresize class="pie-chart-container" :class="{ 'transition-in': skeleton }"
-             :option="chartOptions" :update-options="{ notMerge: true }"
-             @click="clickItem" @legendselectchanged="onLegendSelectChanged" />
+    <div class="pie-chart-wrapper">
+        <v-chart autoresize class="pie-chart-container" :class="{ 'transition-in': skeleton }"
+                 :option="chartOptions" :update-options="{ notMerge: true }"
+                 @click="clickItem" @legendselectchanged="onLegendSelectChanged" />
+        <div class="pie-chart-center" aria-hidden="true"
+             v-if="styleType === 'donut' && !skeleton && (centerTitle || centerValue)">
+            <div class="pie-chart-center-title ebk-technical-heading" v-if="centerTitle">{{ centerTitle }}</div>
+            <div class="pie-chart-center-value" v-if="centerValue">{{ centerValue }}</div>
+        </div>
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -11,27 +18,40 @@ import { useTheme } from 'vuetify';
 import type { ECElementEvent } from 'echarts/core';
 import type { CallbackDataParams } from 'echarts/types/dist/shared';
 
+import { useI18n } from '@/locales/helpers.ts';
 import { type CommonPieChartDataItem, type CommonPieChartProps, usePieChartBase } from '@/components/base/PieChartBase.ts'
 
 import { itemAndIndex } from '@/core/base.ts';
 import type { BigDecimal } from '@/core/numeral.ts';
 import type { ColorStyleValue } from '@/core/color.ts';
 import { ThemeType } from '@/core/theme.ts';
+import { TextDirection } from '@/core/text.ts';
 
 import { getObjectOwnFieldCount } from '@/lib/common.ts';
 import { BIG_DECIMAL_ZERO, parseBigDecimal } from '@/lib/numeral.ts';
+import { getChartAnimationOptions } from '@/lib/motion.ts';
+import {
+    getChartThemePalette,
+    getChartTooltipStyleOptions,
+    getChartLegendStyleOptions,
+    getChartLabelTextStyleOptions,
+    getChartDecal
+} from '@/components/base/ChartThemeBase.ts';
 
 type PieChartStyleType = 'pie' | 'donut' | 'nightingaleRose';
 
 interface DesktopPieChartDataItem extends CommonPieChartDataItem {
     itemStyle: {
         color: ColorStyleValue;
+        decal?: Record<string, unknown>;
     };
     selected: boolean;
 }
 
 interface DesktopPieChartProps extends CommonPieChartProps {
     styleType?: PieChartStyleType;
+    centerTitle?: string; // only shown in the donut style, e.g. "Total Expense"
+    centerValue?: string; // only shown in the donut style, e.g. the formatted total amount
 }
 
 const props = defineProps<DesktopPieChartProps>();
@@ -41,16 +61,29 @@ const emit = defineEmits<{
 }>();
 
 const theme = useTheme();
+const { getCurrentLanguageTextDirection } = useI18n();
 
 const { selectedIndex, validItems, allItemsMap } = usePieChartBase(props);
 
 const selectedLegends = ref<Record<string, boolean>>({});
 
+const isRtl = computed<boolean>(() => getCurrentLanguageTextDirection() === TextDirection.RTL);
+
+const validItemsMap = computed<Record<string, CommonPieChartDataItem>>(() => {
+    const map: Record<string, CommonPieChartDataItem> = {};
+
+    for (const item of validItems.value) {
+        map[item.id] = item;
+    }
+
+    return map;
+});
+
 const isDarkMode = computed<boolean>(() => theme.global.name.value === ThemeType.Dark);
 
 const seriesRadius = computed<[number | string, string]>(() => {
     if (props.styleType === 'donut') {
-        return ['40%', '75%'];
+        return ['48%', '72%'];
     }
 
     return [0, '75%'];
@@ -59,11 +92,14 @@ const seriesRadius = computed<[number | string, string]>(() => {
 const seriesData = computed<DesktopPieChartDataItem[]>(() => {
     const ret: DesktopPieChartDataItem[] = [];
 
-    for (const item of validItems.value) {
+    for (const [item, index] of itemAndIndex(validItems.value)) {
+        const decal = getChartDecal(index, isDarkMode.value);
+
         ret.push({
             ...item,
             itemStyle: {
                 color: item.color,
+                ...(decal ? { decal: decal } : {})
             },
             selected: true
         });
@@ -121,14 +157,13 @@ const firstItemAndHalfCurrentItemTotalPercent = computed<number>(() => {
 });
 
 const chartOptions = computed<object>(() => {
+    const palette = getChartThemePalette(isDarkMode.value);
+
     return {
+        backgroundColor: 'transparent',
         tooltip: {
             trigger: 'item',
-            backgroundColor: isDarkMode.value ? '#333' : '#fff',
-            borderColor: isDarkMode.value ? '#333' : '#fff',
-            textStyle: {
-                color: isDarkMode.value ? '#eee' : '#333'
-            },
+            ...getChartTooltipStyleOptions(isDarkMode.value),
             formatter: (params: CallbackDataParams) => {
                 const dataItem = params.data as DesktopPieChartDataItem;
                 let percent = dataItem.displayPercent;
@@ -165,10 +200,30 @@ const chartOptions = computed<object>(() => {
             top: 0,
             data: validItems.value.map(item => item.name),
             selected: selectedLegends.value,
-            textStyle: {
-                color: isDarkMode.value ? '#eee' : '#333'
-            },
-            formatter: (id: string) => allItemsMap.value[id]?.name ?? id
+            ...getChartLegendStyleOptions(isDarkMode.value),
+            icon: 'roundRect',
+            itemWidth: 12,
+            itemHeight: 12,
+            formatter: (id: string) => {
+                const name = allItemsMap.value[id]?.name ?? id;
+                const validItem = validItemsMap.value[id];
+
+                if (!validItem || props.skeleton) {
+                    return name;
+                }
+
+                const parts: string[] = [name];
+
+                if (props.showValue) {
+                    parts.push(validItem.displayValue);
+                }
+
+                if (props.showPercent && validItem.value > 0) {
+                    parts.push(validItem.displayPercent);
+                }
+
+                return parts.join('  ');
+            }
         },
         series: [
             {
@@ -178,21 +233,49 @@ const chartOptions = computed<object>(() => {
                 startAngle: -90 + firstItemAndHalfCurrentItemTotalPercent.value * 360,
                 radius: seriesRadius.value,
                 roseType: props.styleType === 'nightingaleRose' ? 'radius' : undefined,
+                itemStyle: {
+                    borderColor: palette.surface,
+                    borderWidth: validItems.value.length > 1 ? 1 : 0
+                },
                 emphasis: {
                     itemStyle: {
-                        shadowBlur: 10,
+                        shadowBlur: 8,
                         shadowOffsetX: 0,
-                        shadowColor: 'rgba(0, 0, 0, 0.5)',
+                        shadowColor: palette.emphasisShadow
                     }
                 },
                 label: {
-                    color: isDarkMode.value ? '#eee' : '#333',
+                    ...getChartLabelTextStyleOptions(isDarkMode.value),
                     formatter: (params: CallbackDataParams) => {
                         const dataItem = params.data as DesktopPieChartDataItem;
-                        return dataItem ? dataItem.displayName : '';
+
+                        if (!dataItem) {
+                            return '';
+                        }
+
+                        // donut segments carry percentage labels (design guideline D7)
+                        if (props.showPercent && !props.skeleton && dataItem.value > 0) {
+                            const percent = hasUnselectedItem.value ? `${params.percent}%` : dataItem.displayPercent;
+                            return `${dataItem.displayName}\n{percent|${percent}}`;
+                        }
+
+                        return dataItem.displayName;
+                    },
+                    rich: {
+                        percent: {
+                            ...getChartLabelTextStyleOptions(isDarkMode.value),
+                            color: palette.textSecondary,
+                            fontSize: 11,
+                            lineHeight: 16
+                        }
                     }
                 },
-                animation: !props.skeleton
+                labelLine: {
+                    lineStyle: {
+                        color: palette.axisLine
+                    }
+                },
+                ...getChartAnimationOptions(!props.skeleton)
             }
         ],
         media: [
@@ -203,7 +286,8 @@ const chartOptions = computed<object>(() => {
                 option: {
                     legend: {
                         orient: 'vertical',
-                        left: 'left'
+                        // the legend sits at the start side, so it mirrors in RTL (guideline §7)
+                        ...(isRtl.value ? { right: 'right', align: 'right' } : { left: 'left' })
                     },
                     series: [
                         {
@@ -258,6 +342,44 @@ function onLegendSelectChanged(e: { selected: Record<string, boolean> }): void {
 </script>
 
 <style scoped>
+.pie-chart-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+/*
+ * The donut is drawn at the center of the canvas in both directions, so its label is centered with physical
+ * properties: an inline-start offset plus a direction-dependent translate breaks when the html dir and the
+ * computed direction of the chart disagree.
+ */
+.pie-chart-center {
+    position: absolute;
+    inset-block-start: calc(50% + 25px);
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 30%;
+    text-align: center;
+    pointer-events: none;
+}
+
+.pie-chart-center-title {
+    color: var(--ebk-color-text-secondary);
+}
+
+.pie-chart-center-value {
+    margin-block-start: var(--ebk-space-1);
+    font-size: 1.25rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+}
+
+@media (min-width: 600px) {
+    .pie-chart-center {
+        inset-block-start: 50%;
+    }
+}
+
 .pie-chart-container {
     width: 100%;
     height: 460px;

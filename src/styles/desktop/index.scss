@@ -1,3 +1,5 @@
+@use '../common/tokens';
+@use '../common/motion';
 @use './variable';
 @use './override/vuetify';
 @use './override/vue-datepicker';
@@ -8,4 +10,6 @@
 @use './components/overview';
 @use './components/overview-widget';
 @use './components/setting-items';
+@use './components/shared-controls';
+@use './components/management';
 @use './utilities/helpers';

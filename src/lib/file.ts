@@ -1,8 +1,5 @@
-import chardet, { type Match } from 'chardet';
-
-import type { ImportFileTypeAndExtensions } from '@/core/file.ts';
-
-import { UTF_8, CHARDET_ENCODING_NAME_MAPPING } from '@/consts/file.ts';
+import type { ImportFileTypeAndExtensions } from '@/core/import_transaction.ts';
+import { KnownFileType } from '@/core/file.ts';
 
 import { isString } from './common.ts';
 
@@ -46,56 +43,49 @@ export function isFileExtensionSupported(filename: string, supportedExtensions: 
     return false;
 }
 
-export function detectFileEncoding(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
+export function isPdfFile(file: File | null | undefined): boolean {
+    if (!file) {
+        return false;
+    }
 
-        reader.onload = () => {
-            const arrayBuffer = reader.result as ArrayBuffer;
-            const uint8Array = new Uint8Array(arrayBuffer);
-            const possibleEncodings: Match[] = chardet.analyse(uint8Array);
+    if (file.type && KnownFileType.PDF.isSameType(file.type)) {
+        return true;
+    }
 
-            if (!possibleEncodings || possibleEncodings.length < 1) {
-                reject(new Error('unable to detect file encoding'));
-                return;
-            }
+    return getFileExtension(file.name).toLowerCase() === KnownFileType.PDF.extension;
+}
 
-            const mostPossibleEncoding: Match = possibleEncodings[0] as Match;
+export function isPdfFileUrl(url: string | null | undefined): boolean {
+    if (!url || !isString(url)) {
+        return false;
+    }
 
-            if (!mostPossibleEncoding.name || mostPossibleEncoding.confidence < 50) {
-                // check whether all characters are ASCII
-                let isAllAscii = true;
+    let path = url;
+    const queryOrHashIndex = path.search(/[?#]/);
 
-                for (const byte of uint8Array) {
-                    if (byte > 0x7F) {
-                        isAllAscii = false;
-                        break;
-                    }
-                }
+    if (queryOrHashIndex >= 0) {
+        path = path.substring(0, queryOrHashIndex);
+    }
 
-                if (isAllAscii) {
-                    resolve(UTF_8);
-                    return;
-                }
+    const lastSlashIndex = path.lastIndexOf('/');
+    const fileName = lastSlashIndex >= 0 ? path.substring(lastSlashIndex + 1) : path;
 
-                reject(new Error('unable to detect file encoding'));
-                return;
-            }
+    if (fileName.indexOf('.') < 0) {
+        return false;
+    }
 
-            const encoding = CHARDET_ENCODING_NAME_MAPPING[mostPossibleEncoding.name];
+    return getFileExtension(fileName).toLowerCase() === KnownFileType.PDF.extension;
+}
 
-            if (!encoding) {
-                reject(new Error(`unsupported file encoding: ${mostPossibleEncoding.name}`));
-                return;
-            }
+export function getFileDownloadUrl(url: string | null | undefined): string | undefined {
+    if (!url || !isString(url)) {
+        return undefined;
+    }
 
-            resolve(encoding);
-        };
+    const hashIndex = url.indexOf('#');
+    const urlWithoutHash = hashIndex >= 0 ? url.substring(0, hashIndex) : url;
+    const hash = hashIndex >= 0 ? url.substring(hashIndex) : '';
+    const separator = urlWithoutHash.indexOf('?') >= 0 ? '&' : '?';
 
-        reader.onerror = () => {
-            reject(new Error('failed to read file for encoding detection'));
-        };
-
-        reader.readAsArrayBuffer(file);
-    });
+    return `${urlWithoutHash}${separator}download=true${hash}`;
 }

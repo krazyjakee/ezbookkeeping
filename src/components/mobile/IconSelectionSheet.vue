@@ -40,9 +40,8 @@
                     </div>
                 </div>
 
-                <div class="padding-vertical-half padding-horizontal" v-if="allCustomIconRows.length < 1">
-                    {{ tt('No available custom icons') }}
-                </div>
+                <state-panel class="margin-horizontal margin-vertical-half" compact :title="tt('No available custom icons')"
+                             v-if="allCustomIconRows.length < 1" />
             </f7-block>
         </f7-page-content>
     </f7-sheet>
@@ -50,6 +49,8 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+
+import StatePanel from '@/components/common/StatePanel.vue';
 
 import { useI18n } from '@/locales/helpers.ts';
 

@@ -87,6 +87,8 @@ import AIImageRecognitionSheet from '@/components/mobile/AIImageRecognitionSheet
 
 import TextareaAutoSize from '@/directives/mobile/textareaAutoSize.ts';
 
+import { initMotionPreference } from '@/lib/motion.ts';
+
 import '@/styles/mobile/index.scss';
 import '@/styles/mobile/font-size-default.scss';
 import '@/styles/mobile/font-size-small.scss';
@@ -98,6 +100,8 @@ import '@/styles/mobile/font-size-xxxx-large.scss';
 import '@/styles/mobile/amount-color.scss';
 
 import App from '@/MobileApp.vue';
+
+initMotionPreference();
 
 Framework7.use([
     Framework7Dialog,
@@ -141,6 +145,7 @@ Framework7.use([
 const app = createApp(App);
 const pinia = createPinia();
 const i18n = createI18n(getI18nOptions());
+
 registerComponents(app);
 app.use(pinia);
 app.use(i18n);

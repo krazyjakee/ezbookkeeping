@@ -1,5 +1,31 @@
 <template>
     <div class="import-transaction-table-container d-flex flex-column">
+        <section class="import-check-issues" :class="{ 'import-check-issues--ok': invalidTransactionCount < 1 }"
+                 aria-labelledby="import-check-issues-title" v-if="importTransactions && importTransactions.length">
+            <span id="import-check-issues-title" class="import-check-issues-title ebk-technical-heading">{{ tt('Validation Issues') }}</span>
+            <span class="import-check-issues-ok" role="status" v-if="invalidTransactionCount < 1">
+                <v-icon :icon="mdiCheckCircleOutline" size="16" />
+                {{ tt('No validation issues') }}
+            </span>
+            <span class="import-check-issues-total" role="status" v-else>
+                <v-icon :icon="mdiAlertOutline" size="16" />
+                <span class="ebk-numeric">{{ formatNumberToLocalizedNumerals(invalidTransactionCount) }}</span>
+                <span class="text-medium-emphasis">/ {{ formatNumberToLocalizedNumerals(importTransactions.length) }}</span>
+            </span>
+            <ul class="import-check-issues-list" v-if="invalidTransactionCount > 0">
+                <template :key="issue.type" v-for="issue in validationIssues">
+                    <li class="import-check-issue" v-if="issue.count > 0">
+                        <span class="import-check-issue-label">{{ issue.title }}</span>
+                        <span class="import-check-issue-count ebk-numeric">{{ formatNumberToLocalizedNumerals(issue.count) }}</span>
+                        <v-btn class="import-check-issue-jump" color="default" variant="text" size="small" density="comfortable"
+                               :append-icon="mdiArrowDown"
+                               :disabled="!!disabled || isEditing"
+                               :aria-label="`${tt('Go to Row')}: ${issue.title}`"
+                               @click="jumpToIssue(issue.type)">{{ tt('Go to Row') }}</v-btn>
+                    </li>
+                </template>
+            </ul>
+        </section>
         <v-data-table
             fixed-header
             fixed-footer
@@ -15,8 +41,10 @@
             :search="JSON.stringify(filters)"
             :custom-filter="importTransactionsFilter"
             :no-data-text="tt('No data to import')"
+            :row-props="getImportTransactionRowProps"
             v-model:items-per-page="countPerPage"
             v-model:page="currentPage"
+            v-model:sort-by="tableSortBy"
             @click="focusTableScrollContainerWhenNonEditing"
         >
             <template #header.data-table-select>
@@ -118,6 +146,7 @@
                                        secondary-key-field="id" secondary-value-field="id" secondary-title-field="name"
                                        secondary-icon-field="icon" secondary-icon-type-field="iconType" secondary-icon-type="category" secondary-color-field="color"
                                        secondary-hidden-field="hidden"
+                                       :menu-props="{ contentClass: 'two-column-select-menu select-menu-x-large' }"
                                        :disabled="!!disabled || !hasVisibleExpenseCategories"
                                        :enable-filter="true" :filter-placeholder="tt('Find category')" :filter-no-items-text="tt('No available category')"
                                        :show-selection-primary-text="true"
@@ -136,6 +165,7 @@
                                        secondary-key-field="id" secondary-value-field="id" secondary-title-field="name"
                                        secondary-icon-field="icon" secondary-icon-type-field="iconType" secondary-icon-type="category" secondary-color-field="color"
                                        secondary-hidden-field="hidden"
+                                       :menu-props="{ contentClass: 'two-column-select-menu select-menu-x-large' }"
                                        :disabled="!!disabled || !hasVisibleIncomeCategories"
                                        :enable-filter="true" :filter-placeholder="tt('Find category')" :filter-no-items-text="tt('No available category')"
                                        :show-selection-primary-text="true"
@@ -154,6 +184,7 @@
                                        secondary-key-field="id" secondary-value-field="id" secondary-title-field="name"
                                        secondary-icon-field="icon" secondary-icon-type-field="iconType" secondary-icon-type="category" secondary-color-field="color"
                                        secondary-hidden-field="hidden"
+                                       :menu-props="{ contentClass: 'two-column-select-menu select-menu-x-large' }"
                                        :disabled="!!disabled || !hasVisibleTransferCategories"
                                        :enable-filter="true" :filter-placeholder="tt('Find category')" :filter-no-items-text="tt('No available category')"
                                        :show-selection-primary-text="true"
@@ -219,6 +250,7 @@
                                        secondary-key-field="id" secondary-value-field="id"
                                        secondary-title-field="name" secondary-footer-field="displayBalance"
                                        secondary-icon-field="icon" secondary-icon-type-field="iconType" secondary-icon-type="account" secondary-color-field="color"
+                                       :menu-props="{ contentClass: 'two-column-select-menu select-menu-x-large' }"
                                        :disabled="!!disabled || !allVisibleAccounts.length"
                                        :enable-filter="true" :filter-placeholder="tt('Find account')" :filter-no-items-text="tt('No available account')"
                                        :custom-selection-primary-text="getSourceAccountDisplayName(item)"
@@ -236,6 +268,7 @@
                                        secondary-key-field="id" secondary-value-field="id"
                                        secondary-title-field="name" secondary-footer-field="displayBalance"
                                        secondary-icon-field="icon" secondary-icon-type-field="iconType" secondary-icon-type="account" secondary-color-field="color"
+                                       :menu-props="{ contentClass: 'two-column-select-menu select-menu-x-large' }"
                                        :disabled="!!disabled || !allVisibleAccounts.length"
                                        :enable-filter="true" :filter-placeholder="tt('Find account')" :filter-no-items-text="tt('No available account')"
                                        :custom-selection-primary-text="getDestinationAccountDisplayName(item)"
@@ -416,17 +449,16 @@
     <batch-replace-dialog ref="batchReplaceDialog" />
     <batch-apply-rules-dialog ref="batchApplyRulesDialog" />
     <batch-create-dialog ref="batchCreateDialog" />
-    <snack-bar ref="snackbar" />
 </template>
 
 <script setup lang="ts">
 import PaginationButtons from '@/components/desktop/PaginationButtons.vue';
-import SnackBar from '@/components/desktop/SnackBar.vue';
 import BatchReplaceDialog, { type BatchReplaceDialogDataType } from '../dialogs/BatchReplaceDialog.vue';
 import BatchApplyRulesDialog from '../dialogs/BatchApplyRulesDialog.vue';
 import BatchCreateDialog, { type BatchCreateDialogDataType } from '../dialogs/BatchCreateDialog.vue';
 
-import { ref, computed, useTemplateRef, watch } from 'vue';
+import { ref, computed, useTemplateRef, watch, nextTick } from 'vue';
+import { useLocale } from 'vuetify';
 
 import { useI18n } from '@/locales/helpers.ts';
 import { useTransactionTagSelectionBase } from '@/components/base/TransactionTagSelectionBase.ts';
@@ -437,6 +469,7 @@ import { useAccountsStore } from '@/stores/account.ts';
 import { useTransactionCategoriesStore } from '@/stores/transactionCategory.ts';
 import { useTransactionTagsStore } from '@/stores/transactionTag.ts';
 import { useExchangeRatesStore } from '@/stores/exchangeRates.ts';
+import { useDesktopPageStore } from '@/stores/desktopPage.ts';
 
 import { type NameValue, type NameNumeralValue, itemAndIndex, reversed, keys } from '@/core/base.ts';
 import { DecimalSeparator, AmountFilterType } from '@/core/numeral.ts';
@@ -452,6 +485,7 @@ import { Account, type CategorizedAccountWithDisplayBalance } from '@/models/acc
 import type { TransactionCategory } from '@/models/transaction_category.ts';
 import { TransactionTag } from '@/models/transaction_tag.ts';
 import { ImportTransaction } from '@/models/imported_transaction.ts';
+import type { ImportTransactionReplaceRule } from '@/models/rule.ts';
 
 import {
     isString,
@@ -493,10 +527,11 @@ import {
     mdiFilterOffOutline,
     mdiPlus,
     mdiComma,
-    mdiKeyboardTab
+    mdiKeyboardTab,
+    mdiCheckCircleOutline,
+    mdiArrowDown
 } from '@mdi/js';
 
-type SnackBarType = InstanceType<typeof SnackBar>;
 type BatchReplaceDialogType = InstanceType<typeof BatchReplaceDialog>;
 type BatchApplyRulesDialogType = InstanceType<typeof BatchApplyRulesDialog>;
 type BatchCreateDialogType = InstanceType<typeof BatchCreateDialog>;
@@ -555,8 +590,8 @@ const accountsStore = useAccountsStore();
 const transactionCategoriesStore = useTransactionCategoriesStore();
 const transactionTagsStore = useTransactionTagsStore();
 const exchangeRatesStore = useExchangeRatesStore();
+const desktopPageStore = useDesktopPageStore();
 
-const snackbar = useTemplateRef<SnackBarType>('snackbar');
 const batchReplaceDialog = useTemplateRef<BatchReplaceDialogType>('batchReplaceDialog');
 const batchApplyRulesDialog = useTemplateRef<BatchApplyRulesDialogType>('batchApplyRulesDialog');
 const batchCreateDialog = useTemplateRef<BatchCreateDialogType>('batchCreateDialog');
@@ -576,6 +611,9 @@ const filters = ref<ImportTransactionCheckDataFilter>({
 
 const currentPage = ref<number>(1);
 const countPerPage = ref<number>(10);
+const tableSortBy = ref<{ key: string, order?: boolean | 'asc' | 'desc' }[]>([]);
+const vuetifyLocale = useLocale();
+const highlightedTransactionIndex = ref<number>(-1);
 const showCustomDateRangeDialog = ref<boolean>(false);
 const showCustomAmountFilterDialog = ref<boolean>(false);
 const showCustomDescriptionDialog = ref<boolean>(false);
@@ -1004,24 +1042,67 @@ const currentPageTransactions = computed<ImportTransaction[]>(() => {
         return ret;
     }
 
-    const previousCount = Math.max(0, (currentPage.value - 1) * countPerPage.value);
-    let count = 0;
-
-    for (const importTransaction of props.importTransactions) {
-        if (ret.length >= countPerPage.value) {
-            break;
-        }
-
-        if (isTransactionDisplayed(importTransaction)) {
-            if (count >= previousCount) {
-                ret.push(importTransaction);
-            }
-
-            count++;
-        }
+    if (countPerPage.value <= 0) { // all rows on one page
+        return displayedTransactionsInTableOrder.value;
     }
 
-    return ret;
+    const previousCount = Math.max(0, (currentPage.value - 1) * countPerPage.value);
+
+    // the rows of the current page in the order the table shows them (after the user filters and sorting)
+    return displayedTransactionsInTableOrder.value.slice(previousCount, previousCount + countPerPage.value);
+});
+
+// the transactions shown by the table, in the table order: the custom filter, then the user sorting
+// (the comparison mirrors the default sorting of the Vuetify data table, no column defines a custom sort)
+const displayedTransactionsInTableOrder = computed<ImportTransaction[]>(() => {
+    if (!props.importTransactions || props.importTransactions.length < 1) {
+        return [];
+    }
+
+    const displayed = props.importTransactions.filter(transaction => isTransactionDisplayed(transaction));
+    const sortBy = tableSortBy.value.filter(item => item.order !== false);
+
+    if (!sortBy.length) {
+        return displayed;
+    }
+
+    const collator = new Intl.Collator(vuetifyLocale.current.value, { sensitivity: 'accent', usage: 'sort' });
+    const isEmptyValue = (value: string | undefined | null) => value === null || value === undefined || value.trim() === '';
+    const toSortValue = (transaction: ImportTransaction, key: string): string | undefined | null => {
+        const value = (transaction as unknown as Record<string, unknown>)[key];
+        return value !== null && value !== undefined ? String(value).toLocaleLowerCase() : value as undefined | null;
+    };
+
+    return displayed.slice().sort((a, b) => {
+        for (const item of sortBy) {
+            let sortA = toSortValue(a, item.key);
+            let sortB = toSortValue(b, item.key);
+
+            if (item.order === 'desc') {
+                [sortA, sortB] = [sortB, sortA];
+            }
+
+            if (sortA === sortB) {
+                continue;
+            }
+
+            if (isEmptyValue(sortA) && isEmptyValue(sortB)) {
+                return 0;
+            } else if (isEmptyValue(sortA)) {
+                return -1;
+            } else if (isEmptyValue(sortB)) {
+                return 1;
+            }
+
+            if (!isNaN(sortA as unknown as number) && !isNaN(sortB as unknown as number)) {
+                return Number(sortA) - Number(sortB);
+            }
+
+            return collator.compare(sortA as string, sortB as string);
+        }
+
+        return 0;
+    });
 });
 
 const selectedImportTransactionCount = computed<number>(() => {
@@ -1828,7 +1909,7 @@ function showBatchReplaceDialog(type: BatchReplaceDialogDataType, allSourceTagIt
         }
 
         if (updatedCount > 0) {
-            snackbar.value?.showMessage('format.misc.youHaveUpdatedTransactions', {
+            desktopPageStore.addToast('format.misc.youHaveUpdatedTransactions', {
                 count: formatNumberToLocalizedNumerals(updatedCount)
             });
         }
@@ -1891,7 +1972,7 @@ function showBatchAddDialog(type: BatchReplaceDialogDataType): void {
         }
 
         if (updatedCount > 0) {
-            snackbar.value?.showMessage('format.misc.youHaveUpdatedTransactions', {
+            desktopPageStore.addToast('format.misc.youHaveUpdatedTransactions', {
                 count: formatNumberToLocalizedNumerals(updatedCount)
             });
         }
@@ -1991,14 +2072,14 @@ function showReplaceInvalidItemDialog(type: BatchReplaceDialogDataType, invalidI
         }
 
         if (updatedCount > 0) {
-            snackbar.value?.showMessage('format.misc.youHaveUpdatedTransactions', {
+            desktopPageStore.addToast('format.misc.youHaveUpdatedTransactions', {
                 count: formatNumberToLocalizedNumerals(updatedCount)
             });
         }
     });
 }
 
-function showBatchApplyRulesDialog(): void {
+function showBatchApplyRulesDialog(initialRules: ImportTransactionReplaceRule[]): void {
     if (isEditing.value) {
         return;
     }
@@ -2010,6 +2091,7 @@ function showBatchApplyRulesDialog(): void {
         sourceAccountNames: allOriginalSourceAccountNames.value,
         destinationAccountNames: allOriginalDestinationAccountNames.value,
         tagNames: allOriginalTransactionTagNames.value,
+        initialRules: initialRules,
         selectedTransactionCount: selectedImportTransactionCount.value
     }).then(result => {
         if (!result || !result.rules || !result.scope) {
@@ -2026,7 +2108,7 @@ function showBatchApplyRulesDialog(): void {
         });
 
         if (applyResult.updatedTransactionCount > 0) {
-            snackbar.value?.showMessage('format.misc.youHaveUpdatedTransactions', {
+            desktopPageStore.addToast('format.misc.youHaveUpdatedTransactions', {
                 count: formatNumberToLocalizedNumerals(applyResult.updatedTransactionCount)
             });
         }
@@ -2096,10 +2178,25 @@ function showBatchCreateInvalidItemDialog(type: BatchCreateDialogDataType, inval
         }
 
         if (updatedCount > 0) {
-            snackbar.value?.showMessage('format.misc.youHaveUpdatedTransactions', {
+            desktopPageStore.addToast('format.misc.youHaveUpdatedTransactions', {
                 count: formatNumberToLocalizedNumerals(updatedCount)
             });
         }
+    });
+}
+
+function applyPresetRules(rules: ImportTransactionReplaceRule[]): void {
+    if (!rules.length) {
+        return;
+    }
+
+    applyImportTransactionReplaceRules(props.importTransactions || [], rules, 'all', {
+        allCategoriesMap: allCategoriesMap.value,
+        allSecondaryCategoriesMapByName: allSecondaryCategoriesMapByName.value,
+        allAccountsMap: allAccountsMap.value,
+        allAccountsMapByName: allAccountsMapByName.value,
+        allTagsMap: allTagsMap.value,
+        updateTransaction: updateTransactionData
     });
 }
 
@@ -2210,7 +2307,7 @@ function focusTableScrollContainerWhenNonEditing(event: MouseEvent): void {
 }
 
 function onShowDateRangeError(message: string): void {
-    snackbar.value?.showError(message);
+    desktopPageStore.addErrorToast(message);
 }
 
 function reset(): void {
@@ -2238,6 +2335,165 @@ watch(filters, () => {
     deep: true
 });
 
+type ImportTransactionValidationIssueType = 'category' | 'account' | 'tag' | 'description';
+
+const ALL_VALIDATION_ISSUE_TYPES: ImportTransactionValidationIssueType[] = [ 'category', 'account', 'tag', 'description' ];
+
+interface ImportTransactionValidationIssue {
+    readonly type: ImportTransactionValidationIssueType;
+    readonly title: string;
+    readonly count: number;
+}
+
+function hasValidationIssue(transaction: ImportTransaction, type: ImportTransactionValidationIssueType): boolean {
+    if (type === 'category') {
+        const categoryId = transaction.categoryId;
+        return transaction.type !== TransactionType.ModifyBalance && (!categoryId || categoryId === '0' || !allCategoriesMap.value[categoryId]);
+    } else if (type === 'account') {
+        const sourceAccountId = transaction.sourceAccountId;
+        const destinationAccountId = transaction.destinationAccountId;
+
+        if (!sourceAccountId || sourceAccountId === '0' || !allAccountsMap.value[sourceAccountId]) {
+            return true;
+        }
+
+        return transaction.type === TransactionType.Transfer && (!destinationAccountId || destinationAccountId === '0' || !allAccountsMap.value[destinationAccountId]);
+    } else if (type === 'tag') {
+        if (!transaction.tagIds) {
+            return false;
+        }
+
+        for (const tagId of transaction.tagIds) {
+            if (!tagId || tagId === '0' || !allTagsMap.value[tagId]) {
+                return true;
+            }
+        }
+
+        return false;
+    } else if (type === 'description') {
+        return !!transaction.comment && transaction.comment.length > TRANSACTION_MAX_COMMENT_LENGTH;
+    }
+
+    return false;
+}
+
+const invalidTransactionCount = computed<number>(() => {
+    let count = 0;
+
+    for (const importTransaction of (props.importTransactions || [])) {
+        if (!importTransaction.valid) {
+            count++;
+        }
+    }
+
+    return count;
+});
+
+// validation issues with the number of affected transactions (guidelines §6.4)
+const validationIssues = computed<ImportTransactionValidationIssue[]>(() => {
+    const counts: Record<ImportTransactionValidationIssueType, number> = {
+        category: 0,
+        account: 0,
+        tag: 0,
+        description: 0
+    };
+
+    for (const importTransaction of (props.importTransactions || [])) {
+        if (importTransaction.valid) {
+            continue;
+        }
+
+        for (const type of ALL_VALIDATION_ISSUE_TYPES) {
+            if (hasValidationIssue(importTransaction, type)) {
+                counts[type]++;
+            }
+        }
+    }
+
+    return [
+        { type: 'category', title: tt('Invalid Category'), count: counts.category },
+        { type: 'account', title: tt('Invalid Account'), count: counts.account },
+        { type: 'tag', title: tt('Invalid Tag'), count: counts.tag },
+        { type: 'description', title: tt('Description Too Long'), count: counts.description }
+    ];
+});
+
+function getImportTransactionRowProps({ item }: { item: ImportTransaction }): Record<string, unknown> {
+    return {
+        class: {
+            'import-transaction-row-invalid': !item.valid,
+            'import-transaction-row-current': item.index === highlightedTransactionIndex.value
+        },
+        'data-import-index': item.index
+    };
+}
+
+// jumps to the next affected row after the one jumped to last time, so repeated presses walk through every issue
+function jumpToIssue(type: ImportTransactionValidationIssueType): void {
+    if (!props.importTransactions || !props.importTransactions.length || isEditing.value) {
+        return;
+    }
+
+    const isAffected = (transaction: ImportTransaction) => !transaction.valid && hasValidationIssue(transaction, type);
+    const displayedTransactions = displayedTransactionsInTableOrder.value;
+    const highlightedDisplayIndex = displayedTransactions.findIndex(transaction => transaction.index === highlightedTransactionIndex.value);
+    let anyAffectedHidden = false;
+    let firstDisplayed: { transaction: ImportTransaction, displayIndex: number } | null = null;
+    let nextDisplayed: { transaction: ImportTransaction, displayIndex: number } | null = null;
+
+    // walk the rows in the order the table shows them, so the jump follows the user sorting and filters
+    for (const [importTransaction, displayIndex] of itemAndIndex(displayedTransactions)) {
+        if (!isAffected(importTransaction)) {
+            continue;
+        }
+
+        if (!firstDisplayed) {
+            firstDisplayed = { transaction: importTransaction, displayIndex };
+        }
+
+        if (!nextDisplayed && displayIndex > highlightedDisplayIndex) {
+            nextDisplayed = { transaction: importTransaction, displayIndex };
+            break;
+        }
+    }
+
+    if (!firstDisplayed) {
+        for (const importTransaction of props.importTransactions) {
+            if (isAffected(importTransaction) && !isTransactionDisplayed(importTransaction)) {
+                anyAffectedHidden = true;
+                break;
+            }
+        }
+    }
+
+    const target = nextDisplayed ?? firstDisplayed;
+
+    if (!target) {
+        if (anyAffectedHidden) {
+            // the affected rows are hidden by the current filters
+            filters.value.minDatetime = null;
+            filters.value.maxDatetime = null;
+            filters.value.transactionType = null;
+            filters.value.category = null;
+            filters.value.amount = null;
+            filters.value.account = null;
+            filters.value.tag = null;
+            filters.value.description = null;
+            nextTick(() => jumpToIssue(type));
+        }
+
+        return;
+    }
+
+    highlightedTransactionIndex.value = target.transaction.index;
+    currentPage.value = countPerPage.value > 0 ? Math.floor(target.displayIndex / countPerPage.value) + 1 : 1;
+
+    nextTick(() => {
+        const row = document.querySelector(`.import-transaction-table tr[data-import-index="${target.transaction.index}"]`);
+        row?.scrollIntoView({ block: 'center', behavior: 'auto' });
+    });
+}
+
 defineExpose({
     filterMenus,
     toolMenus,
@@ -2245,12 +2501,94 @@ defineExpose({
     canImport,
     showBatchApplyRulesDialog,
     updateAllTransactionsIsValid,
+    applyPresetRules,
     reset,
     setCountPerPage
 });
 </script>
 
 <style>
+/* Validation issues strip (guidelines §6.4): counts per issue and a jump-to-row action */
+.import-check-issues {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: var(--ebk-space-3);
+    row-gap: var(--ebk-space-1);
+    min-height: 40px;
+    padding: var(--ebk-space-1) var(--ebk-space-4);
+    border-block-end: 1px solid var(--ebk-color-hairline);
+    border-inline-start: 3px solid rgb(var(--v-theme-error));
+    background-color: rgba(var(--v-theme-error), 0.06);
+    font-size: 0.875rem;
+}
+
+.import-check-issue-label {
+    color: var(--ebk-color-text-primary);
+}
+
+.import-check-issues--ok {
+    border-inline-start-color: rgb(var(--v-theme-success));
+    background-color: transparent;
+}
+
+.import-check-issues-title {
+    color: var(--ebk-color-text-secondary);
+}
+
+.import-check-issues-ok,
+.import-check-issues-total {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ebk-space-1);
+    font-weight: 600;
+}
+
+.import-check-issues-total {
+    color: var(--ebk-color-error-text);
+}
+
+.import-check-issues-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ebk-space-1) var(--ebk-space-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.import-check-issue {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ebk-space-1);
+    padding-inline-start: var(--ebk-space-3);
+    border-inline-start: 1px solid var(--ebk-color-hairline);
+}
+
+.import-check-issue-count {
+    min-width: 1.5rem;
+    padding-inline: var(--ebk-space-2);
+    border-radius: var(--ebk-radius-pill);
+    background-color: rgba(var(--v-theme-error), 0.12);
+    color: var(--ebk-color-text-primary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.import-transaction-table tr.import-transaction-row-invalid > td:first-child {
+    box-shadow: inset 2px 0 0 rgb(var(--v-theme-error));
+}
+
+[dir='rtl'] .import-transaction-table tr.import-transaction-row-invalid > td:first-child {
+    box-shadow: inset -2px 0 0 rgb(var(--v-theme-error));
+}
+
+.import-transaction-table tr.import-transaction-row-current > td {
+    background-color: var(--ebk-color-selected-background);
+}
+
 .import-transaction-table > .v-table__wrapper > table {
     th:not(:last-child),
     td:not(:last-child) {

@@ -264,12 +264,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch, onBeforeUnmount } from 'vue';
 
 import { useI18n } from '@/locales/helpers.ts';
 import { useI18nUIComponents } from '@/lib/ui/mobile.ts';
 import { useStatisticsSettingPageBase } from '@/views/base/statistics/StatisticsSettingPageBase.ts';
 
+import { useSettingsStore } from '@/stores/setting.ts';
 import { useAccountsStore } from '@/stores/account.ts';
 import { useTransactionCategoriesStore } from '@/stores/transactionCategory.ts';
 
@@ -300,6 +301,7 @@ const {
     defaultAssetTrendsChartDateRange
 } = useStatisticsSettingPageBase();
 
+const settingsStore = useSettingsStore();
 const accountsStore = useAccountsStore();
 const transactionCategoriesStore = useTransactionCategoriesStore();
 
@@ -342,4 +344,26 @@ function init(): void {
 }
 
 init();
+
+// settings apply and save immediately; confirm each save with a toast, as the desktop snackbar does (guideline 6.5)
+let settingsSavedToastTimer: ReturnType<typeof setTimeout> | null = null;
+
+watch(() => settingsStore.appSettings, () => {
+    if (settingsSavedToastTimer) {
+        clearTimeout(settingsSavedToastTimer);
+    }
+
+    // several values changed by one action are confirmed once
+    settingsSavedToastTimer = setTimeout(() => {
+        settingsSavedToastTimer = null;
+        showToast('Settings saved');
+    }, 200);
+}, { deep: true });
+
+onBeforeUnmount(() => {
+    if (settingsSavedToastTimer) {
+        clearTimeout(settingsSavedToastTimer);
+        settingsSavedToastTimer = null;
+    }
+});
 </script>

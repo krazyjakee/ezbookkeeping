@@ -6,16 +6,35 @@
              v-if="draggingWidget"></div>
         <div class="overview-dashboard-item"
              :class="{ 'overview-dashboard-item-editing': editing, 'overview-dashboard-item-dragging': draggingWidget?.id === widget.id, 'overview-dashboard-item-fixed-height': isFixedHeightWidget(widget) }"
-             :style="getWidgetStyle(widget)" :key="widget.id" v-for="widget in sortedWidgets">
-            <overview-widget class="overview-dashboard-widget" :widget="widget" :loading="loading" :editing="editing"
+             :style="getWidgetStyle(widget)" :data-widget-id="widget.id" :key="widget.id"
+             v-for="(widget, index) in sortedWidgets">
+            <overview-widget class="overview-dashboard-widget" :class="{ 'ebk-animate-reveal': !editing }"
+                             :style="!editing ? getStaggerStyle(index) : undefined"
+                             :widget="widget" :loading="loading" :editing="editing"
                              @refresh="refresh" />
             <template v-if="editing">
-                <div class="overview-dashboard-title-drag-area" :aria-label="tt('Move')"
+                <div class="overview-dashboard-title-drag-area" aria-hidden="true"
                      @pointerdown="startPointerAction($event, widget, 'move')"></div>
                 <div class="overview-dashboard-editor-toolbar">
-                    <v-btn density="comfortable" color="default" variant="text" class="ma-1"
+                    <span class="overview-dashboard-drag-indicator" aria-hidden="true"
+                          @pointerdown="startPointerAction($event, widget, 'move')">
+                        <v-icon :icon="mdiDragVertical" size="20" />
+                    </span>
+                    <v-btn class="overview-dashboard-move-up" density="comfortable" size="small" color="default" variant="text"
+                           :aria-label="tt('Move Up')" :disabled="loading || index === 0" :icon="true"
+                           @click="moveWidget(widget, -1)">
+                        <v-icon :icon="mdiArrowUp" size="20" />
+                        <v-tooltip activator="parent">{{ tt('Move Up') }}</v-tooltip>
+                    </v-btn>
+                    <v-btn class="overview-dashboard-move-down" density="comfortable" size="small" color="default" variant="text"
+                           :aria-label="tt('Move Down')" :disabled="loading || index === sortedWidgets.length - 1" :icon="true"
+                           @click="moveWidget(widget, 1)">
+                        <v-icon :icon="mdiArrowDown" size="20" />
+                        <v-tooltip activator="parent">{{ tt('Move Down') }}</v-tooltip>
+                    </v-btn>
+                    <v-btn density="comfortable" size="small" color="default" variant="text"
                            :aria-label="tt('More')" :disabled="loading" :icon="true">
-                        <v-icon :icon="mdiDotsVertical" />
+                        <v-icon :icon="mdiDotsVertical" size="20" />
                         <v-tooltip activator="parent">{{ tt('More') }}</v-tooltip>
                         <v-menu activator="parent">
                             <v-list>
@@ -24,6 +43,11 @@
                                                  @click="emit('configure', widget)" />
                                     <v-divider class="my-2" />
                                 </template>
+                                <v-list-item :prepend-icon="mdiArrowUp" :title="tt('Move Up')"
+                                             :disabled="index === 0" @click="moveWidget(widget, -1)" />
+                                <v-list-item :prepend-icon="mdiArrowDown" :title="tt('Move Down')"
+                                             :disabled="index === sortedWidgets.length - 1" @click="moveWidget(widget, 1)" />
+                                <v-divider class="my-2" />
                                 <v-list-item :prepend-icon="mdiContentDuplicate" :title="tt('Duplicate')"
                                              @click="emit('duplicate', widget)" />
                                 <v-list-item :prepend-icon="mdiDeleteOutline" :title="tt('Delete')"
@@ -34,23 +58,27 @@
                 </div>
                 <button class="overview-dashboard-resize-handle" :aria-label="tt('Resize')"
                         @pointerdown="startPointerAction($event, widget, 'resize')">
-                    <v-icon class="icon-with-direction" :icon="mdiResizeBottomRight" size="32" />
+                    <v-icon class="icon-with-direction" :icon="mdiResizeBottomRight" size="24" />
                 </button>
             </template>
         </div>
 
-        <div class="d-flex flex-column align-center justify-center ga-3" v-if="!layout.widgets.length">
-            <v-icon :icon="mdiWidgetsOutline" size="64" color="secondary" />
-            <span class="text-title-medium">{{ tt('No widgets') }}</span>
-            <v-btn color="primary" variant="tonal" @click="emit('add')" v-if="editing">{{ tt('Add Widget') }}</v-btn>
-        </div>
+        <state-panel class="overview-dashboard-empty-state" type="empty" :title="tt('No widgets')" v-if="!layout.widgets.length">
+            <template #icon>
+                <v-icon :icon="mdiWidgetsOutline" size="24" />
+            </template>
+            <template #actions v-if="editing">
+                <v-btn color="primary" variant="tonal" @click="emit('add')">{{ tt('Add Widget') }}</v-btn>
+            </template>
+        </state-panel>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onBeforeUnmount } from 'vue';
+import { ref, computed, nextTick, onBeforeUnmount } from 'vue';
 
 import OverviewWidget from './OverviewWidget.vue';
+import StatePanel from '@/components/common/StatePanel.vue';
 
 import { useI18n } from '@/locales/helpers.ts';
 
@@ -65,15 +93,22 @@ import {
 } from '@/consts/overview_layout.ts';
 
 import {
+    cloneWidget,
     resolveDesktopOverviewWidgetCollisions,
     compactDesktopOverviewWidgets
 } from '@/lib/overview_layout.ts';
+import { getStaggerStyle } from '@/lib/motion.ts';
+
+import { provideOverviewWidgetState } from './overviewWidgetState.ts';
 
 import {
+    mdiArrowDown,
+    mdiArrowUp,
     mdiCogOutline,
     mdiContentDuplicate,
     mdiDeleteOutline,
     mdiDotsVertical,
+    mdiDragVertical,
     mdiResizeBottomRight,
     mdiWidgetsOutline
 } from '@mdi/js';
@@ -103,6 +138,7 @@ interface DraggingPreview {
 const props = defineProps<{
     layout: DesktopOverviewLayout;
     loading: boolean;
+    loadFailed?: boolean;
     editing?: boolean
 }>();
 
@@ -121,6 +157,11 @@ const ROW_HEIGHT: number = 60;
 const GAP: number = 16;
 
 const grid = ref<HTMLElement | null>(null);
+
+provideOverviewWidgetState({
+    loadFailed: computed<boolean>(() => !!props.loadFailed),
+    retry: () => emit('refresh', false)
+});
 const pointerAction = ref<PointerActionState | null>(null);
 const draggingPreview = ref<DraggingPreview | null>(null);
 
@@ -272,6 +313,68 @@ function finishPointerAction(event: PointerEvent): void {
     window.removeEventListener('pointercancel', finishPointerAction);
 
     emit('update:layout', { ...props.layout, widgets: compactDesktopOverviewWidgets(props.layout.widgets) });
+}
+
+/**
+ * Non-drag alternative to moving widgets: swaps the widget with its previous / next widget in reading order
+ * (top to bottom, start to end), then resolves the collisions with the same rules as dragging
+ */
+function moveWidget(widget: DesktopOverviewWidgetLayout, direction: -1 | 1): void {
+    if (props.loading || !props.editing) {
+        return;
+    }
+
+    const widgets = sortedWidgets.value;
+    const index = widgets.findIndex(item => item.id === widget.id);
+    const target = widgets[index + direction];
+
+    if (index < 0 || !target) {
+        return;
+    }
+
+    const mover: DesktopOverviewWidgetLayout = direction < 0 ? widget : target;
+    const anchor: DesktopOverviewWidgetLayout = direction < 0 ? target : widget;
+
+    const movedWidget: DesktopOverviewWidgetLayout = {
+        ...cloneWidget(mover),
+        x: Math.min(anchor.x, DESKTOP_OVERVIEW_LAYOUT_COLUMNS - mover.w),
+        y: anchor.y
+    };
+    const displacedWidget: DesktopOverviewWidgetLayout = {
+        ...cloneWidget(anchor),
+        x: Math.min(mover.x, DESKTOP_OVERVIEW_LAYOUT_COLUMNS - anchor.w),
+        y: mover.y
+    };
+
+    if (mover.y === anchor.y && movedWidget.x + mover.w + anchor.w <= DESKTOP_OVERVIEW_LAYOUT_COLUMNS) {
+        // widgets in the same row swap places side by side, even when their widths differ
+        displacedWidget.x = movedWidget.x + mover.w;
+    }
+
+    const nextWidgets = props.layout.widgets.map(item => {
+        if (item.id === movedWidget.id) {
+            return movedWidget;
+        } else if (item.id === displacedWidget.id) {
+            return displacedWidget;
+        }
+
+        return item;
+    });
+
+    const resolvedWidgets = resolveDesktopOverviewWidgetCollisions(nextWidgets, movedWidget.id);
+    emit('update:layout', { ...props.layout, widgets: compactDesktopOverviewWidgets(resolvedWidgets) });
+
+    nextTick(() => {
+        // keep keyboard focus on the control that was used, so the widget can be moved repeatedly
+        const item = grid.value?.querySelector(`[data-widget-id="${widget.id}"]`);
+        const button = item?.querySelector<HTMLElement>(direction < 0 ? '.overview-dashboard-move-up' : '.overview-dashboard-move-down');
+
+        if (button && !button.hasAttribute('disabled')) {
+            button.focus();
+        } else {
+            item?.querySelector<HTMLElement>(direction < 0 ? '.overview-dashboard-move-down' : '.overview-dashboard-move-up')?.focus();
+        }
+    });
 }
 
 function refresh(force: boolean): void {

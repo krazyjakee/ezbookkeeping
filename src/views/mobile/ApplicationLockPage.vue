@@ -1,5 +1,5 @@
 <template>
-    <f7-page>
+    <f7-page class="ebk-settings-page">
         <f7-navbar>
             <f7-nav-left :back-link="tt('Back')"></f7-nav-left>
             <f7-nav-title :title="tt('Application Lock')"></f7-nav-title>
@@ -23,7 +23,7 @@
                     <f7-toggle :checked="isEnableApplicationLockWebAuthn" @toggle:change="isEnableApplicationLockWebAuthn = $event"></f7-toggle>
                 </template>
             </f7-list-item>
-            <f7-list-button v-if="isEnableApplicationLock" @click="disable(null)">{{ tt('Disable') }}</f7-list-button>
+            <f7-list-button color="red" v-if="isEnableApplicationLock" @click="disable(null)">{{ tt('Disable') }}</f7-list-button>
             <f7-list-button v-if="!isEnableApplicationLock" @click="enable(null)">{{ tt('Enable') }}</f7-list-button>
         </f7-list>
 

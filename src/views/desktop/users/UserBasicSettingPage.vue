@@ -1,15 +1,20 @@
 <template>
     <v-row>
         <v-col cols="12">
-            <v-card class="setting-items" :class="{ 'disabled': loading || saving }">
-                <template #title>
-                    <span>{{ tt('Basic Settings') }}</span>
-                    <v-progress-circular indeterminate size="20" class="ms-3" v-if="loading"></v-progress-circular>
-                </template>
+            <v-card class="setting-items ebk-settings-panel" :class="{ 'disabled': loading || saving }">
+                <header class="ebk-panel-header-strip ebk-settings-panel-header">
+                    <h2 class="ebk-settings-panel-title">{{ tt('Basic Settings') }}</h2>
+                    <div class="ebk-panel-header-actions">
+                        <v-progress-circular indeterminate size="18" v-if="loading"></v-progress-circular>
+                    </div>
+                </header>
 
                 <v-card-text class="d-flex mt-2">
                     <v-avatar rounded="lg" variant="tonal" size="100" class="me-4 user-profile-avatar-icon"
                               :class="{ 'cursor-pointer': avatarProvider === 'internal', 'user-profile-avatar-icon-modifiable': avatarProvider === 'internal' }"
+                              :tag="avatarProvider === 'internal' ? 'button' : 'div'"
+                              :type="avatarProvider === 'internal' ? 'button' : undefined"
+                              :aria-label="avatarProvider === 'internal' ? tt('Update Avatar') : undefined"
                               :color="currentUserAvatar ? 'rgba(0,0,0,0)' : 'primary'">
                         <v-img :src="currentUserAvatar" v-if="currentUserAvatar">
                             <template #placeholder>
@@ -31,7 +36,7 @@
                     </v-avatar>
                     <div class="d-flex flex-column justify-center gap-3">
                         <div class="d-flex text-body-large">
-                            <span class="me-1">{{ tt('Username:') }}</span>
+                            <span class="me-1 text-medium-emphasis">{{ tt('Username:') }}</span>
                             <v-skeleton-loader class="skeleton-no-margin" type="text" style="width: 100px" :loading="true" v-if="loading"></v-skeleton-loader>
                             <span v-if="!loading">{{ oldProfile.username }}</span>
                         </div>
@@ -55,13 +60,13 @@
                         <div class="setting-item">
                             <span>{{ tt('Nickname') }}</span>
                             <v-spacer/>
-                            <v-text-field
+                            <v-text-field :aria-label="tt('Nickname')"
                                 class="ms-4"
                                 density="compact"
                                 type="text"
                                 autocomplete="nickname"
                                 persistent-placeholder
-                                max-width="400px"
+                                max-width="320px"
                                 :disabled="loading || saving"
                                 :placeholder="tt('Your nickname')"
                                 v-model="newProfile.nickname"
@@ -71,13 +76,13 @@
                         <div class="setting-item">
                             <span>{{ tt('E-mail') }}</span>
                             <v-spacer/>
-                            <v-text-field
+                            <v-text-field :aria-label="tt('E-mail')"
                                 class="ms-4"
                                 density="compact"
                                 type="email"
                                 autocomplete="email"
                                 persistent-placeholder
-                                max-width="400px"
+                                max-width="320px"
                                 :disabled="loading || saving"
                                 :placeholder="tt('Your email address')"
                                 v-model="newProfile.email"
@@ -87,7 +92,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Default Account') }}</span>
                             <v-spacer/>
-                            <two-column-select class="ms-4" density="compact" max-width="600px"
+                            <two-column-select :aria-label="tt('Default Account')" class="ms-4" density="compact" max-width="600px"
                                                primary-key-field="id" primary-value-field="category"
                                                primary-title-field="name"
                                                primary-icon-field="icon" primary-icon-type-field="iconType" primary-icon-type="account"
@@ -96,6 +101,7 @@
                                                secondary-key-field="id" secondary-value-field="id"
                                                secondary-title-field="name"
                                                secondary-icon-field="icon" secondary-icon-type-field="iconType" secondary-icon-type="account" secondary-color-field="color"
+                                               :menu-props="{ contentClass: 'two-column-select-menu select-menu-x-large' }"
                                                :disabled="loading || saving || !allVisibleAccounts.length"
                                                :enable-filter="true" :filter-placeholder="tt('Find account')" :filter-no-items-text="tt('No available account')"
                                                :placeholder="tt('Default Account')"
@@ -108,7 +114,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Use Last Reconciled Time') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Use Last Reconciled Time')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -133,7 +139,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Editable Transaction Range') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Editable Transaction Range')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -154,7 +160,8 @@
                         <div class="setting-item">
                             <span>{{ languageTitle }}</span>
                             <v-spacer/>
-                            <language-select class="ms-4" density="compact" max-width="400px"
+                            <language-select :aria-label="languageTitle" class="ms-4" density="compact" max-width="400px"
+                                             :menu-props="{ contentClass: 'select-menu-large' }"
                                              :disabled="loading || saving"
                                              :placeholder="languageTitle"
                                              :include-system-default="true"
@@ -164,7 +171,8 @@
                         <div class="setting-item">
                             <span>{{ tt('Default Currency') }}</span>
                             <v-spacer/>
-                            <currency-select class="ms-4" density="compact" max-width="400px"
+                            <currency-select :aria-label="tt('Default Currency')" class="ms-4" density="compact" max-width="400px"
+                                             :menu-props="{ contentClass: 'select-menu-large' }"
                                              :disabled="loading || saving"
                                              :placeholder="tt('Default Currency')"
                                              v-model="newProfile.defaultCurrency" />
@@ -173,7 +181,7 @@
                         <div class="setting-item">
                             <span>{{ tt('First Day of Week') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('First Day of Week')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -190,7 +198,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Fiscal Year Start Date') }}</span>
                             <v-spacer/>
-                            <fiscal-year-start-select
+                            <fiscal-year-start-select :aria-label="tt('Fiscal Year Start Date')"
                                 class="ms-4"
                                 density="compact"
                                 persistent-placeholder
@@ -209,7 +217,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Calendar Display Type') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Calendar Display Type')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -226,7 +234,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Date Display Type') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Date Display Type')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -243,7 +251,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Long Date Format') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Long Date Format')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -260,7 +268,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Short Date Format') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Short Date Format')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -277,7 +285,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Long Time Format') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Long Time Format')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -294,7 +302,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Short Time Format') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Short Time Format')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -311,7 +319,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Fiscal Year Format') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Fiscal Year Format')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -332,7 +340,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Currency Display Mode') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Currency Display Mode')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -349,7 +357,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Numeral System') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Numeral System')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -366,7 +374,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Digit Grouping') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Digit Grouping')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -383,7 +391,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Digit Grouping Symbol') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Digit Grouping Symbol')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -400,7 +408,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Decimal Separator') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Decimal Separator')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -421,7 +429,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Geographic Location Format') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Geographic Location Format')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -442,7 +450,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Expense Amount Color') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Expense Amount Color')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -459,7 +467,7 @@
                         <div class="setting-item">
                             <span>{{ tt('Income Amount Color') }}</span>
                             <v-spacer/>
-                            <v-select
+                            <v-select :aria-label="tt('Income Amount Color')"
                                 class="ms-4"
                                 density="compact"
                                 item-title="displayName"
@@ -474,15 +482,13 @@
                         </div>
                     </v-card-text>
 
-                    <v-divider />
-
-                    <v-card-text class="d-flex flex-wrap gap-4">
-                        <v-btn :disabled="inputIsNotChanged || inputIsInvalid || saving" @click="save">
+                    <v-card-text class="ebk-settings-panel-footer ebk-settings-panel-footer--sticky">
+                        <span class="ebk-settings-panel-footer-status" role="status" v-if="!loading && !inputIsNotChanged">{{ tt('Unsaved changes') }}</span>
+                        <v-btn color="primary" :loading="saving" :disabled="inputIsNotChanged || inputIsInvalid || saving" @click="save">
                             {{ tt('Save Changes') }}
-                            <v-progress-circular indeterminate size="22" class="ms-2" v-if="saving"></v-progress-circular>
                         </v-btn>
 
-                        <v-btn color="default" variant="tonal" @click="reset">
+                        <v-btn color="default" variant="outlined" :disabled="saving" @click="reset">
                             {{ tt('Reset') }}
                         </v-btn>
                     </v-card-text>
@@ -492,13 +498,11 @@
     </v-row>
 
     <confirm-dialog ref="confirmDialog"/>
-    <snack-bar ref="snackbar" />
     <input ref="avatarInput" type="file" style="display: none" :accept="SUPPORTED_IMAGE_EXTENSIONS" @change="updateAvatar($event)" />
 </template>
 
 <script setup lang="ts">
 import ConfirmDialog from '@/components/desktop/ConfirmDialog.vue';
-import SnackBar from '@/components/desktop/SnackBar.vue';
 
 import { ref, computed, useTemplateRef } from 'vue';
 
@@ -508,13 +512,13 @@ import { useUserProfilePageBase } from '@/views/base/users/UserProfilePageBase.t
 import { useRootStore } from '@/stores/index.ts';
 import { useUserStore } from '@/stores/user.ts';
 import { useAccountsStore } from '@/stores/account.ts';
+import { useDesktopPageStore } from '@/stores/desktopPage.ts';
 
 import { TransactionEditScopeType } from '@/core/transaction.ts';
 import { SUPPORTED_IMAGE_EXTENSIONS } from '@/consts/file.ts';
 import type { UserProfileResponse } from '@/models/user.ts';
 import { Account } from '@/models/account.ts';
 
-import { generateRandomUUID } from '@/lib/misc.ts';
 import { isUserVerifyEmailEnabled } from '@/lib/server_settings.ts';
 
 import {
@@ -523,7 +527,6 @@ import {
 } from '@mdi/js';
 
 type ConfirmDialogType = InstanceType<typeof ConfirmDialog>;
-type SnackBarType = InstanceType<typeof SnackBar>;
 
 const { tt } = useI18n();
 
@@ -571,16 +574,15 @@ const {
 const rootStore = useRootStore();
 const userStore = useUserStore();
 const accountsStore = useAccountsStore();
+const desktopPageStore = useDesktopPageStore();
 
 const confirmDialog = useTemplateRef<ConfirmDialogType>('confirmDialog');
-const snackbar = useTemplateRef<SnackBarType>('snackbar');
 const avatarInput = useTemplateRef<HTMLInputElement>('avatarInput');
 
 const avatarUrl = ref<string>('');
 const avatarProvider = ref<string | undefined>('');
-const avatarNoCacheId = ref<string>('');
 
-const currentUserAvatar = computed<string | null>(() => userStore.getUserAvatarUrl(avatarUrl.value, avatarNoCacheId.value));
+const currentUserAvatar = computed<string | null>(() => userStore.getUserAvatarUrl(avatarUrl.value));
 
 function init(): void {
     loading.value = true;
@@ -604,7 +606,7 @@ function init(): void {
         loading.value = false;
 
         if (!error.processed) {
-            snackbar.value?.showError(error);
+            desktopPageStore.addErrorToast(error);
         }
     });
 }
@@ -613,22 +615,25 @@ function save(): void {
     const problemMessage = inputIsNotChangedProblemMessage.value || inputInvalidProblemMessage.value || extendInputInvalidProblemMessage.value || langAndRegionInputInvalidProblemMessage.value;
 
     if (problemMessage) {
-        snackbar.value?.showMessage(problemMessage);
+        desktopPageStore.addToast(problemMessage);
         return;
     }
 
     saving.value = true;
 
     rootStore.updateUserProfile(newProfile.value.toProfileUpdateRequest()).then(response => {
-        saving.value = false;
-
-        doAfterProfileUpdate(response.user);
-        snackbar.value?.showMessage('Your profile has been successfully updated');
+        doAfterProfileUpdate(response.user).then(() => {
+            desktopPageStore.addToast('Your profile has been successfully updated');
+        }).catch(() => {
+            desktopPageStore.addToast('Your profile has been successfully updated, but the language resources could not be loaded.');
+        }).finally(() => {
+            saving.value = false;
+        });
     }).catch(error => {
         saving.value = false;
 
         if (!error.processed) {
-            snackbar.value?.showError(error);
+            desktopPageStore.addErrorToast(error);
         }
     });
 }
@@ -656,16 +661,15 @@ function updateAvatar(event: Event): void {
         if (response) {
             avatarUrl.value = response.avatar;
             avatarProvider.value = response.avatarProvider;
-            avatarNoCacheId.value = generateRandomUUID();
             setCurrentUserProfile(response);
         }
 
-        snackbar.value?.showMessage('Your avatar has been successfully updated');
+        desktopPageStore.addToast('Your avatar has been successfully updated');
     }).catch(error => {
         saving.value = false;
 
         if (!error.processed) {
-            snackbar.value?.showError(error);
+            desktopPageStore.addErrorToast(error);
         }
     });
 }
@@ -683,12 +687,12 @@ function removeAvatar(): void {
                 setCurrentUserProfile(response);
             }
 
-            snackbar.value?.showMessage('Your profile has been successfully updated');
+            desktopPageStore.addToast('Your avatar has been successfully updated');
         }).catch(error => {
             saving.value = false;
 
             if (!error.processed) {
-                snackbar.value?.showError(error);
+                desktopPageStore.addErrorToast(error);
             }
         });
     });
@@ -699,12 +703,12 @@ function resendVerifyEmail(): void {
 
     rootStore.resendVerifyEmailByLoginedUser().then(() => {
         resending.value = false;
-        snackbar.value?.showMessage('Validation email has been sent');
+        desktopPageStore.addToast('Validation email has been sent');
     }).catch(error => {
         resending.value = false;
 
         if (!error.processed) {
-            snackbar.value?.showError(error);
+            desktopPageStore.addErrorToast(error);
         }
     });
 }
@@ -730,7 +734,14 @@ init();
     color: rgba(255, 255, 255, 0.8);
 }
 
-.user-profile-avatar-icon:hover .avatar-edit-icon {
+button.user-profile-avatar-icon {
+    padding: 0;
+    border: 0;
+}
+
+/* the edit overlay also appears on keyboard focus, not only on hover (#36) */
+.user-profile-avatar-icon:hover .avatar-edit-icon,
+.user-profile-avatar-icon:focus-visible .avatar-edit-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -738,12 +749,12 @@ init();
 }
 
 .v-theme--dark {
-    .user-profile-avatar-icon:hover .avatar-edit-icon {
+    .user-profile-avatar-icon:is(:hover, :focus-visible) .avatar-edit-icon {
         background-color: rgba(64, 64, 64, 0.6);
     }
 }
 
-.user-profile-avatar-icon-modifiable:hover .user-profile-avatar-placeholder {
+.user-profile-avatar-icon-modifiable:is(:hover, :focus-visible) .user-profile-avatar-placeholder {
     display: none;
 }
 </style>

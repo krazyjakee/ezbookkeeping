@@ -4,16 +4,17 @@
             <f7-nav-title :title="tt('global.app.title')"></f7-nav-title>
         </f7-navbar>
 
-        <f7-block class="currency-quick-switch margin-vertical-half" v-if="showQuickSwitch">
-            <f7-chip :key="currency" v-for="currency in quickSwitchCurrencies"
-                     :class="{ 'disabled': !!switchingCurrency }"
-                     :color="currency === defaultCurrency ? 'primary' : undefined"
-                     :outline="currency !== defaultCurrency"
-                     :text="currency"
-                     @click="onSwitchCurrency(currency)" />
-        </f7-block>
+        <div class="home-currency-quick-switch" v-if="showQuickSwitch">
+            <currency-quick-switch touch
+                                   :currencies="quickSwitchCurrencies"
+                                   :selected-currency="selectedCurrency"
+                                   :switching-currency="switchingCurrency"
+                                   :disabled="loading"
+                                   @switch="onSwitchCurrency" />
+        </div>
 
-        <overview-dashboard :layout="layout" :loading="loading" @navigate="onNavigate" />
+        <overview-dashboard :layout="layout" :loading="loading" :load-failed="loadFailed"
+                            @navigate="onNavigate" @retry="retry" />
 
         <f7-toolbar tabbar icons bottom class="main-tabbar">
             <f7-link class="link" href="/transaction/list" :aria-label="tt('Details')">
@@ -29,7 +30,9 @@
                      href="/transaction/add"
                      :aria-label="tt('Add Transaction')"
                      @taphold="openTransactionTemplatePopover">
-                <f7-icon f7="plus_square" class="ebk-tarbar-big-icon" aria-hidden="true"></f7-icon>
+                <span class="ebk-tabbar-add-key" aria-hidden="true">
+                    <f7-icon f7="plus"></f7-icon>
+                </span>
             </f7-link>
             <f7-link class="link" href="/statistic/transaction" :aria-label="tt('Statistics')">
                 <f7-icon f7="chart_pie" aria-hidden="true"></f7-icon>
@@ -78,6 +81,7 @@
 
 <script setup lang="ts">
 import AIImageRecognitionSheet, { type AIImageRecognitionResult } from '@/components/mobile/AIImageRecognitionSheet.vue';
+import CurrencyQuickSwitch from '@/components/common/CurrencyQuickSwitch.vue';
 import OverviewDashboard from './overview/OverviewDashboard.vue';
 
 import { ref, computed, useTemplateRef } from 'vue';
@@ -130,9 +134,9 @@ const props = defineProps<{
     f7router: Router.Router;
 }>();
 
-const { tt } = useI18n();
+const { tt, getCurrencyName } = useI18n();
 const { showToast } = useI18nUIComponents();
-const { switchingCurrency, quickSwitchCurrencies, defaultCurrency, showQuickSwitch, switchCurrency } = useCurrencyQuickSwitchBase();
+const { switchingCurrency, quickSwitchCurrencies, selectedCurrency, showQuickSwitch, switchCurrency } = useCurrencyQuickSwitchBase();
 
 const settingsStore = useSettingsStore();
 const accountsStore = useAccountsStore();
@@ -143,6 +147,7 @@ const overviewStore = useOverviewStore();
 const aiImageRecognitionSheet = useTemplateRef<AIImageRecognitionSheetType>('aiImageRecognitionSheet');
 
 const loading = ref<boolean>(true);
+const loadFailed = ref<boolean>(false);
 const showTransactionTemplatePopover = ref<boolean>(false);
 const showAIReceiptImageRecognitionSheet = ref<boolean>(false);
 
@@ -187,8 +192,10 @@ function init(): void {
             }
 
             loading.value = false;
+            loadFailed.value = false;
         }).catch(error => {
             loading.value = false;
+            loadFailed.value = !error.isUpToDate;
 
             if (!error.processed) {
                 showToast(error.message || error);
@@ -208,12 +215,14 @@ function reload(done?: () => void): void {
 
     Promise.all(promises).then(() => {
         done?.();
+        loadFailed.value = false;
 
         if (force) {
             showToast('Data has been updated');
         }
     }).catch(error => {
         done?.();
+        loadFailed.value = !error.isUpToDate;
 
         if (!error.processed) {
             showToast(error.message || error);
@@ -222,13 +231,24 @@ function reload(done?: () => void): void {
 }
 
 function onSwitchCurrency(currency: string): void {
-    switchCurrency(currency).then(() => {
+    switchCurrency(currency).then(switched => {
+        if (!switched) {
+            return;
+        }
+
+        showToast(tt('format.misc.defaultCurrencyChangedTo', { currency: `${getCurrencyName(currency)} (${currency})` }));
         reload();
     }).catch(error => {
+        // the default currency has not been changed, the selection has already gone back to the saved currency
         if (!error.processed) {
             showToast(error.message || error);
         }
     });
+}
+
+function retry(): void {
+    // the failed load may also have missed the accounts / categories / templates, so run the full initialization again
+    init();
 }
 
 function reloadOverviewData(force: boolean): Promise<unknown>[] {
@@ -384,10 +404,9 @@ init();
 </script>
 
 <style>
-.currency-quick-switch {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
+.home-currency-quick-switch {
+    padding-block: var(--ebk-space-3) 0;
+    padding-inline: calc(var(--ebk-space-3) + var(--f7-safe-area-left)) calc(var(--ebk-space-3) + var(--f7-safe-area-right));
 }
 
 .home-summary-card {
@@ -456,13 +475,6 @@ init();
 
 .tabbar.main-tabbar .link i + span.tabbar-label {
     margin-top: var(--ebk-icon-text-margin);
-}
-
-.tabbar.main-tabbar .link i.ebk-tarbar-big-icon {
-    font-size: var(--ebk-big-icon-button-size);
-    width: var(--ebk-big-icon-button-size);
-    height: var(--ebk-big-icon-button-size);
-    line-height: var(--ebk-big-icon-button-size);
 }
 
 .template-popover-menu .popover-inner {

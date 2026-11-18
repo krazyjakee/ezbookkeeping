@@ -1,15 +1,17 @@
 <template>
     <v-row>
         <v-col cols="12">
-            <v-card :class="{ 'disabled': updatingPassword }" :title="tt('Modify Password')">
+            <v-card class="ebk-settings-panel" :class="{ 'disabled': updatingPassword }">
+                <header class="ebk-panel-header-strip ebk-settings-panel-header">
+                    <h2 class="ebk-settings-panel-title">{{ tt('Modify Password') }}</h2>
+                </header>
                 <v-form>
-                    <v-card-text class="pt-2">
-                        <span class="text-body-large">{{ tt('After changing the password, other devices will be logged out. Please use the new password to log in on other devices.') }}</span>
+                    <v-card-text class="ebk-settings-panel-note">
+                        <v-icon class="ebk-settings-panel-note-icon" size="18" :icon="mdiInformationOutline" />
+                        <span>{{ tt('After changing the password, other devices will be logged out. Please use the new password to log in on other devices.') }}</span>
                     </v-card-text>
 
-                    <v-divider/>
-
-                    <v-card-text class="mt-1">
+                    <v-card-text class="pt-2">
                         <v-row>
                             <v-col cols="12" md="6">
                                 <v-text-field
@@ -55,12 +57,9 @@
                         </v-row>
                     </v-card-text>
 
-                    <v-divider/>
-
-                    <v-card-text class="d-flex flex-wrap gap-4">
-                        <v-btn :disabled="!newPassword || !confirmPassword || updatingPassword" @click="updatePassword">
+                    <v-card-text class="ebk-settings-panel-footer">
+                        <v-btn color="primary" :loading="updatingPassword" :disabled="!newPassword || !confirmPassword || updatingPassword" @click="updatePassword">
                             {{ tt('Save Changes') }}
-                            <v-progress-circular indeterminate size="22" class="ms-2" v-if="updatingPassword"></v-progress-circular>
                         </v-btn>
                     </v-card-text>
                 </v-form>
@@ -68,20 +67,20 @@
         </v-col>
 
         <v-col cols="12" v-if="isOAuth2Enabled() && (loadingExternalAuth || (thirdPartyLoginList && thirdPartyLoginList.length))">
-            <v-card :class="{ 'disabled': loadingExternalAuth }">
-                <template #title>
-                    <div class="d-flex align-center">
-                        <span>{{ tt('Third-Party Login') }}</span>
-                        <v-btn density="compact" color="default" variant="text" size="24" class="ms-2"
+            <v-card class="ebk-settings-panel" :class="{ 'disabled': loadingExternalAuth }">
+                <header class="ebk-panel-header-strip ebk-settings-panel-header">
+                    <h2 class="ebk-settings-panel-title">{{ tt('Third-Party Login') }}</h2>
+                    <div class="ebk-panel-header-actions">
+                        <v-btn density="compact" color="default" variant="text" size="28"
                                :aria-label="tt('Refresh')" :icon="true" :loading="loadingExternalAuth" @click="reloadExternalAuth(false)">
                             <template #loader>
-                                <v-progress-circular indeterminate size="20"/>
+                                <v-progress-circular indeterminate size="18"/>
                             </template>
-                            <v-icon :icon="mdiRefresh" size="24" />
+                            <v-icon :icon="mdiRefresh" size="20" />
                             <v-tooltip activator="parent">{{ tt('Refresh') }}</v-tooltip>
                         </v-btn>
                     </div>
-                </template>
+                </header>
 
                 <v-table class="table-striped text-no-wrap" :hover="!loadingExternalAuth">
                     <thead>
@@ -111,8 +110,7 @@
                         <td class=" text-right">
                             <v-btn density="comfortable" variant="tonal"
                                    :disabled="loggingInByOAuth2"
-                                   :href="oauth2LinkUrl"
-                                   @click="loggingInByOAuth2 = true"
+                                   @click="linkExternalAuth"
                                    v-if="!thirdPartyLogin.linked && isOAuth2Enabled() && getOAuth2Provider() === thirdPartyLogin.externalAuthType">
                                 {{ tt('Link') }}
                                 <v-progress-circular indeterminate size="22" class="ms-2" v-if="loggingInByOAuth2"></v-progress-circular>
@@ -131,22 +129,23 @@
         </v-col>
 
         <v-col cols="12">
-            <v-card :class="{ 'disabled': loadingSession }">
-                <template #title>
-                    <div class="d-flex align-center">
-                        <span>{{ tt('Device & Sessions') }}</span>
-                        <v-btn class="ms-3" density="compact" color="default" variant="outlined"
+            <v-card class="ebk-settings-panel" :class="{ 'disabled': loadingSession }">
+                <header class="ebk-panel-header-strip ebk-settings-panel-header">
+                    <h2 class="ebk-settings-panel-title">{{ tt('Device & Sessions') }}</h2>
+                    <span class="ebk-settings-panel-meta ebk-numeric" v-if="!loadingSession && sessions.length">{{ sessions.length }}</span>
+                    <div class="ebk-panel-header-actions">
+                        <v-btn density="compact" color="default" variant="text"
                                @click="generateToken" v-if="isAPITokenEnabled() || isMCPServerEnabled()">{{ tt('Generate Token') }}</v-btn>
-                        <v-btn density="compact" color="default" variant="text" size="24" class="ms-2"
+                        <v-btn density="compact" color="default" variant="text" size="28"
                                :aria-label="tt('Refresh')" :icon="true" :loading="loadingSession" @click="reloadSessions(false)">
                             <template #loader>
-                                <v-progress-circular indeterminate size="20"/>
+                                <v-progress-circular indeterminate size="18"/>
                             </template>
-                            <v-icon :icon="mdiRefresh" size="24" />
+                            <v-icon :icon="mdiRefresh" size="20" />
                             <v-tooltip activator="parent">{{ tt('Refresh') }}</v-tooltip>
                         </v-btn>
                     </div>
-                </template>
+                </header>
 
                 <v-table class="table-striped text-no-wrap" :hover="!loadingSession">
                     <thead>
@@ -196,13 +195,11 @@
     <unlink-third-party-login-dialog ref="unlinkThirdPartyLoginDialog" />
     <user-generate-token-dialog ref="generateTokenDialog" />
     <confirm-dialog ref="confirmDialog"/>
-    <snack-bar ref="snackbar" />
 </template>
 
 <script setup lang="ts">
 import { VTextField } from 'vuetify/components/VTextField';
 import ConfirmDialog from '@/components/desktop/ConfirmDialog.vue';
-import SnackBar from '@/components/desktop/SnackBar.vue';
 import UnlinkThirdPartyLoginDialog from './settings/dialogs/UnlinkThirdPartyLoginDialog.vue';
 import UserGenerateTokenDialog from './settings/dialogs/UserGenerateTokenDialog.vue';
 
@@ -214,6 +211,7 @@ import { useRootStore } from '@/stores/index.ts';
 import { useSettingsStore } from '@/stores/setting.ts';
 import { useUserExternalAuthStore } from '@/stores/userExternalAuth.ts';
 import { useTokensStore } from '@/stores/token.ts';
+import { useDesktopPageStore } from '@/stores/desktopPage.ts';
 
 import { itemAndIndex, reversedItemAndIndex } from '@/core/base.ts';
 import { KnownErrorCode } from '@/consts/api.ts';
@@ -235,6 +233,7 @@ import { generateRandomUUID } from '@/lib/misc.ts';
 
 import {
     mdiRefresh,
+    mdiInformationOutline,
     mdiLinkVariant,
     mdiGithub,
     mdiCellphone,
@@ -307,7 +306,6 @@ class DesktopPageSessionInfo extends SessionInfo {
 type UnlinkThirdPartyLoginDialogType = InstanceType<typeof UnlinkThirdPartyLoginDialog>;
 type UserGenerateTokenDialogType = InstanceType<typeof UserGenerateTokenDialog>;
 type ConfirmDialogType = InstanceType<typeof ConfirmDialog>;
-type SnackBarType = InstanceType<typeof SnackBar>;
 
 const {
     tt,
@@ -320,13 +318,13 @@ const rootStore = useRootStore();
 const settingsStore = useSettingsStore();
 const userExternalAuthStore = useUserExternalAuthStore();
 const tokensStore = useTokensStore();
+const desktopPageStore = useDesktopPageStore();
 
 const newPasswordInput = useTemplateRef<VTextField>('newPasswordInput');
 const confirmPasswordInput = useTemplateRef<VTextField>('confirmPasswordInput');
 const unlinkThirdPartyLoginDialog = useTemplateRef<UnlinkThirdPartyLoginDialogType>('unlinkThirdPartyLoginDialog');
 const generateTokenDialog = useTemplateRef<UserGenerateTokenDialogType>('generateTokenDialog');
 const confirmDialog = useTemplateRef<ConfirmDialogType>('confirmDialog');
-const snackbar = useTemplateRef<SnackBarType>('snackbar');
 
 const externalAuths = ref<UserExternalAuthInfoResponse[]>([]);
 const tokens = ref<TokenInfoResponse[]>([]);
@@ -338,8 +336,6 @@ const loadingExternalAuth = ref<boolean>(true);
 const loadingSession = ref<boolean>(true);
 const loggingInByOAuth2 = ref<boolean>(false);
 const oauth2ClientSessionId = ref<string>(generateRandomUUID());
-
-const oauth2LinkUrl = computed<string>(() => rootStore.generateOAuth2LinkUrl('desktop', oauth2ClientSessionId.value));
 
 const thirdPartyLoginList = computed<DesktopPageLinkedThirdPartyLogin[]>(() => {
     const ret: DesktopPageLinkedThirdPartyLogin[] = [];
@@ -393,7 +389,7 @@ function updatePassword(): void {
     const problemMessage = inputProblemMessage.value;
 
     if (problemMessage) {
-        snackbar.value?.showMessage(problemMessage);
+        desktopPageStore.addToast(problemMessage);
         return;
     }
 
@@ -403,25 +399,33 @@ function updatePassword(): void {
         password: newPassword.value,
         oldPassword: currentPassword.value
     }).then(response => {
-        updatingPassword.value = false;
         currentPassword.value = '';
         newPassword.value = '';
         confirmPassword.value = '';
 
-        if (response.user) {
-            const localeDefaultSettings = setLanguage(response.user.language);
+        const languagePromise = response.user ? setLanguage(response.user.language) : Promise.reject();
+
+        languagePromise.then(localeDefaultSettings => {
             settingsStore.updateLocalizedDefaultSettings(localeDefaultSettings);
-        }
 
-        reloadSessions(true);
+            if (response.user) {
+                desktopPageStore.addToast('Your profile has been successfully updated');
+            }
+        }).catch(() => {
+            if (response.user) {
+                desktopPageStore.addToast('Your profile has been successfully updated, but the language resources could not be loaded.');
+            }
+        }).finally(() => {
+            updatingPassword.value = false;
+            reloadSessions(true);
+        });
 
-        snackbar.value?.showMessage('Your profile has been successfully updated');
     }).catch(error => {
         updatingPassword.value = false;
         currentPassword.value = '';
 
         if (!error.processed) {
-            snackbar.value?.showError(error);
+            desktopPageStore.addErrorToast(error);
         }
     });
 }
@@ -436,9 +440,9 @@ function reloadExternalAuth(silent?: boolean): void {
     userExternalAuthStore.getExternalAuths().then(response => {
         if (!silent) {
             if (isEquals(externalAuths.value, response)) {
-                snackbar.value?.showMessage('Third-party login list is up to date');
+                desktopPageStore.addToast('Third-party login list is up to date');
             } else {
-                snackbar.value?.showMessage('Third-party login list has been updated');
+                desktopPageStore.addToast('Third-party login list has been updated');
             }
         }
 
@@ -451,7 +455,31 @@ function reloadExternalAuth(silent?: boolean): void {
             externalAuths.value = [];
         } else if (!error.processed) {
             externalAuths.value = [];
-            snackbar.value?.showError(error);
+            desktopPageStore.addErrorToast(error);
+        }
+    });
+}
+
+function linkExternalAuth(): void {
+    if (!isOAuth2Enabled() || loggingInByOAuth2.value) {
+        return;
+    }
+
+    loggingInByOAuth2.value = true;
+
+    userExternalAuthStore.linkExternalOAuth2({
+        platform: 'desktop',
+        clientSessionId: oauth2ClientSessionId.value
+    }).then(url => {
+        window.location.href = url;
+        oauth2ClientSessionId.value = generateRandomUUID();
+        loggingInByOAuth2.value = false;
+    }).catch(error => {
+        oauth2ClientSessionId.value = generateRandomUUID();
+        loggingInByOAuth2.value = false;
+
+        if (!error.processed) {
+            desktopPageStore.addErrorToast(error);
         }
     });
 }
@@ -478,9 +506,9 @@ function reloadSessions(silent?: boolean): void {
     tokensStore.getAllTokens().then(response => {
         if (!silent) {
             if (isEquals(tokens.value, response)) {
-                snackbar.value?.showMessage('Session list is up to date');
+                desktopPageStore.addToast('Session list is up to date');
             } else {
-                snackbar.value?.showMessage('Session list has been updated');
+                desktopPageStore.addToast('Session list has been updated');
             }
         }
 
@@ -490,7 +518,7 @@ function reloadSessions(silent?: boolean): void {
         loadingSession.value = false;
 
         if (!error.processed) {
-            snackbar.value?.showError(error);
+            desktopPageStore.addErrorToast(error);
         }
     });
 }
@@ -513,7 +541,7 @@ function revokeSession(session: SessionInfo): void {
             loadingSession.value = false;
 
             if (!error.processed) {
-                snackbar.value?.showError(error);
+                desktopPageStore.addErrorToast(error);
             }
         });
     });
@@ -536,12 +564,12 @@ function revokeAllSessions(): void {
                 }
             }
 
-            snackbar.value?.showMessage('You have logged out all other sessions');
+            desktopPageStore.addToast('You have logged out all other sessions');
         }).catch(error => {
             loadingSession.value = false;
 
             if (!error.processed) {
-                snackbar.value?.showError(error);
+                desktopPageStore.addErrorToast(error);
             }
         });
     });

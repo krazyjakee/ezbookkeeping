@@ -221,7 +221,7 @@ func (t *camtStatementTransactionDataRowIterator) Next(ctx core.Context, user *m
 		}
 	}
 
-	rowItems, err := t.parseTransaction(ctx, user, account, entry, transactionDetails)
+	rowItems, err := t.parseTransaction(ctx, account, entry, transactionDetails)
 
 	if err != nil {
 		log.Errorf(ctx, "[camt_statement_transaction_data_table.Next] cannot parsing transaction in %s, because %s", t.CurrentRowId(), err.Error())
@@ -237,7 +237,7 @@ func (t *camtStatementTransactionDataRowIterator) Next(ctx core.Context, user *m
 	}, nil
 }
 
-func (t *camtStatementTransactionDataRowIterator) parseTransaction(ctx core.Context, user *models.User, account *camtAccount, entry *camtEntry, transactionDetails *camtTransactionDetails) (map[datatable.TransactionDataTableColumn]string, error) {
+func (t *camtStatementTransactionDataRowIterator) parseTransaction(ctx core.Context, account *camtAccount, entry *camtEntry, transactionDetails *camtTransactionDetails) (map[datatable.TransactionDataTableColumn]string, error) {
 	data := make(map[datatable.TransactionDataTableColumn]string, len(camtTransactionSupportedColumns))
 
 	if account == nil {

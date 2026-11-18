@@ -1,5 +1,5 @@
 <template>
-    <v-text-field type="text" class="amount-input text-field-with-colored-label" autocomplete="off"
+    <v-text-field type="text" class="amount-input text-field-with-colored-label" autocomplete="off" v-bind="$attrs"
                   :class="extraClass" :color="color" :base-color="color"
                   :density="density" :variant="variant" :autofocus="autofocus"
                   :readonly="!!readonly" :disabled="!!disabled"
@@ -12,6 +12,7 @@
         </template>
         <template #append-inner>
             <div class="text-no-wrap" v-if="currency && appendText">{{ appendText }}</div>
+            <span class="amount-input-currency-code" v-if="showCurrencyCode">{{ currency }}</span>
             <v-tooltip :text="tt('Enter formula mode')">
                 <template v-slot:activator="{ props }">
                     <v-icon class="ms-2" :aria-label="tt('Enter formula mode')" :icon="mdiCalculatorVariantOutline"
@@ -21,9 +22,10 @@
             </v-tooltip>
         </template>
     </v-text-field>
-    <v-text-field type="text" class="text-field-with-colored-label" autocomplete="off"
+    <v-text-field type="text" class="amount-input amount-input--formula text-field-with-colored-label" autocomplete="off" v-bind="$attrs"
                   :class="extraClass" :color="color" :base-color="color"
-                  :density="density" :readonly="!!readonly" :disabled="!!disabled"
+                  :density="density" :variant="variant"
+                  :readonly="!!readonly" :disabled="!!disabled"
                   :label="label" :placeholder="placeholder"
                   :persistent-placeholder="!!persistentPlaceholder"
                   v-model="currentFormula" v-if="!hide && formulaMode"
@@ -33,6 +35,7 @@
         </template>
         <template #append-inner>
             <div class="text-no-wrap" v-if="currency && appendText">{{ appendText }}</div>
+            <span class="amount-input-currency-code" v-if="showCurrencyCode">{{ currency }}</span>
             <v-tooltip :text="tt('Calculate formula result')">
                 <template v-slot:activator="{ props }">
                     <v-icon class="ms-2" color="primary" :aria-label="tt('Calculate formula result')" :icon="mdiCheck"
@@ -49,9 +52,10 @@
             </v-tooltip>
         </template>
     </v-text-field>
-    <v-text-field type="password" class="text-field-with-colored-label" autocomplete="off"
+    <v-text-field type="password" class="amount-input amount-input--hidden text-field-with-colored-label" autocomplete="off" v-bind="$attrs"
                   :class="extraClass" :color="color" :base-color="color"
-                  :density="density" :readonly="!!readonly" :disabled="!!disabled"
+                  :density="density" :variant="variant"
+                  :readonly="!!readonly" :disabled="!!disabled"
                   :label="label" :placeholder="placeholder"
                   :persistent-placeholder="!!persistentPlaceholder"
                   :rules="enableRules ? rules : []" v-model="currentValue" v-if="hide"
@@ -59,18 +63,15 @@
         <template #prepend-inner v-if="currency && prependText">
             <div>{{ prependText }}</div>
         </template>
-        <template #append-inner v-if="currency && appendText">
-            <div class="text-no-wrap">{{ appendText }}</div>
+        <template #append-inner v-if="(currency && appendText) || showCurrencyCode">
+            <div class="text-no-wrap" v-if="currency && appendText">{{ appendText }}</div>
+            <span class="amount-input-currency-code" v-if="showCurrencyCode">{{ currency }}</span>
         </template>
     </v-text-field>
-
-    <snack-bar ref="snackbar" />
 </template>
 
 <script setup lang="ts">
-import SnackBar from '@/components/desktop/SnackBar.vue';
-
-import { ref, computed, useTemplateRef, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 
 import { useI18n } from '@/locales/helpers.ts';
 import {
@@ -78,6 +79,8 @@ import {
     type CommonNumberInputEmits,
     useCommonNumberInputBase
 } from '@/components/base/CommonNumberInputBase.ts';
+
+import { useDesktopPageStore } from '@/stores/desktopPage.ts';
 
 import { NumeralSystem, DecimalSeparator } from '@/core/numeral.ts';
 import type { CurrencyPrependAndAppendText } from '@/core/currency.ts';
@@ -96,8 +99,6 @@ import {
     mdiClose
 } from '@mdi/js';
 
-type SnackBarType = InstanceType<typeof SnackBar>;
-
 interface DesktopAmountInputProps extends CommonNumberInputProps {
     class?: string;
     color?: string;
@@ -112,6 +113,9 @@ interface DesktopAmountInputProps extends CommonNumberInputProps {
     enableFormula?: boolean;
     flipNegative?: boolean;
 }
+
+// the component renders one of three fields, so attributes (id, aria-*) are forwarded explicitly to the rendered field
+defineOptions({ inheritAttrs: false });
 
 const props = defineProps<DesktopAmountInputProps>();
 const emit = defineEmits<CommonNumberInputEmits>();
@@ -131,7 +135,7 @@ const {
     onPaste
 } = useCommonNumberInputBase(props, emit, DEFAULT_DECIMAL_NUMBER_COUNT, getInitedFormattedValue(props.modelValue, props.flipNegative), parseAmountFromLocalizedNumerals, getFormattedValue, getValidFormattedValue);
 
-const snackbar = useTemplateRef<SnackBarType>('snackbar');
+const desktopPageStore = useDesktopPageStore();
 
 const rules = [
     (v: string) => {
@@ -187,6 +191,18 @@ const appendText = computed<string | undefined>(() => {
     return texts.appendText;
 });
 
+// the currency code is shown next to the amount unless the currency is already displayed as its code
+const showCurrencyCode = computed<boolean>(() => {
+    if (!props.currency || !props.showCurrency) {
+        return false;
+    }
+
+    const prepend = (prependText.value || '').trim();
+    const append = (appendText.value || '').trim();
+
+    return prepend !== props.currency && append !== props.currency;
+});
+
 const extraClass = computed<string>(() => {
     let finalClass = props.class || '';
 
@@ -216,7 +232,7 @@ function calculateFormula(): void {
     let finalFormula = currentFormula.value;
 
     if (systemDecimalSeparator !== decimalSeparator && finalFormula.indexOf(systemDecimalSeparator) >= 0) {
-        snackbar.value?.showMessage('Formula is invalid');
+        desktopPageStore.addToast('Formula is invalid');
         return;
     } else if (systemDecimalSeparator !== decimalSeparator) {
         finalFormula = replaceAll(currentFormula.value, decimalSeparator, systemDecimalSeparator);
@@ -233,13 +249,13 @@ function calculateFormula(): void {
             currentValue.value = getValidFormattedValue(calculatedAmount, textualValue, hasDecimalSeparator);
             formulaMode.value = false;
         } else {
-            snackbar.value?.showMessage('Formula is invalid');
+            desktopPageStore.addToast('Formula is invalid');
         }
     } catch (ex) {
         logger.error('cannot evaluate formula in amount input, original formula is ' + finalFormula, ex);
 
         if (ex instanceof Error) {
-            snackbar.value?.showMessage(ex.message);
+            desktopPageStore.addToast(ex.message);
         }
     }
 }
@@ -385,11 +401,41 @@ watch(currentValue, (newValue) => {
 </script>
 
 <style>
+/* the label carries the user amount color, which only reaches 4.5:1 at full opacity (#36) */
+.text-field-with-colored-label .v-field:not(.v-field--disabled) .v-label.v-field-label {
+    opacity: 1;
+}
+
 .text-field-with-colored-label.has-pretend-text .v-field {
     grid-template-columns: max-content minmax(0, 1fr) min-content min-content;
 }
 
 .text-field-with-colored-label.has-pretend-text .v-field__input {
     padding-inline-start: 0.5rem;
+}
+
+.amount-input .v-field__input {
+    font-weight: 600;
+}
+
+.amount-input .v-field__append-inner {
+    align-items: center;
+    gap: var(--ebk-space-1);
+}
+
+.amount-input-currency-code {
+    display: inline-flex;
+    align-items: center;
+    min-height: 20px;
+    padding-inline: var(--ebk-space-2);
+    border: 1px solid var(--ebk-color-hairline);
+    border-radius: var(--ebk-radius-pill);
+    background-color: var(--ebk-color-surface);
+    color: var(--ebk-color-text-secondary);
+    font-size: 0.6875rem;
+    font-weight: var(--ebk-font-technical-weight);
+    letter-spacing: var(--ebk-font-technical-letter-spacing);
+    line-height: 1;
+    white-space: nowrap;
 }
 </style>

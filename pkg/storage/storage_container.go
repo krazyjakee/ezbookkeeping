@@ -178,3 +178,26 @@ func newObjectStorage(config *settings.Config, pathPrefix string) (ObjectStorage
 
 	return nil, errs.ErrInvalidStorageType
 }
+
+// GetAllObjectStoragePathPrefixes returns the path prefixes of all the object storages used by ezBookkeeping
+func GetAllObjectStoragePathPrefixes() []string {
+	return []string{avatarPathPrefix, userCustomIconPathPrefix, transactionPicturePathPrefix}
+}
+
+// NewAllObjectStorages returns new object storage instances of all the path prefixes according to the config,
+// regardless of whether the related features are enabled (used by full-instance backup and restore)
+func NewAllObjectStorages(config *settings.Config) (map[string]ObjectStorage, error) {
+	storages := make(map[string]ObjectStorage)
+
+	for _, pathPrefix := range GetAllObjectStoragePathPrefixes() {
+		objectStorage, err := newObjectStorage(config, pathPrefix)
+
+		if err != nil {
+			return nil, err
+		}
+
+		storages[pathPrefix] = objectStorage
+	}
+
+	return storages, nil
+}

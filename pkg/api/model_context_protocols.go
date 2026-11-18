@@ -21,6 +21,9 @@ type ModelContextProtocolAPI struct {
 	transactions          *services.TransactionService
 	transactionCategories *services.TransactionCategoryService
 	transactionTags       *services.TransactionTagService
+	transactionTagGroups  *services.TransactionTagGroupService
+	transactionTemplates  *services.TransactionTemplateService
+	transactionPictures   *services.TransactionPictureService
 	accounts              *services.AccountService
 	users                 *services.UserService
 	tokens                *services.TokenService
@@ -35,6 +38,9 @@ var (
 		transactions:          services.Transactions,
 		transactionCategories: services.TransactionCategories,
 		transactionTags:       services.TransactionTags,
+		transactionTagGroups:  services.TransactionTagGroups,
+		transactionTemplates:  services.TransactionTemplates,
+		transactionPictures:   services.TransactionPictures,
 		accounts:              services.Accounts,
 		users:                 services.Users,
 		tokens:                services.Tokens,
@@ -172,21 +178,42 @@ func (a *ModelContextProtocolAPI) ListToolsHandler(c *core.WebContext, jsonRPCRe
 		return nil, errs.ErrNotPermittedToPerformThisAction
 	}
 
+	enabledTools := core.MCPAllTools
+
+	if context := c.GetTokenContext(); context != "" {
+		var tokenContext models.MCPTokenContext
+		err = json.Unmarshal([]byte(context), &tokenContext)
+
+		if err != nil {
+			log.Errorf(c, "[model_context_protocols.ListToolsHandler] failed to parse token context \"%s\", because %s", context, err.Error())
+			return nil, errs.ErrInvalidToken
+		}
+
+		enabledTools = tokenContext.EnabledTools
+	}
+
 	mcpVersion := a.getMCPVersion(c)
 	toolsInfo := mcp.Container.GetMCPTools()
-	finalToolsInfos := make([]*mcp.MCPTool, len(toolsInfo))
+	finalToolsInfos := make([]*mcp.MCPTool, 0, len(toolsInfo))
 
 	for i := 0; i < len(toolsInfo); i++ {
-		finalToolsInfos[i] = &mcp.MCPTool{
+		if !toolsInfo[i].ToolType.IsEnabled(enabledTools) {
+			continue
+		}
+
+		toolInfo := &mcp.MCPTool{
 			Name:        toolsInfo[i].Name,
 			InputSchema: toolsInfo[i].InputSchema,
 			Title:       toolsInfo[i].Title,
 			Description: toolsInfo[i].Description,
+			Annotations: toolsInfo[i].Annotations,
 		}
 
 		if mcpVersion >= string(mcp.ToolResultStructuredContentMinVersion) {
-			finalToolsInfos[i].OutputSchema = toolsInfo[i].OutputSchema
+			toolInfo.OutputSchema = toolsInfo[i].OutputSchema
 		}
+
+		finalToolsInfos = append(finalToolsInfos, toolInfo)
 	}
 
 	listToolsResp := mcp.MCPListToolsResponse{
@@ -257,6 +284,21 @@ func (a *ModelContextProtocolAPI) GetAccountService() *services.AccountService {
 // GetUserService implements the MCPAvailableServices interface
 func (a *ModelContextProtocolAPI) GetUserService() *services.UserService {
 	return a.users
+}
+
+// GetTransactionTagGroupService implements the MCPAvailableServices interface
+func (a *ModelContextProtocolAPI) GetTransactionTagGroupService() *services.TransactionTagGroupService {
+	return a.transactionTagGroups
+}
+
+// GetTransactionTemplateService implements the MCPAvailableServices interface
+func (a *ModelContextProtocolAPI) GetTransactionTemplateService() *services.TransactionTemplateService {
+	return a.transactionTemplates
+}
+
+// GetTransactionPictureService implements the MCPAvailableServices interface
+func (a *ModelContextProtocolAPI) GetTransactionPictureService() *services.TransactionPictureService {
+	return a.transactionPictures
 }
 
 // getMCPVersion returns the MCP protocol version from the request header

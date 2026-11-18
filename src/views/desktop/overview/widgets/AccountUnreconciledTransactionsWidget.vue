@@ -1,48 +1,43 @@
 <template>
-    <v-card class="overview-widget overview-widget--list overview-widget--accounts h-100" :class="{ disabled: loading }">
-        <template #title>
-            <overview-widget-header :title="title || tt('Account Unreconciled Transactions')" :icon="mdiCreditCardOutline" />
-        </template>
-
-        <v-card-text class="overview-widget__body overview-widget__list-body">
-            <v-list class="py-0" density="compact" v-if="displayAccounts.length">
-                <v-list-item class="overview-widget__list-item" :key="item.account.id" :title="item.account.name"
-                             @click="showReconciliationStatementDialog(item.account.id)"
-                             v-for="item in displayAccounts">
-                    <template #prepend>
-                        <span class="overview-widget__item-icon">
-                            <ItemIcon size="24px" :icon-type="getAccountIconType(item.account.iconType)" :icon-id="item.account.icon" :color="item.account.color" />
-                        </span>
-                    </template>
-                    <template #append>
-                        <span class="overview-widget__list-amount overview-widget__amount">{{ formatNumberToLocalizedNumerals(item.count) }}</span>
-                    </template>
-                </v-list-item>
-            </v-list>
-            <div v-if="loading && !displayAccounts.length">
-                <v-skeleton-loader class="skeleton-no-margin mx-2 py-3" style="margin-bottom: 1px" type="text" :key="idx" :loading="true" v-for="idx in props.itemCount"></v-skeleton-loader>
+    <overview-widget-panel class="overview-widget--list"
+                           :title="title || tt('Account Unreconciled Transactions')"
+                           :loading="loading" :empty="!displayAccounts.length" :empty-text="noDataText">
+        <v-list class="overview-widget__list py-0" density="compact" v-if="displayAccounts.length">
+            <v-list-item class="overview-widget__list-item" :key="item.account.id" :title="item.account.name"
+                         @click="showReconciliationStatementDialog(item.account.id)"
+                         v-for="item in displayAccounts">
+                <template #prepend>
+                    <span class="overview-widget__item-icon">
+                        <ItemIcon size="22px" :icon-type="getAccountIconType(item.account.iconType)" :icon-id="item.account.icon" :color="item.account.color" />
+                    </span>
+                </template>
+                <template #append>
+                    <span class="overview-widget__count-badge ebk-numeric">{{ formatNumberToLocalizedNumerals(item.count) }}</span>
+                </template>
+            </v-list-item>
+        </v-list>
+        <div class="overview-widget__list" v-else-if="loading">
+            <div class="overview-widget__list-skeleton" :key="idx" v-for="idx in props.itemCount">
+                <v-skeleton-loader class="skeleton-no-margin" type="avatar" width="32px" height="32px" />
+                <v-skeleton-loader class="skeleton-no-margin flex-grow-1" type="text" />
             </div>
-            <div class="overview-widget__empty" v-else-if="!loading && !displayAccounts.length">
-                <v-icon :icon="mdiCreditCardOutline" size="32" />
-                <span>{{ noDataText }}</span>
-            </div>
-        </v-card-text>
+        </div>
 
         <reconciliation-statement-dialog ref="reconciliationStatementDialog"
                                          @update:last-reconciled-time="onUpdateLastReconciledTime"
                                          @error="onShowReconciliationStatementError" />
-        <snack-bar ref="snackbar" />
-    </v-card>
+    </overview-widget-panel>
 </template>
 
 <script setup lang="ts">
-import OverviewWidgetHeader from './OverviewWidgetHeader.vue';
-import SnackBar from '@/components/desktop/SnackBar.vue';
+import OverviewWidgetPanel from './OverviewWidgetPanel.vue';
 import ReconciliationStatementDialog from '@/views/desktop/accounts/list/dialogs/ReconciliationStatementDialog.vue';
 
 import { useTemplateRef } from 'vue';
 
 import { useI18n } from '@/locales/helpers.ts';
+
+import { useDesktopPageStore } from '@/stores/desktopPage.ts';
 
 import {
     type CommonAccountUnreconciledTransactionsWidgetProps,
@@ -51,11 +46,6 @@ import {
 
 import { getAccountIconType } from '@/lib/icon.ts';
 
-import {
-    mdiCreditCardOutline
-} from '@mdi/js';
-
-type SnackBarType = InstanceType<typeof SnackBar>;
 type ReconciliationStatementDialogType = InstanceType<typeof ReconciliationStatementDialog>;
 
 const emit = defineEmits<{
@@ -72,7 +62,8 @@ const { tt, formatNumberToLocalizedNumerals } = useI18n();
 
 const { noDataText, displayAccounts, getTransactionListDateRange } = useAccountUnreconciledTransactionsWidgetBase(props);
 
-const snackbar = useTemplateRef<SnackBarType>('snackbar');
+const desktopPageStore = useDesktopPageStore();
+
 const reconciliationStatementDialog = useTemplateRef<ReconciliationStatementDialogType>('reconciliationStatementDialog');
 
 function showReconciliationStatementDialog(accountId: string): void {
@@ -94,6 +85,6 @@ function onUpdateLastReconciledTime(): void {
 }
 
 function onShowReconciliationStatementError(message: string): void {
-    snackbar.value?.showError(message);
+    desktopPageStore.addErrorToast(message);
 }
 </script>
